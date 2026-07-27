@@ -57,6 +57,13 @@ export default [
 
       // allow debugger during development only
       'no-debugger': process.env.NODE_ENV === 'production' ? 'error' : 'off',
+
+      // The visual editor (src/editor/**) intentionally mutates nested
+      // fields of `entry`/`entries` props in place — that's the reactive
+      // object living at story.project.chapters[i], shared with the live
+      // PhoneShell preview (see docs/phase2-plan.md). `shallowOnly` still
+      // flags reassigning the prop itself, just not its nested fields.
+      'vue/no-mutating-props': ['error', { shallowOnly: true }],
     },
   },
 

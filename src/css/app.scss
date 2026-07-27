@@ -1,1 +1,27 @@
 // app global css
+
+// This simulates a phone screen — no browser chrome behavior (text
+// selection, scrollbars) should leak through and break the illusion.
+// Scoped to .phone-frame (PhoneShell's root) rather than html/body like
+// NTR's original app.scss, since here the phone preview sits alongside
+// the editor's own UI (project explorer, JSON panel...) which should keep
+// normal browser text-selection/scrollbar behavior.
+.phone-frame {
+  -webkit-user-select: none;
+  user-select: none;
+
+  input,
+  textarea {
+    -webkit-user-select: text;
+    user-select: text;
+  }
+
+  * {
+    scrollbar-width: none; // Firefox
+    -ms-overflow-style: none; // old Edge/IE
+  }
+
+  *::-webkit-scrollbar {
+    display: none; // Chrome/Safari/new Edge
+  }
+}
