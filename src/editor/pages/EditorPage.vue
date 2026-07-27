@@ -3,6 +3,21 @@
     <div class="topbar">
       <span class="project-name">{{ story.project?.manifest?.name || '(projet)' }}</span>
       <span v-if="dirty" class="dirty-dot" title="Modifications non enregistrées">●</span>
+
+      <q-btn-toggle
+        dense
+        no-caps
+        unelevated
+        v-model="viewMode"
+        class="view-toggle"
+        :options="[
+          { label: 'Chapitres', value: 'chapters' },
+          { label: 'Contacts', value: 'contacts' },
+          { label: 'Threads', value: 'threads' },
+          { label: 'Jeu', value: 'game' },
+        ]"
+      />
+
       <div class="spacer" />
 
       <q-btn
@@ -39,54 +54,117 @@
     </div>
 
     <div class="panes">
-      <q-splitter v-if="!focusPreview" v-model="splitOuter" :limits="[12, 45]" class="full-splitter">
-        <template #before>
-          <div class="pane chapters-pane">
-            <ChapterList v-model="selectedIndex" @preview-from="previewFrom" />
-          </div>
-        </template>
-
-        <template #after>
-          <q-splitter v-model="splitInner" :limits="[30, 85]" class="full-splitter">
-            <template #before>
-              <div class="pane timeline-pane">
-                <template v-if="selectedChapter">
-                  <div class="panel chapter-header">
-                    <q-input dense outlined label="Titre" v-model="selectedChapter.title" />
-                    <q-input dense outlined label="Id" v-model="selectedChapter.id" class="id-input" />
-                  </div>
-
-                  <div class="panel">
-                    <div class="section-label">
-                      Condition de démarrage du chapitre (optionnel)
-                      <FieldHelp
-                        text="Ce chapitre ne démarre que si toutes ces conditions sont vraies. Rien d'ajouté = toujours autorisé."
-                      />
-                    </div>
-                    <RequiresBuilder
-                      :model-value="selectedChapter.requires"
-                      @update:model-value="(v) => (selectedChapter.requires = v)"
-                    />
-                  </div>
-
-                  <TimelineEditor :entries="selectedChapter.timeline" />
-                </template>
-                <div v-else class="empty-state">Sélectionne un chapitre à gauche.</div>
-              </div>
-            </template>
-
-            <template #after>
-              <div class="pane preview-pane">
-                <PhoneShell />
-              </div>
-            </template>
-          </q-splitter>
-        </template>
-      </q-splitter>
-
-      <div v-else class="pane preview-pane focus-mode">
+      <div v-if="focusPreview" class="pane preview-pane focus-mode">
         <PhoneShell />
       </div>
+
+      <template v-else>
+        <q-splitter v-if="viewMode === 'chapters'" v-model="splitOuter" :limits="[12, 45]" class="full-splitter">
+          <template #before>
+            <div class="pane chapters-pane">
+              <ChapterList v-model="selectedIndex" @preview-from="previewFrom" />
+            </div>
+          </template>
+
+          <template #after>
+            <q-splitter v-model="splitInner" :limits="[30, 85]" class="full-splitter">
+              <template #before>
+                <div class="pane timeline-pane">
+                  <template v-if="selectedChapter">
+                    <div class="panel chapter-header">
+                      <q-input dense outlined label="Titre" v-model="selectedChapter.title" />
+                      <q-input dense outlined label="Id" v-model="selectedChapter.id" class="id-input" />
+                    </div>
+
+                    <div class="panel">
+                      <div class="section-label">
+                        Condition de démarrage du chapitre (optionnel)
+                        <FieldHelp
+                          text="Ce chapitre ne démarre que si toutes ces conditions sont vraies. Rien d'ajouté = toujours autorisé."
+                        />
+                      </div>
+                      <RequiresBuilder
+                        :model-value="selectedChapter.requires"
+                        @update:model-value="(v) => (selectedChapter.requires = v)"
+                      />
+                    </div>
+
+                    <TimelineEditor :entries="selectedChapter.timeline" />
+                  </template>
+                  <div v-else class="empty-state">Sélectionne un chapitre à gauche.</div>
+                </div>
+              </template>
+
+              <template #after>
+                <div class="pane preview-pane">
+                  <PhoneShell />
+                </div>
+              </template>
+            </q-splitter>
+          </template>
+        </q-splitter>
+
+        <q-splitter v-else-if="viewMode === 'contacts'" v-model="splitOuter" :limits="[12, 45]" class="full-splitter">
+          <template #before>
+            <div class="pane chapters-pane">
+              <ContactList v-model="selectedContactIndex" />
+            </div>
+          </template>
+
+          <template #after>
+            <q-splitter v-model="splitInner" :limits="[30, 85]" class="full-splitter">
+              <template #before>
+                <div class="pane timeline-pane">
+                  <ContactForm v-if="selectedContact" :contact="selectedContact" />
+                  <div v-else class="empty-state">Sélectionne un contact à gauche.</div>
+                </div>
+              </template>
+              <template #after>
+                <div class="pane preview-pane">
+                  <PhoneShell />
+                </div>
+              </template>
+            </q-splitter>
+          </template>
+        </q-splitter>
+
+        <q-splitter v-else-if="viewMode === 'threads'" v-model="splitOuter" :limits="[12, 45]" class="full-splitter">
+          <template #before>
+            <div class="pane chapters-pane">
+              <ThreadList v-model="selectedThreadIndex" />
+            </div>
+          </template>
+
+          <template #after>
+            <q-splitter v-model="splitInner" :limits="[30, 85]" class="full-splitter">
+              <template #before>
+                <div class="pane timeline-pane">
+                  <ThreadForm v-if="selectedThread" :thread="selectedThread" />
+                  <div v-else class="empty-state">Sélectionne un thread à gauche.</div>
+                </div>
+              </template>
+              <template #after>
+                <div class="pane preview-pane">
+                  <PhoneShell />
+                </div>
+              </template>
+            </q-splitter>
+          </template>
+        </q-splitter>
+
+        <q-splitter v-else-if="viewMode === 'game'" v-model="splitInner" :limits="[20, 85]" class="full-splitter">
+          <template #before>
+            <div class="pane timeline-pane">
+              <GameForm :game="story.project.gameConfig" />
+            </div>
+          </template>
+          <template #after>
+            <div class="pane preview-pane">
+              <PhoneShell />
+            </div>
+          </template>
+        </q-splitter>
+      </template>
     </div>
   </q-page>
 </template>
@@ -96,12 +174,17 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { Notify } from 'quasar'
 import { useStoryStore } from '@/engine/stores/story'
-import { serializeChapter } from '@/project/serializeChapter'
+import { serializeChapter, serializeContacts, serializeThreads, serializeGame } from '@/project/serializeChapter'
 import PhoneShell from '@/components/phone/PhoneShell.vue'
 import ChapterList from '@/editor/components/ChapterList.vue'
 import RequiresBuilder from '@/editor/components/RequiresBuilder.vue'
 import TimelineEditor from '@/editor/components/TimelineEditor.vue'
 import FieldHelp from '@/editor/components/FieldHelp.vue'
+import ContactList from '@/editor/components/ContactList.vue'
+import ContactForm from '@/editor/components/ContactForm.vue'
+import ThreadList from '@/editor/components/ThreadList.vue'
+import ThreadForm from '@/editor/components/ThreadForm.vue'
+import GameForm from '@/editor/components/GameForm.vue'
 
 const AUTOSAVE_KEY = 'storie-engine-autosave'
 const SPLIT_OUTER_KEY = 'storie-engine-split-outer'
@@ -111,8 +194,37 @@ const AUTOSAVE_DEBOUNCE_MS = 1200
 const router = useRouter()
 const story = useStoryStore()
 
+// Which project-wide resource is being edited — chapters keep their existing
+// 3-pane layout, contacts/threads/game reuse the same list+form+preview
+// shape (see docs/phase3-plan.md Phase 4 roadmap). Reuses the app's existing
+// q-btn-toggle mode-switch convention (see ChoiceEntryForm.vue's SMS/DM
+// toggle) rather than introducing routing/tabs, which have no precedent here.
+const viewMode = ref('chapters')
+
 const selectedIndex = ref(0)
 const selectedChapter = computed(() => story.project?.chapters?.[selectedIndex.value] || null)
+const selectedContactIndex = ref(0)
+const selectedContact = computed(() => story.project?.contacts?.[selectedContactIndex.value] || null)
+const selectedThreadIndex = ref(0)
+const selectedThread = computed(() => story.project?.threads?.[selectedThreadIndex.value] || null)
+
+// The object currently watched for the dirty flag/autosave — a single
+// chapter for 'chapters' mode, or the whole array/object for the other
+// three modes (their save() call always writes the whole file anyway).
+const activeResource = computed(() => {
+  switch (viewMode.value) {
+    case 'chapters':
+      return selectedChapter.value
+    case 'contacts':
+      return story.project?.contacts || null
+    case 'threads':
+      return story.project?.threads || null
+    case 'game':
+      return story.project?.gameConfig || null
+    default:
+      return null
+  }
+})
 
 const dirty = ref(false)
 const autosave = ref(localStorage.getItem(AUTOSAVE_KEY) === 'true')
@@ -130,11 +242,11 @@ watch(splitInner, (val) => localStorage.setItem(SPLIT_INNER_KEY, String(val)))
 let debounceTimer = null
 let stopWatch = null
 
-function watchSelectedChapter() {
+function watchActiveResource() {
   stopWatch?.()
-  if (!selectedChapter.value) return
+  if (!activeResource.value) return
   stopWatch = watch(
-    selectedChapter,
+    activeResource,
     () => {
       dirty.value = true
       if (autosave.value) {
@@ -145,24 +257,45 @@ function watchSelectedChapter() {
     { deep: true },
   )
 }
-watch(selectedIndex, () => {
+// Only re-arm on viewMode/selectedIndex change, NOT on
+// selectedContactIndex/selectedThreadIndex — those pick which item the form
+// *displays* within the same already-watched array, so re-arming on them
+// would wrongly reset `dirty` just from selecting a different row.
+watch([viewMode, selectedIndex], () => {
   dirty.value = false
   clearTimeout(debounceTimer)
-  watchSelectedChapter()
+  watchActiveResource()
 })
-watchSelectedChapter()
+watchActiveResource()
 
 async function save() {
-  const chapter = selectedChapter.value
-  if (!chapter) return
   try {
-    await window.storieAPI.saveChapter({
-      rootPath: story.project.rootPath,
-      sourceFile: chapter.__sourceFile,
-      source: serializeChapter(chapter),
-    })
+    if (viewMode.value === 'chapters') {
+      const chapter = selectedChapter.value
+      if (!chapter) return
+      await window.storieAPI.saveChapter({
+        rootPath: story.project.rootPath,
+        sourceFile: chapter.__sourceFile,
+        source: serializeChapter(chapter),
+      })
+    } else if (viewMode.value === 'contacts') {
+      await window.storieAPI.saveContacts({
+        rootPath: story.project.rootPath,
+        source: serializeContacts(story.project.contacts),
+      })
+    } else if (viewMode.value === 'threads') {
+      await window.storieAPI.saveThreads({
+        rootPath: story.project.rootPath,
+        source: serializeThreads(story.project.threads),
+      })
+    } else if (viewMode.value === 'game') {
+      await window.storieAPI.saveGame({
+        rootPath: story.project.rootPath,
+        source: serializeGame(story.project.gameConfig),
+      })
+    }
     dirty.value = false
-    Notify.create({ type: 'positive', message: 'Chapitre enregistré.' })
+    Notify.create({ type: 'positive', message: 'Enregistré.' })
   } catch (err) {
     Notify.create({ type: 'negative', message: err.message || String(err) })
   }
@@ -235,6 +368,10 @@ async function buildGame() {
 .dirty-dot {
   color: var(--color-warning);
   font-size: var(--text-sm);
+}
+
+.view-toggle {
+  margin-left: var(--space-3);
 }
 
 .spacer {

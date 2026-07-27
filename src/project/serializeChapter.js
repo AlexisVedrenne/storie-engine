@@ -47,3 +47,18 @@ export function serializeChapter(chapter) {
   const { __sourceFile, ...content } = chapter;
   return `export default ${toJsLiteral(content)};\n`;
 }
+
+// contacts.js / threads.js / game.js are flat data (array / array / object)
+// with no editor-only bookkeeping field to strip — thin named wrappers over
+// toJsLiteral so call sites read as intent, matching serializeChapter().
+export function serializeContacts(contacts) {
+  return `export default ${toJsLiteral(contacts)};\n`;
+}
+
+export function serializeThreads(threads) {
+  return `export default ${toJsLiteral(threads)};\n`;
+}
+
+export function serializeGame(game) {
+  return `export default ${toJsLiteral(game)};\n`;
+}

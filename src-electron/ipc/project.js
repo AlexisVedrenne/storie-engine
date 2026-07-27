@@ -231,6 +231,24 @@ export function registerProjectHandlers(mainWindow) {
     return manifest;
   });
 
+  // contacts.js / threads.js / game.js are flat single files (no per-item
+  // file, no manifest bookkeeping) — add/remove is in-memory array mutation
+  // renderer-side, always followed by a full overwrite here.
+  ipcMain.handle("project:saveContacts", async (_evt, { rootPath, source }) => {
+    fs.writeFileSync(path.join(rootPath, "contacts.js"), await formatJs(source), "utf-8");
+    return true;
+  });
+
+  ipcMain.handle("project:saveThreads", async (_evt, { rootPath, source }) => {
+    fs.writeFileSync(path.join(rootPath, "threads.js"), await formatJs(source), "utf-8");
+    return true;
+  });
+
+  ipcMain.handle("project:saveGame", async (_evt, { rootPath, source }) => {
+    fs.writeFileSync(path.join(rootPath, "game.js"), await formatJs(source), "utf-8");
+    return true;
+  });
+
   // Opens a file picker rooted at the project's assets/ folder, returns a
   // path relative to it (what image/media fields store) — rejects a pick
   // made outside assets/ rather than silently writing an unusable path.
