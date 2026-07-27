@@ -70,7 +70,7 @@ async function browse() {
 .preview {
   max-width: 160px;
   max-height: 120px;
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   object-fit: cover;
 }
 </style>

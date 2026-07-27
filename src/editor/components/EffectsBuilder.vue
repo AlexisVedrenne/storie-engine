@@ -395,6 +395,6 @@ function sync() {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: var(--space-3);
-  padding: 8px 4px;
+  padding: var(--space-2) var(--space-1);
 }
 </style>
