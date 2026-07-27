@@ -1,5 +1,21 @@
 // app global css
 
+// Visible keyboard focus everywhere in the editor UI (docs/ui-ux-guidelines.md
+// §6) — an editor used all day should be fully navigable without a mouse.
+// Scoped to :focus-visible (not :focus) so mouse clicks don't show a ring,
+// only actual keyboard navigation does.
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+// Shared "ghost" button intent (secondary/low-emphasis actions) — see
+// docs/ui-ux-guidelines.md §6. Global utility rather than repeating this in
+// every editor component's scoped <style>.
+.btn-ghost {
+  color: var(--color-text-muted);
+}
+
 // This simulates a phone screen — no browser chrome behavior (text
 // selection, scrollbars) should leak through and break the illusion.
 // Scoped to .phone-frame (PhoneShell's root) rather than html/body like

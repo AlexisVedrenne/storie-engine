@@ -1,0 +1,13 @@
+# Populated fresh from storie-engine's own source + the open project on
+# every build (see src-electron/ipc/build.js) — never committed here.
+/src/engine/
+/src/components/
+/src/boot/
+/src/i18n/
+/src/css/
+/src/project-data/
+/public/
+
+/node_modules/
+/dist/
+/.quasar/

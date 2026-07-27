@@ -1,6 +1,7 @@
 <template>
   <div class="comments-field">
-    <div class="section-title">Commentaires</div>
+    <div class="section-title">Commentaires (optionnel)</div>
+    <div v-if="!comments.length" class="empty-hint">Aucun commentaire écrit à la main.</div>
     <div v-for="(c, i) in comments" :key="i" class="row">
       <q-select
         dense
@@ -8,14 +9,17 @@
         emit-value
         map-options
         class="author-select"
+        label="Auteur"
         :options="contactOptions"
         v-model="c.author"
         @update:model-value="sync"
       />
-      <q-input dense outlined class="text-input" v-model="c.text" @update:model-value="sync" />
-      <q-btn dense flat round icon="close" size="sm" @click="removeComment(i)" />
+      <q-input dense outlined class="text-input" placeholder="Texte du commentaire" v-model="c.text" @update:model-value="sync" />
+      <q-btn dense flat round icon="close" size="sm" @click="removeComment(i)">
+        <q-tooltip>Retirer</q-tooltip>
+      </q-btn>
     </div>
-    <q-btn dense flat icon="add" label="Ajouter un commentaire" @click="addComment" />
+    <q-btn dense flat no-caps icon="add" label="Ajouter un commentaire" class="btn-ghost" @click="addComment" />
     <q-input
       dense
       outlined
@@ -61,23 +65,34 @@ function sync() {
 .comments-field {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--space-2);
 }
 
 .section-title {
-  font-size: 11px;
+  font-size: var(--text-xs);
   text-transform: uppercase;
-  opacity: 0.6;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+}
+
+.empty-hint {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  font-style: italic;
 }
 
 .row {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
 }
 
 .author-select {
-  width: 160px;
+  flex: 0 0 160px;
 }
 
 .text-input {

@@ -89,6 +89,37 @@ function pseudoHandle(contact) {
   return contact.pseudo ? `@${contact.pseudo}` : contact.name;
 }
 
+// Project-wide flag registry (editor only) — scans every chapter for every
+// flag name referenced in a `requires`/`effects`, so the editor's flag
+// pickers (RequiresBuilder/EffectsBuilder) can offer a dropdown of flags
+// already in use instead of forcing free-text everywhere. Purely derived,
+// no schema/metadata stored anywhere — a flag is "known" simply by having
+// been typed somewhere already.
+function addFlagKeys(container, set) {
+  if (container?.flags) for (const key of Object.keys(container.flags)) set.add(key);
+}
+function collectFlagsFromTimeline(timeline, set) {
+  for (const entry of timeline || []) {
+    addFlagKeys(entry.requires, set);
+    if (entry.type === "effect") addFlagKeys(entry.effects, set);
+    if (entry.type === "choice") {
+      for (const option of entry.options || []) {
+        addFlagKeys(option.requires, set);
+        addFlagKeys(option.effects, set);
+        collectFlagsFromTimeline(option.then, set);
+      }
+    }
+  }
+}
+function collectAllFlagNames(chapters) {
+  const set = new Set();
+  for (const chapter of chapters || []) {
+    addFlagKeys(chapter.requires, set);
+    collectFlagsFromTimeline(chapter.timeline, set);
+  }
+  return [...set].sort();
+}
+
 function defaultState() {
   return {
     project: null, // ProjectData set by loadProject() — see src-electron/ipc/project.js
@@ -176,6 +207,10 @@ export const useStoryStore = defineStore("story", {
     socialHandle: () => (contact) => pseudoHandle(contact),
     contactsList: (state) => state.project?.contacts ?? [],
     gameConfig: (state) => state.project?.gameConfig ?? { title: "" },
+
+    // Editor-only: every flag name already used anywhere in the project,
+    // alphabetically sorted — see collectAllFlagNames above.
+    allFlagNames: (state) => collectAllFlagNames(state.project?.chapters),
 
     // narrative content (chapters, contacts bios) is always written in
     // French — `bucket` defaults to the current chapter but can be passed

@@ -1,6 +1,7 @@
 <template>
   <q-page class="open-project-page flex flex-center">
     <div class="panel">
+      <q-icon name="auto_stories" size="40px" class="brand-icon" />
       <h1 class="title">Storie Engine</h1>
       <p class="subtitle">Éditeur du moteur narratif</p>
 
@@ -14,6 +15,8 @@
       </q-banner>
 
       <q-btn
+        unelevated
+        no-caps
         color="primary"
         :loading="loading"
         :disable="!hasStorieApi"
@@ -60,18 +63,23 @@ async function openProject() {
 <style scoped>
 .open-project-page {
   height: 100vh;
-  background: #101018;
-  color: #fff;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-ui);
 }
 
 .panel {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
+  gap: var(--space-4);
   max-width: 480px;
   text-align: center;
-  padding: 24px;
+  padding: var(--space-6);
+}
+
+.brand-icon {
+  color: var(--color-accent);
 }
 
 .title {
@@ -82,11 +90,11 @@ async function openProject() {
 
 .subtitle {
   margin: 0;
-  opacity: 0.7;
-  font-size: 14px;
+  color: var(--color-text-muted);
+  font-size: var(--text-base);
 }
 
 .banner {
-  border-radius: 8px;
+  border-radius: var(--radius-md);
 }
 </style>

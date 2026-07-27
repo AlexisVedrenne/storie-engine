@@ -1,5 +1,7 @@
 <template>
   <div class="chapter-list">
+    <div class="pane-label">Chapitres</div>
+
     <div
       v-for="(chapter, i) in chapters"
       :key="chapter.id"
@@ -7,17 +9,37 @@
       :class="{ active: i === modelValue }"
       @click="emit('update:modelValue', i)"
     >
+      <div class="active-bar" />
       <div class="chapter-info">
         <div class="chapter-title">{{ chapter.title || chapter.id }}</div>
         <div class="chapter-id">{{ chapter.id }}</div>
       </div>
-      <q-btn dense flat round icon="arrow_upward" size="sm" :disable="i === 0" @click.stop="moveUp(i)" />
-      <q-btn dense flat round icon="arrow_downward" size="sm" :disable="i === chapters.length - 1" @click.stop="moveDown(i)" />
-      <q-btn dense flat round icon="play_arrow" size="sm" title="Prévisualiser depuis ce chapitre" @click.stop="previewFrom(chapter)" />
-      <q-btn dense flat round icon="delete" size="sm" @click.stop="confirmDelete(chapter)" />
+      <div class="row-actions">
+        <q-btn dense flat round icon="arrow_upward" size="sm" :disable="i === 0" @click.stop="moveUp(i)">
+          <q-tooltip>Monter</q-tooltip>
+        </q-btn>
+        <q-btn dense flat round icon="arrow_downward" size="sm" :disable="i === chapters.length - 1" @click.stop="moveDown(i)">
+          <q-tooltip>Descendre</q-tooltip>
+        </q-btn>
+        <q-btn dense flat round icon="play_arrow" size="sm" color="primary" @click.stop="previewFrom(chapter)">
+          <q-tooltip>Prévisualiser depuis ce chapitre</q-tooltip>
+        </q-btn>
+        <q-btn dense flat round icon="delete" size="sm" color="negative" @click.stop="confirmDelete(chapter)">
+          <q-tooltip>Supprimer</q-tooltip>
+        </q-btn>
+      </div>
     </div>
 
-    <q-btn class="new-chapter-btn" dense flat icon="add" label="Nouveau chapitre" @click="newChapterDialog = true" />
+    <q-btn
+      class="new-chapter-btn"
+      dense
+      flat
+      no-caps
+      icon="add"
+      label="Nouveau chapitre"
+      color="primary"
+      @click="newChapterDialog = true"
+    />
 
     <q-dialog v-model="newChapterDialog">
       <q-card class="new-chapter-card">
@@ -118,25 +140,50 @@ async function createChapter() {
 .chapter-list {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding: 8px;
+  gap: var(--space-1);
+  padding: var(--space-2);
+}
+
+.pane-label {
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+  padding: var(--space-2) var(--space-2) var(--space-1);
 }
 
 .chapter-row {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 2px;
-  padding: 6px 8px;
-  border-radius: 6px;
+  gap: var(--space-1);
+  min-height: var(--row-height);
+  padding: var(--space-2) var(--space-2) var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
   cursor: pointer;
+  transition: background-color var(--transition-fast);
 }
 
 .chapter-row:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--color-surface-hover);
 }
 
 .chapter-row.active {
-  background: rgba(76, 139, 245, 0.2);
+  background: var(--color-accent-tint);
+}
+
+.active-bar {
+  position: absolute;
+  left: 0;
+  top: 4px;
+  bottom: 4px;
+  width: 3px;
+  border-radius: 2px;
+  background: transparent;
+}
+
+.chapter-row.active .active-bar {
+  background: var(--color-accent);
 }
 
 .chapter-info {
@@ -145,23 +192,41 @@ async function createChapter() {
 }
 
 .chapter-title {
-  font-size: 13px;
+  font-size: var(--text-sm);
   font-weight: 600;
+  color: var(--color-text);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .chapter-id {
-  font-size: 10px;
-  opacity: 0.5;
+  font-size: var(--text-xs);
+  font-family: var(--font-mono);
+  color: var(--color-text-muted);
+}
+
+.row-actions {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+
+.chapter-row:hover .row-actions,
+.chapter-row.active .row-actions {
+  opacity: 1;
 }
 
 .new-chapter-btn {
-  margin-top: 6px;
+  margin-top: var(--space-2);
+  justify-content: flex-start;
 }
 
 .new-chapter-card {
   min-width: 320px;
+  background: var(--color-surface);
+  color: var(--color-text);
 }
 </style>

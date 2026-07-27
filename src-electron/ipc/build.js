@@ -1,0 +1,164 @@
+// Build pipeline — turns the currently open project into a standalone,
+// packaged Electron game (see docs/phase3-plan.md). Assembles a fresh temp
+// copy of templates/game-shell/ + storie-engine's own src/engine and
+// src/components (never a hand-maintained second copy of the phone engine,
+// see the plan doc's "principe" section), copies the open project's
+// content into it, then runs `quasar build -m electron` inside it.
+import { ipcMain, dialog } from "electron";
+import fs from "node:fs";
+import path from "node:path";
+import os from "node:os";
+import { spawn } from "node:child_process";
+
+// storie-engine's own source root. Only valid while the editor runs from
+// source via `pnpm run dev:electron` — see docs/phase3-plan.md risk #3.
+const APP_ROOT = process.cwd();
+const TEMPLATE_DIR = path.join(APP_ROOT, "templates", "game-shell");
+
+function run(cmd, args, cwd) {
+  return new Promise((resolve, reject) => {
+    const child = spawn(cmd, args, { cwd, shell: true, stdio: "pipe" });
+    let stderr = "";
+    child.stderr.on("data", (d) => (stderr += d.toString()));
+    child.on("error", reject);
+    child.on("close", (code) => {
+      if (code === 0) resolve();
+      else reject(new Error(`"${cmd} ${args.join(" ")}" a échoué (code ${code})\n${stderr.slice(-4000)}`));
+    });
+  });
+}
+
+function copyIfExists(src, dest) {
+  if (fs.existsSync(src)) fs.cpSync(src, dest, { recursive: true });
+}
+
+function assembleShell(tmpDir, rootPath) {
+  fs.cpSync(TEMPLATE_DIR, tmpDir, { recursive: true, filter: (src) => !src.includes(`${path.sep}engine-overrides${path.sep}`) && !src.endsWith("engine-overrides") });
+
+  // The engine + phone UI are never duplicated by hand — copied fresh from
+  // the editor's own current source every build.
+  copyIfExists(path.join(APP_ROOT, "src", "engine"), path.join(tmpDir, "src", "engine"));
+  copyIfExists(path.join(APP_ROOT, "src", "components", "phone"), path.join(tmpDir, "src", "components", "phone"));
+  copyIfExists(path.join(APP_ROOT, "src", "components", "apps"), path.join(tmpDir, "src", "components", "apps"));
+  copyIfExists(path.join(APP_ROOT, "src", "boot"), path.join(tmpDir, "src", "boot"));
+  copyIfExists(path.join(APP_ROOT, "src", "i18n"), path.join(tmpDir, "src", "i18n"));
+  copyIfExists(path.join(APP_ROOT, "src", "css"), path.join(tmpDir, "src", "css"));
+  // ChatThread.vue/DmThreadScreen.vue import '@/utils/chatTime' — confirmed
+  // by an actual end-to-end test build (see docs/phase3-plan.md); grep
+  // `src/components/**` for `from '@/...'` again if new engine code ever
+  // adds another such top-level import, since nothing here catches that
+  // automatically.
+  copyIfExists(path.join(APP_ROOT, "src", "utils"), path.join(tmpDir, "src", "utils"));
+
+  // The one file that legitimately differs between editor and shipped game
+  // (see templates/game-shell/engine-overrides/assets.js's own comment).
+  fs.copyFileSync(
+    path.join(TEMPLATE_DIR, "engine-overrides", "assets.js"),
+    path.join(tmpDir, "src", "engine", "assets.js"),
+  );
+
+  // Engine infra served from public/ (sounds, favicon) — same static-asset
+  // mechanism the project's own images will use below.
+  copyIfExists(path.join(APP_ROOT, "public", "icons"), path.join(tmpDir, "public", "icons"));
+  copyIfExists(path.join(APP_ROOT, "public", "sounds"), path.join(tmpDir, "public", "sounds"));
+  const favicon = path.join(APP_ROOT, "public", "favicon.ico");
+  if (fs.existsSync(favicon)) fs.copyFileSync(favicon, path.join(tmpDir, "public", "favicon.ico"));
+
+  // The project itself.
+  const projectDataDir = path.join(tmpDir, "src", "project-data");
+  fs.mkdirSync(projectDataDir, { recursive: true });
+  for (const file of ["contacts.js", "threads.js", "game.js", "project.json"]) {
+    const src = path.join(rootPath, file);
+    if (fs.existsSync(src)) fs.copyFileSync(src, path.join(projectDataDir, file));
+  }
+  copyIfExists(path.join(rootPath, "chapters"), path.join(projectDataDir, "chapters"));
+  copyIfExists(path.join(rootPath, "seed"), path.join(projectDataDir, "seed"));
+  copyIfExists(path.join(rootPath, "i18n"), path.join(projectDataDir, "i18n"));
+  copyIfExists(path.join(rootPath, "assets"), path.join(tmpDir, "public", "story-assets"));
+
+  // Name the generated app after the project rather than the generic
+  // template default.
+  const manifestPath = path.join(rootPath, "project.json");
+  const manifest = fs.existsSync(manifestPath) ? JSON.parse(fs.readFileSync(manifestPath, "utf-8")) : {};
+  const pkgPath = path.join(tmpDir, "package.json");
+  const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf-8"));
+  pkg.productName = manifest.name || pkg.productName;
+  fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + "\n", "utf-8");
+}
+
+function slugify(name) {
+  return (
+    String(name || "")
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "") || "storie-game"
+  );
+}
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+// Windows commonly still holds a lock on some file inside tmpDir for a
+// moment after the build's child processes have exited (electron.exe,
+// antivirus scanning the freshly-written .exe, etc.) — EPERM here is
+// transient, not a real failure. Retries a few times before giving up
+// silently: a leftover temp folder is harmless (OS/user can clean it up),
+// nowhere near as bad as this cleanup step's own failure masking whatever
+// the actual build result was (see the try/finally below).
+async function cleanupWithRetry(dir) {
+  for (let attempt = 0; attempt < 5; attempt++) {
+    try {
+      fs.rmSync(dir, { recursive: true, force: true });
+      return;
+    } catch (err) {
+      if (attempt === 4) {
+        console.warn(`[storie-engine] could not remove temp build dir ${dir}:`, err.message);
+        return;
+      }
+      await sleep(300 * (attempt + 1));
+    }
+  }
+}
+
+async function buildGame(rootPath, destPath) {
+  const tmpDir = path.join(os.tmpdir(), `storie-engine-build-${Date.now()}`);
+  try {
+    assembleShell(tmpDir, rootPath);
+
+    const pnpmCmd = process.platform === "win32" ? "pnpm.cmd" : "pnpm";
+    await run(pnpmCmd, ["install"], tmpDir);
+    await run(pnpmCmd, ["exec", "quasar", "build", "-m", "electron"], tmpDir);
+
+    const packagedDir = path.join(tmpDir, "dist", "electron", "Packaged");
+    if (!fs.existsSync(packagedDir)) {
+      throw new Error("Le build a réussi mais le dossier packagé est introuvable (dist/electron/Packaged).");
+    }
+
+    const manifestPath = path.join(rootPath, "project.json");
+    const manifest = fs.existsSync(manifestPath) ? JSON.parse(fs.readFileSync(manifestPath, "utf-8")) : {};
+    const outDir = path.join(destPath, slugify(manifest.name));
+    fs.cpSync(packagedDir, outDir, { recursive: true });
+    return outDir;
+  } finally {
+    // Never let a cleanup failure override/mask the actual build result —
+    // this used to be a plain `fs.rmSync(...)` here, which on a Windows
+    // EPERM (transient file lock) would replace a successful return value
+    // with this cleanup error instead, hiding that the build had worked.
+    await cleanupWithRetry(tmpDir);
+  }
+}
+
+export function registerBuildHandlers(mainWindow) {
+  ipcMain.handle("project:build", async (_evt, { rootPath }) => {
+    const result = await dialog.showOpenDialog(mainWindow, {
+      properties: ["openDirectory", "createDirectory"],
+      title: "Choisir où exporter le jeu",
+    });
+    if (result.canceled || !result.filePaths[0]) return null;
+
+    const outDir = await buildGame(rootPath, result.filePaths[0]);
+    return outDir;
+  });
+}

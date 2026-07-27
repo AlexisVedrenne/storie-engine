@@ -49,13 +49,13 @@ async function browse() {
 .asset-field {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--space-1);
 }
 
 .row {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-2);
 }
 
 .path-input {
@@ -63,8 +63,8 @@ async function browse() {
 }
 
 .error-text {
-  color: #f44336;
-  font-size: 12px;
+  color: var(--color-danger);
+  font-size: var(--text-xs);
 }
 
 .preview {

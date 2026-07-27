@@ -1,0 +1,18 @@
+# https://pnpm.io/settings
+# Without this, pnpm's default build-script sandboxing blocks esbuild's and
+# electron's own postinstall scripts in this freshly-generated project —
+# confirmed by an actual test build (see docs/phase3-plan.md) that failed
+# with [ERR_PNPM_IGNORED_BUILDS] until this file was added. Mirrors
+# storie-engine's own root pnpm-workspace.yaml, plus `electron` itself
+# (storie-engine's own copy gets it for free from a separately-approved
+# src-electron/ sub-project, which this generated shell doesn't have).
+allowBuilds:
+  electron: true
+  '@electron/packager': true
+  esbuild: true
+  '@parcel/watcher': true
+  core-js: true
+  electron-winstaller: true
+  lightningcss: true
+  rolldown: true
+  unrs-resolver: true

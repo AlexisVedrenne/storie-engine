@@ -42,5 +42,6 @@ contextBridge.exposeInMainWorld("storieAPI", {
   createChapter: (payload) => ipcRenderer.invoke("project:createChapter", payload),
   deleteChapter: (payload) => ipcRenderer.invoke("project:deleteChapter", payload),
   reorderChapters: (payload) => ipcRenderer.invoke("project:reorderChapters", payload),
-  pickAsset: (payload) => ipcRenderer.invoke("project:pickAsset", payload)
+  pickAsset: (payload) => ipcRenderer.invoke("project:pickAsset", payload),
+  buildGame: (payload) => ipcRenderer.invoke("project:build", payload)
 })

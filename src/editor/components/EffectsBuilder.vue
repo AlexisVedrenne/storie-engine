@@ -1,33 +1,57 @@
 <template>
   <div class="effects-builder">
-    <div class="section-title">Flags</div>
-    <div v-for="(row, i) in flagRows" :key="i" class="row">
-      <q-input dense outlined class="key-input" v-model="row.key" label="Flag" @update:model-value="sync" />
-      <q-select
-        dense
-        outlined
-        class="mode-select"
-        v-model="row.mode"
-        :options="FLAG_EFFECT_MODES"
-        emit-value
-        map-options
-        @update:model-value="sync"
-      />
-      <q-input
-        v-if="row.mode === 'delta'"
-        dense
-        outlined
-        type="number"
-        class="num-input"
-        label="+/-"
-        v-model.number="row.delta"
-        @update:model-value="sync"
-      />
-      <q-btn dense flat round icon="close" size="sm" @click="removeFlagRow(i)" />
-    </div>
-    <q-btn dense flat icon="add" label="Ajouter un flag" @click="addFlagRow" />
+    <p class="intro">
+      Modifie l'état du jeu quand cette entrée se joue — rien n'est montré au joueur, contrairement
+      à un message ou une story. Toutes les sections ci-dessous sont optionnelles.
+    </p>
 
-    <q-expansion-item dense-toggle label="Météo" v-model="sections.weather" @update:model-value="sync">
+    <div class="section-title">
+      Stats du joueur (flags)
+      <FieldHelp
+        text="Un flag est une valeur mémorisée (nombre qui s'accumule, ou vrai/faux ponctuel) — relis-la plus tard via une Condition (requires) pour faire varier l'histoire."
+      />
+    </div>
+    <div v-if="!flagRows.length" class="empty-hint">Aucune stat modifiée.</div>
+    <div v-for="(row, i) in flagRows" :key="i" class="row-card">
+      <q-btn dense flat round icon="close" size="sm" class="row-remove" @click="removeFlagRow(i)">
+        <q-tooltip>Retirer</q-tooltip>
+      </q-btn>
+      <div class="row-fields">
+        <FlagNameField v-model="row.key" @update:model-value="sync" />
+        <q-select
+          dense
+          outlined
+          class="mode-select"
+          label="Action"
+          v-model="row.mode"
+          :options="FLAG_EFFECT_MODES"
+          emit-value
+          map-options
+          @update:model-value="sync"
+        />
+        <q-input
+          v-if="row.mode === 'delta'"
+          dense
+          outlined
+          type="number"
+          class="num-input"
+          label="+/-"
+          v-model.number="row.delta"
+          @update:model-value="sync"
+        />
+      </div>
+    </div>
+    <q-btn dense flat no-caps icon="add" label="Ajouter une stat à modifier" class="btn-ghost" @click="addFlagRow" />
+
+    <div class="section-title top-gap">Widgets du téléphone</div>
+
+    <q-expansion-item
+      dense-toggle
+      label="Météo"
+      caption="Change le widget météo de l'écran d'accueil"
+      v-model="sections.weather"
+      @update:model-value="sync"
+    >
       <div class="grid">
         <q-input dense outlined label="Ville" v-model="weather.city" @update:model-value="sync" />
         <q-input dense outlined type="number" label="Température" v-model.number="weather.temp" @update:model-value="sync" />
@@ -37,25 +61,49 @@
       </div>
     </q-expansion-item>
 
-    <q-expansion-item dense-toggle label="Pas (steps)" v-model="sections.steps" @update:model-value="sync">
+    <q-expansion-item
+      dense-toggle
+      label="Pas (steps)"
+      caption="Widget podomètre de l'écran d'accueil"
+      v-model="sections.steps"
+      @update:model-value="sync"
+    >
       <div class="grid">
         <q-input dense outlined type="number" label="Pas actuels" v-model.number="steps.value" @update:model-value="sync" />
         <q-input dense outlined type="number" label="Objectif" v-model.number="steps.goal" @update:model-value="sync" />
       </div>
     </q-expansion-item>
 
-    <q-expansion-item dense-toggle label="Batterie" v-model="sections.battery" @update:model-value="sync">
+    <q-expansion-item
+      dense-toggle
+      label="Batterie"
+      caption="Fixe le % affiché — utile pour une tension narrative (batterie qui se vide)"
+      v-model="sections.battery"
+      @update:model-value="sync"
+    >
       <q-input dense outlined type="number" label="% batterie" v-model.number="battery.value" @update:model-value="sync" />
     </q-expansion-item>
 
-    <q-expansion-item dense-toggle label="Réseau" v-model="sections.network" @update:model-value="sync">
+    <q-expansion-item
+      dense-toggle
+      label="Réseau"
+      caption="Barres de réseau + Wi-Fi affichés dans la barre de statut"
+      v-model="sections.network"
+      @update:model-value="sync"
+    >
       <div class="grid">
         <q-input dense outlined type="number" label="Barres (0-4)" v-model.number="network.signal" @update:model-value="sync" />
         <q-toggle v-model="network.wifi" label="Wi-Fi" @update:model-value="sync" />
       </div>
     </q-expansion-item>
 
-    <q-expansion-item dense-toggle label="Horloge" v-model="sections.clock" @update:model-value="sync">
+    <q-expansion-item
+      dense-toggle
+      label="Horloge"
+      caption="Fige l'heure affichée (verrouillage, barre de statut) au lieu de l'heure réelle"
+      v-model="sections.clock"
+      @update:model-value="sync"
+    >
       <q-select
         dense
         outlined
@@ -68,7 +116,13 @@
       <q-input v-if="clock.mode === 'set'" dense outlined label="HH:MM" v-model="clock.value" @update:model-value="sync" />
     </q-expansion-item>
 
-    <q-expansion-item dense-toggle label="Date" v-model="sections.date" @update:model-value="sync">
+    <q-expansion-item
+      dense-toggle
+      label="Date"
+      caption="Fige la date affichée au lieu de la date réelle"
+      v-model="sections.date"
+      @update:model-value="sync"
+    >
       <q-select
         dense
         outlined
@@ -81,32 +135,44 @@
       <q-input v-if="date.mode === 'set'" dense outlined label="JJ/MM/AAAA" v-model="date.value" @update:model-value="sync" />
     </q-expansion-item>
 
-    <div class="section-title">Social (abonnés/abonnements d'un contact)</div>
-    <div v-for="(row, i) in socialRows" :key="i" class="row">
-      <q-select
-        dense
-        outlined
-        class="key-input"
-        v-model="row.contactId"
-        :options="contactOptions"
-        emit-value
-        map-options
-        label="Contact"
-        @update:model-value="sync"
-      />
-      <q-input dense outlined type="number" class="num-input" label="+abonnés" v-model.number="row.followers" @update:model-value="sync" />
-      <q-input dense outlined type="number" class="num-input" label="+abonnements" v-model.number="row.following" @update:model-value="sync" />
-      <q-btn dense flat round icon="close" size="sm" @click="removeSocialRow(i)" />
+    <div class="section-title top-gap">
+      Réseau social (Pixly)
+      <FieldHelp text="Fait varier le nombre d'abonnés/abonnements affiché sur le profil d'un personnage." />
     </div>
-    <q-btn dense flat icon="add" label="Ajouter" @click="addSocialRow" />
+    <div v-if="!socialRows.length" class="empty-hint">Aucun changement d'abonnés.</div>
+    <div v-for="(row, i) in socialRows" :key="i" class="row-card">
+      <q-btn dense flat round icon="close" size="sm" class="row-remove" @click="removeSocialRow(i)">
+        <q-tooltip>Retirer</q-tooltip>
+      </q-btn>
+      <div class="row-fields">
+        <q-select
+          dense
+          outlined
+          class="key-input"
+          v-model="row.contactId"
+          :options="contactOptions"
+          emit-value
+          map-options
+          label="Personnage"
+          @update:model-value="sync"
+        />
+        <q-input dense outlined type="number" class="num-input" label="+abonnés" v-model.number="row.followers" @update:model-value="sync" />
+        <q-input dense outlined type="number" class="num-input" label="+abonnements" v-model.number="row.following" @update:model-value="sync" />
+      </div>
+    </div>
+    <q-btn dense flat no-caps icon="add" label="Ajouter" class="btn-ghost" @click="addSocialRow" />
 
-    <div class="section-title">Nouveaux abonnés (te suivent)</div>
+    <div class="section-title top-gap">
+      Nouveaux abonnés
+      <FieldHelp text="Ces personnages se mettent à suivre le joueur — déclenche une notification 'a commencé à te suivre'." />
+    </div>
     <q-select
       dense
       outlined
       multiple
       emit-value
       map-options
+      placeholder="Aucun"
       :options="contactOptions"
       v-model="newFollowerIds"
       @update:model-value="sync"
@@ -117,6 +183,8 @@
 <script setup>
 import { reactive, ref } from 'vue'
 import { useStoryStore } from '@/engine/stores/story'
+import FieldHelp from '@/editor/components/FieldHelp.vue'
+import FlagNameField from '@/editor/components/FlagNameField.vue'
 
 // `effects: { flags?, weather?, steps?, stepsGoal?, battery?, network?,
 // clock?, date?, social?, newFollower? }` — see NTR docs/story-engine.md
@@ -252,39 +320,81 @@ function sync() {
 .effects-builder {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--space-2);
+}
+
+.intro {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  margin: 0;
+  line-height: 1.5;
 }
 
 .section-title {
-  font-size: 11px;
-  text-transform: uppercase;
-  opacity: 0.6;
-  margin-top: 8px;
-}
-
-.row {
   display: flex;
   align-items: center;
-  gap: 6px;
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+  margin-top: var(--space-2);
+}
+
+.section-title.top-gap {
+  margin-top: var(--space-4);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border);
+}
+
+.empty-hint {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+.row-card {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  padding-right: var(--space-6);
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+}
+
+.row-fields {
+  flex: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.row-remove {
+  position: absolute;
+  top: var(--space-1);
+  right: var(--space-1);
 }
 
 .key-input {
-  flex: 1;
-  min-width: 120px;
+  flex: 1 1 160px;
+  min-width: 140px;
 }
 
 .mode-select {
-  width: 170px;
+  flex: 0 0 170px;
 }
 
 .num-input {
-  width: 100px;
+  flex: 0 0 100px;
 }
 
 .grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 8px;
+  gap: var(--space-3);
   padding: 8px 4px;
 }
 </style>

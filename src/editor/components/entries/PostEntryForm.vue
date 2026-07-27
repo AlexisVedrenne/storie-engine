@@ -1,9 +1,17 @@
 <template>
   <div class="entry-form">
-    <q-select dense outlined emit-value map-options label="Auteur" :options="contactOptions" v-model="entry.author" />
-    <q-input dense outlined type="textarea" autogrow label="Contenu" v-model="entry.content" />
+    <q-select dense outlined emit-value map-options label="Auteur de la publication" :options="contactOptions" v-model="entry.author" />
+    <q-input
+      dense
+      outlined
+      type="textarea"
+      autogrow
+      label="Légende"
+      placeholder="ex: dernière lumière du soir ✨"
+      v-model="entry.content"
+    />
     <AssetField v-model="entry.image" label="Image (optionnel)" />
-    <q-input dense outlined type="number" label="Likes (optionnel — sinon aléatoire)" v-model.number="entry.likes" />
+    <q-input dense outlined type="number" label="Nombre de likes (optionnel — sinon aléatoire)" v-model.number="entry.likes" />
     <CommentsListField
       v-model="entry.comments"
       :comments-count="entry.commentsCount"
@@ -26,6 +34,6 @@ const contactOptions = story.contactsList.map((c) => ({ label: c.name, value: c.
 .entry-form {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--space-3);
 }
 </style>

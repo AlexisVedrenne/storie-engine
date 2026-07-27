@@ -5,12 +5,20 @@
       outlined
       emit-value
       map-options
-      label="Contact"
+      label="De (qui envoie le SMS)"
       :options="contactOptions"
       v-model="entry.contact"
     />
-    <q-input dense outlined type="textarea" autogrow label="Texte" v-model="entry.text" />
-    <AssetField v-model="entry.image" label="Image (optionnel)" />
+    <q-input
+      dense
+      outlined
+      type="textarea"
+      autogrow
+      label="Texte du message"
+      placeholder="ex: Coucou ! Ça va ?"
+      v-model="entry.text"
+    />
+    <AssetField v-model="entry.image" label="Photo jointe (optionnel)" />
   </div>
 </template>
 
@@ -27,6 +35,6 @@ const contactOptions = story.contactsList.filter((c) => c.id !== 'me').map((c) =
 .entry-form {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--space-3);
 }
 </style>

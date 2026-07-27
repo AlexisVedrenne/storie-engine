@@ -14,6 +14,6 @@ defineProps({ entry: { type: Object, required: true } })
 .entry-form {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--space-3);
 }
 </style>

@@ -4,17 +4,38 @@
       <span class="project-name">{{ story.project?.manifest?.name || '(projet)' }}</span>
       <span v-if="dirty" class="dirty-dot" title="Modifications non enregistrées">●</span>
       <div class="spacer" />
+
       <q-btn
         dense
         flat
+        no-caps
         :icon="focusPreview ? 'visibility_off' : 'smartphone'"
         :label="focusPreview ? `Afficher l'édition` : 'Aperçu seul'"
+        class="btn-ghost"
         @click="focusPreview = !focusPreview"
       />
-      <q-toggle dense v-model="autosave" label="Sauvegarde auto" />
-      <q-btn dense flat icon="refresh" label="Relancer l'aperçu" @click="restartPreview" />
-      <q-btn dense flat icon="save" label="Enregistrer" :disable="!dirty" @click="save" />
-      <q-btn dense flat icon="folder_open" label="Changer de projet" @click="closeProject" />
+      <q-toggle dense v-model="autosave" label="Sauvegarde auto" color="primary" />
+      <q-btn dense flat no-caps round icon="refresh" class="btn-ghost" @click="restartPreview">
+        <q-tooltip>Relancer l'aperçu</q-tooltip>
+      </q-btn>
+
+      <div class="topbar-divider" />
+
+      <q-btn dense unelevated no-caps icon="save" label="Enregistrer" color="primary" :disable="!dirty" @click="save" />
+      <q-btn
+        dense
+        outline
+        no-caps
+        icon="rocket_launch"
+        label="Build"
+        color="primary"
+        :loading="building"
+        :disable="building"
+        @click="buildGame"
+      >
+        <q-tooltip>Exporter ce projet en jeu jouable (app Electron packagée)</q-tooltip>
+      </q-btn>
+      <q-btn dense flat no-caps icon="folder_open" label="Changer de projet" class="btn-ghost" :disable="building" @click="closeProject" />
     </div>
 
     <div class="panes">
@@ -29,17 +50,28 @@
           <q-splitter v-model="splitInner" :limits="[30, 85]" class="full-splitter">
             <template #before>
               <div class="pane timeline-pane">
-                <div v-if="selectedChapter" class="chapter-header">
-                  <q-input dense outlined label="Titre" v-model="selectedChapter.title" />
-                  <q-input dense outlined label="Id" v-model="selectedChapter.id" />
-                </div>
-                <div class="sub-title">Condition de démarrage du chapitre (requires, optionnel)</div>
-                <RequiresBuilder
-                  v-if="selectedChapter"
-                  :model-value="selectedChapter.requires"
-                  @update:model-value="(v) => (selectedChapter.requires = v)"
-                />
-                <TimelineEditor v-if="selectedChapter" :entries="selectedChapter.timeline" />
+                <template v-if="selectedChapter">
+                  <div class="panel chapter-header">
+                    <q-input dense outlined label="Titre" v-model="selectedChapter.title" />
+                    <q-input dense outlined label="Id" v-model="selectedChapter.id" class="id-input" />
+                  </div>
+
+                  <div class="panel">
+                    <div class="section-label">
+                      Condition de démarrage du chapitre (optionnel)
+                      <FieldHelp
+                        text="Ce chapitre ne démarre que si toutes ces conditions sont vraies. Rien d'ajouté = toujours autorisé."
+                      />
+                    </div>
+                    <RequiresBuilder
+                      :model-value="selectedChapter.requires"
+                      @update:model-value="(v) => (selectedChapter.requires = v)"
+                    />
+                  </div>
+
+                  <TimelineEditor :entries="selectedChapter.timeline" />
+                </template>
+                <div v-else class="empty-state">Sélectionne un chapitre à gauche.</div>
               </div>
             </template>
 
@@ -69,6 +101,7 @@ import PhoneShell from '@/components/phone/PhoneShell.vue'
 import ChapterList from '@/editor/components/ChapterList.vue'
 import RequiresBuilder from '@/editor/components/RequiresBuilder.vue'
 import TimelineEditor from '@/editor/components/TimelineEditor.vue'
+import FieldHelp from '@/editor/components/FieldHelp.vue'
 
 const AUTOSAVE_KEY = 'storie-engine-autosave'
 const SPLIT_OUTER_KEY = 'storie-engine-split-outer'
@@ -156,6 +189,21 @@ function closeProject() {
   story.loadProject(null)
   router.push({ name: 'open-project' })
 }
+
+const building = ref(false)
+async function buildGame() {
+  building.value = true
+  try {
+    const outDir = await window.storieAPI.buildGame({ rootPath: story.project.rootPath })
+    if (outDir) {
+      Notify.create({ type: 'positive', message: `Jeu exporté dans ${outDir}`, timeout: 6000 })
+    }
+  } catch (err) {
+    Notify.create({ type: 'negative', message: err.message || String(err), timeout: 8000 })
+  } finally {
+    building.value = false
+  }
+}
 </script>
 
 <style scoped>
@@ -163,30 +211,45 @@ function closeProject() {
   height: 100vh;
   display: flex;
   flex-direction: column;
-  background: #16161f;
-  color: #e8e8f0;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-ui);
 }
 
 .topbar {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 8px 14px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  gap: var(--space-2);
+  height: var(--header-height);
   flex-shrink: 0;
+  padding: 0 var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface);
 }
 
 .project-name {
   font-weight: 600;
-  font-size: 14px;
+  font-size: var(--text-base);
 }
 
 .dirty-dot {
-  color: #ffc107;
+  color: var(--color-warning);
+  font-size: var(--text-sm);
 }
 
 .spacer {
   flex: 1;
+}
+
+.topbar-divider {
+  width: 1px;
+  align-self: stretch;
+  margin: var(--space-2) 0;
+  background: var(--color-border);
+}
+
+.btn-ghost {
+  color: var(--color-text-muted);
 }
 
 .panes {
@@ -207,36 +270,62 @@ function closeProject() {
 }
 
 .chapters-pane {
-  border-right: 1px solid rgba(255, 255, 255, 0.1);
+  border-right: 1px solid var(--color-border);
+  background: var(--color-bg);
 }
 
 .timeline-pane {
-  padding: 12px;
+  padding: var(--space-4);
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--space-4);
+}
+
+.panel {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
 }
 
 .chapter-header {
   display: flex;
-  gap: 8px;
+  gap: var(--space-3);
 }
 
-.sub-title {
-  font-size: 11px;
+.id-input {
+  width: 220px;
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+}
+
+.section-label {
+  display: flex;
+  align-items: center;
+  font-size: var(--text-xs);
   text-transform: uppercase;
-  opacity: 0.6;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-2);
+}
+
+.empty-state {
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  padding: var(--space-6);
+  text-align: center;
 }
 
 .preview-pane {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 16px;
+  padding: var(--space-4);
+  background: var(--color-bg);
 }
 
 .preview-pane.focus-mode {
   width: 100%;
-  padding: 32px;
+  padding: var(--space-8);
 }
 </style>

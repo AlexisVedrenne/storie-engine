@@ -12,14 +12,18 @@
 // to match your app's branding.
 // Tip: Use the "Theme Builder" on Quasar's documentation website.
 
-$primary: #1976d2;
-$secondary: #26a69a;
-$accent: #9c27b0;
+// Storie Engine palette — see docs/ui-ux-guidelines.md §4. One accent, fixed
+// roles; Notify/Dialog already use 'positive'/'negative' (see EditorPage.vue,
+// ChapterList.vue), so keeping these in sync with design-tokens.scss makes
+// every toast/confirm dialog consistent with the rest of the UI for free.
+$primary: #4c8bf5;
+$secondary: #334155;
+$accent: #4c8bf5;
 
-$dark: #1d1d1d;
-$dark-page: #121212;
+$dark: #1e293b;
+$dark-page: #0f172a;
 
-$positive: #21ba45;
-$negative: #c10015;
-$info: #31ccec;
-$warning: #f2c037;
+$positive: #22c55e;
+$negative: #f44336;
+$info: #38bdf8;
+$warning: #ffc107;

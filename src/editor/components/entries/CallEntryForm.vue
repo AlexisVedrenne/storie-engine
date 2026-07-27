@@ -1,9 +1,14 @@
 <template>
   <div class="entry-form">
-    <q-select dense outlined emit-value map-options label="Contact (appelant)" :options="contactOptions" v-model="entry.contact" />
+    <q-select dense outlined emit-value map-options label="Qui appelle" :options="contactOptions" v-model="entry.contact" />
 
-    <div class="section-title">Script de l'appel</div>
+    <div class="section-title">
+      Script de l'appel
+      <FieldHelp text="Les répliques s'affichent une par une, dans l'ordre, une fois l'appel décroché — le joueur clique pour faire avancer la conversation." />
+    </div>
+    <div v-if="!scriptRows.length" class="empty-hint">Aucune réplique — l'appel se terminera sans dialogue.</div>
     <div v-for="(line, i) in scriptRows" :key="i" class="row">
+      <span class="line-number">{{ i + 1 }}</span>
       <q-select
         dense
         outlined
@@ -14,16 +19,19 @@
         v-model="line.from"
         @update:model-value="sync"
       />
-      <q-input dense outlined class="text-input" v-model="line.text" @update:model-value="sync" />
-      <q-btn dense flat round icon="close" size="sm" @click="removeLine(i)" />
+      <q-input dense outlined class="text-input" placeholder="Texte de la réplique" v-model="line.text" @update:model-value="sync" />
+      <q-btn dense flat round icon="close" size="sm" @click="removeLine(i)">
+        <q-tooltip>Retirer</q-tooltip>
+      </q-btn>
     </div>
-    <q-btn dense flat icon="add" label="Ajouter une réplique" @click="addLine" />
+    <q-btn dense flat no-caps icon="add" label="Ajouter une réplique" class="btn-ghost" @click="addLine" />
   </div>
 </template>
 
 <script setup>
 import { reactive } from 'vue'
 import { useStoryStore } from '@/engine/stores/story'
+import FieldHelp from '@/editor/components/FieldHelp.vue'
 
 const props = defineProps({ entry: { type: Object, required: true } })
 const story = useStoryStore()
@@ -49,23 +57,44 @@ function sync() {
 .entry-form {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--space-3);
 }
 
 .section-title {
-  font-size: 11px;
+  display: flex;
+  align-items: center;
+  font-size: var(--text-xs);
   text-transform: uppercase;
-  opacity: 0.6;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+}
+
+.empty-hint {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  font-style: italic;
 }
 
 .row {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+}
+
+.line-number {
+  flex-shrink: 0;
+  width: 18px;
+  text-align: center;
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
 }
 
 .from-select {
-  width: 140px;
+  flex: 0 0 140px;
 }
 
 .text-input {

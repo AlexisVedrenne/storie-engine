@@ -1,0 +1,49 @@
+// Design tokens — single source of truth for spacing/color/radius/type.
+// See docs/ui-ux-guidelines.md. Every component's <style> should reference
+// these variables instead of hardcoding a value — that's what makes the
+// whole app read as one system instead of one-off-styled components.
+:root {
+  // Spacing — 8px base unit (docs §2)
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+
+  --header-height: 48px;
+  --sidebar-width: 280px;
+  --row-height: 36px;
+
+  // Color roles (docs §4) — one accent, fixed roles, kept in sync with
+  // src/css/quasar.variables.scss so Quasar's own components (Notify,
+  // Dialog, q-btn color="primary"/"negative"...) match automatically.
+  --color-bg: #0f172a;
+  --color-surface: #1e293b;
+  --color-surface-hover: #334155;
+  --color-border: rgba(255, 255, 255, 0.1);
+  --color-text: #f8fafc;
+  --color-text-muted: #94a3b8;
+  --color-accent: #4c8bf5;
+  --color-accent-tint: rgba(76, 139, 245, 0.14);
+  --color-success: #22c55e;
+  --color-danger: #f44336;
+  --color-warning: #ffc107;
+  --color-warning-tint: rgba(255, 193, 7, 0.16);
+
+  // Typography (docs §3)
+  --font-ui: 'Inter', 'Fira Sans', sans-serif;
+  --font-mono: 'Fira Code', 'JetBrains Mono', monospace;
+
+  --text-xs: 11px;
+  --text-sm: 13px;
+  --text-base: 14px;
+  --text-lg: 16px;
+
+  --transition-fast: 0.15s ease;
+  --transition-base: 0.2s ease;
+}
