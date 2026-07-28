@@ -18,7 +18,7 @@
       placeholder="ex: Coucou ! Ça va ?"
       v-model="entry.text"
     />
-    <AssetField v-model="entry.image" label="Photo jointe (optionnel)" />
+    <AssetField v-model="entry.image" label="Photo jointe (optionnel)" :contact-id="entry.contact" />
   </div>
 </template>
 

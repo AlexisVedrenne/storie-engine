@@ -15,6 +15,7 @@
           { label: 'Contacts', value: 'contacts' },
           { label: 'Threads', value: 'threads' },
           { label: 'Jeu', value: 'game' },
+          { label: 'Assets', value: 'assets' },
         ]"
       />
 
@@ -83,7 +84,8 @@
             <ChapterList v-if="viewMode === 'chapters'" v-model="selectedIndex" @preview-from="previewFrom" />
             <ContactList v-else-if="viewMode === 'contacts'" v-model="selectedContactIndex" />
             <ThreadList v-else-if="viewMode === 'threads'" v-model="selectedThreadIndex" />
-            <div v-else class="empty-state">Le titre du jeu est un champ unique — pas de liste.</div>
+            <div v-else-if="viewMode === 'game'" class="empty-state">Le titre du jeu est un champ unique — pas de liste.</div>
+            <div v-else class="empty-state">Tous les fichiers d'assets/ s'affichent à droite.</div>
           </div>
         </template>
 
@@ -127,6 +129,8 @@
                 </template>
 
                 <GameForm v-else-if="viewMode === 'game'" :game="story.project.gameConfig" />
+
+                <AssetsPanel v-else-if="viewMode === 'assets'" />
               </div>
             </template>
 
@@ -159,6 +163,7 @@ import ContactForm from '@/editor/components/ContactForm.vue'
 import ThreadList from '@/editor/components/ThreadList.vue'
 import ThreadForm from '@/editor/components/ThreadForm.vue'
 import GameForm from '@/editor/components/GameForm.vue'
+import AssetsPanel from '@/editor/components/AssetsPanel.vue'
 
 const AUTOSAVE_KEY = 'storie-engine-autosave'
 const SPLIT_OUTER_KEY = 'storie-engine-split-outer'
@@ -199,6 +204,10 @@ const activeResource = computed(() => {
       return story.project?.threads || null
     case 'game':
       return story.project?.gameConfig || null
+    case 'assets':
+      // Assets tab has no dirty/save flow — imports/deletes are immediate
+      // IPC side effects (see AssetsPanel.vue), not a buffered edit.
+      return null
     default:
       return null
   }

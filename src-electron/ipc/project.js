@@ -317,6 +317,69 @@ export function registerProjectHandlers(mainWindow) {
     return rel.replace(/\\/g, "/");
   });
 
+  // Unlike pickAsset, the source dialog is NOT restricted to assets/ — this
+  // is the actual "import" path: pick a file from anywhere on disk, copy it
+  // into the project's assets/ (optionally under a suggested subfolder,
+  // e.g. "images/<contact-id>" — see AssetField.vue), collision-safe.
+  ipcMain.handle("project:importAsset", async (_evt, { rootPath, suggestedFolder }) => {
+    const result = await dialog.showOpenDialog(mainWindow, {
+      title: "Importer une image",
+      properties: ["openFile"],
+      filters: [{ name: "Images", extensions: ["png", "jpg", "jpeg", "gif", "svg", "webp"] }],
+    });
+    if (result.canceled || !result.filePaths[0]) return null;
+    const picked = result.filePaths[0];
+
+    const assetsRoot = path.join(rootPath, "assets");
+    const destDir = path.join(assetsRoot, suggestedFolder || "");
+    fs.mkdirSync(destDir, { recursive: true });
+
+    const ext = path.extname(picked);
+    const stem = path.basename(picked, ext);
+    let destPath = path.join(destDir, `${stem}${ext}`);
+    let n = 2;
+    while (fs.existsSync(destPath)) {
+      destPath = path.join(destDir, `${stem}-${n}${ext}`);
+      n += 1;
+    }
+
+    fs.copyFileSync(picked, destPath);
+    return path.relative(assetsRoot, destPath).replace(/\\/g, "/");
+  });
+
+  // Recursive listing of every file under assets/ (not directories) as
+  // assets/-relative forward-slash paths — the "what actually exists on
+  // disk" side of the used/orphan comparison in the Assets tab
+  // (collectAssetPaths, src/project/validateProject.js, is the "used" side).
+  ipcMain.handle("project:listAssetFiles", async (_evt, { rootPath, assetsRoot }) => {
+    const root = path.join(rootPath, assetsRoot);
+    const out = [];
+    function walk(dir) {
+      if (!fs.existsSync(dir)) return;
+      for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+        const full = path.join(dir, entry.name);
+        if (entry.isDirectory()) walk(full);
+        else out.push(path.relative(root, full).replace(/\\/g, "/"));
+      }
+    }
+    walk(root);
+    return out;
+  });
+
+  // Same anti-traversal validation as pickAsset — only ever called on a
+  // path the renderer already confirmed is an orphan (see AssetsPanel.vue),
+  // but the main process re-validates rather than trusting the renderer.
+  ipcMain.handle("project:deleteAsset", async (_evt, { rootPath, assetsRoot, path: relPath }) => {
+    const root = path.join(rootPath, assetsRoot);
+    const rel = path.normalize(relPath);
+    if (rel.startsWith("..") || path.isAbsolute(rel)) {
+      throw new Error("Chemin d'asset invalide.");
+    }
+    const target = path.join(root, rel);
+    if (fs.existsSync(target)) fs.unlinkSync(target);
+    return true;
+  });
+
   // Renderer has no fs access — project:checkAssets does the existence
   // check main-process-side for the "Valider le projet" feature, returning
   // just the subset of relative paths that don't exist on disk (the

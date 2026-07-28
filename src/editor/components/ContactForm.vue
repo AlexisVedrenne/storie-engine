@@ -39,8 +39,8 @@
 
     <div class="panel">
       <div class="section-label">Images</div>
-      <AssetField v-model="contact.avatar" label="Avatar (Téléphone / Messages / Appels)" />
-      <AssetField v-model="contact.socialAvatar" label="Avatar Pixly (Fil / Stories / DM / Profil)" />
+      <AssetField v-model="contact.avatar" label="Avatar (Téléphone / Messages / Appels)" :contact-id="contact.id" />
+      <AssetField v-model="contact.socialAvatar" label="Avatar Pixly (Fil / Stories / DM / Profil)" :contact-id="contact.id" />
     </div>
   </div>
 </template>

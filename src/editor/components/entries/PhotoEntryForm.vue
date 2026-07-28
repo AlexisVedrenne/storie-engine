@@ -1,7 +1,7 @@
 <template>
   <div class="entry-form">
     <q-select dense outlined emit-value map-options label="Envoyée par" :options="contactOptions" v-model="entry.from" />
-    <AssetField v-model="entry.url" label="Image" />
+    <AssetField v-model="entry.url" label="Image" :contact-id="entry.from" />
     <q-input dense outlined label="Légende (optionnel)" placeholder="ex: Le café de ce matin" v-model="entry.caption" />
   </div>
 </template>

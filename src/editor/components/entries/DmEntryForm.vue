@@ -19,7 +19,7 @@
       placeholder="ex: Je préfère te le dire en privé 😉"
       v-model="entry.text"
     />
-    <AssetField v-model="entry.image" label="Photo jointe (optionnel)" />
+    <AssetField v-model="entry.image" label="Photo jointe (optionnel)" :contact-id="entry.from" />
   </div>
 </template>
 

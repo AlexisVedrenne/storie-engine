@@ -1,7 +1,7 @@
 <template>
   <div class="entry-form">
     <q-select dense outlined emit-value map-options label="Personnage" :options="contactOptions" v-model="entry.contact" />
-    <AssetField v-model="entry.media" label="Image (optionnel — sinon emoji sur fond coloré)" />
+    <AssetField v-model="entry.media" label="Image (optionnel — sinon emoji sur fond coloré)" :contact-id="entry.contact" />
     <div class="row">
       <q-input dense outlined label="Emoji" placeholder="☕" v-model="entry.emoji" class="emoji-input" />
       <q-input dense outlined label="Couleur de fond" placeholder="#e91e63" v-model="entry.bg" />

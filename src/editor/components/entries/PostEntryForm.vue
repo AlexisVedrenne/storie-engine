@@ -10,7 +10,7 @@
       placeholder="ex: dernière lumière du soir ✨"
       v-model="entry.content"
     />
-    <AssetField v-model="entry.image" label="Image (optionnel)" />
+    <AssetField v-model="entry.image" label="Image (optionnel)" :contact-id="entry.author" />
     <q-input dense outlined type="number" label="Nombre de likes (optionnel — sinon aléatoire)" v-model.number="entry.likes" />
     <CommentsListField
       v-model="entry.comments"

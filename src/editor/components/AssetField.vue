@@ -10,7 +10,12 @@
         :label="label"
         @update:model-value="(val) => emit('update:modelValue', val || undefined)"
       />
-      <q-btn dense flat icon="folder_open" label="Parcourir…" @click="browse" />
+      <q-btn dense flat icon="upload" label="Importer…" @click="importFile">
+        <q-tooltip>Copier un fichier depuis n'importe où sur le disque dans assets/</q-tooltip>
+      </q-btn>
+      <q-btn dense flat icon="folder_open" label="Parcourir…" @click="browse">
+        <q-tooltip>Choisir un fichier déjà présent dans assets/</q-tooltip>
+      </q-btn>
     </div>
     <div v-if="error" class="error-text">{{ error }}</div>
     <img v-if="modelValue" :src="resolveAssetUrl(modelValue)" class="preview" />
@@ -22,9 +27,13 @@ import { ref } from 'vue'
 import { useStoryStore } from '@/engine/stores/story'
 import { resolveAssetUrl } from '@/engine/assets'
 
-defineProps({
+const props = defineProps({
   modelValue: { type: String, default: '' },
   label: { type: String, default: 'Image' },
+  // Suggests a per-contact subfolder for imports (assets/images/<contactId>/),
+  // matching the project's existing asset layout convention — left empty for
+  // fields with no natural contact context, which import to assets/ root.
+  contactId: { type: String, default: '' },
 })
 const emit = defineEmits(['update:modelValue'])
 const story = useStoryStore()
@@ -38,6 +47,23 @@ async function browse() {
   }
   try {
     const rel = await window.storieAPI.pickAsset({ rootPath: story.project.rootPath })
+    if (rel) emit('update:modelValue', rel)
+  } catch (err) {
+    error.value = err.message || String(err)
+  }
+}
+
+async function importFile() {
+  error.value = ''
+  if (!window.storieAPI) {
+    error.value = "window.storieAPI indisponible — lance en mode Electron."
+    return
+  }
+  try {
+    const rel = await window.storieAPI.importAsset({
+      rootPath: story.project.rootPath,
+      suggestedFolder: props.contactId ? `images/${props.contactId}` : '',
+    })
     if (rel) emit('update:modelValue', rel)
   } catch (err) {
     error.value = err.message || String(err)

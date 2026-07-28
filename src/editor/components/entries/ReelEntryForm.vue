@@ -1,7 +1,7 @@
 <template>
   <div class="entry-form">
     <q-select dense outlined emit-value map-options label="Auteur du reel" :options="contactOptions" v-model="entry.author" />
-    <AssetField v-model="entry.media" label="Média (vidéo/image)" />
+    <AssetField v-model="entry.media" label="Média (vidéo/image)" :contact-id="entry.author" />
     <q-input dense outlined label="Légende (optionnel)" placeholder="ex: lundi matin ☕" v-model="entry.caption" />
     <q-input dense outlined label="Musique (optionnel)" placeholder="ex: Son original" v-model="entry.music" />
     <q-input dense outlined type="number" label="Nombre de likes (optionnel — sinon aléatoire)" v-model.number="entry.likes" />
