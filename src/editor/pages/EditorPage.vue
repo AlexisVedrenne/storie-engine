@@ -198,6 +198,7 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { Dialog, Notify } from 'quasar'
 import { useStoryStore } from '@/engine/stores/story'
+import { usePhoneStore } from '@/engine/stores/phone'
 import {
   serializeChapter,
   serializeContacts,
@@ -235,6 +236,7 @@ const LAST_PROJECT_KEY = 'storie-engine-last-project'
 
 const router = useRouter()
 const story = useStoryStore()
+const phone = usePhoneStore()
 
 // See the template comment above the v-if="!story.project" guard — this
 // sends the user back to pick/reload a project instead of leaving them on
@@ -392,7 +394,14 @@ async function save() {
 }
 
 function restartPreview() {
+  // loadProject() alone only refreshes the story data (picks up in-memory
+  // edits) — it never touches phone.rebootCount, which is the ONLY thing
+  // PhoneShell watches to actually replay the boot animation (see
+  // phone.js's requestReboot(), otherwise only called from the Settings
+  // app's "reset phone"). Without this, the button silently did nothing
+  // visible: same screen, same lock state, just fresher data underneath.
   story.loadProject(story.project)
+  phone.requestReboot()
 }
 
 function previewFrom(chapterId) {
