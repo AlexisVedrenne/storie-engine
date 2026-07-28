@@ -269,4 +269,12 @@ export function registerProjectHandlers(mainWindow) {
     }
     return rel.replace(/\\/g, "/");
   });
+
+  // Renderer has no fs access — project:checkAssets does the existence
+  // check main-process-side for the "Valider le projet" feature, returning
+  // just the subset of relative paths that don't exist on disk (the
+  // renderer already has the referencing-location labels for each).
+  ipcMain.handle("project:checkAssets", async (_evt, { rootPath, assetsRoot, paths }) => {
+    return paths.filter((p) => !fs.existsSync(path.join(rootPath, assetsRoot, p)));
+  });
 }

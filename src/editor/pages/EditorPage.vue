@@ -36,6 +36,19 @@
 
       <div class="topbar-divider" />
 
+      <q-btn
+        dense
+        outline
+        no-caps
+        icon="fact_check"
+        label="Valider le projet"
+        class="btn-ghost"
+        :loading="validating"
+        @click="runValidation"
+      >
+        <q-tooltip>Cherche les références cassées (contact/thread/image introuvable) et les problèmes de chapitres</q-tooltip>
+      </q-btn>
+
       <q-btn dense unelevated no-caps icon="save" label="Enregistrer" color="primary" :disable="!dirty" @click="save" />
       <q-btn
         dense
@@ -132,9 +145,10 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { Notify } from 'quasar'
+import { Dialog, Notify } from 'quasar'
 import { useStoryStore } from '@/engine/stores/story'
 import { serializeChapter, serializeContacts, serializeThreads, serializeGame } from '@/project/serializeChapter'
+import { validateProject, collectAssetPaths } from '@/project/validateProject'
 import PhoneShell from '@/components/phone/PhoneShell.vue'
 import ChapterList from '@/editor/components/ChapterList.vue'
 import RequiresBuilder from '@/editor/components/RequiresBuilder.vue'
@@ -281,6 +295,37 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
 function closeProject() {
   story.loadProject(null)
   router.push({ name: 'open-project' })
+}
+
+const validating = ref(false)
+async function runValidation() {
+  validating.value = true
+  try {
+    const { errors, warnings } = validateProject(story.project)
+    const assetRefs = collectAssetPaths(story.project)
+    const missing = await window.storieAPI.checkAssets({
+      rootPath: story.project.rootPath,
+      assetsRoot: story.project.assetsRoot,
+      paths: assetRefs.map((a) => a.path),
+    })
+    for (const missingPath of missing) {
+      const ref = assetRefs.find((a) => a.path === missingPath)
+      errors.push(`Fichier introuvable dans assets/ : "${missingPath}" (référencé par ${ref.labels.join(', ')})`)
+    }
+
+    if (!errors.length && !warnings.length) {
+      Dialog.create({ title: 'Validation du projet', message: 'Aucun problème détecté.', ok: true })
+      return
+    }
+    const parts = []
+    if (errors.length) parts.push(`ERREURS (${errors.length}) :\n${errors.join('\n')}`)
+    if (warnings.length) parts.push(`AVERTISSEMENTS (${warnings.length}) :\n${warnings.join('\n')}`)
+    Dialog.create({ title: 'Validation du projet', message: parts.join('\n\n'), ok: true })
+  } catch (err) {
+    Notify.create({ type: 'negative', message: err.message || String(err) })
+  } finally {
+    validating.value = false
+  }
 }
 
 const building = ref(false)

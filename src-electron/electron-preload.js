@@ -46,5 +46,6 @@ contextBridge.exposeInMainWorld("storieAPI", {
   saveThreads: (payload) => ipcRenderer.invoke("project:saveThreads", payload),
   saveGame: (payload) => ipcRenderer.invoke("project:saveGame", payload),
   pickAsset: (payload) => ipcRenderer.invoke("project:pickAsset", payload),
+  checkAssets: (payload) => ipcRenderer.invoke("project:checkAssets", payload),
   buildGame: (payload) => ipcRenderer.invoke("project:build", payload)
 })
