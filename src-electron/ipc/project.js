@@ -266,6 +266,17 @@ export function registerProjectHandlers(mainWindow) {
     return true;
   });
 
+  const SEED_BUCKETS = new Set(["messages", "dms", "posts", "reels", "photos"]);
+  ipcMain.handle("project:saveSeedBucket", async (_evt, { rootPath, bucket, source }) => {
+    if (!SEED_BUCKETS.has(bucket)) {
+      throw new Error(`Bucket seed inconnu : ${bucket}`);
+    }
+    const seedDir = path.join(rootPath, "seed");
+    fs.mkdirSync(seedDir, { recursive: true });
+    fs.writeFileSync(path.join(seedDir, `${bucket}.js`), await formatJs(source), "utf-8");
+    return true;
+  });
+
   // Locale codes are folder names, not slugify()'d ids — BCP-47 casing
   // (en-US, not en-us) is meaningful convention here, so this only rejects
   // path-unsafe characters rather than lowercasing/hyphenating like

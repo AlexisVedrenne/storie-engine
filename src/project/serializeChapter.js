@@ -67,3 +67,10 @@ export function serializeGame(game) {
 export function serializeI18nBucket(dict) {
   return `export default ${toJsLiteral(dict)};\n`;
 }
+
+// seed/<bucket>.js — either a dict (messages/dms, keyed by contact/thread
+// id) or a flat array (posts/reels/photos); toJsLiteral handles both shapes
+// already, this is just the intent-revealing wrapper matching the others.
+export function serializeSeedBucket(data) {
+  return `export default ${toJsLiteral(data)};\n`;
+}

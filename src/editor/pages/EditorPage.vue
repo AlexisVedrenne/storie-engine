@@ -17,6 +17,7 @@
           { label: 'Jeu', value: 'game' },
           { label: 'Assets', value: 'assets' },
           { label: 'Traductions', value: 'i18n' },
+          { label: 'Seed', value: 'seed' },
         ]"
       />
 
@@ -88,6 +89,7 @@
             <div v-else-if="viewMode === 'game'" class="empty-state">Le titre du jeu est un champ unique — pas de liste.</div>
             <AssetTree v-else-if="viewMode === 'assets'" v-model="selectedAssetFolder" />
             <LocaleList v-else-if="viewMode === 'i18n'" v-model="selectedLocale" />
+            <SeedBucketList v-else-if="viewMode === 'seed'" v-model="selectedSeedBucket" />
           </div>
         </template>
 
@@ -138,6 +140,8 @@
                   <I18nBucketEditor v-if="selectedLocale" :locale="selectedLocale" v-model:bucket="selectedBucket" />
                   <div v-else class="empty-state">Sélectionne une langue à gauche.</div>
                 </template>
+
+                <SeedBucketEditor v-else-if="viewMode === 'seed'" :bucket="selectedSeedBucket" />
               </div>
             </template>
 
@@ -158,7 +162,14 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { Dialog, Notify } from 'quasar'
 import { useStoryStore } from '@/engine/stores/story'
-import { serializeChapter, serializeContacts, serializeThreads, serializeGame, serializeI18nBucket } from '@/project/serializeChapter'
+import {
+  serializeChapter,
+  serializeContacts,
+  serializeThreads,
+  serializeGame,
+  serializeI18nBucket,
+  serializeSeedBucket,
+} from '@/project/serializeChapter'
 import { validateProject, collectAssetPaths } from '@/project/validateProject'
 import PhoneShell from '@/components/phone/PhoneShell.vue'
 import ChapterList from '@/editor/components/ChapterList.vue'
@@ -174,6 +185,8 @@ import AssetsPanel from '@/editor/components/AssetsPanel.vue'
 import AssetTree from '@/editor/components/AssetTree.vue'
 import LocaleList from '@/editor/components/LocaleList.vue'
 import I18nBucketEditor from '@/editor/components/I18nBucketEditor.vue'
+import SeedBucketList from '@/editor/components/SeedBucketList.vue'
+import SeedBucketEditor from '@/editor/components/SeedBucketEditor.vue'
 
 const AUTOSAVE_KEY = 'storie-engine-autosave'
 const SPLIT_OUTER_KEY = 'storie-engine-split-outer'
@@ -206,6 +219,7 @@ const selectedThread = computed(() => story.project?.threads?.[selectedThreadInd
 const selectedAssetFolder = ref('')
 const selectedLocale = ref('')
 const selectedBucket = ref('common')
+const selectedSeedBucket = ref('messages')
 
 // The object currently watched for the dirty flag/autosave — a single
 // chapter for 'chapters' mode, or the whole array/object for the other
@@ -226,6 +240,13 @@ const activeResource = computed(() => {
       return null
     case 'i18n':
       return story.project?.i18n?.[selectedLocale.value]?.[selectedBucket.value] ?? null
+    case 'seed':
+      // Whole bucket watched (dict or array), same as contacts/threads —
+      // NOT narrowed to whichever conversation is open within
+      // messages/dms, matching the established "which sub-item is
+      // selected doesn't rearm" rule (that state is local to
+      // SeedBucketEditor.vue, not lifted here).
+      return story.project?.seed?.[selectedSeedBucket.value] ?? null
     default:
       return null
   }
@@ -269,7 +290,11 @@ function watchActiveResource() {
 // selectedLocale/selectedBucket are different: like selectedIndex, they
 // change WHICH object is watched (a different dict entirely per
 // locale+bucket), not just which row is shown within the same object.
-watch([viewMode, selectedIndex, selectedLocale, selectedBucket], () => {
+// selectedSeedBucket is the same case (messages vs. posts vs. ... are
+// different objects) — but which conversation is open WITHIN
+// messages/dms is local state inside SeedBucketEditor.vue, never lifted
+// here, so there's no equivalent of selectedContactIndex to exclude.
+watch([viewMode, selectedIndex, selectedLocale, selectedBucket, selectedSeedBucket], () => {
   dirty.value = false
   clearTimeout(debounceTimer)
   watchActiveResource()
@@ -308,6 +333,12 @@ async function save() {
         locale: selectedLocale.value,
         bucket: selectedBucket.value,
         source: serializeI18nBucket(story.project.i18n[selectedLocale.value][selectedBucket.value] || {}),
+      })
+    } else if (viewMode.value === 'seed') {
+      await window.storieAPI.saveSeedBucket({
+        rootPath: story.project.rootPath,
+        bucket: selectedSeedBucket.value,
+        source: serializeSeedBucket(story.project.seed[selectedSeedBucket.value]),
       })
     }
     dirty.value = false
