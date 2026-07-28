@@ -51,6 +51,23 @@ gros boutons ».
     composant, mais la même forme visuelle.
   - Sons → un seul `AssetField` par son avec `fallback-audio-src` (au lieu
     d'un bloc "son par défaut" + un `AssetField` vide empilés dessous).
+- **`src/editor/components/ContactForm.vue`** — Couleur reprend le même
+  `swatch-box`/`meta-row` que GameForm (avant : `q-input` + pastille de 18px
+  en prepend, comme l'ancienne Couleur d'interface). Correction au passage :
+  la couleur de repli était `#4c8bf5` (l'accent du jeu, sans rapport) au
+  lieu du vrai gris `#999999` que `ContactList.vue`/`ThreadForm.vue`
+  utilisent déjà pour un contact sans couleur.
+
+## Pastille d'identité (couleur de contact) — validé le 2026-07-28
+
+Partout où un contact apparaît en dehors de son propre formulaire (liste,
+chip, badge...), sa couleur doit être visible sous forme d'une petite
+pastille ronde — pas juste du texte. Déjà le cas dans `ChapterList.vue`/
+`ContactList.vue` (barre/point de couleur) ; étendu aux chips
+"Participants" de `ThreadForm.vue` (`contactColor(id)` → `story.getContact(id)?.color || '#999999'`,
+span rond 8px avant le label du chip). Look "cool" validé par
+l'utilisateur — à répliquer si un contact apparaît ailleurs sous forme de
+chip/tag sans pastille.
 
 ## Check avant d'ajouter un nouveau champ de ce genre
 
