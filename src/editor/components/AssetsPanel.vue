@@ -4,7 +4,7 @@
       <div class="breadcrumb">
         <span class="section-label">Assets</span>
         <span class="path mono">{{ folder ? `assets/${folder}` : 'assets/' }}</span>
-        <span class="count">{{ visibleItems.length }} fichier(s) ici, {{ orphanCount }} orphelin(s) au total</span>
+        <span class="count">{{ visibleFolders.length }} dossier(s), {{ visibleFiles.length }} fichier(s), {{ orphanCount }} orphelin(s) au total</span>
       </div>
       <div class="spacer" />
       <q-btn dense flat no-caps icon="upload" label="Importer un fichier" @click="importFile" />
@@ -15,16 +15,32 @@
 
     <div v-if="error" class="error-text">{{ error }}</div>
 
-    <div v-if="!visibleItems.length" class="empty-state">Aucun fichier dans ce dossier.</div>
+    <div v-if="!visibleFolders.length && !visibleFiles.length && folder === ''" class="empty-state">
+      Aucun fichier ni dossier dans assets/.
+    </div>
 
     <div v-else class="grid">
-      <div v-for="item in visibleItems" :key="item.path" class="asset-card">
+      <div v-if="folder" class="asset-card folder-card" @click="goTo(parentFolder)">
+        <div class="thumb thumb-placeholder">
+          <q-icon name="drive_file_move_rtl" size="32px" />
+        </div>
+        <div class="asset-name">.. (dossier parent)</div>
+      </div>
+
+      <div v-for="sub in visibleFolders" :key="sub.path" class="asset-card folder-card" @click="goTo(sub.path)">
+        <div class="thumb thumb-placeholder">
+          <q-icon name="folder" size="32px" />
+        </div>
+        <div class="asset-name" :title="sub.path">{{ sub.name }}</div>
+      </div>
+
+      <div v-for="item in visibleFiles" :key="item.path" class="asset-card">
         <img v-if="item.category === 'image'" :src="resolveAssetUrl(item.path)" class="thumb" />
         <div v-else class="thumb thumb-placeholder">
           <q-icon :name="item.category === 'audio' ? 'audiotrack' : 'insert_drive_file'" size="32px" />
           <audio v-if="item.category === 'audio'" controls preload="none" :src="resolveAssetUrl(item.path)" class="audio-control" />
         </div>
-        <div class="asset-name" :title="item.path">{{ folder ? item.name : item.path }}</div>
+        <div class="asset-name" :title="item.path">{{ item.name }}</div>
         <div class="asset-footer">
           <span class="badge" :class="item.used ? 'badge-used' : 'badge-orphan'">
             {{ item.used ? 'Utilisé' : 'Orphelin' }}
@@ -55,14 +71,20 @@ import { resolveAssetUrl } from '@/engine/assets'
 import { collectAssetPaths } from '@/project/validateProject'
 import { useAssetLibrary } from '@/editor/composables/useAssetLibrary'
 
+// Real explorer behavior: this pane shows the CURRENT folder's direct
+// subfolders (click to descend) and direct files, plus a ".." tile to go
+// up — not a flat/recursive list. v-model:folder so clicking a tile here
+// keeps EditorPage's selectedAssetFolder (and AssetTree's selection) in
+// sync, same as AssetTree driving it the other way.
 const props = defineProps({ folder: { type: String, default: '' } })
+const emit = defineEmits(['update:folder'])
 
 const story = useStoryStore()
-const { files, refresh } = useAssetLibrary()
+const { files, folders, refresh } = useAssetLibrary()
 const error = ref('')
 
 onMounted(() => {
-  if (!files.value.length) refresh()
+  if (!files.value.length && !folders.value.length) refresh()
 })
 
 const IMAGE_EXT = new Set(['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp'])
@@ -74,10 +96,26 @@ function categoryFor(filePath) {
   return 'other'
 }
 
-function dirnameOf(filePath) {
-  const i = filePath.lastIndexOf('/')
-  return i === -1 ? '' : filePath.slice(0, i)
+function dirnameOf(itemPath) {
+  const i = itemPath.lastIndexOf('/')
+  return i === -1 ? '' : itemPath.slice(0, i)
 }
+
+function goTo(path) {
+  emit('update:folder', path)
+}
+
+const parentFolder = computed(() => {
+  const i = props.folder.lastIndexOf('/')
+  return i === -1 ? '' : props.folder.slice(0, i)
+})
+
+const visibleFolders = computed(() =>
+  [...folders.value]
+    .filter((f) => dirnameOf(f) === props.folder)
+    .map((path) => ({ path, name: path.split('/').pop() }))
+    .sort((a, b) => a.name.localeCompare(b.name)),
+)
 
 const allItems = computed(() => {
   const used = new Set(collectAssetPaths(story.project).map((a) => a.path))
@@ -91,15 +129,8 @@ const allItems = computed(() => {
 
 const orphanCount = computed(() => allItems.value.filter((i) => !i.used).length)
 
-// Root ('') shows every file recursively — in practice almost nothing sits
-// directly at assets/ root (everything's organized into subfolders), so a
-// "direct children only" root view would look empty even when the project
-// has plenty of assets. Any specific subfolder still shows just its own
-// direct children, standard file-browser behavior once you've drilled in.
-const visibleItems = computed(() =>
-  allItems.value
-    .filter((item) => (props.folder === '' ? true : dirnameOf(item.path) === props.folder))
-    .sort((a, b) => a.path.localeCompare(b.path)),
+const visibleFiles = computed(() =>
+  allItems.value.filter((item) => dirnameOf(item.path) === props.folder).sort((a, b) => a.name.localeCompare(b.name)),
 )
 
 async function importFile() {
@@ -214,6 +245,20 @@ function confirmDelete(item) {
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   padding: var(--space-2);
+}
+
+.folder-card {
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+}
+
+.folder-card:hover {
+  background: var(--color-surface-hover);
+}
+
+.folder-card .asset-name {
+  color: var(--color-text);
+  font-family: var(--font-ui);
 }
 
 .thumb {

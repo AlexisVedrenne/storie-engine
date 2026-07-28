@@ -130,7 +130,7 @@
 
                 <GameForm v-else-if="viewMode === 'game'" :game="story.project.gameConfig" />
 
-                <AssetsPanel v-else-if="viewMode === 'assets'" :folder="selectedAssetFolder" />
+                <AssetsPanel v-else-if="viewMode === 'assets'" v-model:folder="selectedAssetFolder" />
               </div>
             </template>
 
