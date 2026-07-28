@@ -1,6 +1,21 @@
 <template>
   <div class="entry-form">
-    <q-select dense outlined emit-value map-options label="Qui appelle" :options="contactOptions" v-model="entry.contact" />
+    <q-select dense outlined emit-value map-options label="Qui appelle" :options="contactOptions" v-model="entry.contact">
+      <template #selected>
+        <span class="selected-row">
+          <span class="option-dot" :style="{ background: contactColor(entry.contact) }" />
+          {{ contactLabel(entry.contact) }}
+        </span>
+      </template>
+      <template #option="scope">
+        <q-item v-bind="scope.itemProps">
+          <q-item-section avatar>
+            <span class="option-dot" :style="{ background: contactColor(scope.opt.value) }" />
+          </q-item-section>
+          <q-item-section>{{ scope.opt.label }}</q-item-section>
+        </q-item>
+      </template>
+    </q-select>
 
     <div class="section-title">
       Script de l'appel
@@ -18,7 +33,22 @@
         :options="fromOptions"
         v-model="line.from"
         @update:model-value="sync"
-      />
+      >
+        <template #selected>
+          <span class="selected-row">
+            <span class="option-dot" :style="{ background: contactColor(line.from) }" />
+            {{ contactLabel(line.from) }}
+          </span>
+        </template>
+        <template #option="scope">
+          <q-item v-bind="scope.itemProps">
+            <q-item-section avatar>
+              <span class="option-dot" :style="{ background: contactColor(scope.opt.value) }" />
+            </q-item-section>
+            <q-item-section>{{ scope.opt.label }}</q-item-section>
+          </q-item>
+        </template>
+      </q-select>
       <q-input dense outlined class="text-input" placeholder="Texte de la réplique" v-model="line.text" @update:model-value="sync" />
       <q-btn dense flat round icon="close" size="sm" @click="removeLine(i)">
         <q-tooltip>Retirer</q-tooltip>
@@ -34,7 +64,12 @@ import { useContactOptions } from '@/editor/composables/useContactOptions'
 import FieldHelp from '@/editor/components/FieldHelp.vue'
 
 const props = defineProps({ entry: { type: Object, required: true } })
-const { contactOptions: contactOptionsAll, contactOptionsNoMe: contactOptions } = useContactOptions()
+const {
+  contactOptions: contactOptionsAll,
+  contactOptionsNoMe: contactOptions,
+  contactColor,
+  contactLabel,
+} = useContactOptions()
 const fromOptions = contactOptionsAll
 
 const scriptRows = reactive((props.entry.script || []).map((l) => reactive({ ...l })))
@@ -94,6 +129,19 @@ function sync() {
 
 .from-select {
   flex: 0 0 140px;
+}
+
+.selected-row {
+  display: inline-flex;
+  align-items: center;
+}
+
+.option-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-right: var(--space-1);
 }
 
 .text-input {

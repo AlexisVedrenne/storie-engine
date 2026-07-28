@@ -12,7 +12,7 @@
       <template #selected>
         <span class="selected-row">
           <span class="option-dot" :style="{ background: contactColor(entry.contact) }" />
-          {{ story.getContact(entry.contact).name }}
+          {{ contactLabel(entry.contact) }}
         </span>
       </template>
       <template #option="scope">
@@ -39,19 +39,10 @@
 
 <script setup>
 import { useContactOptions } from '@/editor/composables/useContactOptions'
-import { useStoryStore } from '@/engine/stores/story'
 import AssetField from '@/editor/components/AssetField.vue'
 
 defineProps({ entry: { type: Object, required: true } })
-const story = useStoryStore()
-const { contactOptionsNoMe: contactOptions } = useContactOptions()
-
-// Same identity-dot pattern as ThreadForm.vue's participant chips (see
-// docs/ui-design-principles.md) — a contact picker was plain text with no
-// visual identity at all before this.
-function contactColor(id) {
-  return story.getContact(id)?.color || '#999999'
-}
+const { contactOptionsNoMe: contactOptions, contactColor, contactLabel } = useContactOptions()
 </script>
 
 <style scoped>

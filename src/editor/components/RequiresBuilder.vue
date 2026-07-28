@@ -102,7 +102,22 @@
           map-options
           label="Personnage"
           @update:model-value="sync"
-        />
+        >
+          <template #selected>
+            <span class="selected-row">
+              <span class="option-dot" :style="{ background: contactColor(row.contactId) }" />
+              {{ contactLabel(row.contactId) }}
+            </span>
+          </template>
+          <template #option="scope">
+            <q-item v-bind="scope.itemProps">
+              <q-item-section avatar>
+                <span class="option-dot" :style="{ background: contactColor(scope.opt.value) }" />
+              </q-item-section>
+              <q-item-section>{{ scope.opt.label }}</q-item-section>
+            </q-item>
+          </template>
+        </q-select>
         <q-toggle v-model="row.expected" label="le joueur le suit" @update:model-value="sync" />
       </div>
     </div>
@@ -131,7 +146,7 @@ const FLAG_MODES = [
   { label: 'entre… et…', value: 'range' },
 ]
 
-const { contactOptions } = useContactOptions()
+const { contactOptions, contactColor, contactLabel } = useContactOptions()
 
 function flagRowFrom(key, expected) {
   if (typeof expected === 'boolean') return reactive({ key, mode: 'bool', boolValue: expected, exactValue: 0, min: 0, max: 0 })
@@ -261,6 +276,19 @@ function sync() {
 .key-input {
   flex: 1 1 160px;
   min-width: 140px;
+}
+
+.selected-row {
+  display: inline-flex;
+  align-items: center;
+}
+
+.option-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-right: var(--space-1);
 }
 
 .mode-select {

@@ -1,15 +1,10 @@
-// Shared contact/thread picker options for editor forms — extracted from the
-// pattern independently duplicated across ~10 entry forms (ChoiceEntryForm.vue
-// has the most complete version, merging group threads + implicit 1:1
-// contact-as-thread options). Unlike those duplicates (plain `const`, built
-// once at setup), these are `computed()` so they stay correct now that
-// contacts/threads are editable mid-session (Phase 4a) instead of static for
-// the whole editor session.
-//
-// Not yet wired into the pre-existing entry forms — that's unrelated-scope
-// churn across files this change doesn't need to touch. Intended as the
-// eventual replacement, adopted opportunistically next time one of those
-// files is touched for its own reason.
+// Shared contact/thread picker options + identity helpers for editor forms —
+// used by every entry form that lets you pick a contact or a conversation
+// (ChoiceEntryForm, MessageEntryForm, PostEntryForm, DmEntryForm, CallEntryForm,
+// RequiresBuilder, EffectsBuilder, CommentsListField...). `computed()` (not a
+// plain `const` built once) so options stay correct now that contacts/threads
+// are editable mid-session (Phase 4a) instead of static for the whole editor
+// session.
 import { computed } from 'vue'
 import { useStoryStore } from '@/engine/stores/story'
 
@@ -24,10 +19,41 @@ export function useContactOptions() {
     story.contactsList.filter((c) => c.id !== 'me').map((c) => ({ label: c.name, value: c.id })),
   )
 
+  // `group` tags each option so pickers can tell a real group thread (no
+  // color of its own) apart from an implicit 1:1 thread (a contact id,
+  // which does have a color) — e.g. to show a contact's identity dot only
+  // where it's meaningful. See docs/ui-design-principles.md.
   const threadOptions = computed(() => [
-    ...(story.project?.threads || []).map((t) => ({ label: `${t.name} (groupe)`, value: t.id })),
-    ...story.contactsList.filter((c) => c.id !== 'me').map((c) => ({ label: `${c.name} (1:1)`, value: c.id })),
+    ...(story.project?.threads || []).map((t) => ({ label: `${t.name} (groupe)`, value: t.id, group: true })),
+    ...story.contactsList
+      .filter((c) => c.id !== 'me')
+      .map((c) => ({ label: `${c.name} (1:1)`, value: c.id, group: false })),
   ])
 
-  return { contactOptions, contactOptionsNoMe, threadOptions }
+  // Identity helpers behind the "pastille" pattern (docs/ui-design-principles.md,
+  // section "Pastille d'identité") — centralized here so every contact/thread
+  // picker across the editor renders the same dot/fallback instead of each
+  // form re-deriving it from `story.getContact` on its own.
+  function contactColor(id) {
+    return story.getContact(id)?.color || '#999999'
+  }
+  function contactLabel(id) {
+    return story.getContact(id)?.name || ''
+  }
+  function isGroupThread(id) {
+    return threadOptions.value.find((o) => o.value === id)?.group ?? false
+  }
+  function threadLabel(id) {
+    return threadOptions.value.find((o) => o.value === id)?.label || ''
+  }
+
+  return {
+    contactOptions,
+    contactOptionsNoMe,
+    threadOptions,
+    contactColor,
+    contactLabel,
+    isGroupThread,
+    threadLabel,
+  }
 }

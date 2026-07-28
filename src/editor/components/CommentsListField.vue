@@ -13,7 +13,22 @@
         :options="contactOptions"
         v-model="c.author"
         @update:model-value="sync"
-      />
+      >
+        <template #selected>
+          <span class="selected-row">
+            <span class="option-dot" :style="{ background: contactColor(c.author) }" />
+            {{ contactLabel(c.author) }}
+          </span>
+        </template>
+        <template #option="scope">
+          <q-item v-bind="scope.itemProps">
+            <q-item-section avatar>
+              <span class="option-dot" :style="{ background: contactColor(scope.opt.value) }" />
+            </q-item-section>
+            <q-item-section>{{ scope.opt.label }}</q-item-section>
+          </q-item>
+        </template>
+      </q-select>
       <q-input dense outlined class="text-input" placeholder="Texte du commentaire" v-model="c.text" @update:model-value="sync" />
       <q-btn dense flat round icon="close" size="sm" @click="removeComment(i)">
         <q-tooltip>Retirer</q-tooltip>
@@ -40,7 +55,7 @@ const props = defineProps({
   commentsCount: { type: Number, default: undefined },
 })
 const emit = defineEmits(['update:modelValue', 'update:commentsCount'])
-const { contactOptions } = useContactOptions()
+const { contactOptions, contactColor, contactLabel } = useContactOptions()
 
 const comments = reactive((props.modelValue || []).map((c) => reactive({ ...c })))
 
@@ -92,6 +107,19 @@ function sync() {
 
 .author-select {
   flex: 0 0 160px;
+}
+
+.selected-row {
+  display: inline-flex;
+  align-items: center;
+}
+
+.option-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-right: var(--space-1);
 }
 
 .text-input {

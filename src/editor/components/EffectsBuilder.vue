@@ -155,7 +155,22 @@
           map-options
           label="Personnage"
           @update:model-value="sync"
-        />
+        >
+          <template #selected>
+            <span class="selected-row">
+              <span class="option-dot" :style="{ background: contactColor(row.contactId) }" />
+              {{ contactLabel(row.contactId) }}
+            </span>
+          </template>
+          <template #option="scope">
+            <q-item v-bind="scope.itemProps">
+              <q-item-section avatar>
+                <span class="option-dot" :style="{ background: contactColor(scope.opt.value) }" />
+              </q-item-section>
+              <q-item-section>{{ scope.opt.label }}</q-item-section>
+            </q-item>
+          </template>
+        </q-select>
         <q-input dense outlined type="number" class="num-input" label="+abonnés" v-model.number="row.followers" @update:model-value="sync" />
         <q-input dense outlined type="number" class="num-input" label="+abonnements" v-model.number="row.following" @update:model-value="sync" />
       </div>
@@ -176,7 +191,22 @@
       :options="contactOptions"
       v-model="newFollowerIds"
       @update:model-value="sync"
-    />
+    >
+      <template #selected-item="scope">
+        <q-chip dense removable @remove="scope.removeAtIndex(scope.index)">
+          <span class="chip-dot" :style="{ background: contactColor(scope.opt.value) }" />
+          {{ scope.opt.label }}
+        </q-chip>
+      </template>
+      <template #option="scope">
+        <q-item v-bind="scope.itemProps">
+          <q-item-section avatar>
+            <span class="option-dot" :style="{ background: contactColor(scope.opt.value) }" />
+          </q-item-section>
+          <q-item-section>{{ scope.opt.label }}</q-item-section>
+        </q-item>
+      </template>
+    </q-select>
   </div>
 </template>
 
@@ -203,7 +233,7 @@ const CLOCK_MODES = [
   { label: 'libérer (revenir à l’heure réelle)', value: 'clear' },
 ]
 
-const { contactOptions } = useContactOptions()
+const { contactOptions, contactColor, contactLabel } = useContactOptions()
 const initial = props.modelValue || {}
 
 const flagRows = reactive(
@@ -379,6 +409,20 @@ function sync() {
 .key-input {
   flex: 1 1 160px;
   min-width: 140px;
+}
+
+.selected-row {
+  display: inline-flex;
+  align-items: center;
+}
+
+.option-dot,
+.chip-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-right: var(--space-1);
 }
 
 .mode-select {

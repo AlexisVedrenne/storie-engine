@@ -23,7 +23,22 @@
           label="Contact"
           :options="contactOptions"
           v-model="entry.contact"
-        />
+        >
+          <template #selected>
+            <span class="selected-row">
+              <span class="option-dot" :style="{ background: contactColor(entry.contact) }" />
+              {{ contactLabel(entry.contact) }}
+            </span>
+          </template>
+          <template #option="scope">
+            <q-item v-bind="scope.itemProps">
+              <q-item-section avatar>
+                <span class="option-dot" :style="{ background: contactColor(scope.opt.value) }" />
+              </q-item-section>
+              <q-item-section>{{ scope.opt.label }}</q-item-section>
+            </q-item>
+          </template>
+        </q-select>
         <q-select
           v-else
           dense
@@ -34,7 +49,24 @@
           label="Conversation (1:1 ou groupe)"
           :options="threadOptions"
           v-model="entry.thread"
-        />
+        >
+          <template #selected>
+            <span class="selected-row">
+              <span v-if="!isGroupThread(entry.thread)" class="option-dot" :style="{ background: contactColor(entry.thread) }" />
+              <q-icon v-else name="group" size="16px" class="option-icon" />
+              {{ threadLabel(entry.thread) }}
+            </span>
+          </template>
+          <template #option="scope">
+            <q-item v-bind="scope.itemProps">
+              <q-item-section avatar>
+                <span v-if="!scope.opt.group" class="option-dot" :style="{ background: contactColor(scope.opt.value) }" />
+                <q-icon v-else name="group" size="16px" class="option-icon" />
+              </q-item-section>
+              <q-item-section>{{ scope.opt.label }}</q-item-section>
+            </q-item>
+          </template>
+        </q-select>
       </div>
     </div>
 
@@ -55,13 +87,23 @@
       :key="i"
       v-model="expandedOptions[i]"
       class="option-card"
-      :label="`Option ${i + 1}${option.text ? ' — ' + option.text : ''}`"
     >
       <template #header>
         <q-item-section>Option {{ i + 1 }}{{ option.text ? ' — ' + option.text : ' (texte vide)' }}</q-item-section>
         <q-item-section side>
-          <q-btn dense flat round icon="close" size="sm" color="negative" @click.stop="removeOption(i)">
-            <q-tooltip>Supprimer cette option</q-tooltip>
+          <q-btn
+            dense
+            flat
+            round
+            icon="close"
+            size="sm"
+            color="negative"
+            :disable="entry.options.length <= 1"
+            @click.stop="removeOption(i)"
+          >
+            <q-tooltip>
+              {{ entry.options.length <= 1 ? 'Un choix a besoin d\'au moins une option' : 'Supprimer cette option' }}
+            </q-tooltip>
           </q-btn>
         </q-item-section>
       </template>
@@ -138,7 +180,8 @@ const props = defineProps({
   entry: { type: Object, required: true },
   breadcrumb: { type: Array, default: () => [] },
 })
-const { contactOptionsNoMe: contactOptions, threadOptions } = useContactOptions()
+const { contactOptionsNoMe: contactOptions, threadOptions, contactColor, contactLabel, isGroupThread, threadLabel } =
+  useContactOptions()
 
 // Controls each option's q-expansion-item (previously uncontrolled) so a
 // breadcrumb click can collapse it programmatically — see optionSegment()
@@ -182,6 +225,7 @@ function tabFor(i) {
 function addOption() {
   if (!props.entry.options) props.entry.options = []
   props.entry.options.push({ text: '', then: [] })
+  expandedOptions[props.entry.options.length - 1] = true
 }
 function removeOption(i) {
   props.entry.options.splice(i, 1)
@@ -209,6 +253,24 @@ function removeOption(i) {
 
 .target-select {
   flex: 1;
+}
+
+.selected-row {
+  display: inline-flex;
+  align-items: center;
+}
+
+.option-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-right: var(--space-1);
+}
+
+.option-icon {
+  margin-right: var(--space-1);
+  color: var(--color-text-muted);
 }
 
 .section-label {
