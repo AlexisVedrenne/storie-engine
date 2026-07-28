@@ -11,7 +11,10 @@
 import { useStoryStore } from "@/engine/stores/story";
 import { resolveAssetUrl } from "@/engine/assets";
 
-const SOUND_FILES = {
+// Exported so the editor (GameForm.vue's Sons section) can play the
+// bundled default for a slot before/instead of overriding it — same paths
+// getAudio() falls back to when a project sets no override.
+export const SOUND_FILES = {
   "sms-receive": "/sounds/sms-receive.mp3",
   "sms-send": "/sounds/sms-send.mp3",
   "dm-receive": "/sounds/dm-receive.mp3",

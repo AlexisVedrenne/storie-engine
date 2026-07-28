@@ -40,6 +40,14 @@
         <FieldHelp text="Remplace un son d'interface par défaut du moteur par un fichier audio du projet. Laisse vide pour garder le son par défaut." />
       </div>
       <div v-for="sound in SOUND_KEYS" :key="sound.key" class="sound-row">
+        <!-- Default bundled sound + play button — shown until overridden;
+             once game.sounds[key] is set, AssetField's own preview below
+             already shows/plays THAT file, so this default player steps
+             aside instead of duplicating a second <audio> control. -->
+        <div v-if="!game.sounds[sound.key]" class="sound-current">
+          <span class="sound-current-label">Son par défaut du moteur — {{ sound.label }}</span>
+          <audio controls preload="none" :src="SOUND_FILES[sound.key]" class="audio-control" />
+        </div>
         <AssetField v-model="game.sounds[sound.key]" :label="sound.label" />
       </div>
     </div>
@@ -49,6 +57,7 @@
 <script setup>
 import AssetField from '@/editor/components/AssetField.vue'
 import FieldHelp from '@/editor/components/FieldHelp.vue'
+import { SOUND_FILES } from '@/engine/utils/sound'
 
 const props = defineProps({ game: { type: Object, required: true } })
 
@@ -117,5 +126,31 @@ const SOUND_KEYS = [
 .sound-row + .sound-row {
   padding-top: var(--space-2);
   border-top: 1px solid var(--color-border);
+}
+
+.sound-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.sound-current {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-2);
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+}
+
+.sound-current-label {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+
+.audio-control {
+  width: 100%;
+  height: 32px;
 }
 </style>
