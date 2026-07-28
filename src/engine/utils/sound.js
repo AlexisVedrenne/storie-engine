@@ -9,6 +9,7 @@
 // the play() promise quietly (see playSound/startLoop), same as a real
 // notification sound nobody's recorded yet.
 import { useStoryStore } from "@/engine/stores/story";
+import { resolveAssetUrl } from "@/engine/assets";
 
 const SOUND_FILES = {
   "sms-receive": "/sounds/sms-receive.mp3",
@@ -31,19 +32,36 @@ const SOUND_FILES = {
 // one <audio> element per sound, reused across plays instead of recreated
 // each time — cheap, and required anyway for stopSound() to have something
 // to pause (a loop like the ringtone needs a stable handle).
+//
+// Keyed on {audio, url} rather than just the Audio element: a project can
+// override any of these 15 sounds (game.sounds, see GameForm.vue) with its
+// own asset, and that override can change mid-session (edited in the Game
+// tab, previewed again) — comparing the resolved url on every getAudio()
+// call and rebuilding only when it actually changed means the override
+// takes effect on the very next play, no separate cache-reset call needed
+// anywhere else.
 const pool = {};
+
+// useStoryStore() is only ever called from inside a function body (see the
+// comment on currentSettings() below) — same safe pattern applies here.
+function resolveSoundUrl(name) {
+  const store = useStoryStore();
+  const override = store.project?.gameConfig?.sounds?.[name];
+  return override ? resolveAssetUrl(override) : SOUND_FILES[name];
+}
 
 function getAudio(name) {
   if (!(name in SOUND_FILES)) {
     console.warn(`[sound] unknown sound "${name}"`);
     return null;
   }
-  if (!pool[name]) {
-    const audio = new Audio(SOUND_FILES[name]);
+  const url = resolveSoundUrl(name);
+  if (!pool[name] || pool[name].url !== url) {
+    const audio = new Audio(url);
     audio.preload = "auto";
-    pool[name] = audio;
+    pool[name] = { audio, url };
   }
-  return pool[name];
+  return pool[name].audio;
 }
 
 // useStoryStore() is only ever called from inside the function bodies below
@@ -83,7 +101,7 @@ export function startLoop(name) {
 }
 
 export function stopSound(name) {
-  const audio = pool[name];
+  const audio = pool[name]?.audio;
   if (!audio) return;
   audio.pause();
   audio.currentTime = 0;

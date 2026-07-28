@@ -1,5 +1,5 @@
 <template>
-  <div class="home-screen">
+  <div class="home-screen" :class="{ 'has-wallpaper': wallpaperUrl }" :style="wallpaperStyle">
     <div class="home-scroll">
       <HomeWidgets />
 
@@ -27,11 +27,20 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { usePhoneStore } from '@/engine/stores/phone'
 import { useStoryStore } from '@/engine/stores/story'
+import { resolveAssetUrl } from '@/engine/assets'
 import HomeWidgets from './HomeWidgets.vue'
 
 const phone = usePhoneStore()
 const story = useStoryStore()
 const { t } = useI18n()
+
+// Same game.wallpaper convention as LockScreen.vue (kept independent, not
+// extracted to a shared component — the two screens' mesh/scrim CSS
+// already existed as separate copies before this addition).
+const wallpaperUrl = computed(() => (story.gameConfig?.wallpaper ? resolveAssetUrl(story.gameConfig.wallpaper) : ''))
+const wallpaperStyle = computed(() =>
+  wallpaperUrl.value ? { backgroundImage: `url(${wallpaperUrl.value})` } : {},
+)
 
 const apps = computed(() => [
   {
@@ -141,6 +150,20 @@ const apps = computed(() => [
   .home-screen::after {
     animation: none;
   }
+}
+
+.home-screen.has-wallpaper {
+  background-size: cover;
+  background-position: center;
+}
+
+.home-screen.has-wallpaper::before {
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.1) 0%, rgba(0, 0, 0, 0.45) 100%);
+  animation: none;
+}
+
+.home-screen.has-wallpaper::after {
+  display: none;
 }
 
 .app-grid {

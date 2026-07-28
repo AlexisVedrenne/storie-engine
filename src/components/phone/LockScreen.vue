@@ -1,5 +1,5 @@
 <template>
-  <div class="lock-screen" @click="unlocking = true">
+  <div class="lock-screen" :class="{ 'has-wallpaper': wallpaperUrl }" :style="wallpaperStyle" @click="unlocking = true">
     <div class="wallpaper-title">{{ story.gameConfig.title }}</div>
 
     <transition name="skip-label">
@@ -26,10 +26,20 @@ import { useI18n } from 'vue-i18n'
 import { usePhoneStore } from '@/engine/stores/phone'
 import { useStoryStore } from '@/engine/stores/story'
 import { playSound } from '@/engine/utils/sound'
+import { resolveAssetUrl } from '@/engine/assets'
 
 const phone = usePhoneStore()
 const story = useStoryStore()
 const { t } = useI18n()
+
+// game.wallpaper (see GameForm.vue) — when set, replaces the default
+// gradient+mesh look below (::before/::after get overridden to a plain
+// readability scrim instead, see .has-wallpaper in <style>). Unset =
+// pixel-identical to before this feature existed.
+const wallpaperUrl = computed(() => (story.gameConfig?.wallpaper ? resolveAssetUrl(story.gameConfig.wallpaper) : ''))
+const wallpaperStyle = computed(() =>
+  wallpaperUrl.value ? { backgroundImage: `url(${wallpaperUrl.value})` } : {},
+)
 
 // story.resolvedClock() (driven by clockTime/clockDate, set via an `effect`
 // — see applyEffects) combines the real device time with whichever piece
@@ -131,6 +141,29 @@ watch(unlocking, val => {
   .lock-screen::after {
     animation: none;
   }
+}
+
+/* game.wallpaper set — swap the decorative mesh for a plain readability
+   scrim over the image instead (time/date/notifs stay legible regardless
+   of the picture's own brightness) rather than stacking both looks. */
+.lock-screen.has-wallpaper {
+  background-size: cover;
+  background-position: center;
+}
+
+.lock-screen.has-wallpaper::before {
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.15) 0%, rgba(0, 0, 0, 0.55) 100%);
+  animation: none;
+}
+
+.lock-screen.has-wallpaper::after {
+  display: none;
+}
+
+/* the giant faint title watermark exists to fill the plain gradient when
+   there's no wallpaper — redundant clutter once a real photo is showing */
+.lock-screen.has-wallpaper .wallpaper-title {
+  display: none;
 }
 
 .wallpaper-title {

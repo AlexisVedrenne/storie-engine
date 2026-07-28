@@ -180,7 +180,7 @@ watch(
 }
 
 .bubble-row.me .bubble {
-  background: #4c8bf5;
+  background: var(--phone-accent, #4c8bf5);
 }
 
 .bubble-image {

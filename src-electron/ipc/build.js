@@ -9,6 +9,7 @@ import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
 import { spawn } from "node:child_process";
+import { pathToFileURL } from "node:url";
 
 // storie-engine's own source root. Only valid while the editor runs from
 // source via `pnpm run dev:electron` — see docs/phase3-plan.md risk #3.
@@ -32,7 +33,17 @@ function copyIfExists(src, dest) {
   if (fs.existsSync(src)) fs.cpSync(src, dest, { recursive: true });
 }
 
-function assembleShell(tmpDir, rootPath) {
+// Cache-busted dynamic import, same pattern as project.js's loadDefaultOr —
+// build.js doesn't otherwise ever load game.js's actual content (only
+// project.json's manifest, for the productName/output-folder slug).
+async function loadGameConfig(rootPath) {
+  const gamePath = path.join(rootPath, "game.js");
+  if (!fs.existsSync(gamePath)) return {};
+  const mod = await import(pathToFileURL(gamePath).href + "?t=" + Date.now());
+  return mod.default || {};
+}
+
+async function assembleShell(tmpDir, rootPath) {
   fs.cpSync(TEMPLATE_DIR, tmpDir, { recursive: true, filter: (src) => !src.includes(`${path.sep}engine-overrides${path.sep}`) && !src.endsWith("engine-overrides") });
 
   // The engine + phone UI are never duplicated by hand — copied fresh from
@@ -75,6 +86,27 @@ function assembleShell(tmpDir, rootPath) {
   copyIfExists(path.join(rootPath, "seed"), path.join(projectDataDir, "seed"));
   copyIfExists(path.join(rootPath, "i18n"), path.join(projectDataDir, "i18n"));
   copyIfExists(path.join(rootPath, "assets"), path.join(tmpDir, "public", "story-assets"));
+
+  // Custom build icon (game.icon, see GameForm.vue) — @quasar/app-vite's
+  // own default already points electron.packager.icon at
+  // src-electron/electron-assets/icons/icon (extensionless, platform
+  // suffix auto-appended), it just finds nothing there today since
+  // templates/game-shell/ ships no such directory. A real .ico is required
+  // on Windows for the packaged .exe's own icon (Explorer/taskbar) —
+  // no PNG->ICO conversion here (no such dependency in this project), so a
+  // .png-only source only gets the running window's title-bar icon
+  // (BrowserWindow's `icon` option accepts plain PNG fine, see
+  // electron-main.js), not the packaged .exe file icon. Documented
+  // limitation, not a bug — see docs/phase3-plan.md.
+  const gameConfig = await loadGameConfig(rootPath);
+  if (gameConfig.icon) {
+    const iconSrc = path.join(rootPath, "assets", gameConfig.icon);
+    if (fs.existsSync(iconSrc)) {
+      const iconsDir = path.join(tmpDir, "src-electron", "electron-assets", "icons");
+      fs.mkdirSync(iconsDir, { recursive: true });
+      fs.copyFileSync(iconSrc, path.join(iconsDir, `icon${path.extname(iconSrc)}`));
+    }
+  }
 
   // Name the generated app after the project rather than the generic
   // template default.
@@ -125,7 +157,7 @@ async function cleanupWithRetry(dir) {
 async function buildGame(rootPath, destPath) {
   const tmpDir = path.join(os.tmpdir(), `storie-engine-build-${Date.now()}`);
   try {
-    assembleShell(tmpDir, rootPath);
+    await assembleShell(tmpDir, rootPath);
 
     const pnpmCmd = process.platform === "win32" ? "pnpm.cmd" : "pnpm";
     await run(pnpmCmd, ["install"], tmpDir);

@@ -1,5 +1,5 @@
 <template>
-  <div class="phone-frame" :class="{ ringing }">
+  <div class="phone-frame" :class="{ ringing }" :style="accentStyle">
     <div class="phone-notch" />
 
     <div ref="screenEl" class="phone-screen">
@@ -117,6 +117,18 @@ watch(
 const ringing = computed(
   () => !!story.pendingCall && !story.calls.some(c => c.id === story.pendingCall.id)
 )
+
+// Sets --phone-accent on the root of all phone UI so every descendant's CSS
+// can just do var(--phone-accent, #4c8bf5) instead of hardcoding the hex —
+// a project can override the phone's accent color via Réglages > Jeu
+// (game.accentColor, see GameForm.vue) without touching any component.
+// Left unset (not even the fallback) when no override exists, so CSS's own
+// var(..., #4c8bf5) default is the single source of truth for "what the
+// color is when nobody customized it."
+const accentStyle = computed(() => {
+  const color = story.gameConfig?.accentColor
+  return color ? { '--phone-accent': color } : {}
+})
 
 // Every screen (status bar, home, apps, boot, setup wizard) is written in
 // fixed px sizes designed against a "normal" phone-sized canvas — that's

@@ -235,7 +235,7 @@ function hangUp() {
 
 .script-line.me {
   align-self: flex-end;
-  background: #4c8bf5;
+  background: var(--phone-accent, #4c8bf5);
 }
 
 .next-btn {

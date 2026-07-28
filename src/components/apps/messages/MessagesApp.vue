@@ -240,7 +240,7 @@ function open(id) {
 }
 
 .unread-dot {
-  background: #4c8bf5;
+  background: var(--phone-accent, #4c8bf5);
   color: #fff;
   font-size: 11px;
   font-weight: 700;

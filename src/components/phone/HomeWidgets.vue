@@ -263,7 +263,7 @@ const playing = ref(false)
 .eq span {
   width: 3px;
   height: 4px;
-  background: #4c8bf5;
+  background: var(--phone-accent, #4c8bf5);
   border-radius: 2px;
   animation: eq-bounce 0.8s ease-in-out infinite;
   animation-play-state: paused;
