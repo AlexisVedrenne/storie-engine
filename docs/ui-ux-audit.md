@@ -2,12 +2,12 @@
 
 ## Statut (2026-07-28)
 
-**Quick wins (palier 1) ET chantier moyen (palier 2) faits et vérifiés en
-vraie fenêtre Electron, le jour même.** Détail dans « Priorisation
-proposée » plus bas, chaque item est marqué `[x]` avec ce qui a été changé
-et où. Seul le chantier large (fil d'Ariane de profondeur, recherche sur
-les traductions inutilisées) n'a pas été commencé — reste à cadrer avant
-d'attaquer, comme d'habitude pour cette codebase.
+**Les 3 paliers (quick wins, chantier moyen, chantier large) sont faits et
+vérifiés en vraie fenêtre Electron, le jour même.** Détail dans
+« Priorisation proposée » plus bas, chaque item est marqué `[x]` avec ce
+qui a été changé et où. Audit soldé — plus rien de la liste initiale n'est
+en attente (voir « Ce que je n'ai pas encore vérifié » pour ce qui est
+resté hors périmètre dès le départ).
 
 ## Méthode
 
@@ -82,7 +82,7 @@ JetBrains Mono), un `import '@fontsource/inter/400.css'` + `/600.css` dans
 `app.scss` ou le point d'entrée. Deux lignes de dépendance, zéro
 renégociation de design — les tokens sont déjà corrects.
 
-### 2. Aucun fil d'Ariane dans la profondeur — le vrai « je cherche 3h »
+### 2. Aucun fil d'Ariane dans la profondeur — le vrai « je cherche 3h » — **corrigé**
 
 Confirmé à l'écran (capture `choice` → option 1 → onglet « Juste après ») :
 un `choice` peut contenir une option, qui contient un `TimelineEditor` niché
@@ -96,6 +96,32 @@ l'écran. Sur un chapitre de 30 entrées avec plusieurs choix imbriqués (cas
 réel visé par l'outil), remonter mentalement « dans quel choix suis-je »
 demande de scroller vers le haut pour retrouver le contexte. C'est très
 probablement la plus grosse source du « je sais pas où cliquer » rapporté.
+
+**Fix appliqué** (2026-07-28) : fil d'Ariane cliquable (« Choix : ... ›
+Option 1 — ... »), construit par prop-drilling pur — `TimelineEditor.vue`
+accepte une prop `breadcrumb` et l'étend d'un segment `{ label, collapse }`
+quand elle rend une entrée `choice` ; `ChoiceEntryForm.vue` fait pareil par
+option avant de la transmettre à la `TimelineEditor` nichée de son onglet
+« Juste après ». Pas de `provide`/`inject` (aucun précédent dans cette
+codebase, et un état "chemin courant" partagé aurait été ambigu : les
+entrées d'une même liste peuvent être dépliées simultanément, pas un
+accordéon à sélection unique). Cliquer un segment referme ce niveau (les
+options du choix sont passées d'un `q-expansion-item` non contrôlé à
+contrôlé pour permettre ça). Vérifié à l'écran : le fil apparaît
+correctement dans l'onglet "Juste après" d'une option, cliquer "Choix :
+..." referme tout le choix, cliquer "Option 1" ne referme que l'option.
+
+**Limite assumée, pas corrigée** : le bandeau n'est **pas** collé en haut
+de l'écran (`position: sticky`) pendant qu'on scrolle toute la liste
+parente — `.entry-card` a `overflow: hidden` (pour l'arrondi de ses
+coins), et un ancêtre `overflow:hidden` empêche `sticky` de fonctionner
+pour un descendant. Le bandeau règle donc "aucun repère du tout" → "repère
+clair dès qu'on rouvre/remonte vers ce niveau", mais pas le cas "scrollé
+très loin, toujours visible". Le rendre vraiment sticky demanderait de
+retirer `overflow:hidden` de `.entry-card` et reporter l'arrondi sur l'en-
+tête/le corps séparément — pas fait pour limiter le risque sur un style
+existant ; à reconsidérer si le bandeau non-sticky s'avère insuffisant à
+l'usage réel.
 
 ### 3. Le bloc Condition/Requires se répète intégralement à chaque niveau — **corrigé**
 
@@ -187,7 +213,7 @@ l'impression de vide contredit l'idée d'un outil dense/maîtrisé — surtout
 en comparaison avec l'onglet Jeu ou une timeline remplie, qui eux
 utilisent bien l'espace.
 
-### 8. Aucune recherche/filtre sur les listes qui grossissent le plus
+### 8. Aucune recherche/filtre sur les listes qui grossissent le plus — **corrigé (recherche seule, périmètre choisi)**
 
 Confirmé à l'écran : l'onglet Traductions affiche une liste plate de
 **152 « traductions inutilisées »**, chacune sur 2 colonnes (FR/EN) avec un
@@ -198,6 +224,15 @@ chapitres en pratique) et pour `AssetsPanel` (grille sans recherche, mais
 navigable par dossier). Le point Traductions est le plus urgent parce que
 c'est une liste plate, non-hiérarchique, qui n'a **aucune** structure de
 navigation pour s'y retrouver au-delà du scroll.
+
+**Fix appliqué** (2026-07-28), périmètre volontairement réduit à la
+recherche (pas de suppression groupée, choix explicite de l'utilisateur) :
+`I18nBucketEditor.vue` a un champ de recherche au-dessus de la liste des
+traductions inutilisées, filtre insensible à la casse sur le texte source
+OU sa traduction, compteur qui passe en `X/152` quand une recherche est
+active. Ne touche pas la liste principale (pas le même problème d'échelle)
+ni `ChapterList`/`AssetsPanel` (laissés tels quels, comme noté ci-dessus).
+Vérifié à l'écran : recherche "kg" → 1/152, la bonne entrée affichée.
 
 ### 9. Troncature de texte incohérente : parfois un tooltip de secours, parfois rien — **corrigé**
 
@@ -362,17 +397,24 @@ Lint clean sur tous les fichiers touchés (`AudioPreview.vue` nouveau,
 `AssetField.vue`, `AssetsPanel.vue`, `GameForm.vue`, `RequiresBuilder.vue`,
 `PhoneShell.vue`, `EditorPage.vue`).
 
-**Chantier plus large (à cadrer avant de commencer, comme d'habitude) :**
-8. Fil d'Ariane de profondeur pour la navigation imbriquée choice/then
-   (point 2) — touche potentiellement `TimelineEditor.vue` et
-   `EditorPage.vue`, demande de décider comment représenter la pile de
-   contexte (breadcrumb texte ? panneau latéral ? autre ?).
-9. Recherche/filtre sur la liste des traductions inutilisées (point 8) —
-   et more generally réfléchir si d'autres listes (assets, chapitres) en
-   auront besoin à mesure qu'un vrai projet grossit.
+**Chantier plus large — fait et vérifié le 2026-07-28 (plan approuvé +
+2 questions de cadrage tranchées au préalable — fil d'Ariane cliquable qui
+replie plutôt qu'informatif seul, recherche seule sur les traductions
+plutôt que recherche + suppression groupée) :**
+8. [x] Fil d'Ariane de profondeur pour la navigation imbriquée choice/then
+   (point 2). Détail + limite sticky assumée au point 2 ci-dessus.
+9. [x] Recherche sur la liste des traductions inutilisées (point 8).
+   Détail au point 8 ci-dessus. Pas étendu à `AssetsPanel`/`ChapterList`
+   (pas demandé, pas le même problème d'échelle aujourd'hui).
+
+Lint clean sur les 3 fichiers touchés (`TimelineEditor.vue`,
+`ChoiceEntryForm.vue`, `I18nBucketEditor.vue`).
+
+**Backlog restant, hors périmètre choisi cette fois :**
 10. Rendre les états vides d'écran entier (Traductions sans langue
     sélectionnée, Groupes avec peu de contenu) moins vides — probablement
     en resserrant la mise en page plutôt qu'en ajoutant du contenu factice.
+    Pas demandé lors de ce chantier, reste en attente.
 
 ## Ce que je n'ai pas encore vérifié
 

@@ -53,6 +53,7 @@
     <q-expansion-item
       v-for="(option, i) in entry.options"
       :key="i"
+      v-model="expandedOptions[i]"
       class="option-card"
       :label="`Option ${i + 1}${option.text ? ' — ' + option.text : ''}`"
     >
@@ -96,7 +97,7 @@
               Ce qui se joue immédiatement après ce choix (ex: la réponse du contact) — tous les
               types d'entrée sont disponibles ici, comme dans la timeline principale.
             </p>
-            <TimelineEditor :entries="ensureThen(option)" />
+            <TimelineEditor :entries="ensureThen(option)" :breadcrumb="[...breadcrumb, optionSegment(option, i)]" />
           </q-tab-panel>
 
           <q-tab-panel name="effects" class="option-panel">
@@ -129,8 +130,27 @@ import EffectsBuilder from '@/editor/components/EffectsBuilder.vue'
 import TimelineEditor from '@/editor/components/TimelineEditor.vue'
 import FieldHelp from '@/editor/components/FieldHelp.vue'
 
-const props = defineProps({ entry: { type: Object, required: true } })
+// `breadcrumb` — see docs/ui-ux-audit.md point 2 / TimelineEditor.vue's own
+// prop of the same name. Forwarded here (not built by TimelineEditor
+// itself) because TimelineEditor only knows about the choice ENTRY, not
+// which option is being edited — this component owns that next segment.
+const props = defineProps({
+  entry: { type: Object, required: true },
+  breadcrumb: { type: Array, default: () => [] },
+})
 const { contactOptionsNoMe: contactOptions, threadOptions } = useContactOptions()
+
+// Controls each option's q-expansion-item (previously uncontrolled) so a
+// breadcrumb click can collapse it programmatically — see optionSegment()
+// below.
+const expandedOptions = reactive({})
+
+function optionSegment(option, i) {
+  return {
+    label: `Option ${i + 1}${option.text ? ' — ' + option.text : ''}`,
+    collapse: () => (expandedOptions[i] = false),
+  }
+}
 
 const target = computed(() => ({ mode: props.entry.thread ? 'thread' : 'contact' }))
 

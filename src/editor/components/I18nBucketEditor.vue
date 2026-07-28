@@ -35,11 +35,23 @@
 
     <template v-if="orphanKeys.length">
       <div class="section-label orphan-label">
-        Traductions inutilisées ({{ orphanKeys.length }})
+        Traductions inutilisées ({{ orphanSearch ? `${filteredOrphanKeys.length}/${orphanKeys.length}` : orphanKeys.length }})
         <FieldHelp text="Ces clés existent dans le dictionnaire mais ne correspondent plus à aucune phrase du contenu actuel — probablement du texte modifié ou supprimé depuis." />
       </div>
+      <q-input
+        dense
+        outlined
+        clearable
+        v-model="orphanSearch"
+        placeholder="Rechercher parmi les traductions inutilisées…"
+        class="orphan-search"
+      >
+        <template #prepend>
+          <q-icon name="search" size="18px" />
+        </template>
+      </q-input>
       <div class="rows">
-        <div v-for="frText in orphanKeys" :key="frText" class="row orphan-row">
+        <div v-for="frText in filteredOrphanKeys" :key="frText" class="row orphan-row">
           <div class="source" :title="frText">{{ frText }}</div>
           <div class="translation-readonly" :title="getValue(frText)">{{ getValue(frText) }}</div>
           <q-btn dense flat round icon="delete" size="sm" color="negative" @click="deleteKey(frText)">
@@ -52,7 +64,7 @@
 </template>
 
 <script setup>
-import { computed, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useStoryStore } from '@/engine/stores/story'
 import { extractTranslatableStrings } from '@/project/extractTranslatableStrings'
 import FieldHelp from '@/editor/components/FieldHelp.vue'
@@ -99,6 +111,16 @@ function deleteKey(frText) {
 const translatedCount = computed(() => strings.value.filter((s) => getValue(s)).length)
 
 const orphanKeys = computed(() => Object.keys(dict.value).filter((k) => !strings.value.includes(k)).sort())
+
+// Search over the orphan list only (docs/ui-ux-audit.md point 8) — the
+// main strings list above isn't the pain point, it's this one that grows
+// unbounded with no other way to navigate it (152 entries in the fixture).
+const orphanSearch = ref('')
+const filteredOrphanKeys = computed(() => {
+  const q = orphanSearch.value.trim().toLowerCase()
+  if (!q) return orphanKeys.value
+  return orphanKeys.value.filter((k) => k.toLowerCase().includes(q) || (getValue(k) || '').toLowerCase().includes(q))
+})
 </script>
 
 <style scoped>
@@ -203,6 +225,10 @@ const orphanKeys = computed(() => Object.keys(dict.value).filter((k) => !strings
   margin-top: var(--space-2);
   padding-top: var(--space-3);
   border-top: 1px solid var(--color-border);
+}
+
+.orphan-search {
+  margin-bottom: var(--space-1);
 }
 
 .orphan-row {

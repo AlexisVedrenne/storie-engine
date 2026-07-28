@@ -1,5 +1,12 @@
 <template>
   <div class="timeline-editor">
+    <div v-if="breadcrumb.length" class="breadcrumb-bar">
+      <template v-for="(seg, si) in breadcrumb" :key="si">
+        <span class="crumb" @click="seg.collapse">{{ seg.label }}</span>
+        <q-icon v-if="si < breadcrumb.length - 1" name="chevron_right" size="14px" class="crumb-sep" />
+      </template>
+    </div>
+
     <div v-for="(entry, i) in entries" :key="i" class="entry-card" :class="{ open: expanded[i] }">
       <div class="entry-header" @click="toggle(i)">
         <q-icon :name="expanded[i] ? 'expand_less' : 'expand_more'" size="18px" class="chevron" />
@@ -28,7 +35,11 @@
 
       <div v-if="expanded[i]" class="entry-body">
         <p class="entry-help">{{ helpFor(entry.type) }}</p>
-        <component :is="formFor(entry.type)" :entry="entry" />
+        <component
+          :is="formFor(entry.type)"
+          :entry="entry"
+          v-bind="entry.type === 'choice' ? { breadcrumb: [...breadcrumb, choiceSegment(entry, i)] } : {}"
+        />
         <div class="section-label">
           Condition d'affichage (optionnel)
           <FieldHelp text="N'affiche cette entrée que si toutes les conditions sont vraies. Rien d'ajouté = toujours affichée." />
@@ -86,7 +97,19 @@ import TimeskipEntryForm from '@/editor/components/entries/TimeskipEntryForm.vue
 // actual reactive array (chapter.timeline, or an option's `then`), never a
 // copy, so edits here are immediately visible to the live PhoneShell preview
 // reading the same story.project data (see docs/phase2-plan.md).
-const props = defineProps({ entries: { type: Array, required: true } })
+// `breadcrumb` — ancestry of {label, collapse} segments built by whichever
+// parent (a choice option's own TimelineEditor, ultimately) mounted THIS
+// instance nested inside its "Juste après" tab. Plain prop-drilling, not
+// provide/inject (no precedent for that pattern in this codebase, and a
+// shared global "current path" would be ambiguous anyway — entries can be
+// expanded simultaneously, not an accordion, so there's no single current
+// path to share). Empty at the top level (mounted directly in
+// EditorPage.vue), so the chapter view is unaffected. See
+// docs/ui-ux-audit.md point 2.
+const props = defineProps({
+  entries: { type: Array, required: true },
+  breadcrumb: { type: Array, default: () => [] },
+})
 const story = useStoryStore()
 
 const FORM_BY_TYPE = {
@@ -191,6 +214,14 @@ function toggle(i) {
   expanded[i] = !expanded[i]
 }
 
+// Breadcrumb segment for a `choice` entry — `collapse` closes THIS
+// entry, which hides everything nested under it (its options' own "Juste
+// après" sub-timelines included) since the entry-body is gated on
+// `expanded[i]` above.
+function choiceSegment(entry, i) {
+  return { label: `Choix : ${entry.prompt || '(prompt vide)'}`, collapse: () => (expanded[i] = false) }
+}
+
 function addEntry(type) {
   props.entries.push(defaultEntry(type))
   expanded[props.entries.length - 1] = true
@@ -245,6 +276,31 @@ function summaryFor(entry) {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
+}
+
+.breadcrumb-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+}
+
+.crumb {
+  color: var(--color-accent);
+  cursor: pointer;
+}
+
+.crumb:hover {
+  text-decoration: underline;
+}
+
+.crumb-sep {
+  color: var(--color-text-muted);
 }
 
 .entry-card {
