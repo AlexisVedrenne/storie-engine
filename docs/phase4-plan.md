@@ -103,6 +103,31 @@ dans le fixture), sinon racine de `assets/`.
   contre un dossier scratch — 3 imports du même fichier → suffixes `-2`/`-3`
   corrects, pas d'écrasement.
 
+**Affinage post-4c (demandé par l'utilisateur)** : la grille plate ne
+suffisait pas — organisation par dossier/sous-dossier demandée, plus la
+possibilité de créer des dossiers à l'avance (avant l'import), plus
+préparer l'import pour d'autres types de fichiers (audio à venir).
+- `project:listAssetFiles` retourne désormais `{files, folders}` (les
+  dossiers, y compris vides, pas seulement les fichiers).
+- `src/editor/components/AssetTree.vue` (nouveau) — colonne de gauche
+  (auparavant un message vide en mode Assets), liste indentée par
+  profondeur, bouton « Nouveau dossier » (`project:createAssetFolder`,
+  nouveau handler).
+- `AssetsPanel.vue` (grille) filtré par dossier sélectionné (état levé dans
+  `EditorPage.vue`, `selectedAssetFolder`, même pattern que les autres
+  onglets) + fil d'ariane, rendu par catégorie (image/audio/autre — icône +
+  `<audio controls>` pour l'audio, icône générique sinon).
+- `project:importAsset` accepte un `accept: 'any'` (médias + « tous les
+  fichiers » dans la boîte de dialogue) pour l'import général de l'onglet
+  Assets — les imports typés d'`AssetField.vue` (avatar, image de post...)
+  restent images uniquement.
+- `src/editor/composables/useAssetLibrary.js` (nouveau) — cache partagé
+  files/folders entre `AssetTree` et `AssetsPanel` (ni l'un ni l'autre n'a
+  sa propre copie qui pourrait devenir périmée).
+- **Testé en Node standalone** : dossiers ancêtres toujours présents,
+  dossiers vides survivent au listing, traversée de chemin rejetée à la
+  création de dossier.
+
 ## Feuille de route restante (Phase 4)
 
 - Édition des dictionnaires i18n dans l'UI.
