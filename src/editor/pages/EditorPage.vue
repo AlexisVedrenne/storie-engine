@@ -13,11 +13,11 @@
         :options="[
           { label: 'Chapitres', value: 'chapters' },
           { label: 'Contacts', value: 'contacts' },
-          { label: 'Threads', value: 'threads' },
+          { label: 'Groupes', value: 'threads' },
           { label: 'Jeu', value: 'game' },
-          { label: 'Assets', value: 'assets' },
+          { label: 'Ressources', value: 'assets' },
           { label: 'Traductions', value: 'i18n' },
-          { label: 'Seed', value: 'seed' },
+          { label: 'Contenu initial', value: 'seed' },
         ]"
       />
 

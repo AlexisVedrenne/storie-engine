@@ -1,6 +1,6 @@
 <template>
   <div class="seed-list">
-    <div class="pane-label">Contenu seed</div>
+    <div class="pane-label">Contenu initial</div>
 
     <div
       v-for="bucket in buckets"

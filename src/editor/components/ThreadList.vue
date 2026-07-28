@@ -1,6 +1,6 @@
 <template>
   <div class="thread-list">
-    <div class="pane-label">Threads (groupes)</div>
+    <div class="pane-label">Groupes</div>
 
     <div
       v-for="(thread, i) in threads"

@@ -2,7 +2,7 @@
   <div class="assets-panel">
     <div class="panel toolbar">
       <div class="breadcrumb">
-        <span class="section-label">Assets</span>
+        <span class="section-label">Ressources</span>
         <span class="path mono">{{ folder ? `assets/${folder}` : 'assets/' }}</span>
         <span class="count">{{ visibleFolders.length }} dossier(s), {{ visibleFiles.length }} fichier(s), {{ orphanCount }} orphelin(s) au total</span>
       </div>
