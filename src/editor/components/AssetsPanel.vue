@@ -24,7 +24,7 @@
           <q-icon :name="item.category === 'audio' ? 'audiotrack' : 'insert_drive_file'" size="32px" />
           <audio v-if="item.category === 'audio'" controls preload="none" :src="resolveAssetUrl(item.path)" class="audio-control" />
         </div>
-        <div class="asset-name" :title="item.path">{{ item.name }}</div>
+        <div class="asset-name" :title="item.path">{{ folder ? item.name : item.path }}</div>
         <div class="asset-footer">
           <span class="badge" :class="item.used ? 'badge-used' : 'badge-orphan'">
             {{ item.used ? 'Utilisé' : 'Orphelin' }}
@@ -91,8 +91,15 @@ const allItems = computed(() => {
 
 const orphanCount = computed(() => allItems.value.filter((i) => !i.used).length)
 
+// Root ('') shows every file recursively — in practice almost nothing sits
+// directly at assets/ root (everything's organized into subfolders), so a
+// "direct children only" root view would look empty even when the project
+// has plenty of assets. Any specific subfolder still shows just its own
+// direct children, standard file-browser behavior once you've drilled in.
 const visibleItems = computed(() =>
-  allItems.value.filter((item) => dirnameOf(item.path) === props.folder).sort((a, b) => a.name.localeCompare(b.name)),
+  allItems.value
+    .filter((item) => (props.folder === '' ? true : dirnameOf(item.path) === props.folder))
+    .sort((a, b) => a.path.localeCompare(b.path)),
 )
 
 async function importFile() {
