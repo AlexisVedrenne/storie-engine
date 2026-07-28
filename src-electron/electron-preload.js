@@ -47,6 +47,8 @@ contextBridge.exposeInMainWorld("storieAPI", {
   saveContacts: (payload) => ipcRenderer.invoke("project:saveContacts", payload),
   saveThreads: (payload) => ipcRenderer.invoke("project:saveThreads", payload),
   saveGame: (payload) => ipcRenderer.invoke("project:saveGame", payload),
+  saveI18nBucket: (payload) => ipcRenderer.invoke("project:saveI18nBucket", payload),
+  createLocale: (payload) => ipcRenderer.invoke("project:createLocale", payload),
   pickAsset: (payload) => ipcRenderer.invoke("project:pickAsset", payload),
   importAsset: (payload) => ipcRenderer.invoke("project:importAsset", payload),
   listAssetFiles: (payload) => ipcRenderer.invoke("project:listAssetFiles", payload),

@@ -62,3 +62,8 @@ export function serializeThreads(threads) {
 export function serializeGame(game) {
   return `export default ${toJsLiteral(game)};\n`;
 }
+
+// i18n/<locale>/<bucket>.js — flat {frenchText: translatedText} dict.
+export function serializeI18nBucket(dict) {
+  return `export default ${toJsLiteral(dict)};\n`;
+}

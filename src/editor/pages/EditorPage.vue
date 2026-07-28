@@ -16,6 +16,7 @@
           { label: 'Threads', value: 'threads' },
           { label: 'Jeu', value: 'game' },
           { label: 'Assets', value: 'assets' },
+          { label: 'Traductions', value: 'i18n' },
         ]"
       />
 
@@ -86,6 +87,7 @@
             <ThreadList v-else-if="viewMode === 'threads'" v-model="selectedThreadIndex" />
             <div v-else-if="viewMode === 'game'" class="empty-state">Le titre du jeu est un champ unique — pas de liste.</div>
             <AssetTree v-else-if="viewMode === 'assets'" v-model="selectedAssetFolder" />
+            <LocaleList v-else-if="viewMode === 'i18n'" v-model="selectedLocale" />
           </div>
         </template>
 
@@ -131,6 +133,11 @@
                 <GameForm v-else-if="viewMode === 'game'" :game="story.project.gameConfig" />
 
                 <AssetsPanel v-else-if="viewMode === 'assets'" v-model:folder="selectedAssetFolder" />
+
+                <template v-else-if="viewMode === 'i18n'">
+                  <I18nBucketEditor v-if="selectedLocale" :locale="selectedLocale" v-model:bucket="selectedBucket" />
+                  <div v-else class="empty-state">Sélectionne une langue à gauche.</div>
+                </template>
               </div>
             </template>
 
@@ -151,7 +158,7 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { Dialog, Notify } from 'quasar'
 import { useStoryStore } from '@/engine/stores/story'
-import { serializeChapter, serializeContacts, serializeThreads, serializeGame } from '@/project/serializeChapter'
+import { serializeChapter, serializeContacts, serializeThreads, serializeGame, serializeI18nBucket } from '@/project/serializeChapter'
 import { validateProject, collectAssetPaths } from '@/project/validateProject'
 import PhoneShell from '@/components/phone/PhoneShell.vue'
 import ChapterList from '@/editor/components/ChapterList.vue'
@@ -165,6 +172,8 @@ import ThreadForm from '@/editor/components/ThreadForm.vue'
 import GameForm from '@/editor/components/GameForm.vue'
 import AssetsPanel from '@/editor/components/AssetsPanel.vue'
 import AssetTree from '@/editor/components/AssetTree.vue'
+import LocaleList from '@/editor/components/LocaleList.vue'
+import I18nBucketEditor from '@/editor/components/I18nBucketEditor.vue'
 
 const AUTOSAVE_KEY = 'storie-engine-autosave'
 const SPLIT_OUTER_KEY = 'storie-engine-split-outer'
@@ -195,6 +204,8 @@ const selectedThread = computed(() => story.project?.threads?.[selectedThreadInd
 // pattern as the selection refs above, shared between AssetTree (left pane)
 // and AssetsPanel (middle pane, filters its grid to this folder).
 const selectedAssetFolder = ref('')
+const selectedLocale = ref('')
+const selectedBucket = ref('common')
 
 // The object currently watched for the dirty flag/autosave — a single
 // chapter for 'chapters' mode, or the whole array/object for the other
@@ -213,6 +224,8 @@ const activeResource = computed(() => {
       // Assets tab has no dirty/save flow — imports/deletes are immediate
       // IPC side effects (see AssetsPanel.vue), not a buffered edit.
       return null
+    case 'i18n':
+      return story.project?.i18n?.[selectedLocale.value]?.[selectedBucket.value] ?? null
     default:
       return null
   }
@@ -249,11 +262,14 @@ function watchActiveResource() {
     { deep: true },
   )
 }
-// Only re-arm on viewMode/selectedIndex change, NOT on
-// selectedContactIndex/selectedThreadIndex — those pick which item the form
-// *displays* within the same already-watched array, so re-arming on them
-// would wrongly reset `dirty` just from selecting a different row.
-watch([viewMode, selectedIndex], () => {
+// Re-arm on viewMode/selectedIndex/selectedLocale/selectedBucket change, NOT
+// on selectedContactIndex/selectedThreadIndex — those pick which item the
+// form *displays* within the same already-watched array, so re-arming on
+// them would wrongly reset `dirty` just from selecting a different row.
+// selectedLocale/selectedBucket are different: like selectedIndex, they
+// change WHICH object is watched (a different dict entirely per
+// locale+bucket), not just which row is shown within the same object.
+watch([viewMode, selectedIndex, selectedLocale, selectedBucket], () => {
   dirty.value = false
   clearTimeout(debounceTimer)
   watchActiveResource()
@@ -284,6 +300,14 @@ async function save() {
       await window.storieAPI.saveGame({
         rootPath: story.project.rootPath,
         source: serializeGame(story.project.gameConfig),
+      })
+    } else if (viewMode.value === 'i18n') {
+      if (!selectedLocale.value) return
+      await window.storieAPI.saveI18nBucket({
+        rootPath: story.project.rootPath,
+        locale: selectedLocale.value,
+        bucket: selectedBucket.value,
+        source: serializeI18nBucket(story.project.i18n[selectedLocale.value][selectedBucket.value] || {}),
       })
     }
     dirty.value = false

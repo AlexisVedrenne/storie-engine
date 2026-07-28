@@ -14,7 +14,13 @@ import estreePlugin from "prettier/plugins/estree";
 // Pure, dependency-free (no Vue/Electron/browser API) — safe to reuse
 // straight from the main process for scaffolding a new project's initial
 // files, same as the renderer reuses it for saving edits.
-import { serializeChapter, serializeContacts, serializeThreads, serializeGame } from "../../src/project/serializeChapter.js";
+import {
+  serializeChapter,
+  serializeContacts,
+  serializeThreads,
+  serializeGame,
+  serializeI18nBucket,
+} from "../../src/project/serializeChapter.js";
 
 // Read by electron-main.js's `storie-asset://` protocol handler so it knows
 // which project's assets/ folder to resolve relative paths against.
@@ -251,6 +257,31 @@ export function registerProjectHandlers(mainWindow) {
   ipcMain.handle("project:saveGame", async (_evt, { rootPath, source }) => {
     fs.writeFileSync(path.join(rootPath, "game.js"), await formatJs(source), "utf-8");
     return true;
+  });
+
+  ipcMain.handle("project:saveI18nBucket", async (_evt, { rootPath, locale, bucket, source }) => {
+    const localeDir = path.join(rootPath, "i18n", locale);
+    fs.mkdirSync(localeDir, { recursive: true });
+    fs.writeFileSync(path.join(localeDir, `${bucket}.js`), await formatJs(source), "utf-8");
+    return true;
+  });
+
+  // Locale codes are folder names, not slugify()'d ids — BCP-47 casing
+  // (en-US, not en-us) is meaningful convention here, so this only rejects
+  // path-unsafe characters rather than lowercasing/hyphenating like
+  // slugify() does for chapter ids.
+  ipcMain.handle("project:createLocale", async (_evt, { rootPath, locale }) => {
+    const trimmed = String(locale).trim();
+    if (!trimmed || !/^[A-Za-z0-9_-]+$/.test(trimmed)) {
+      throw new Error("Code de langue invalide (lettres, chiffres, - et _ uniquement).");
+    }
+    const localeDir = path.join(rootPath, "i18n", trimmed);
+    fs.mkdirSync(localeDir, { recursive: true });
+    const commonPath = path.join(localeDir, "common.js");
+    if (!fs.existsSync(commonPath)) {
+      fs.writeFileSync(commonPath, await formatJs(serializeI18nBucket({})), "utf-8");
+    }
+    return trimmed;
   });
 
   // Picks a PARENT folder to create the new project's own folder inside —
