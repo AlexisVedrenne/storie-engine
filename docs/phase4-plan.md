@@ -1,4 +1,4 @@
-# Storie Engine — contacts/threads/game (4a) + validation (4b) + assets (4c)
+# Storie Engine — contacts/threads/game (4a) + validation (4b) + assets (4c) + i18n (4d)
 
 ## Statut : implémentées, en attente de vérification manuelle Electron (voir plus bas)
 
@@ -128,9 +128,34 @@ préparer l'import pour d'autres types de fichiers (audio à venir).
   dossiers vides survivent au listing, traversée de chemin rejetée à la
   création de dossier.
 
+**Correctif de navigation post-affinage** : la grille (`AssetsPanel.vue`) ne
+montrait que les fichiers directs du dossier sélectionné — à la racine
+`assets/` (où presque rien ne vit directement, tout est dans des
+sous-dossiers), la vue paraissait vide. Après un premier essai raté (rendre
+la racine récursive), la vraie demande était un explorateur classique dans
+la grille elle-même : les sous-dossiers apparaissent en tuiles cliquables
+en premier (avec une tuile `..` pour remonter), les fichiers du dossier
+courant en dessous. `AssetsPanel.vue` est passé de `:folder` (prop) à
+`v-model:folder`, pour que cliquer une tuile-dossier dans la grille mette à
+jour le même état que l'arbre de gauche.
+
+## Phase 4d — Édition des dictionnaires i18n
+
+Décision actée : éditeur **intelligent**, pas une liste clé/valeur brute —
+extrait automatiquement chaque phrase française réellement utilisée par
+bucket (chapitre, ou `common`), affiche un badge Traduit/Manquant, plus
+création de nouvelle langue depuis l'UI.
+
+- `src/project/extractTranslatableStrings.js` (nouveau, pur) — calque exactement les points d'appel réels de `fill()`/`seedFill()`/`translateStory()` dans `story.js`, pas « ce qui devrait logiquement être traduit » : par exemple les commentaires de post/reel *en direct* (pas seed) ne sont **pas** traduits par le moteur aujourd'hui, donc l'extracteur les exclut aussi, alors que les commentaires seed le sont.
+- `src-electron/ipc/project.js` — `project:saveI18nBucket` (mirroring `saveContacts`) + `project:createLocale` (crée `i18n/<code>/common.js` vide ; le code de langue garde sa casse BCP-47 telle quelle, pas de `slugify()`).
+- `src/editor/components/LocaleList.vue` (nouveau, 6ème onglet « Traductions », colonne gauche) — liste des langues avec un badge de progression (X/Y traduits, calculé une fois via l'extracteur et partagé entre toutes les lignes) + « Nouvelle langue ».
+- `src/editor/components/I18nBucketEditor.vue` (nouveau, colonne milieu) — sélecteur de bucket (Commun + un par chapitre), une ligne par phrase extraite avec traduction éditable + badge, section « Traductions inutilisées » (clés du dictionnaire qui ne correspondent plus à rien, suppression uniquement — même esprit que les assets orphelins).
+- `EditorPage.vue` — `selectedLocale`/`selectedBucket` **inclus** dans la liste de réarmement dirty/autosave (contrairement à `selectedContactIndex`/`selectedThreadIndex`) : ici l'objet observé change réellement d'identité à chaque changement de langue/bucket (comme `selectedChapter` par chapitre), alors que pour contacts/threads c'est toujours le même tableau entier qui est observé.
+- **Vérifié contre le fixture réel** : `extractTranslatableStrings` recoupé avec les traductions `en-US` déjà écrites à la main — les comptes correspondent, et l'extraction a même révélé deux problèmes préexistants dans le fixture : un espace de fin manquant dans une clé du dictionnaire (une option de choix ne se traduit donc jamais silencieusement) et ~150 entrées orphelines dans `common.js` (reste d'un seed plus riche dont le fixture a été réduit).
+
 ## Feuille de route restante (Phase 4)
 
-- Édition des dictionnaires i18n dans l'UI.
+Phase 4 est essentiellement terminée. Reste, hors scope des demandes explicites jusqu'ici :
 - Migration opportuniste des 10 formulaires d'entrée vers `useContactOptions()`.
 - Icône d'app personnalisée pour le build.
-- (Optionnel, hors scope) correctif du remount `PhoneShell` sur le bouton « Aperçu seul ».
+- (Optionnel) correctif du remount `PhoneShell` sur le bouton « Aperçu seul ».
