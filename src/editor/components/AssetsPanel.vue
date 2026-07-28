@@ -1,7 +1,11 @@
 <template>
   <div class="assets-panel">
     <div class="panel toolbar">
-      <div class="section-label">Assets ({{ items.length }} fichier(s), {{ orphanCount }} orphelin(s))</div>
+      <div class="breadcrumb">
+        <span class="section-label">Assets</span>
+        <span class="path mono">{{ folder ? `assets/${folder}` : 'assets/' }}</span>
+        <span class="count">{{ visibleItems.length }} fichier(s) ici, {{ orphanCount }} orphelin(s) au total</span>
+      </div>
       <div class="spacer" />
       <q-btn dense flat no-caps icon="upload" label="Importer un fichier" @click="importFile" />
       <q-btn dense flat round icon="refresh" @click="refresh">
@@ -11,12 +15,16 @@
 
     <div v-if="error" class="error-text">{{ error }}</div>
 
-    <div v-if="!items.length" class="empty-state">Aucun fichier dans assets/.</div>
+    <div v-if="!visibleItems.length" class="empty-state">Aucun fichier dans ce dossier.</div>
 
     <div v-else class="grid">
-      <div v-for="item in items" :key="item.path" class="asset-card">
-        <img :src="resolveAssetUrl(item.path)" class="thumb" />
-        <div class="asset-path" :title="item.path">{{ item.path }}</div>
+      <div v-for="item in visibleItems" :key="item.path" class="asset-card">
+        <img v-if="item.category === 'image'" :src="resolveAssetUrl(item.path)" class="thumb" />
+        <div v-else class="thumb thumb-placeholder">
+          <q-icon :name="item.category === 'audio' ? 'audiotrack' : 'insert_drive_file'" size="32px" />
+          <audio v-if="item.category === 'audio'" controls preload="none" :src="resolveAssetUrl(item.path)" class="audio-control" />
+        </div>
+        <div class="asset-name" :title="item.path">{{ item.name }}</div>
         <div class="asset-footer">
           <span class="badge" :class="item.used ? 'badge-used' : 'badge-orphan'">
             {{ item.used ? 'Utilisé' : 'Orphelin' }}
@@ -45,31 +53,56 @@ import { Dialog, Notify } from 'quasar'
 import { useStoryStore } from '@/engine/stores/story'
 import { resolveAssetUrl } from '@/engine/assets'
 import { collectAssetPaths } from '@/project/validateProject'
+import { useAssetLibrary } from '@/editor/composables/useAssetLibrary'
+
+const props = defineProps({ folder: { type: String, default: '' } })
 
 const story = useStoryStore()
-const items = ref([])
+const { files, refresh } = useAssetLibrary()
 const error = ref('')
-const orphanCount = computed(() => items.value.filter((i) => !i.used).length)
 
-async function refresh() {
-  error.value = ''
-  try {
-    const files = await window.storieAPI.listAssetFiles({
-      rootPath: story.project.rootPath,
-      assetsRoot: story.project.assetsRoot,
-    })
-    const used = new Set(collectAssetPaths(story.project).map((a) => a.path))
-    items.value = files.map((path) => ({ path, used: used.has(path) })).sort((a, b) => a.path.localeCompare(b.path))
-  } catch (err) {
-    error.value = err.message || String(err)
-  }
+onMounted(() => {
+  if (!files.value.length) refresh()
+})
+
+const IMAGE_EXT = new Set(['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp'])
+const AUDIO_EXT = new Set(['mp3', 'wav', 'ogg', 'm4a', 'flac'])
+function categoryFor(filePath) {
+  const ext = filePath.split('.').pop().toLowerCase()
+  if (IMAGE_EXT.has(ext)) return 'image'
+  if (AUDIO_EXT.has(ext)) return 'audio'
+  return 'other'
 }
-onMounted(refresh)
+
+function dirnameOf(filePath) {
+  const i = filePath.lastIndexOf('/')
+  return i === -1 ? '' : filePath.slice(0, i)
+}
+
+const allItems = computed(() => {
+  const used = new Set(collectAssetPaths(story.project).map((a) => a.path))
+  return files.value.map((path) => ({
+    path,
+    name: path.split('/').pop(),
+    category: categoryFor(path),
+    used: used.has(path),
+  }))
+})
+
+const orphanCount = computed(() => allItems.value.filter((i) => !i.used).length)
+
+const visibleItems = computed(() =>
+  allItems.value.filter((item) => dirnameOf(item.path) === props.folder).sort((a, b) => a.name.localeCompare(b.name)),
+)
 
 async function importFile() {
   error.value = ''
   try {
-    const rel = await window.storieAPI.importAsset({ rootPath: story.project.rootPath, suggestedFolder: '' })
+    const rel = await window.storieAPI.importAsset({
+      rootPath: story.project.rootPath,
+      suggestedFolder: props.folder,
+      accept: 'any',
+    })
     if (rel) await refresh()
   } catch (err) {
     error.value = err.message || String(err)
@@ -89,7 +122,7 @@ function confirmDelete(item) {
         assetsRoot: story.project.assetsRoot,
         path: item.path,
       })
-      items.value = items.value.filter((i) => i.path !== item.path)
+      await refresh()
       Notify.create({ type: 'positive', message: 'Fichier supprimé.' })
     } catch (err) {
       Notify.create({ type: 'negative', message: err.message || String(err) })
@@ -111,6 +144,13 @@ function confirmDelete(item) {
   gap: var(--space-2);
 }
 
+.breadcrumb {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
 .spacer {
   flex: 1;
 }
@@ -120,6 +160,25 @@ function confirmDelete(item) {
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--color-text-muted);
+  flex-shrink: 0;
+}
+
+.path {
+  font-size: var(--text-sm);
+  color: var(--color-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.count {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+}
+
+.mono {
+  font-family: var(--font-mono);
 }
 
 .error-text {
@@ -158,7 +217,21 @@ function confirmDelete(item) {
   background: var(--color-bg);
 }
 
-.asset-path {
+.thumb-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  color: var(--color-text-muted);
+}
+
+.audio-control {
+  width: 100%;
+  height: 28px;
+}
+
+.asset-name {
   font-family: var(--font-mono);
   font-size: var(--text-xs);
   color: var(--color-text-muted);

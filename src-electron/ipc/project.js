@@ -321,11 +321,24 @@ export function registerProjectHandlers(mainWindow) {
   // is the actual "import" path: pick a file from anywhere on disk, copy it
   // into the project's assets/ (optionally under a suggested subfolder,
   // e.g. "images/<contact-id>" — see AssetField.vue), collision-safe.
-  ipcMain.handle("project:importAsset", async (_evt, { rootPath, suggestedFolder }) => {
+  ipcMain.handle("project:importAsset", async (_evt, { rootPath, suggestedFolder, accept }) => {
+    // 'images' (default, used by AssetField.vue's typed narrative fields —
+    // avatar/post image/etc.) keeps the original single-filter behavior.
+    // 'any' (used by the Assets tab's general import) offers a médias
+    // preset plus an explicit "all files" entry — the OS dialog lets the
+    // user switch between filter entries, so this isn't a hard restriction,
+    // just a convenient default ahead of future asset types (e.g. audio).
+    const filters =
+      accept === "any"
+        ? [
+            { name: "Médias", extensions: ["png", "jpg", "jpeg", "gif", "svg", "webp", "mp3", "wav", "ogg", "m4a"] },
+            { name: "Tous les fichiers", extensions: ["*"] },
+          ]
+        : [{ name: "Images", extensions: ["png", "jpg", "jpeg", "gif", "svg", "webp"] }];
     const result = await dialog.showOpenDialog(mainWindow, {
-      title: "Importer une image",
+      title: "Importer un fichier",
       properties: ["openFile"],
-      filters: [{ name: "Images", extensions: ["png", "jpg", "jpeg", "gif", "svg", "webp"] }],
+      filters,
     });
     if (result.canceled || !result.filePaths[0]) return null;
     const picked = result.filePaths[0];
@@ -347,23 +360,45 @@ export function registerProjectHandlers(mainWindow) {
     return path.relative(assetsRoot, destPath).replace(/\\/g, "/");
   });
 
-  // Recursive listing of every file under assets/ (not directories) as
-  // assets/-relative forward-slash paths — the "what actually exists on
-  // disk" side of the used/orphan comparison in the Assets tab
-  // (collectAssetPaths, src/project/validateProject.js, is the "used" side).
+  // Recursive listing of assets/ as assets/-relative forward-slash paths —
+  // files (the "what actually exists on disk" side of the used/orphan
+  // comparison in the Assets tab; collectAssetPaths in
+  // src/project/validateProject.js is the "used" side) AND folders (every
+  // directory encountered, pushed before recursing into it so ancestors are
+  // always present even when empty — needed for the folder tree, since a
+  // freshly-created empty folder has no file to imply its existence).
   ipcMain.handle("project:listAssetFiles", async (_evt, { rootPath, assetsRoot }) => {
     const root = path.join(rootPath, assetsRoot);
-    const out = [];
+    const files = [];
+    const folders = [];
     function walk(dir) {
       if (!fs.existsSync(dir)) return;
       for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
         const full = path.join(dir, entry.name);
-        if (entry.isDirectory()) walk(full);
-        else out.push(path.relative(root, full).replace(/\\/g, "/"));
+        const rel = path.relative(root, full).replace(/\\/g, "/");
+        if (entry.isDirectory()) {
+          folders.push(rel);
+          walk(full);
+        } else {
+          files.push(rel);
+        }
       }
     }
     walk(root);
-    return out;
+    return { files, folders };
+  });
+
+  // Lets the user create an (initially empty) subfolder ahead of importing
+  // anything into it — same anti-traversal validation as the other
+  // relative-path asset handlers.
+  ipcMain.handle("project:createAssetFolder", async (_evt, { rootPath, assetsRoot, folderPath }) => {
+    const root = path.join(rootPath, assetsRoot);
+    const rel = path.normalize(folderPath);
+    if (rel.startsWith("..") || path.isAbsolute(rel)) {
+      throw new Error("Chemin de dossier invalide.");
+    }
+    fs.mkdirSync(path.join(root, rel), { recursive: true });
+    return true;
   });
 
   // Same anti-traversal validation as pickAsset — only ever called on a

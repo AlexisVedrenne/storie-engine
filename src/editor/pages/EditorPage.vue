@@ -85,7 +85,7 @@
             <ContactList v-else-if="viewMode === 'contacts'" v-model="selectedContactIndex" />
             <ThreadList v-else-if="viewMode === 'threads'" v-model="selectedThreadIndex" />
             <div v-else-if="viewMode === 'game'" class="empty-state">Le titre du jeu est un champ unique — pas de liste.</div>
-            <div v-else class="empty-state">Tous les fichiers d'assets/ s'affichent à droite.</div>
+            <AssetTree v-else-if="viewMode === 'assets'" v-model="selectedAssetFolder" />
           </div>
         </template>
 
@@ -130,7 +130,7 @@
 
                 <GameForm v-else-if="viewMode === 'game'" :game="story.project.gameConfig" />
 
-                <AssetsPanel v-else-if="viewMode === 'assets'" />
+                <AssetsPanel v-else-if="viewMode === 'assets'" :folder="selectedAssetFolder" />
               </div>
             </template>
 
@@ -164,6 +164,7 @@ import ThreadList from '@/editor/components/ThreadList.vue'
 import ThreadForm from '@/editor/components/ThreadForm.vue'
 import GameForm from '@/editor/components/GameForm.vue'
 import AssetsPanel from '@/editor/components/AssetsPanel.vue'
+import AssetTree from '@/editor/components/AssetTree.vue'
 
 const AUTOSAVE_KEY = 'storie-engine-autosave'
 const SPLIT_OUTER_KEY = 'storie-engine-split-outer'
@@ -190,6 +191,10 @@ const selectedContactIndex = ref(0)
 const selectedContact = computed(() => story.project?.contacts?.[selectedContactIndex.value] || null)
 const selectedThreadIndex = ref(0)
 const selectedThread = computed(() => story.project?.threads?.[selectedThreadIndex.value] || null)
+// Selected folder path within assets/ ('' = root) — same lift-state-up
+// pattern as the selection refs above, shared between AssetTree (left pane)
+// and AssetsPanel (middle pane, filters its grid to this folder).
+const selectedAssetFolder = ref('')
 
 // The object currently watched for the dirty flag/autosave — a single
 // chapter for 'chapters' mode, or the whole array/object for the other
