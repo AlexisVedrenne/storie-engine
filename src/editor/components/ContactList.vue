@@ -12,7 +12,7 @@
       <div class="active-bar" />
       <div class="swatch" :style="{ background: contact.color || '#999999' }" />
       <div class="contact-info">
-        <div class="contact-name">{{ contact.name || contact.id }}</div>
+        <div class="contact-name" :title="contact.name || contact.id">{{ contact.name || contact.id }}</div>
         <div class="contact-id">{{ contact.id }}</div>
       </div>
       <div class="row-actions">
@@ -90,6 +90,7 @@ function confirmDelete(contact) {
       title: 'Suppression impossible',
       message: `« ${contact.name || contact.id} » est encore référencé :\n\n${refs.join('\n')}`,
       ok: true,
+      color: 'primary',
     })
     return
   }
@@ -98,6 +99,7 @@ function confirmDelete(contact) {
     message: `« ${contact.name || contact.id} » sera supprimé du disque. Cette action est irréversible.`,
     cancel: true,
     persistent: true,
+    color: 'negative',
   }).onOk(async () => {
     const idx = contacts.findIndex((c) => c.id === contact.id)
     contacts.splice(idx, 1)

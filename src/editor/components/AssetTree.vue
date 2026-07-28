@@ -20,7 +20,7 @@
       @click="emit('update:modelValue', folder.path)"
     >
       <q-icon name="folder" size="16px" class="folder-icon" />
-      <span class="folder-name">{{ folder.name }}</span>
+      <span class="folder-name" :title="folder.path">{{ folder.name }}</span>
       <div class="row-actions">
         <q-btn dense flat round icon="create_new_folder" size="sm" @click.stop="openNewFolderDialog(folder.path)">
           <q-tooltip>Nouveau sous-dossier ici</q-tooltip>

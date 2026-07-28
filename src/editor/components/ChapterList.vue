@@ -11,7 +11,7 @@
     >
       <div class="active-bar" />
       <div class="chapter-info">
-        <div class="chapter-title">{{ chapter.title || chapter.id }}</div>
+        <div class="chapter-title" :title="chapter.title || chapter.id">{{ chapter.title || chapter.id }}</div>
         <div class="chapter-id">{{ chapter.id }}</div>
       </div>
       <div class="row-actions">
@@ -101,6 +101,7 @@ function confirmDelete(chapter) {
     message: `« ${chapter.title || chapter.id} » sera supprimé du disque. Cette action est irréversible.`,
     cancel: true,
     persistent: true,
+    color: 'negative',
   }).onOk(async () => {
     const idx = chapters.findIndex((c) => c.id === chapter.id)
     await window.storieAPI.deleteChapter({

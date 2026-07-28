@@ -29,7 +29,7 @@
         <div v-for="(entry, i) in entries" :key="i" class="card" :class="{ open: expanded[i] }">
           <div class="card-header" @click="toggle(i)">
             <q-icon :name="expanded[i] ? 'expand_less' : 'expand_more'" size="18px" class="chevron" />
-            <span class="summary">{{ summaryFor(entry) }}</span>
+            <span class="summary" :title="summaryFor(entry)">{{ summaryFor(entry) }}</span>
             <div class="spacer" />
             <div class="row-actions">
               <q-btn dense flat round icon="arrow_upward" size="sm" :disable="i === 0" @click.stop="moveUp(i)">

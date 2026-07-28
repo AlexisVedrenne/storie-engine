@@ -5,6 +5,7 @@
   "private": true,
   "type": "module",
   "devDependencies": {
+    "@electron/packager": "^20.0.4",
     "electron": "^43.2.0"
   }
 }

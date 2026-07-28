@@ -3,7 +3,7 @@
     <div class="panel toolbar">
       <div class="breadcrumb">
         <span class="section-label">Ressources</span>
-        <span class="path mono">{{ folder ? `assets/${folder}` : 'assets/' }}</span>
+        <span class="path mono" :title="folder ? `assets/${folder}` : 'assets/'">{{ folder ? `assets/${folder}` : 'assets/' }}</span>
         <span class="count">{{ visibleFolders.length }} dossier(s), {{ visibleFiles.length }} fichier(s), {{ orphanCount }} orphelin(s) au total</span>
       </div>
       <div class="spacer" />
@@ -145,6 +145,7 @@ function confirmDelete(item) {
     message: `« ${item.path} » n'est référencé nulle part dans le projet. Il sera supprimé du disque. Cette action est irréversible.`,
     cancel: true,
     persistent: true,
+    color: 'negative',
   }).onOk(async () => {
     try {
       await window.storieAPI.deleteAsset({

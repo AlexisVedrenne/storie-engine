@@ -1,5 +1,16 @@
 // app global css
 
+// Actually load the two font families design-tokens.scss's --font-ui/
+// --font-mono name — without this the browser silently skips both and
+// falls back to the OS default sans/monospace (see docs/ui-ux-audit.md
+// point 1). Only the weights used anywhere in src/editor (400 body, 600/700
+// titles) — no need to ship the full variable-weight family.
+@import '@fontsource/inter/400.css';
+@import '@fontsource/inter/600.css';
+@import '@fontsource/inter/700.css';
+@import '@fontsource/fira-code/400.css';
+@import '@fontsource/fira-code/600.css';
+
 // Visible keyboard focus everywhere in the editor UI (docs/ui-ux-guidelines.md
 // §6) — an editor used all day should be fully navigable without a mouse.
 // Scoped to :focus-visible (not :focus) so mouse clicks don't show a ring,

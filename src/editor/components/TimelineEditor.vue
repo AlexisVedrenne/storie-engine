@@ -5,7 +5,7 @@
         <q-icon :name="expanded[i] ? 'expand_less' : 'expand_more'" size="18px" class="chevron" />
         <q-icon :name="iconFor(entry.type)" size="16px" class="type-icon" />
         <span class="type-badge">{{ entry.type }}</span>
-        <span class="summary">{{ summaryFor(entry) }}</span>
+        <span class="summary" :title="summaryFor(entry)">{{ summaryFor(entry) }}</span>
         <span v-if="entry.requires" class="requires-badge" title="Cette entrée a une condition d'affichage">
           <q-icon name="rule" size="12px" /> condition
         </span>

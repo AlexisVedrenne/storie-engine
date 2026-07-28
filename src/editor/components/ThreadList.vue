@@ -12,7 +12,7 @@
       <div class="active-bar" />
       <q-icon name="groups" size="16px" class="thread-icon" />
       <div class="thread-info">
-        <div class="thread-name">{{ thread.name || thread.id }}</div>
+        <div class="thread-name" :title="thread.name || thread.id">{{ thread.name || thread.id }}</div>
         <div class="thread-id">{{ thread.id }}</div>
       </div>
       <div class="row-actions">
@@ -76,6 +76,7 @@ function confirmDelete(thread) {
       title: 'Suppression impossible',
       message: `« ${thread.name || thread.id} » est encore référencé :\n\n${refs.join('\n')}`,
       ok: true,
+      color: 'primary',
     })
     return
   }
@@ -84,6 +85,7 @@ function confirmDelete(thread) {
     message: `« ${thread.name || thread.id} » sera supprimé du disque. Cette action est irréversible.`,
     cancel: true,
     persistent: true,
+    color: 'negative',
   }).onOk(async () => {
     const idx = threads.findIndex((t) => t.id === thread.id)
     threads.splice(idx, 1)

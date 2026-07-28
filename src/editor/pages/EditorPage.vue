@@ -25,13 +25,13 @@
         v-model="viewMode"
         class="view-toggle"
         :options="[
-          { label: 'Chapitres', value: 'chapters' },
-          { label: 'Contacts', value: 'contacts' },
-          { label: 'Groupes', value: 'threads' },
-          { label: 'Jeu', value: 'game' },
-          { label: 'Ressources', value: 'assets' },
-          { label: 'Traductions', value: 'i18n' },
-          { label: 'Contenu initial', value: 'seed' },
+          { label: 'Chapitres', value: 'chapters', attrs: { 'aria-label': 'Chapitres' } },
+          { label: 'Contacts', value: 'contacts', attrs: { 'aria-label': 'Contacts' } },
+          { label: 'Groupes', value: 'threads', attrs: { 'aria-label': 'Groupes' } },
+          { label: 'Jeu', value: 'game', attrs: { 'aria-label': 'Jeu' } },
+          { label: 'Ressources', value: 'assets', attrs: { 'aria-label': 'Ressources' } },
+          { label: 'Traductions', value: 'i18n', attrs: { 'aria-label': 'Traductions' } },
+          { label: 'Contenu initial', value: 'seed', attrs: { 'aria-label': 'Contenu initial' } },
         ]"
       />
 
@@ -444,13 +444,13 @@ async function computeValidation() {
 
 function showValidationDialog(errors, warnings) {
   if (!errors.length && !warnings.length) {
-    Dialog.create({ title: 'Validation du projet', message: 'Aucun problème détecté.', ok: true })
+    Dialog.create({ title: 'Validation du projet', message: 'Aucun problème détecté.', ok: true, color: 'primary' })
     return
   }
   const parts = []
   if (errors.length) parts.push(`ERREURS (${errors.length}) :\n${errors.join('\n')}`)
   if (warnings.length) parts.push(`AVERTISSEMENTS (${warnings.length}) :\n${warnings.join('\n')}`)
-  Dialog.create({ title: 'Validation du projet', message: parts.join('\n\n'), ok: true })
+  Dialog.create({ title: 'Validation du projet', message: parts.join('\n\n'), ok: true, color: 'primary' })
 }
 
 const validating = ref(false)
@@ -483,6 +483,7 @@ async function buildGame() {
           message: `${warnings.length} avertissement(s) détecté(s) :\n\n${warnings.join('\n')}\n\nLancer le build quand même ?`,
           cancel: true,
           persistent: true,
+          color: 'primary',
         })
           .onOk(() => resolve(true))
           .onCancel(() => resolve(false))
