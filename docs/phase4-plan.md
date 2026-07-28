@@ -74,6 +74,12 @@ rendu visuel reste à vérifier via `pnpm run dev:electron`.
 12. Cliquer « Valider le projet » sur le fixture propre → « Aucun problème détecté. ».
 13. Casser un `message.contact`, retirer un id de `chapterOrder`, renommer un fichier dans `assets/` sur disque → revalider, confirmer que les 3 problèmes remontent dans le même dialog avec les bons libellés.
 
+## Correctifs/ajouts post-4b (demandés par l'utilisateur après usage réel)
+
+- **Validation avant build** — `buildGame()` lance désormais la même validation que le bouton dédié avant de construire : erreurs dures → build annulé, dialog affiché ; avertissements seuls → dialog de confirmation (continuer quand même ?) ; projet propre → build direct sans friction. Logique partagée via `computeValidation()`/`showValidationDialog()` dans `EditorPage.vue`.
+- **Réouverture du dernier projet** — `rootPath` du dernier projet ouvert/créé stocké dans `localStorage` (`storie-engine-last-project`), réouvert silencieusement au lancement (`OpenProjectPage.vue`, `onMounted`). « Changer de projet » efface cette clé — une sortie volontaire n'est pas annulée par le lancement suivant.
+- **Bouton « Nouveau projet »** — dialog nom → `project:selectNewProjectLocation` (choisit le dossier parent) → `project:createProject` (nouveaux handlers IPC) crée `project.json` + `chapters/chapter1.js` + `contacts.js` (avec le contact `me` requis) + `threads.js`/`game.js` vides, en réutilisant `serializeChapter.js` (pur, sans dépendance Electron/navigateur — importable tel quel depuis le process principal, pas de duplication de logique de sérialisation). Scaffold vérifié en Node standalone (fichiers valides, `contacts.js` réimportable).
+
 ## Feuille de route restante (Phase 4)
 
 - Gestionnaire d'assets (import direct dans `assets/`, pas juste sélection de l'existant).
