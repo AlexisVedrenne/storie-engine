@@ -1,4 +1,4 @@
-# Storie Engine — édition visuelle contacts/threads/game (Phase 4a) + validation de projet (Phase 4b)
+# Storie Engine — contacts/threads/game (4a) + validation (4b) + assets (4c)
 
 ## Statut : implémentées, en attente de vérification manuelle Electron (voir plus bas)
 
@@ -80,10 +80,32 @@ rendu visuel reste à vérifier via `pnpm run dev:electron`.
 - **Réouverture du dernier projet** — `rootPath` du dernier projet ouvert/créé stocké dans `localStorage` (`storie-engine-last-project`), réouvert silencieusement au lancement (`OpenProjectPage.vue`, `onMounted`). « Changer de projet » efface cette clé — une sortie volontaire n'est pas annulée par le lancement suivant.
 - **Bouton « Nouveau projet »** — dialog nom → `project:selectNewProjectLocation` (choisit le dossier parent) → `project:createProject` (nouveaux handlers IPC) crée `project.json` + `chapters/chapter1.js` + `contacts.js` (avec le contact `me` requis) + `threads.js`/`game.js` vides, en réutilisant `serializeChapter.js` (pur, sans dépendance Electron/navigateur — importable tel quel depuis le process principal, pas de duplication de logique de sérialisation). Scaffold vérifié en Node standalone (fichiers valides, `contacts.js` réimportable).
 
+## Phase 4c — Gestionnaire d'assets
+
+Décisions actées : import-depuis-le-disque **et** onglet dédié (pas juste le
+fix minimal d'import) ; destination d'import pour un champ lié à un contact
+= `assets/images/<contact-id>/<fichier>` (suit la convention déjà visible
+dans le fixture), sinon racine de `assets/`.
+
+- `AssetField.vue` — nouveau bouton « Importer… » (à côté de « Parcourir… »,
+  qui reste pour sélectionner un fichier déjà présent dans `assets/`),
+  nouvelle prop `contactId` câblée aux 7 usages (`ContactForm` ×2, et
+  `entry.contact`/`entry.author`/`entry.from` selon le formulaire).
+- `src-electron/ipc/project.js` — 3 nouveaux handlers : `project:importAsset`
+  (dialog non restreint + copie collision-safe, `photo.png` → `photo-2.png`…),
+  `project:listAssetFiles` (scan récursif de `assets/`), `project:deleteAsset`
+  (même validation anti-traversal que `pickAsset`).
+- `src/editor/components/AssetsPanel.vue` (nouveau, 5ème onglet « Assets ») —
+  grille de vignettes, badge Utilisé/Orphelin (réutilise `collectAssetPaths()`
+  déjà construit pour la 4b), suppression des orphelins uniquement, bouton
+  « Importer un fichier » (racine, sans contexte contact) + rafraîchir.
+- **Testé en Node standalone** : logique de nommage collision-safe vérifiée
+  contre un dossier scratch — 3 imports du même fichier → suffixes `-2`/`-3`
+  corrects, pas d'écrasement.
+
 ## Feuille de route restante (Phase 4)
 
-- Gestionnaire d'assets (import direct dans `assets/`, pas juste sélection de l'existant).
 - Édition des dictionnaires i18n dans l'UI.
 - Migration opportuniste des 10 formulaires d'entrée vers `useContactOptions()`.
 - Icône d'app personnalisée pour le build.
-- (Optionnel, hors scope 4b) correctif du remount `PhoneShell` sur le bouton « Aperçu seul ».
+- (Optionnel, hors scope) correctif du remount `PhoneShell` sur le bouton « Aperçu seul ».
