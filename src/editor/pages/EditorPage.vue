@@ -175,7 +175,17 @@
         </template>
       </q-splitter>
 
-      <Teleport :to="focusPreview ? '#phone-slot-focus' : '#phone-slot-docked'">
+      <!-- defer (Vue 3.5+) — the target divs live inside the same render
+           tree as this Teleport (nested in q-splitter slots above), not
+           some pre-existing DOM node outside the component tree, so they
+           don't exist yet on the very first synchronous mount pass without
+           it. Without `defer`, this intermittently threw "Failed to locate
+           Teleport target"/"Invalid Teleport target: null" on first
+           navigation into the editor, which then corrupted later renders
+           (unrelated-looking "Cannot read properties of null
+           (reading 'emitsOptions')" crashes on subsequent clicks were a
+           downstream symptom of the same failed mount, not a separate bug). -->
+      <Teleport defer :to="focusPreview ? '#phone-slot-focus' : '#phone-slot-docked'">
         <PhoneShell />
       </Teleport>
     </div>
