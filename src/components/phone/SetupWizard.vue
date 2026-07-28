@@ -8,7 +8,7 @@
         <h1>Langue · Language</h1>
         <div class="language-list">
           <button
-            v-for="l in SUPPORTED_LOCALES"
+            v-for="l in story.availableLocales"
             :key="l.code"
             class="language-row"
             @click="chooseLocale(l.code)"
@@ -177,7 +177,6 @@
 import { ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useStoryStore } from '@/engine/stores/story'
-import { SUPPORTED_LOCALES } from '@/engine/i18n/locales'
 
 const story = useStoryStore()
 const { t } = useI18n()

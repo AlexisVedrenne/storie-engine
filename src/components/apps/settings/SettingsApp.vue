@@ -84,7 +84,7 @@
               <q-icon name="language" size="19px" color="#00bcd4" />
               <span class="row-label">{{ t('settings.language') }}</span>
               <select class="language-select" :value="story.activeLocale" @change="onLocaleChange">
-                <option v-for="l in SUPPORTED_LOCALES" :key="l.code" :value="l.code">{{ l.label }}</option>
+                <option v-for="l in story.availableLocales" :key="l.code" :value="l.code">{{ l.label }}</option>
               </select>
             </div>
           </div>
@@ -187,7 +187,6 @@ import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { usePhoneStore } from '@/engine/stores/phone'
 import { useStoryStore } from '@/engine/stores/story'
-import { SUPPORTED_LOCALES } from '@/engine/i18n/locales'
 import AppTitleBar from '@/components/phone/AppTitleBar.vue'
 import AppHeader from '@/components/phone/AppHeader.vue'
 import AppAvatar from '@/components/phone/AppAvatar.vue'

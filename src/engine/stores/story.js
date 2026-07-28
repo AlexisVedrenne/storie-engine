@@ -1,7 +1,7 @@
 import { defineStore } from "pinia";
 import { usePhoneStore } from "./phone";
 import { i18n, persistLocale } from "@/engine/i18n/instance";
-import { DEFAULT_LOCALE } from "@/engine/i18n/locales";
+import { DEFAULT_LOCALE, SUPPORTED_LOCALES } from "@/engine/i18n/locales";
 import { playSound, startLoop, stopSound } from "@/engine/utils/sound";
 
 // Phase 1: this store is project-agnostic — it holds no hardcoded chapters/
@@ -197,6 +197,20 @@ export const useStoryStore = defineStore("story", {
     myName: (state) => state.playerName || "Moi",
     myColor: (state) => state.playerColor || findContact(state.project, "me").color,
     activeLocale: (state) => state.locale || DEFAULT_LOCALE,
+
+    // Language picker options for the Setup wizard + Settings — the engine's
+    // built-in UI-chrome languages (SUPPORTED_LOCALES, which have real
+    // interface translations) plus any locale the currently open project
+    // has story content for (story.project.i18n keys), even one not (yet)
+    // in SUPPORTED_LOCALES — its narrative text still translates correctly
+    // via resolveStoryText's per-string fallback, only the interface itself
+    // (menus/buttons) stays in the fallback language for that case.
+    availableLocales: (state) => {
+      const extra = Object.keys(state.project?.i18n || {}).filter(
+        (code) => !SUPPORTED_LOCALES.some((l) => l.code === code),
+      );
+      return [...SUPPORTED_LOCALES, ...extra.map((code) => ({ code, label: code }))];
+    },
 
     // reads the currently loaded project's contact/thread lists — the
     // project-agnostic replacement for NTR's static `getContact`/`getThread`/
