@@ -70,17 +70,24 @@
     </div>
 
     <div class="panes">
-      <div v-if="focusPreview" class="pane preview-pane focus-mode">
-        <PhoneShell />
+      <!-- Both layouts stay permanently mounted (v-show, not v-if/v-else) —
+           only their CSS display toggles with focusPreview. A single
+           <PhoneShell/> lives outside both, Teleported into whichever
+           layout's slot is currently visible: v-if/v-else here would
+           unmount/remount PhoneShell on every "Aperçu seul" toggle (the
+           same bug already fixed once for viewMode tab switches — see the
+           note below — this is the other place it still existed). -->
+      <div v-show="focusPreview" class="pane preview-pane focus-mode">
+        <div id="phone-slot-focus"></div>
       </div>
 
-      <!-- Single splitter tree shared by all four view modes — only the
+      <!-- Single splitter tree shared by all view modes — only the
            list/form content inside switches with viewMode. PhoneShell stays
            mounted at the same template position across tab switches so it
-           never gets destroyed/recreated (it used to live in 4 separate
+           never gets destroyed/recreated (it used to live in separate
            branches, one per viewMode, which made Vue tear down and reboot
            the whole preview on every tab click). -->
-      <q-splitter v-else v-model="splitOuter" :limits="[12, 45]" class="full-splitter">
+      <q-splitter v-show="!focusPreview" v-model="splitOuter" :limits="[12, 45]" class="full-splitter">
         <template #before>
           <div class="pane chapters-pane">
             <ChapterList v-if="viewMode === 'chapters'" v-model="selectedIndex" @preview-from="previewFrom" />
@@ -147,12 +154,16 @@
 
             <template #after>
               <div class="pane preview-pane">
-                <PhoneShell />
+                <div id="phone-slot-docked"></div>
               </div>
             </template>
           </q-splitter>
         </template>
       </q-splitter>
+
+      <Teleport :to="focusPreview ? '#phone-slot-focus' : '#phone-slot-docked'">
+        <PhoneShell />
+      </Teleport>
     </div>
   </q-page>
 </template>
