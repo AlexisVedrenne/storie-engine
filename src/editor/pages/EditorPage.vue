@@ -1,5 +1,19 @@
 <template>
   <q-page class="editor-page">
+    <!-- Guards every child below (ChapterList/ContactList/.../GameForm) from
+         ever mounting with story.project === null — several of them read
+         story.project.<field> directly at setup() top level (not behind
+         optional chaining), so without this the page hard-crashes instead
+         of just showing nothing. Reachable with no project loaded via
+         dev-server HMR resetting the Pinia store while still routed to
+         /editor, or landing here directly (browser back/forward, a stale
+         URL) without going through OpenProjectPage's load flow first. -->
+    <div v-if="!story.project" class="editor-empty">
+      <q-spinner color="primary" size="32px" />
+      <p>Aucun projet chargé — redirection…</p>
+    </div>
+
+    <template v-else>
     <div class="topbar">
       <span class="project-name">{{ story.project?.manifest?.name || '(projet)' }}</span>
       <span v-if="dirty" class="dirty-dot" title="Modifications non enregistrées">●</span>
@@ -165,6 +179,7 @@
         <PhoneShell />
       </Teleport>
     </div>
+    </template>
   </q-page>
 </template>
 
@@ -210,6 +225,13 @@ const LAST_PROJECT_KEY = 'storie-engine-last-project'
 
 const router = useRouter()
 const story = useStoryStore()
+
+// See the template comment above the v-if="!story.project" guard — this
+// sends the user back to pick/reload a project instead of leaving them on
+// a permanently empty page.
+if (!story.project) {
+  router.replace({ name: 'open-project' })
+}
 
 // Which project-wide resource is being edited — chapters keep their existing
 // 3-pane layout, contacts/threads/game reuse the same list+form+preview
@@ -469,6 +491,17 @@ async function buildGame() {
   background: var(--color-bg);
   color: var(--color-text);
   font-family: var(--font-ui);
+}
+
+.editor-empty {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
 }
 
 .topbar {

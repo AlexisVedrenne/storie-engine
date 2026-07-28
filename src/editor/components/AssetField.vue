@@ -18,14 +18,24 @@
       </q-btn>
     </div>
     <div v-if="error" class="error-text">{{ error }}</div>
-    <img v-if="modelValue" :src="resolveAssetUrl(modelValue)" class="preview" />
+
+    <img v-if="category === 'image'" :src="resolveAssetUrl(modelValue)" class="preview" />
+    <div v-else-if="category === 'audio'" class="audio-preview">
+      <span class="audio-name" :title="modelValue">{{ modelValue }}</span>
+      <audio controls preload="none" :src="resolveAssetUrl(modelValue)" class="audio-control" />
+    </div>
+    <div v-else-if="modelValue" class="file-preview">
+      <q-icon name="insert_drive_file" size="18px" />
+      <span class="audio-name" :title="modelValue">{{ modelValue }}</span>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useStoryStore } from '@/engine/stores/story'
 import { resolveAssetUrl } from '@/engine/assets'
+import { categorizeAsset } from '@/editor/utils/assetCategory'
 
 const props = defineProps({
   modelValue: { type: String, default: '' },
@@ -38,6 +48,11 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue'])
 const story = useStoryStore()
 const error = ref('')
+
+// Shown-file preview branches by type (image thumbnail / playable audio /
+// generic file row) instead of always assuming an image — this field is
+// now also used for sound overrides (see GameForm.vue's Sons section).
+const category = computed(() => (props.modelValue ? categorizeAsset(props.modelValue) : ''))
 
 async function browse() {
   error.value = ''
@@ -98,5 +113,35 @@ async function importFile() {
   max-height: 120px;
   border-radius: var(--radius-md);
   object-fit: cover;
+}
+
+.audio-preview,
+.file-preview {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-muted);
+}
+
+.audio-preview {
+  flex-wrap: wrap;
+}
+
+.audio-name {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.audio-control {
+  width: 100%;
+  height: 32px;
 }
 </style>

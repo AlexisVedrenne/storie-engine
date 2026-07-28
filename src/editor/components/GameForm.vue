@@ -25,7 +25,11 @@
       </div>
       <q-input dense outlined clearable label="Couleur (hex)" placeholder="#4c8bf5" v-model="game.accentColor">
         <template #prepend>
-          <div class="swatch" :style="{ background: game.accentColor || 'transparent' }" />
+          <div class="swatch" :style="{ background: game.accentColor || 'transparent' }">
+            <q-popup-proxy cover transition-show="scale" transition-hide="scale">
+              <q-color v-model="game.accentColor" default-value="#4c8bf5" no-header no-footer />
+            </q-popup-proxy>
+          </div>
         </template>
       </q-input>
     </div>
@@ -107,6 +111,7 @@ const SOUND_KEYS = [
   height: 18px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--color-border);
+  cursor: pointer;
 }
 
 .sound-row + .sound-row {

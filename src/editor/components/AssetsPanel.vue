@@ -70,6 +70,7 @@ import { useStoryStore } from '@/engine/stores/story'
 import { resolveAssetUrl } from '@/engine/assets'
 import { collectAssetPaths } from '@/project/validateProject'
 import { useAssetLibrary } from '@/editor/composables/useAssetLibrary'
+import { categorizeAsset } from '@/editor/utils/assetCategory'
 
 // Real explorer behavior: this pane shows the CURRENT folder's direct
 // subfolders (click to descend) and direct files, plus a ".." tile to go
@@ -86,15 +87,6 @@ const error = ref('')
 onMounted(() => {
   if (!files.value.length && !folders.value.length) refresh()
 })
-
-const IMAGE_EXT = new Set(['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp'])
-const AUDIO_EXT = new Set(['mp3', 'wav', 'ogg', 'm4a', 'flac'])
-function categoryFor(filePath) {
-  const ext = filePath.split('.').pop().toLowerCase()
-  if (IMAGE_EXT.has(ext)) return 'image'
-  if (AUDIO_EXT.has(ext)) return 'audio'
-  return 'other'
-}
 
 function dirnameOf(itemPath) {
   const i = itemPath.lastIndexOf('/')
@@ -122,7 +114,7 @@ const allItems = computed(() => {
   return files.value.map((path) => ({
     path,
     name: path.split('/').pop(),
-    category: categoryFor(path),
+    category: categorizeAsset(path),
     used: used.has(path),
   }))
 })

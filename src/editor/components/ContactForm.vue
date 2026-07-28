@@ -8,7 +8,11 @@
       </div>
       <q-input dense outlined label="Couleur (hex)" placeholder="#4c8bf5" v-model="contact.color">
         <template #prepend>
-          <div class="swatch" :style="{ background: contact.color || 'transparent' }" />
+          <div class="swatch" :style="{ background: contact.color || 'transparent' }">
+            <q-popup-proxy cover transition-show="scale" transition-hide="scale">
+              <q-color v-model="contact.color" default-value="#4c8bf5" no-header no-footer />
+            </q-popup-proxy>
+          </div>
         </template>
       </q-input>
     </div>
@@ -98,5 +102,6 @@ defineProps({ contact: { type: Object, required: true } })
   height: 18px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--color-border);
+  cursor: pointer;
 }
 </style>
