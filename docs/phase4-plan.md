@@ -1,4 +1,4 @@
-# Storie Engine — contacts/threads/game (4a) + validation (4b) + assets (4c) + i18n (4d)
+# Storie Engine — contacts/threads/game (4a) + validation (4b) + assets (4c) + i18n (4d) + seed (4e)
 
 ## Statut : implémentées, en attente de vérification manuelle Electron (voir plus bas)
 
@@ -152,6 +152,43 @@ création de nouvelle langue depuis l'UI.
 - `src/editor/components/I18nBucketEditor.vue` (nouveau, colonne milieu) — sélecteur de bucket (Commun + un par chapitre), une ligne par phrase extraite avec traduction éditable + badge, section « Traductions inutilisées » (clés du dictionnaire qui ne correspondent plus à rien, suppression uniquement — même esprit que les assets orphelins).
 - `EditorPage.vue` — `selectedLocale`/`selectedBucket` **inclus** dans la liste de réarmement dirty/autosave (contrairement à `selectedContactIndex`/`selectedThreadIndex`) : ici l'objet observé change réellement d'identité à chaque changement de langue/bucket (comme `selectedChapter` par chapitre), alors que pour contacts/threads c'est toujours le même tableau entier qui est observé.
 - **Vérifié contre le fixture réel** : `extractTranslatableStrings` recoupé avec les traductions `en-US` déjà écrites à la main — les comptes correspondent, et l'extraction a même révélé deux problèmes préexistants dans le fixture : un espace de fin manquant dans une clé du dictionnaire (une option de choix ne se traduit donc jamais silencieusement) et ~150 entrées orphelines dans `common.js` (reste d'un seed plus riche dont le fixture a été réduit).
+
+**Correctif post-4d** : une langue créée dans l'éditeur (ex. `es-ES`)
+n'apparaissait pas dans le sélecteur de langue du téléphone (Wizard +
+Réglages) — deux systèmes i18n séparés existent : contenu narratif
+(`story.project.i18n`, par projet, ce que 4d édite) vs. interface du
+téléphone (`src/engine/i18n/locales.js`'s `SUPPORTED_LOCALES`, fixe,
+partagé par tous les projets, jamais édité par 4d). Ajout d'un getter
+`story.availableLocales` (union des deux) branché dans `SetupWizard.vue`/
+`SettingsApp.vue`. Décision actée avec l'utilisateur : pas d'éditeur de
+traduction d'interface par projet (aurait voulu dire retraduire toute
+l'interface pour chaque jeu — non-sens) — la traduction d'interface reste
+un chantier moteur séparé, partagé par mise à jour. En conséquence,
+« Nouvelle langue » (`LocaleList.vue`) est maintenant un choix contraint
+dans `SUPPORTED_LOCALES` (moins les langues déjà ajoutées au projet) plutôt
+qu'un code libre — garantit qu'une nouvelle langue de projet a toujours une
+interface correspondante. Pas d'exclusion de la langue source par défaut
+(la langue d'écriture des chapitres dépend de l'auteur, pas figée sur le
+français).
+
+Ajout complémentaire : détection de la langue système (`app.getLocale()`
+via un nouveau `project:getSystemLocale`, `src-electron/ipc/app.js`) pour
+masquer automatiquement du choix « Nouvelle langue » la langue
+probablement utilisée pour écrire les chapitres — heuristique best-effort,
+sans incidence si la détection échoue ou hors Electron.
+
+## Phase 4e — Édition du contenu seed (messages/dms/posts/reels/photos)
+
+Dernier morceau prévu depuis la Phase 3 (« éditer contacts.js/threads.js/
+game.js/seed/* dans l'UI »). 7ème onglet « Seed », calqué sur la forme de
+l'éditeur i18n (liste fixe à gauche + éditeur de bucket à droite) plutôt
+que sur celle de contacts/threads, car messages/dms sont des dictionnaires
+par conversation alors que posts/reels/photos sont des tableaux plats.
+
+- `src/editor/components/SeedBucketList.vue` — 5 lignes fixes (Messages/DM Insta/Publications/Reels/Galerie), non créables (contrairement à toutes les autres listes de l'éditeur — ces 5 buckets sont dictés par la forme de données du moteur, pas du contenu libre).
+- `src/editor/components/SeedBucketEditor.vue` — pour Messages/DM : sélecteur de conversation local (contact pour Messages, `useContactOptions()`'s `threadOptions` pour DM — 1ère vraie réutilisation hors `ThreadForm.vue`) puis liste de cartes ; pour Publications/Reels/Galerie : liste de cartes directement. Réutilise `AssetField.vue` (image/média) et **`CommentsListField.vue` tel quel** (déjà exactement la bonne forme depuis la Phase 2, aucune modification nécessaire).
+- `src-electron/ipc/project.js` — `project:saveSeedBucket` (nom de bucket vérifié contre une liste blanche).
+- **Testé en Node standalone** : `serializeSeedBucket` fait un aller-retour parfait (round-trip byte-for-byte) sur les deux formes (dict pour messages, tableau vide pour posts/photos) contre le fixture réel.
 
 ## Feuille de route restante (Phase 4)
 
