@@ -41,6 +41,10 @@
             Limité aux langues d'interface déjà supportées par le moteur — sinon les menus/réglages resteraient
             non traduits pour cette langue.
           </div>
+          <div v-if="systemLocaleLabel" class="dialog-hint">
+            « {{ systemLocaleLabel }} » masquée — langue système détectée de cette machine, probablement celle
+            utilisée pour écrire les chapitres.
+          </div>
           <q-select
             dense
             outlined
@@ -62,7 +66,7 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { Notify } from 'quasar'
 import { useStoryStore } from '@/engine/stores/story'
 import { extractTranslatableStrings } from '@/project/extractTranslatableStrings'
@@ -74,17 +78,40 @@ const story = useStoryStore()
 
 const locales = computed(() => Object.keys(story.project.i18n || {}).sort())
 
+// Best-effort guess at "the language the author writes chapters in": the
+// host OS's own UI language (Electron's app.getLocale(), via
+// project:getSystemLocale — see src-electron/ipc/app.js). Not exclude-by-
+// hardcoded-French anymore (an English-system author might genuinely want
+// to add fr-FR) — this is a per-machine heuristic instead, matched against
+// SUPPORTED_LOCALES by exact code first, then by language subtag (system
+// 'fr' matches catalog 'fr-FR'). Silently skipped (no exclusion) outside
+// Electron or if detection fails — it's a convenience default, not a rule
+// anything depends on.
+const systemLocaleCode = ref('')
+onMounted(async () => {
+  if (!window.storieAPI?.getSystemLocale) return
+  try {
+    const raw = await window.storieAPI.getSystemLocale()
+    const match = SUPPORTED_LOCALES.find((l) => l.code === raw || l.code.split('-')[0] === raw.split('-')[0])
+    systemLocaleCode.value = match?.code || ''
+  } catch {
+    // non-fatal — just no exclusion
+  }
+})
+const systemLocaleLabel = computed(() => SUPPORTED_LOCALES.find((l) => l.code === systemLocaleCode.value)?.label || '')
+
 // Constrained to the engine's known UI-chrome languages (SUPPORTED_LOCALES)
-// minus ones already added to this project — NOT excluding the source
-// language, since which language the chapters are actually written in
-// depends on the author (French isn't universally "the" source, just the
-// convention this engine's docs assume by default). No free-text code
-// entry: an arbitrary code would have no interface translation at all,
-// which is exactly the mismatch this constraint exists to avoid going
-// forward (pre-existing locales created before this constraint, if any,
-// are left as-is — see story.availableLocales' fallback for those).
+// minus ones already added to this project, minus the detected system
+// language (see above). No free-text code entry: an arbitrary code would
+// have no interface translation at all, which is exactly the mismatch this
+// constraint exists to avoid going forward (pre-existing locales created
+// before this constraint, if any, are left as-is — see
+// story.availableLocales' fallback for those).
 const addableLocales = computed(() =>
-  SUPPORTED_LOCALES.filter((l) => !locales.value.includes(l.code)).map((l) => ({ label: l.label, value: l.code })),
+  SUPPORTED_LOCALES.filter((l) => !locales.value.includes(l.code) && l.code !== systemLocaleCode.value).map((l) => ({
+    label: l.label,
+    value: l.code,
+  })),
 )
 
 // Computed once, shared across every locale row's progress badge — pure and
