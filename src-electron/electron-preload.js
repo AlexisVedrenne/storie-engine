@@ -37,6 +37,8 @@ contextBridge.exposeInMainWorld("quasarRuntime", quasarRuntime)
  */
 contextBridge.exposeInMainWorld("storieAPI", {
   selectProjectFolder: () => ipcRenderer.invoke("project:selectFolder"),
+  selectNewProjectLocation: () => ipcRenderer.invoke("project:selectNewProjectLocation"),
+  createProject: (payload) => ipcRenderer.invoke("project:createProject", payload),
   loadProject: (rootPath) => ipcRenderer.invoke("project:load", rootPath),
   saveChapter: (payload) => ipcRenderer.invoke("project:saveChapter", payload),
   createChapter: (payload) => ipcRenderer.invoke("project:createChapter", payload),

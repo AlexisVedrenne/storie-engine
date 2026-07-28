@@ -11,6 +11,10 @@ import { pathToFileURL } from "node:url";
 import * as prettier from "prettier/standalone";
 import babelPlugin from "prettier/plugins/babel";
 import estreePlugin from "prettier/plugins/estree";
+// Pure, dependency-free (no Vue/Electron/browser API) — safe to reuse
+// straight from the main process for scaffolding a new project's initial
+// files, same as the renderer reuses it for saving edits.
+import { serializeChapter, serializeContacts, serializeThreads, serializeGame } from "../../src/project/serializeChapter.js";
 
 // Read by electron-main.js's `storie-asset://` protocol handler so it knows
 // which project's assets/ folder to resolve relative paths against.
@@ -247,6 +251,49 @@ export function registerProjectHandlers(mainWindow) {
   ipcMain.handle("project:saveGame", async (_evt, { rootPath, source }) => {
     fs.writeFileSync(path.join(rootPath, "game.js"), await formatJs(source), "utf-8");
     return true;
+  });
+
+  // Picks a PARENT folder to create the new project's own folder inside —
+  // separate title/intent from project:selectFolder (which opens an
+  // existing project root directly).
+  ipcMain.handle("project:selectNewProjectLocation", async () => {
+    const result = await dialog.showOpenDialog(mainWindow, {
+      properties: ["openDirectory", "createDirectory"],
+      title: "Choisir où créer le projet",
+    });
+    return result.canceled ? null : result.filePaths[0];
+  });
+
+  // Scaffolds a minimal new project: project.json + one starter chapter +
+  // contacts.js (with the required 'me' contact, see myColor/findContact in
+  // engine/stores/story.js) + empty threads.js + game.js. Reuses the same
+  // serializers the editor uses for saving, so the on-disk format matches
+  // exactly what a hand-edited/editor-saved project would produce.
+  ipcMain.handle("project:createProject", async (_evt, { parentPath, name }) => {
+    const rootPath = path.join(parentPath, slugify(name));
+    if (fs.existsSync(rootPath)) {
+      throw new Error(`Le dossier "${slugify(name)}" existe déjà à cet endroit.`);
+    }
+    fs.mkdirSync(path.join(rootPath, "chapters"), { recursive: true });
+    fs.mkdirSync(path.join(rootPath, "assets"), { recursive: true });
+
+    writeManifest(rootPath, { name, entryChapterId: "chapter1", chapterOrder: ["chapter1"] });
+
+    const chapter = { id: "chapter1", title: "Chapitre 1", requires: null, timeline: [] };
+    fs.writeFileSync(
+      path.join(rootPath, "chapters", "chapter1.js"),
+      await formatJs(serializeChapter(chapter)),
+      "utf-8",
+    );
+    fs.writeFileSync(
+      path.join(rootPath, "contacts.js"),
+      await formatJs(serializeContacts([{ id: "me", name: "Moi", color: "#4c8bf5" }])),
+      "utf-8",
+    );
+    fs.writeFileSync(path.join(rootPath, "threads.js"), await formatJs(serializeThreads([])), "utf-8");
+    fs.writeFileSync(path.join(rootPath, "game.js"), await formatJs(serializeGame({ title: name })), "utf-8");
+
+    return rootPath;
   });
 
   // Opens a file picker rooted at the project's assets/ folder, returns a

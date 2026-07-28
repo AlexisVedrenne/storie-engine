@@ -164,6 +164,10 @@ const AUTOSAVE_KEY = 'storie-engine-autosave'
 const SPLIT_OUTER_KEY = 'storie-engine-split-outer'
 const SPLIT_INNER_KEY = 'storie-engine-split-inner'
 const AUTOSAVE_DEBOUNCE_MS = 1200
+// Shared with OpenProjectPage.vue (set on open/create) — "Changer de projet"
+// clears it so leaving a project is a deliberate exit, not something the
+// next launch silently undoes by reopening the same project.
+const LAST_PROJECT_KEY = 'storie-engine-last-project'
 
 const router = useRouter()
 const story = useStoryStore()
@@ -293,34 +297,47 @@ onMounted(() => window.addEventListener('keydown', onKeydown))
 onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
 
 function closeProject() {
+  localStorage.removeItem(LAST_PROJECT_KEY)
   story.loadProject(null)
   router.push({ name: 'open-project' })
+}
+
+// Shared by the "Valider le projet" button and the pre-build check below —
+// runs the pure scanner (validateProject.js) plus the asset-existence IPC
+// round trip (renderer has no fs access) and folds missing assets into
+// `errors`, same shape either caller needs.
+async function computeValidation() {
+  const { errors, warnings } = validateProject(story.project)
+  const assetRefs = collectAssetPaths(story.project)
+  const missing = await window.storieAPI.checkAssets({
+    rootPath: story.project.rootPath,
+    assetsRoot: story.project.assetsRoot,
+    paths: assetRefs.map((a) => a.path),
+  })
+  for (const missingPath of missing) {
+    const ref = assetRefs.find((a) => a.path === missingPath)
+    errors.push(`Fichier introuvable dans assets/ : "${missingPath}" (référencé par ${ref.labels.join(', ')})`)
+  }
+  return { errors, warnings }
+}
+
+function showValidationDialog(errors, warnings) {
+  if (!errors.length && !warnings.length) {
+    Dialog.create({ title: 'Validation du projet', message: 'Aucun problème détecté.', ok: true })
+    return
+  }
+  const parts = []
+  if (errors.length) parts.push(`ERREURS (${errors.length}) :\n${errors.join('\n')}`)
+  if (warnings.length) parts.push(`AVERTISSEMENTS (${warnings.length}) :\n${warnings.join('\n')}`)
+  Dialog.create({ title: 'Validation du projet', message: parts.join('\n\n'), ok: true })
 }
 
 const validating = ref(false)
 async function runValidation() {
   validating.value = true
   try {
-    const { errors, warnings } = validateProject(story.project)
-    const assetRefs = collectAssetPaths(story.project)
-    const missing = await window.storieAPI.checkAssets({
-      rootPath: story.project.rootPath,
-      assetsRoot: story.project.assetsRoot,
-      paths: assetRefs.map((a) => a.path),
-    })
-    for (const missingPath of missing) {
-      const ref = assetRefs.find((a) => a.path === missingPath)
-      errors.push(`Fichier introuvable dans assets/ : "${missingPath}" (référencé par ${ref.labels.join(', ')})`)
-    }
-
-    if (!errors.length && !warnings.length) {
-      Dialog.create({ title: 'Validation du projet', message: 'Aucun problème détecté.', ok: true })
-      return
-    }
-    const parts = []
-    if (errors.length) parts.push(`ERREURS (${errors.length}) :\n${errors.join('\n')}`)
-    if (warnings.length) parts.push(`AVERTISSEMENTS (${warnings.length}) :\n${warnings.join('\n')}`)
-    Dialog.create({ title: 'Validation du projet', message: parts.join('\n\n'), ok: true })
+    const { errors, warnings } = await computeValidation()
+    showValidationDialog(errors, warnings)
   } catch (err) {
     Notify.create({ type: 'negative', message: err.message || String(err) })
   } finally {
@@ -332,6 +349,26 @@ const building = ref(false)
 async function buildGame() {
   building.value = true
   try {
+    const { errors, warnings } = await computeValidation()
+    if (errors.length) {
+      showValidationDialog(errors, warnings)
+      Notify.create({ type: 'negative', message: 'Build annulé — corrige les erreurs de validation d\'abord.' })
+      return
+    }
+    if (warnings.length) {
+      const proceed = await new Promise((resolve) => {
+        Dialog.create({
+          title: 'Avertissements de validation',
+          message: `${warnings.length} avertissement(s) détecté(s) :\n\n${warnings.join('\n')}\n\nLancer le build quand même ?`,
+          cancel: true,
+          persistent: true,
+        })
+          .onOk(() => resolve(true))
+          .onCancel(() => resolve(false))
+      })
+      if (!proceed) return
+    }
+
     const outDir = await window.storieAPI.buildGame({ rootPath: story.project.rootPath })
     if (outDir) {
       Notify.create({ type: 'positive', message: `Jeu exporté dans ${outDir}`, timeout: 6000 })
