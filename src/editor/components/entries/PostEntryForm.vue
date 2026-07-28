@@ -21,13 +21,12 @@
 </template>
 
 <script setup>
-import { useStoryStore } from '@/engine/stores/story'
+import { useContactOptions } from '@/editor/composables/useContactOptions'
 import AssetField from '@/editor/components/AssetField.vue'
 import CommentsListField from '@/editor/components/CommentsListField.vue'
 
 defineProps({ entry: { type: Object, required: true } })
-const story = useStoryStore()
-const contactOptions = story.contactsList.map((c) => ({ label: c.name, value: c.id }))
+const { contactOptions } = useContactOptions()
 </script>
 
 <style scoped>

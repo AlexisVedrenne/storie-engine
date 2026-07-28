@@ -100,7 +100,7 @@
 
 <script setup>
 import { reactive } from 'vue'
-import { useStoryStore } from '@/engine/stores/story'
+import { useContactOptions } from '@/editor/composables/useContactOptions'
 import FieldHelp from '@/editor/components/FieldHelp.vue'
 import FlagNameField from '@/editor/components/FlagNameField.vue'
 
@@ -110,8 +110,6 @@ import FlagNameField from '@/editor/components/FlagNameField.vue'
 // round-trip watcher needed since nothing re-derives rows after mount.
 const props = defineProps({ modelValue: { type: Object, default: null } })
 const emit = defineEmits(['update:modelValue'])
-const story = useStoryStore()
-
 const FLAG_MODES = [
   { label: 'vrai / faux', value: 'bool' },
   { label: 'est exactement…', value: 'exact' },
@@ -120,7 +118,7 @@ const FLAG_MODES = [
   { label: 'entre… et…', value: 'range' },
 ]
 
-const contactOptions = story.contactsList.map((c) => ({ label: c.name, value: c.id }))
+const { contactOptions } = useContactOptions()
 
 function flagRowFrom(key, expected) {
   if (typeof expected === 'boolean') return reactive({ key, mode: 'bool', boolValue: expected, exactValue: 0, min: 0, max: 0 })
@@ -147,7 +145,7 @@ function removeFlagRow(i) {
   sync()
 }
 function addFollowingRow() {
-  followingRows.push(reactive({ contactId: contactOptions[0]?.value || '', expected: true }))
+  followingRows.push(reactive({ contactId: contactOptions.value[0]?.value || '', expected: true }))
 }
 function removeFollowingRow(i) {
   followingRows.splice(i, 1)

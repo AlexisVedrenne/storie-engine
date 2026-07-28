@@ -123,28 +123,21 @@
 
 <script setup>
 import { computed, reactive } from 'vue'
-import { useStoryStore } from '@/engine/stores/story'
+import { useContactOptions } from '@/editor/composables/useContactOptions'
 import RequiresBuilder from '@/editor/components/RequiresBuilder.vue'
 import EffectsBuilder from '@/editor/components/EffectsBuilder.vue'
 import TimelineEditor from '@/editor/components/TimelineEditor.vue'
 import FieldHelp from '@/editor/components/FieldHelp.vue'
 
 const props = defineProps({ entry: { type: Object, required: true } })
-const story = useStoryStore()
-
-const contactOptions = story.contactsList.filter((c) => c.id !== 'me').map((c) => ({ label: c.name, value: c.id }))
-const threadOptions = computed(() => {
-  const groups = (story.project?.threads || []).map((t) => ({ label: `${t.name} (groupe)`, value: t.id }))
-  const oneToOne = story.contactsList.filter((c) => c.id !== 'me').map((c) => ({ label: `${c.name} (1:1)`, value: c.id }))
-  return [...groups, ...oneToOne]
-})
+const { contactOptionsNoMe: contactOptions, threadOptions } = useContactOptions()
 
 const target = computed(() => ({ mode: props.entry.thread ? 'thread' : 'contact' }))
 
 function setMode(mode) {
   if (mode === 'contact') {
     props.entry.thread = undefined
-    if (!props.entry.contact) props.entry.contact = contactOptions[0]?.value
+    if (!props.entry.contact) props.entry.contact = contactOptions.value[0]?.value
   } else {
     props.entry.contact = undefined
     if (!props.entry.thread) props.entry.thread = threadOptions.value[0]?.value

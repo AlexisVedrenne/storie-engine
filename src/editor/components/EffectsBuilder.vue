@@ -182,7 +182,7 @@
 
 <script setup>
 import { reactive, ref } from 'vue'
-import { useStoryStore } from '@/engine/stores/story'
+import { useContactOptions } from '@/editor/composables/useContactOptions'
 import FieldHelp from '@/editor/components/FieldHelp.vue'
 import FlagNameField from '@/editor/components/FlagNameField.vue'
 
@@ -192,8 +192,6 @@ import FlagNameField from '@/editor/components/FlagNameField.vue'
 // RequiresBuilder.vue, no reactive round-trip watcher.
 const props = defineProps({ modelValue: { type: Object, default: null } })
 const emit = defineEmits(['update:modelValue'])
-const story = useStoryStore()
-
 const FLAG_EFFECT_MODES = [
   { label: 'ajoute/retire (nombre)', value: 'delta' },
   { label: 'passe à vrai', value: 'true' },
@@ -205,7 +203,7 @@ const CLOCK_MODES = [
   { label: 'libérer (revenir à l’heure réelle)', value: 'clear' },
 ]
 
-const contactOptions = story.contactsList.map((c) => ({ label: c.name, value: c.id }))
+const { contactOptions } = useContactOptions()
 const initial = props.modelValue || {}
 
 const flagRows = reactive(
@@ -251,7 +249,7 @@ function removeFlagRow(i) {
   sync()
 }
 function addSocialRow() {
-  socialRows.push(reactive({ contactId: contactOptions[0]?.value || '', followers: 0, following: 0 }))
+  socialRows.push(reactive({ contactId: contactOptions.value[0]?.value || '', followers: 0, following: 0 }))
 }
 function removeSocialRow(i) {
   socialRows.splice(i, 1)

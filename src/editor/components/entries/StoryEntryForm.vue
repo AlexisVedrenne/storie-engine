@@ -11,12 +11,11 @@
 </template>
 
 <script setup>
-import { useStoryStore } from '@/engine/stores/story'
+import { useContactOptions } from '@/editor/composables/useContactOptions'
 import AssetField from '@/editor/components/AssetField.vue'
 
 defineProps({ entry: { type: Object, required: true } })
-const story = useStoryStore()
-const contactOptions = story.contactsList.filter((c) => c.id !== 'me').map((c) => ({ label: c.name, value: c.id }))
+const { contactOptionsNoMe: contactOptions } = useContactOptions()
 </script>
 
 <style scoped>

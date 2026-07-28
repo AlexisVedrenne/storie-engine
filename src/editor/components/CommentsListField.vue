@@ -33,20 +33,19 @@
 
 <script setup>
 import { reactive } from 'vue'
-import { useStoryStore } from '@/engine/stores/story'
+import { useContactOptions } from '@/editor/composables/useContactOptions'
 
 const props = defineProps({
   modelValue: { type: Array, default: () => [] },
   commentsCount: { type: Number, default: undefined },
 })
 const emit = defineEmits(['update:modelValue', 'update:commentsCount'])
-const story = useStoryStore()
-const contactOptions = story.contactsList.map((c) => ({ label: c.name, value: c.id }))
+const { contactOptions } = useContactOptions()
 
 const comments = reactive((props.modelValue || []).map((c) => reactive({ ...c })))
 
 function addComment() {
-  comments.push(reactive({ author: contactOptions[0]?.value || '', text: '' }))
+  comments.push(reactive({ author: contactOptions.value[0]?.value || '', text: '' }))
   sync()
 }
 function removeComment(i) {

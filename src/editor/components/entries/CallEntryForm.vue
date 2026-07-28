@@ -30,13 +30,12 @@
 
 <script setup>
 import { reactive } from 'vue'
-import { useStoryStore } from '@/engine/stores/story'
+import { useContactOptions } from '@/editor/composables/useContactOptions'
 import FieldHelp from '@/editor/components/FieldHelp.vue'
 
 const props = defineProps({ entry: { type: Object, required: true } })
-const story = useStoryStore()
-const contactOptions = story.contactsList.filter((c) => c.id !== 'me').map((c) => ({ label: c.name, value: c.id }))
-const fromOptions = [{ label: 'Moi', value: 'me' }, ...contactOptions]
+const { contactOptions: contactOptionsAll, contactOptionsNoMe: contactOptions } = useContactOptions()
+const fromOptions = contactOptionsAll
 
 const scriptRows = reactive((props.entry.script || []).map((l) => reactive({ ...l })))
 

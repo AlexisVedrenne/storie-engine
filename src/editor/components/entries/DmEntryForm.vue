@@ -24,23 +24,11 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
-import { useStoryStore } from '@/engine/stores/story'
+import { useContactOptions } from '@/editor/composables/useContactOptions'
 import AssetField from '@/editor/components/AssetField.vue'
 
 defineProps({ entry: { type: Object, required: true } })
-const story = useStoryStore()
-
-const threadOptions = computed(() => {
-  const groups = (story.project?.threads || []).map((t) => ({ label: `${t.name} (groupe)`, value: t.id }))
-  const oneToOne = story.contactsList.filter((c) => c.id !== 'me').map((c) => ({ label: `${c.name} (1:1)`, value: c.id }))
-  return [...groups, ...oneToOne]
-})
-
-const fromOptions = computed(() => [
-  { label: 'Moi', value: 'me' },
-  ...story.contactsList.filter((c) => c.id !== 'me').map((c) => ({ label: c.name, value: c.id })),
-])
+const { contactOptions: fromOptions, threadOptions } = useContactOptions()
 </script>
 
 <style scoped>
