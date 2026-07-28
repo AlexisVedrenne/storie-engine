@@ -22,7 +22,7 @@
     <img v-if="category === 'image'" :src="resolveAssetUrl(modelValue)" class="preview" />
     <div v-else-if="category === 'audio'" class="audio-preview">
       <span class="audio-name" :title="modelValue">{{ modelValue }}</span>
-      <audio controls preload="none" :src="resolveAssetUrl(modelValue)" class="audio-control" />
+      <AudioPreview :src="resolveAssetUrl(modelValue)" />
     </div>
     <div v-else-if="modelValue" class="file-preview">
       <q-icon name="insert_drive_file" size="18px" />
@@ -36,6 +36,7 @@ import { computed, ref } from 'vue'
 import { useStoryStore } from '@/engine/stores/story'
 import { resolveAssetUrl } from '@/engine/assets'
 import { categorizeAsset } from '@/editor/utils/assetCategory'
+import AudioPreview from '@/editor/components/AudioPreview.vue'
 
 const props = defineProps({
   modelValue: { type: String, default: '' },
@@ -140,8 +141,4 @@ async function importFile() {
   max-width: 100%;
 }
 
-.audio-control {
-  width: 100%;
-  height: 32px;
-}
 </style>

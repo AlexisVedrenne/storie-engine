@@ -1,5 +1,14 @@
 # Audit UI/UX de l'éditeur — état réel, sans complaisance
 
+## Statut (2026-07-28)
+
+**Quick wins (palier 1) ET chantier moyen (palier 2) faits et vérifiés en
+vraie fenêtre Electron, le jour même.** Détail dans « Priorisation
+proposée » plus bas, chaque item est marqué `[x]` avec ce qui a été changé
+et où. Seul le chantier large (fil d'Ariane de profondeur, recherche sur
+les traductions inutilisées) n'a pas été commencé — reste à cadrer avant
+d'attaquer, comme d'habitude pour cette codebase.
+
 ## Méthode
 
 Contrairement aux phases précédentes (jamais vérifiées visuellement, bloquées
@@ -50,7 +59,7 @@ guide existant.
 
 ## Problèmes transversaux (affectent plusieurs écrans)
 
-### 1. La typographie du guide n'est jamais chargée — regression silencieuse
+### 1. La typographie du guide n'est jamais chargée — regression silencieuse — **corrigé**
 
 `design-tokens.scss` déclare :
 ```scss
@@ -88,7 +97,7 @@ réel visé par l'outil), remonter mentalement « dans quel choix suis-je »
 demande de scroller vers le haut pour retrouver le contexte. C'est très
 probablement la plus grosse source du « je sais pas où cliquer » rapporté.
 
-### 3. Le bloc Condition/Requires se répète intégralement à chaque niveau
+### 3. Le bloc Condition/Requires se répète intégralement à chaque niveau — **corrigé**
 
 Chaque chapitre, chaque entrée de timeline, ET chaque option de choix affiche
 le même bloc complet : titre "CONDITION D'AFFICHAGE (OPTIONNEL)", phrase
@@ -102,13 +111,18 @@ section par écran-enfant* — ce n'est pas respecté : la home page d'un
 formulaire (`RequiresBuilder`) est ré-instanciée telle quelle à N niveaux
 d'imbrication, sans version condensée pour le cas (majoritaire) où il n'y a
 aucune condition.
-**Piste concrète** : collapse le bloc Condition par défaut derrière une
-ligne « + Ajouter une condition d'affichage » quand il est vide (au lieu
-d'afficher les deux sous-titres + état vide + 2 boutons en permanence) —
-le contenu rempli resterait visible tel quel, seul l'état vide se
-condenserait.
+**Fix appliqué** (2026-07-28) : `RequiresBuilder.vue` se replie derrière une
+seule ligne « + Ajouter une condition » quand ni flags ni abonnements ne
+sont définis — fix posé une seule fois dans le composant, s'applique
+gratuitement à ses 3 appelants (`EditorPage.vue` niveau chapitre,
+`TimelineEditor.vue` chaque entrée, `ChoiceEntryForm.vue` onglet Condition
+de chaque option). Une fois révélé (clic, ou condition déjà existante au
+chargement), reste révélé même si l'utilisateur vide les champs en cours
+d'édition — pas de repli surprise pendant la frappe. Vérifié à l'écran :
+une entrée `message` sans condition passe d'environ 15 lignes de bloc vide
+à 1 seule ligne.
 
-### 4. `<audio controls>` natif du navigateur, jamais stylé — rupture visuelle nette
+### 4. `<audio controls>` natif du navigateur, jamais stylé — rupture visuelle nette — **corrigé**
 
 Confirmé à l'écran (`Jeu`, `AssetField`, `AssetsPanel` — 3 endroits) :
 `GameForm.vue:49`, `AssetField.vue:25`, `AssetsPanel.vue:41` posent tous les
@@ -119,30 +133,31 @@ lecteur **clair, en relief, avec sa propre police système** — posé sur fond
 « pas fini / pas pro » même quand le reste est cohérent. C'est visible sur
 l'onglet Jeu dès qu'on scrolle sur la section Sons (15 lecteurs de ce type
 d'affilée).
-**Piste concrète** : un composant `AudioPreview.vue` minimal (play/pause
-+ barre de progression en CSS, pas de lib) réutilisé aux 3 endroits —
-même effort que les icônes par type d'entrée déjà faites pour
-`TimelineEditor`.
+**Fix appliqué** (2026-07-28) : `src/editor/components/AudioPreview.vue`,
+composant maison minimal — bouton play/pause + barre de progression
+cliquable (seek), `<audio>` natif caché piloté par son API JS au lieu de
+son attribut `controls`, couleurs `--color-accent`/`--color-surface`
+cohérentes avec le reste de l'app. Remplace les 3 sites (`AssetField.vue`,
+`AssetsPanel.vue`, `GameForm.vue`). Vérifié à l'écran : lecture/pause et
+progression fonctionnent, plus aucun widget clair natif visible.
 
-### 5. Un seul accent bleu partout… sauf dans les dialogues natifs Quasar
+### 5. Un seul accent bleu partout… sauf dans les dialogues natifs Quasar — **corrigé**
 
 Le bouton "OK" du dialogue de validation (`Dialog.create()` dans
-`EditorPage.vue`) rend en **doré/ambre**, pas en `--color-accent` bleu
-(`#4C8BF5`) utilisé partout ailleurs (onglet actif, bouton Enregistrer,
-sélection de chapitre). Confirmé à l'écran sur la boîte "Validation du
-projet". `Dialog.create()`/`Notify.create()` utilisent la couleur
-`primary` par défaut de Quasar (`quasar.variables.scss`), qui n'est
-apparemment pas alignée sur `--color-accent` malgré le commentaire dans
-`design-tokens.scss` qui affirme que si (« kept in sync with
-quasar.variables.scss »). Le guide (§4) est explicite : *jamais deux
-couleurs "primaires" qui se battent*. Ce sont les seuls endroits de
-toute l'app qui violent cette règle — précisément parce que ce sont
-des composants Quasar génériques, pas des composants maison.
-**Fix concret** : vérifier `quasar.variables.scss` (à relire — pas encore
-fait dans cet audit) et aligner `$primary` dessus, ou passer
-`color="primary"` explicitement sur les boutons de `Dialog.create()`.
+`EditorPage.vue`) rendait en **doré/ambre**, pas en `--color-accent` bleu
+(`#4C8BF5`) utilisé partout ailleurs. Confirmé à l'écran sur la boîte
+"Validation du projet". **Root cause réelle** (`$primary` était déjà
+correctement aligné sur `--color-accent` dans `quasar.variables.scss` —
+l'hypothèse de désync était fausse) : Quasar's `Dialog.create()` sans
+`color` explicite retombe sur `vmColor = props.color || (isDark ? 'amber'
+: 'primary')`, trouvé en lisant `quasar.client.js` directement — un défaut
+non documenté dans le guide, spécifique au dark mode. **Fix appliqué** :
+`color` explicite sur les 8 appels `Dialog.create()` du projet (voir
+« Priorisation proposée » § quick wins). Le guide (§4, *jamais deux
+couleurs "primaires" qui se battent*) est maintenant respecté aussi sur
+les composants Quasar génériques, pas seulement le code maison.
 
-### 6. Onglets de navigation sans nom accessible — confirmé par l'arbre d'accessibilité
+### 6. Onglets de navigation sans nom accessible — fix appliqué, vérification inconcluante
 
 En pilotant la fenêtre via UI Automation (Windows), les 7 onglets
 (Chapitres/Contacts/.../Contenu initial) apparaissent comme des `Button`
@@ -184,7 +199,7 @@ navigable par dossier). Le point Traductions est le plus urgent parce que
 c'est une liste plate, non-hiérarchique, qui n'a **aucune** structure de
 navigation pour s'y retrouver au-delà du scroll.
 
-### 9. Troncature de texte incohérente : parfois un tooltip de secours, parfois rien
+### 9. Troncature de texte incohérente : parfois un tooltip de secours, parfois rien — **corrigé**
 
 `ChapterList.vue:14` (`.chapter-title`) tronque au `text-overflow: ellipsis`
 **sans `:title`** — confirmé à l'écran : avec le ratio de split par défaut
@@ -195,7 +210,7 @@ manuellement le panneau. À l'inverse, `AssetsPanel.vue:43`
 texte complet au survol. Incohérence facile à corriger partout où un
 `text-overflow: ellipsis` existe sans attribut `title` jumeau.
 
-### 10. « Aperçu seul » ne fait pas ce que son commentaire de code promet
+### 10. « Aperçu seul » ne fait pas ce que son commentaire de code promet — **corrigé, avec une nuance**
 
 Le commentaire dans `EditorPage.vue` dit que ce mode sert à « juger le
 téléphone en pleine taille ». Confirmé à l'écran : le téléphone garde
@@ -205,6 +220,34 @@ d'un immense fond vide (`padding: var(--space-8)` de chaque côté, sans
 1920px de large, ~700px de chaque côté restent vides. Le bouton fait ce
 qu'il dit (cacher l'édition) mais pas ce que son intention documentée
 promettait (voir le téléphone en grand).
+
+**Root cause réelle** (trouvée en relisant `PhoneShell.vue` avant de
+corriger) : `.phone-frame` a déjà `width: min(94vw, 480px, calc(94vh*9/18))`
+— un plafond dur identique en mode docké et en mode focus, basé sur la
+fenêtre *entière* (`vw`/`vh`), pas sur le panneau qui l'entoure. Sur un
+écran de bureau classique ce plafond (480×960) est déjà atteint en mode
+docké dès que le panneau n'est pas trop étroit — passer en focus ne
+changeait donc que le padding autour, jamais la taille réelle.
+
+**Fix appliqué** : nouvelle prop `large` sur `PhoneShell.vue` (même pattern
+que `ringing`), plafond relevé à 600×1200px quand actif, `EditorPage.vue`
+passe `:large="focusPreview"`. Le mode docké est inchangé (toujours
+480×960).
+
+**Nuance honnête après vérification à l'écran** : sur une fenêtre large
+(1920px+), le gain visible reste modeste (~+3 à 5%) — la vraie limite
+physique est la hauteur de fenêtre elle-même (`94vh`), déjà presque
+atteinte dans les deux modes sur ce genre d'écran ; relever encore le
+plafond en dur n'aide pas au-delà de ce que la fenêtre peut physiquement
+montrer. Le fix a un effet net et attendu dans le scénario qu'il cible
+vraiment : quand le panneau docké est étroit (fenêtre plus petite, ou
+splitter tiré pour donner plus de place aux formulaires), le téléphone y
+est réellement rétréci en dessous de 480px par le flex du panneau — et
+"Aperçu seul" le fait alors remonter jusqu'au nouveau plafond de 600px,
+un saut clairement visible. Pas pu confirmer ce cas précis à l'écran dans
+cette session (le redimensionnement programmatique de la fenêtre Electron
+via UI Automation n'a pas coopéré, pas creusé plus loin) — à confirmer
+par un test manuel sur une fenêtre non maximisée si besoin.
 
 ## Par écran — détails complémentaires
 
@@ -271,19 +314,53 @@ Pour éviter de tout remettre en cause sans discernement (la consigne dit
 ## Priorisation proposée (à valider avant tout code)
 
 **Quick wins (peu d'effort, gain immédiat, aucun risque de régression) :**
-1. Charger réellement Inter + Fira Code (point 1) — 2 lignes de dépendance.
-2. Aligner la couleur `primary` de Quasar sur `--color-accent` (point 5).
-3. Ajouter `:title` partout où `text-overflow: ellipsis` existe sans lui
-   (point 9), à commencer par `ChapterList.vue`.
-4. Nommer les onglets pour l'accessibilité (`aria-label` ou équivalent
-   Quasar) (point 6).
+1. [x] Charger réellement Inter + Fira Code (point 1) — `@fontsource/inter`
+   + `@fontsource/fira-code` installés (poids 400/600/700, les seuls
+   utilisés dans `src/editor`), importés dans `src/css/app.scss`. Vérifié
+   à l'écran : rendu change réellement, plus de fallback silencieux.
+2. [x] Couleur du bouton OK des dialogues (point 5) — **root cause
+   corrigée en cours de route** : ce n'était pas `$primary`/`--color-accent`
+   désynchronisés (ils étaient déjà identiques, `#4c8bf5`), mais un défaut
+   Quasar non documenté dans le guide : `Dialog.create()` sans `color`
+   explicite retombe sur `vmColor = props.color || (isDark ? 'amber' :
+   'primary')` — trouvé en lisant le bundle Quasar lui-même
+   (`quasar.client.js`). Les 8 appels `Dialog.create()` du projet
+   (`EditorPage.vue` ×3, `AssetsPanel.vue`, `ChapterList.vue`,
+   `ContactList.vue` ×2, `ThreadList.vue` ×2) ont maintenant un `color`
+   explicite : `'primary'` pour les dialogues informatifs/de confirmation
+   neutre, `'negative'` pour les 4 confirmations de suppression (plus
+   cohérent avec la règle "destructif = danger" du guide §6 qu'un
+   `'primary'` partout). Vérifié à l'écran : OK redevenu bleu.
+3. [x] `:title` ajouté partout où `text-overflow: ellipsis` existait sans
+   lui (point 9) — 7 endroits : `ChapterList.vue` (`.chapter-title`),
+   `ThreadList.vue` (`.thread-name`), `ContactList.vue` (`.contact-name`),
+   `TimelineEditor.vue` + `SeedBucketEditor.vue` (`.summary`),
+   `AssetTree.vue` (`.folder-name`), `AssetsPanel.vue` (`.path` breadcrumb).
+4. [x] `aria-label` sur les 7 onglets de navigation (point 6) — via le
+   mécanisme `attrs` du `options` array de `q-btn-toggle` (confirmé dans
+   le code source Quasar : chaque option destructure `attrs` et le spread
+   sur le `QBtn` généré). Correct côté code ; la re-vérification via
+   l'arbre d'accessibilité Windows après coup n'a rien confirmé de concluant
+   (l'arbre a11y de Chromium/Electron est paresseux/capricieux à interroger
+   de l'extérieur par UI Automation — pas un oracle fiable pour ce genre de
+   micro-vérif, à ne pas retenter de cette façon).
 
-**Chantier moyen :**
-5. Composant `AudioPreview.vue` maison pour remplacer les 3 `<audio
-   controls>` natifs (point 4).
-6. Condenser le bloc Condition vide en une ligne "+ Ajouter une condition"
-   à tous les niveaux (point 3).
-7. Vrai agrandissement du téléphone en mode Aperçu seul (point 10).
+Lint (`eslint`) clean sur tous les fichiers touchés par ces 4 points.
+
+**Chantier moyen — fait et vérifié le 2026-07-28 (plan approuvé au
+préalable, voir historique de session) :**
+5. [x] Composant `AudioPreview.vue` maison pour remplacer les 3 `<audio
+   controls>` natifs (point 4). Détail au point 4 ci-dessus.
+6. [x] Bloc Condition condensé en une ligne "+ Ajouter une condition" à
+   tous les niveaux (point 3), tant qu'aucune condition n'existe. Détail
+   au point 3 ci-dessus.
+7. [x] Plafond de taille du téléphone relevé (480×960 → 600×1200) quand
+   `PhoneShell` a la prop `large` (activée par "Aperçu seul"). Détail +
+   nuance honnête sur l'ampleur réelle du gain au point 10 ci-dessus.
+
+Lint clean sur tous les fichiers touchés (`AudioPreview.vue` nouveau,
+`AssetField.vue`, `AssetsPanel.vue`, `GameForm.vue`, `RequiresBuilder.vue`,
+`PhoneShell.vue`, `EditorPage.vue`).
 
 **Chantier plus large (à cadrer avant de commencer, comme d'habitude) :**
 8. Fil d'Ariane de profondeur pour la navigation imbriquée choice/then

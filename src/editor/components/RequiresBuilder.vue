@@ -1,5 +1,17 @@
 <template>
   <div class="requires-builder">
+    <q-btn
+      v-if="!revealed"
+      dense
+      flat
+      no-caps
+      icon="add"
+      label="Ajouter une condition"
+      class="btn-ghost"
+      @click="revealed = true"
+    />
+
+    <template v-else>
     <p class="intro">
       Toutes les conditions ci-dessous doivent être vraies pour que ce contenu apparaisse. Rien
       d'ajouté = toujours affiché.
@@ -95,11 +107,12 @@
       </div>
     </div>
     <q-btn dense flat no-caps icon="add" label="Ajouter une condition d'abonnement" class="btn-ghost" @click="addFollowingRow" />
+    </template>
   </div>
 </template>
 
 <script setup>
-import { reactive } from 'vue'
+import { reactive, ref } from 'vue'
 import { useContactOptions } from '@/editor/composables/useContactOptions'
 import FieldHelp from '@/editor/components/FieldHelp.vue'
 import FlagNameField from '@/editor/components/FlagNameField.vue'
@@ -136,6 +149,15 @@ const flagRows = reactive(
 const followingRows = reactive(
   Object.entries(props.modelValue?.following || {}).map(([contactId, expected]) => reactive({ contactId, expected })),
 )
+
+// Collapsed behind a single "+ Ajouter une condition" row when there's
+// nothing set yet — RequiresBuilder renders at 3 nesting levels (chapter,
+// every timeline entry, every choice option, see docs/ui-ux-audit.md point
+// 3) and the full intro+2-sections form is ~15 lines of empty boilerplate
+// repeated at each one. Stays revealed once true (including after the user
+// removes their last row mid-edit) so it never collapses out from under
+// them while they're actively working in it.
+const revealed = ref(flagRows.length > 0 || followingRows.length > 0)
 
 function addFlagRow() {
   flagRows.push(reactive({ key: '', mode: 'bool', boolValue: true, exactValue: 0, min: 0, max: 0 }))

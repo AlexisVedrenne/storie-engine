@@ -104,16 +104,26 @@ Constat direct sur le code actuel (`src/editor/**`) :
 
 ## 8. Checklist avant de considérer une passe UI "terminée"
 
-- [ ] Un seul fichier de tokens (couleur/espacement/rayon/typo), tout le reste les référence
-- [ ] Palette dark à rôles fixes (§4), un seul accent
-- [ ] Deux polices max, échelle de tailles limitée à 4-5 paliers
-- [ ] Chaque bouton a une intention visuelle claire (primaire/secondaire/destructif)
-- [ ] Chaque type d'entrée a une icône reconnaissable, pas juste un badge texte
-- [ ] `cursor: pointer` + hover visible sur tout élément cliquable
-- [ ] Focus clavier visible sur tous les champs/boutons
-- [ ] Contraste texte vérifié (4.5:1 minimum) sur fond sombre
-- [ ] Aucune valeur de spacing/couleur en dur dans un nouveau composant — toujours une variable
+État réel vérifié le 2026-07-28 (voir `docs/ui-ux-audit.md` pour le détail
+et les captures) — cette checklist était encore à l'état de vœux quand ce
+doc a été écrit initialement, elle reflète maintenant ce qui est vraiment
+en place :
 
-## Prochaine étape suggérée
+- [x] Un seul fichier de tokens (couleur/espacement/rayon/typo), tout le reste les référence — `src/css/design-tokens.scss`, adopté à 30/31 fichiers de `src/editor`.
+- [x] Palette dark à rôles fixes (§4), un seul accent — vérifié aussi sur les dialogues Quasar génériques (corrigé le 2026-07-28, voir audit point 5).
+- [x] Deux polices max, échelle de tailles limitée à 4-5 paliers — Inter/Fira Code réellement chargées depuis le 2026-07-28 (`@fontsource/*`), auparavant juste des noms dans le CSS jamais servis (voir audit point 1).
+- [x] Chaque bouton a une intention visuelle claire (primaire/secondaire/destructif)
+- [x] Chaque type d'entrée a une icône reconnaissable, pas juste un badge texte
+- [x] `cursor: pointer` + hover visible sur tout élément cliquable
+- [x] Focus clavier visible sur tous les champs/boutons (`:focus-visible` global, `src/css/app.scss`)
+- [ ] Contraste texte vérifié (4.5:1 minimum) sur fond sombre — jamais mesuré formellement, à faire si un vrai audit d'accessibilité est demandé un jour.
+- [x] Aucune valeur de spacing/couleur en dur dans un nouveau composant — toujours une variable
 
-Une fois ce doc validé, la suite logique : créer `src/css/design-tokens.scss`, l'appliquer d'abord à `EditorPage.vue` + `ChapterList.vue` (composants les plus visibles), puis remonter vers `TimelineEditor`/les formulaires d'entrée. Dis si c'est le bon découpage ou si tu préfères tout refaire d'un coup.
+## Prochaine étape
+
+Ce doc décrit le système de référence (stable, pas de changement prévu).
+Le suivi de ce qui est fait/reste à faire vit maintenant dans
+`docs/ui-ux-audit.md` — c'est lui qu'il faut consulter pour l'état courant
+et la suite (chantier moyen : `AudioPreview.vue` maison, bloc Condition
+condensé, vrai agrandissement du mode Aperçu seul ; chantier large : fil
+d'Ariane de profondeur, recherche sur les traductions inutilisées).

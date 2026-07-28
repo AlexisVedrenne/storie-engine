@@ -1,5 +1,5 @@
 <template>
-  <div class="phone-frame" :class="{ ringing }" :style="accentStyle">
+  <div class="phone-frame" :class="{ ringing, large: props.large }" :style="accentStyle">
     <div class="phone-notch" />
 
     <div ref="screenEl" class="phone-screen">
@@ -64,6 +64,14 @@ import SocialApp from '@/components/apps/social/SocialApp.vue'
 import GalleryApp from '@/components/apps/gallery/GalleryApp.vue'
 import CallsApp from '@/components/apps/calls/CallsApp.vue'
 import SettingsApp from '@/components/apps/settings/SettingsApp.vue'
+
+// `large` lets a caller (EditorPage.vue's "Aperçu seul" mode) raise the
+// phone-frame's hard size cap — see docs/ui-ux-audit.md point 10: the
+// normal cap is already ~94vw/94vh of the whole window regardless of the
+// surrounding pane, so a caller with more room to give (no docked
+// chapters/form panes eating the width) needs a bigger cap to actually
+// render bigger, not just less padding around the same size.
+const props = defineProps({ large: { type: Boolean, default: false } })
 
 const phone = usePhoneStore()
 const story = useStoryStore()
@@ -199,6 +207,14 @@ const canvasStyle = computed(() => ({
 
 .phone-frame.ringing {
   animation: phone-shake 0.6s ease-in-out infinite;
+}
+
+/* Bigger hard cap for contexts with more room to give (see the `large`
+   prop above) — still bounded by 94vw/94vh so it never overflows a
+   smaller window, just allowed to grow past the normal 480×960 cap. */
+.phone-frame.large {
+  width: min(94vw, 600px, calc(94vh * 9 / 18));
+  height: min(94vh, 1200px, calc(94vw * 18 / 9));
 }
 
 @keyframes phone-shake {

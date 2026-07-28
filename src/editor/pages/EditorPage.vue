@@ -186,7 +186,7 @@
            (reading 'emitsOptions')" crashes on subsequent clicks were a
            downstream symptom of the same failed mount, not a separate bug). -->
       <Teleport defer :to="focusPreview ? '#phone-slot-focus' : '#phone-slot-docked'">
-        <PhoneShell />
+        <PhoneShell :large="focusPreview" />
       </Teleport>
     </div>
     </template>

@@ -38,7 +38,7 @@
         <img v-if="item.category === 'image'" :src="resolveAssetUrl(item.path)" class="thumb" />
         <div v-else class="thumb thumb-placeholder">
           <q-icon :name="item.category === 'audio' ? 'audiotrack' : 'insert_drive_file'" size="32px" />
-          <audio v-if="item.category === 'audio'" controls preload="none" :src="resolveAssetUrl(item.path)" class="audio-control" />
+          <AudioPreview v-if="item.category === 'audio'" :src="resolveAssetUrl(item.path)" />
         </div>
         <div class="asset-name" :title="item.path">{{ item.name }}</div>
         <div class="asset-footer">
@@ -71,6 +71,7 @@ import { resolveAssetUrl } from '@/engine/assets'
 import { collectAssetPaths } from '@/project/validateProject'
 import { useAssetLibrary } from '@/editor/composables/useAssetLibrary'
 import { categorizeAsset } from '@/editor/utils/assetCategory'
+import AudioPreview from '@/editor/components/AudioPreview.vue'
 
 // Real explorer behavior: this pane shows the CURRENT folder's direct
 // subfolders (click to descend) and direct files, plus a ".." tile to go
@@ -271,10 +272,6 @@ function confirmDelete(item) {
   color: var(--color-text-muted);
 }
 
-.audio-control {
-  width: 100%;
-  height: 28px;
-}
 
 .asset-name {
   font-family: var(--font-mono);

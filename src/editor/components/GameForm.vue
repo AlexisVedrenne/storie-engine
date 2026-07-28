@@ -46,7 +46,7 @@
              aside instead of duplicating a second <audio> control. -->
         <div v-if="!game.sounds[sound.key]" class="sound-current">
           <span class="sound-current-label">Son par défaut du moteur — {{ sound.label }}</span>
-          <audio controls preload="none" :src="SOUND_FILES[sound.key]" class="audio-control" />
+          <AudioPreview :src="SOUND_FILES[sound.key]" />
         </div>
         <AssetField v-model="game.sounds[sound.key]" :label="sound.label" />
       </div>
@@ -56,6 +56,7 @@
 
 <script setup>
 import AssetField from '@/editor/components/AssetField.vue'
+import AudioPreview from '@/editor/components/AudioPreview.vue'
 import FieldHelp from '@/editor/components/FieldHelp.vue'
 import { SOUND_FILES } from '@/engine/utils/sound'
 
@@ -147,10 +148,5 @@ const SOUND_KEYS = [
 .sound-current-label {
   font-size: var(--text-xs);
   color: var(--color-text-muted);
-}
-
-.audio-control {
-  width: 100%;
-  height: 32px;
 }
 </style>
