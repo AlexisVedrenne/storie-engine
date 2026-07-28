@@ -58,18 +58,27 @@
         <PhoneShell />
       </div>
 
-      <template v-else>
-        <q-splitter v-if="viewMode === 'chapters'" v-model="splitOuter" :limits="[12, 45]" class="full-splitter">
-          <template #before>
-            <div class="pane chapters-pane">
-              <ChapterList v-model="selectedIndex" @preview-from="previewFrom" />
-            </div>
-          </template>
+      <!-- Single splitter tree shared by all four view modes — only the
+           list/form content inside switches with viewMode. PhoneShell stays
+           mounted at the same template position across tab switches so it
+           never gets destroyed/recreated (it used to live in 4 separate
+           branches, one per viewMode, which made Vue tear down and reboot
+           the whole preview on every tab click). -->
+      <q-splitter v-else v-model="splitOuter" :limits="[12, 45]" class="full-splitter">
+        <template #before>
+          <div class="pane chapters-pane">
+            <ChapterList v-if="viewMode === 'chapters'" v-model="selectedIndex" @preview-from="previewFrom" />
+            <ContactList v-else-if="viewMode === 'contacts'" v-model="selectedContactIndex" />
+            <ThreadList v-else-if="viewMode === 'threads'" v-model="selectedThreadIndex" />
+            <div v-else class="empty-state">Le titre du jeu est un champ unique — pas de liste.</div>
+          </div>
+        </template>
 
-          <template #after>
-            <q-splitter v-model="splitInner" :limits="[30, 85]" class="full-splitter">
-              <template #before>
-                <div class="pane timeline-pane">
+        <template #after>
+          <q-splitter v-model="splitInner" :limits="[30, 85]" class="full-splitter">
+            <template #before>
+              <div class="pane timeline-pane">
+                <template v-if="viewMode === 'chapters'">
                   <template v-if="selectedChapter">
                     <div class="panel chapter-header">
                       <q-input dense outlined label="Titre" v-model="selectedChapter.title" />
@@ -92,79 +101,30 @@
                     <TimelineEditor :entries="selectedChapter.timeline" />
                   </template>
                   <div v-else class="empty-state">Sélectionne un chapitre à gauche.</div>
-                </div>
-              </template>
+                </template>
 
-              <template #after>
-                <div class="pane preview-pane">
-                  <PhoneShell />
-                </div>
-              </template>
-            </q-splitter>
-          </template>
-        </q-splitter>
-
-        <q-splitter v-else-if="viewMode === 'contacts'" v-model="splitOuter" :limits="[12, 45]" class="full-splitter">
-          <template #before>
-            <div class="pane chapters-pane">
-              <ContactList v-model="selectedContactIndex" />
-            </div>
-          </template>
-
-          <template #after>
-            <q-splitter v-model="splitInner" :limits="[30, 85]" class="full-splitter">
-              <template #before>
-                <div class="pane timeline-pane">
+                <template v-else-if="viewMode === 'contacts'">
                   <ContactForm v-if="selectedContact" :contact="selectedContact" />
                   <div v-else class="empty-state">Sélectionne un contact à gauche.</div>
-                </div>
-              </template>
-              <template #after>
-                <div class="pane preview-pane">
-                  <PhoneShell />
-                </div>
-              </template>
-            </q-splitter>
-          </template>
-        </q-splitter>
+                </template>
 
-        <q-splitter v-else-if="viewMode === 'threads'" v-model="splitOuter" :limits="[12, 45]" class="full-splitter">
-          <template #before>
-            <div class="pane chapters-pane">
-              <ThreadList v-model="selectedThreadIndex" />
-            </div>
-          </template>
-
-          <template #after>
-            <q-splitter v-model="splitInner" :limits="[30, 85]" class="full-splitter">
-              <template #before>
-                <div class="pane timeline-pane">
+                <template v-else-if="viewMode === 'threads'">
                   <ThreadForm v-if="selectedThread" :thread="selectedThread" />
                   <div v-else class="empty-state">Sélectionne un thread à gauche.</div>
-                </div>
-              </template>
-              <template #after>
-                <div class="pane preview-pane">
-                  <PhoneShell />
-                </div>
-              </template>
-            </q-splitter>
-          </template>
-        </q-splitter>
+                </template>
 
-        <q-splitter v-else-if="viewMode === 'game'" v-model="splitInner" :limits="[20, 85]" class="full-splitter">
-          <template #before>
-            <div class="pane timeline-pane">
-              <GameForm :game="story.project.gameConfig" />
-            </div>
-          </template>
-          <template #after>
-            <div class="pane preview-pane">
-              <PhoneShell />
-            </div>
-          </template>
-        </q-splitter>
-      </template>
+                <GameForm v-else-if="viewMode === 'game'" :game="story.project.gameConfig" />
+              </div>
+            </template>
+
+            <template #after>
+              <div class="pane preview-pane">
+                <PhoneShell />
+              </div>
+            </template>
+          </q-splitter>
+        </template>
+      </q-splitter>
     </div>
   </q-page>
 </template>
