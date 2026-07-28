@@ -1,6 +1,14 @@
 <template>
   <div class="entry-form">
-    <q-select dense outlined emit-value map-options label="Auteur de la publication" :options="contactOptions" v-model="entry.author">
+    <q-select
+      dense
+      outlined
+      emit-value
+      map-options
+      label="Auteur de la publication"
+      :options="contactOptions"
+      v-model="entry.author"
+    >
       <template #selected>
         <span class="selected-row">
           <span class="option-dot" :style="{ background: contactColor(entry.author) }" />
@@ -26,7 +34,13 @@
       v-model="entry.content"
     />
     <AssetField v-model="entry.image" label="Image (optionnel)" :contact-id="entry.author" />
-    <q-input dense outlined type="number" label="Nombre de likes (optionnel — sinon aléatoire)" v-model.number="entry.likes" />
+    <q-input
+      dense
+      outlined
+      type="number"
+      label="Nombre de likes (optionnel — sinon aléatoire)"
+      v-model.number="entry.likes"
+    />
     <CommentsListField
       v-model="entry.comments"
       :comments-count="entry.commentsCount"

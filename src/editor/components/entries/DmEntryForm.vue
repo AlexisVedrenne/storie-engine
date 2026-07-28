@@ -11,7 +11,11 @@
     >
       <template #selected>
         <span class="selected-row">
-          <span v-if="!isGroupThread(entry.thread)" class="option-dot" :style="{ background: contactColor(entry.thread) }" />
+          <span
+            v-if="!isGroupThread(entry.thread)"
+            class="option-dot"
+            :style="{ background: contactColor(entry.thread) }"
+          />
           <q-icon v-else name="group" size="16px" class="option-icon" />
           {{ threadLabel(entry.thread) }}
         </span>
@@ -19,14 +23,26 @@
       <template #option="scope">
         <q-item v-bind="scope.itemProps">
           <q-item-section avatar>
-            <span v-if="!scope.opt.group" class="option-dot" :style="{ background: contactColor(scope.opt.value) }" />
+            <span
+              v-if="!scope.opt.group"
+              class="option-dot"
+              :style="{ background: contactColor(scope.opt.value) }"
+            />
             <q-icon v-else name="group" size="16px" class="option-icon" />
           </q-item-section>
           <q-item-section>{{ scope.opt.label }}</q-item-section>
         </q-item>
       </template>
     </q-select>
-    <q-select dense outlined emit-value map-options label="De (qui envoie le message)" :options="fromOptions" v-model="entry.from">
+    <q-select
+      dense
+      outlined
+      emit-value
+      map-options
+      label="De (qui envoie le message)"
+      :options="fromOptions"
+      v-model="entry.from"
+    >
       <template #selected>
         <span class="selected-row">
           <span class="option-dot" :style="{ background: contactColor(entry.from) }" />

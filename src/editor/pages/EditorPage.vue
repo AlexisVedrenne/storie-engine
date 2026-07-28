@@ -14,146 +14,263 @@
     </div>
 
     <template v-else>
-    <div class="topbar">
-      <span class="project-name">{{ story.project?.manifest?.name || '(projet)' }}</span>
-      <span v-if="dirty" class="dirty-dot" title="Modifications non enregistrées">●</span>
+      <div class="topbar">
+        <span class="project-name">{{ story.project?.manifest?.name || '(projet)' }}</span>
+        <span v-if="dirty" class="dirty-dot" title="Modifications non enregistrées">●</span>
 
-      <q-tabs
-        dense
-        no-caps
-        v-model="viewMode"
-        class="view-tabs"
-        active-color="primary"
-        indicator-color="primary"
-        align="left"
-      >
-        <q-tab name="chapters" icon="auto_stories" label="Chapitres" />
-        <q-tab name="contacts" icon="contacts" label="Contacts" />
-        <q-tab name="threads" icon="groups" label="Groupes" />
-        <q-tab name="game" icon="sports_esports" label="Jeu" />
-        <q-tab name="assets" icon="folder" label="Ressources" />
-        <q-tab name="i18n" icon="translate" label="Traductions" />
-        <q-tab name="seed" icon="inventory_2" label="Contenu initial" />
-      </q-tabs>
+        <q-tabs
+          dense
+          no-caps
+          v-model="viewMode"
+          class="view-tabs"
+          active-color="primary"
+          indicator-color="primary"
+          align="left"
+        >
+          <q-tab name="chapters" icon="auto_stories" label="Chapitres" />
+          <q-tab name="contacts" icon="contacts" label="Contacts" />
+          <q-tab name="threads" icon="groups" label="Groupes" />
+          <q-tab name="game" icon="sports_esports" label="Jeu" />
+          <q-tab name="assets" icon="folder" label="Ressources" />
+          <q-tab name="i18n" icon="translate" label="Traductions" />
+          <q-tab name="seed" icon="inventory_2" label="Contenu initial" />
+        </q-tabs>
 
-      <div class="spacer" />
+        <div class="spacer" />
 
-      <q-btn dense flat round :icon="focusPreview ? 'visibility_off' : 'smartphone'" class="btn-ghost" @click="focusPreview = !focusPreview">
-        <q-tooltip>{{ focusPreview ? `Afficher l'édition` : 'Aperçu seul' }}</q-tooltip>
-      </q-btn>
-      <q-toggle dense v-model="autosave" label="Sauvegarde auto" color="primary" />
-      <q-btn dense flat no-caps round icon="refresh" class="btn-ghost" @click="restartPreview">
-        <q-tooltip>Relancer l'aperçu</q-tooltip>
-      </q-btn>
+        <q-btn
+          dense
+          flat
+          round
+          :icon="focusPreview ? 'visibility_off' : 'smartphone'"
+          class="btn-ghost"
+          @click="focusPreview = !focusPreview"
+        >
+          <q-tooltip>{{ focusPreview ? `Afficher l'édition` : 'Aperçu seul' }}</q-tooltip>
+        </q-btn>
+        <q-toggle dense v-model="autosave" label="Sauvegarde auto" color="primary" />
+        <q-btn dense flat no-caps round icon="refresh" class="btn-ghost" @click="restartPreview">
+          <q-tooltip>Relancer l'aperçu</q-tooltip>
+        </q-btn>
 
-      <div class="topbar-divider" />
+        <div class="topbar-divider" />
 
-      <q-btn dense flat round icon="fact_check" class="btn-ghost" :loading="validating" @click="runValidation">
-        <q-tooltip>Valider le projet — cherche les références cassées (contact/thread/image introuvable) et les problèmes de chapitres</q-tooltip>
-      </q-btn>
+        <q-btn
+          dense
+          flat
+          round
+          icon="fact_check"
+          class="btn-ghost"
+          :loading="validating"
+          @click="runValidation"
+        >
+          <q-tooltip
+            >Valider le projet — cherche les références cassées (contact/thread/image introuvable)
+            et les problèmes de chapitres</q-tooltip
+          >
+        </q-btn>
 
-      <q-btn dense unelevated no-caps icon="save" label="Enregistrer" color="primary" :disable="!dirty" @click="save" />
-      <q-btn dense flat round icon="rocket_launch" color="primary" :loading="building" :disable="building" @click="buildGame">
-        <q-tooltip>Build — exporter ce projet en jeu jouable (app Electron packagée)</q-tooltip>
-      </q-btn>
-      <q-btn dense flat round icon="folder_open" class="btn-ghost" :disable="building" @click="closeProject">
-        <q-tooltip>Changer de projet</q-tooltip>
-      </q-btn>
-    </div>
+        <q-btn
+          dense
+          unelevated
+          no-caps
+          icon="save"
+          label="Enregistrer"
+          color="primary"
+          :disable="!dirty"
+          @click="save"
+        />
+        <q-btn
+          dense
+          flat
+          round
+          icon="rocket_launch"
+          color="primary"
+          :loading="building"
+          :disable="building"
+          @click="buildGame"
+        >
+          <q-tooltip>Build — exporter ce projet en jeu jouable (app Electron packagée)</q-tooltip>
+        </q-btn>
+        <q-btn
+          dense
+          flat
+          round
+          icon="folder_open"
+          class="btn-ghost"
+          :disable="building"
+          @click="closeProject"
+        >
+          <q-tooltip>Changer de projet</q-tooltip>
+        </q-btn>
+      </div>
 
-    <div class="panes">
-      <!-- Both layouts stay permanently mounted (v-show, not v-if/v-else) —
+      <div class="panes">
+        <!-- Default state for the Chapitres tab: nothing selected yet =
+             full-bleed graph, no form/preview clutter (user feedback: the
+             3-pane split made the graph itself unreadably cramped and the
+             UI noisy before a chapter is even picked). A separate absolute
+             overlay ON TOP of the untouched splitter below, rather than
+             conditionally removing that splitter/its Teleport target.
+             v-show (not v-if) — same permanently-mounted rule as the
+             focus/docked panes below applies here too: #phone-slot-
+             chapterpage (in the sibling overlay) is one of 3 Teleport
+             targets now, and a target that disappears out from under an
+             active Teleport is exactly the "Invalid Teleport target" crash
+             class already hit once in this codebase (that's also why THIS
+             overlay stays mounted even though it holds no Teleport target
+             itself — toggling between v-if and v-show for the two sibling
+             overlays independently would still fight the same Teleport,
+             simplest to keep both always-mounted). Clicking a node sets
+             `selectedIndex`, which hides this overlay and reveals the
+             chapter-page overlay below (which has a "← Retour au graphe"
+             button to come back). -->
+        <div v-show="!focusPreview && viewMode === 'chapters' && !selectedChapter" class="graph-fullscreen">
+          <ChapterGraph v-model="selectedIndex" @preview-from="previewFrom" />
+        </div>
+
+        <!-- Once a chapter IS selected: a full-page 2-pane layout (form |
+             phone), no graph column at all. v-show on the wrapper (see
+             above) + v-if on the inner content (guards `selectedChapter.*`
+             field access for when this is hidden and selectedChapter is
+             null) — #phone-slot-chapterpage itself must stay permanently
+             in the DOM regardless of which of the two states is active. -->
+        <div v-show="!focusPreview && viewMode === 'chapters' && selectedChapter" class="chapter-page-fullscreen">
+          <q-splitter v-model="splitInner" :limits="[30, 85]" class="full-splitter">
+            <template #before>
+              <div class="pane timeline-pane">
+                <template v-if="selectedChapter">
+                  <div class="panel chapter-header">
+                    <q-btn
+                      dense
+                      flat
+                      round
+                      icon="arrow_back"
+                      class="btn-ghost"
+                      @click="selectedIndex = null"
+                    >
+                      <q-tooltip>Retour au graphe</q-tooltip>
+                    </q-btn>
+                    <q-input dense outlined label="Titre" v-model="selectedChapter.title" />
+                    <q-input
+                      dense
+                      outlined
+                      label="Id"
+                      v-model="selectedChapter.id"
+                      class="id-input"
+                    />
+                    <RoutePickerField
+                      v-model="selectedChapter.route"
+                      label="Route (optionnel)"
+                      class="route-select"
+                    />
+                  </div>
+
+                  <div class="panel">
+                    <div class="section-label">
+                      Condition de démarrage du chapitre (optionnel)
+                      <FieldHelp
+                        text="Ce chapitre ne démarre que si toutes ces conditions sont vraies. Rien d'ajouté = toujours autorisé."
+                      />
+                    </div>
+                    <RequiresBuilder
+                      :model-value="selectedChapter.requires"
+                      @update:model-value="(v) => (selectedChapter.requires = v)"
+                    />
+                  </div>
+
+                  <TimelineEditor :entries="selectedChapter.timeline" />
+                </template>
+              </div>
+            </template>
+            <template #after>
+              <div class="pane preview-pane">
+                <div id="phone-slot-chapterpage"></div>
+              </div>
+            </template>
+          </q-splitter>
+        </div>
+
+        <!-- Both layouts stay permanently mounted (v-show, not v-if/v-else) —
            only their CSS display toggles with focusPreview. A single
            <PhoneShell/> lives outside both, Teleported into whichever
            layout's slot is currently visible: v-if/v-else here would
            unmount/remount PhoneShell on every "Aperçu seul" toggle (the
            same bug already fixed once for viewMode tab switches — see the
            note below — this is the other place it still existed). -->
-      <div v-show="focusPreview" class="pane preview-pane focus-mode">
-        <div id="phone-slot-focus"></div>
-      </div>
+        <div v-show="focusPreview" class="pane preview-pane focus-mode">
+          <div id="phone-slot-focus"></div>
+        </div>
 
-      <!-- Single splitter tree shared by all view modes — only the
+        <!-- Single splitter tree shared by all view modes — only the
            list/form content inside switches with viewMode. PhoneShell stays
            mounted at the same template position across tab switches so it
            never gets destroyed/recreated (it used to live in separate
            branches, one per viewMode, which made Vue tear down and reboot
            the whole preview on every tab click). -->
-      <q-splitter v-show="!focusPreview" v-model="splitOuter" :limits="[12, 45]" class="full-splitter">
-        <template #before>
-          <div class="pane chapters-pane">
-            <ChapterList v-if="viewMode === 'chapters'" v-model="selectedIndex" @preview-from="previewFrom" />
-            <ContactList v-else-if="viewMode === 'contacts'" v-model="selectedContactIndex" />
-            <ThreadList v-else-if="viewMode === 'threads'" v-model="selectedThreadIndex" />
-            <div v-else-if="viewMode === 'game'" class="empty-state">Le titre du jeu est un champ unique — pas de liste.</div>
-            <AssetTree v-else-if="viewMode === 'assets'" v-model="selectedAssetFolder" />
-            <LocaleList v-else-if="viewMode === 'i18n'" v-model="selectedLocale" />
-            <SeedBucketList v-else-if="viewMode === 'seed'" v-model="selectedSeedBucket" />
-          </div>
-        </template>
+        <q-splitter
+          v-show="!focusPreview"
+          v-model="splitOuter"
+          :limits="viewMode === 'chapters' ? [20, 70] : [12, 45]"
+          class="full-splitter"
+        >
+          <template #before>
+            <div class="pane chapters-pane">
+              <ContactList v-if="viewMode === 'contacts'" v-model="selectedContactIndex" />
+              <ThreadList v-else-if="viewMode === 'threads'" v-model="selectedThreadIndex" />
+              <div v-else-if="viewMode === 'game'" class="empty-state">
+                Le titre du jeu est un champ unique — pas de liste.
+              </div>
+              <AssetTree v-else-if="viewMode === 'assets'" v-model="selectedAssetFolder" />
+              <LocaleList v-else-if="viewMode === 'i18n'" v-model="selectedLocale" />
+              <SeedBucketList v-else-if="viewMode === 'seed'" v-model="selectedSeedBucket" />
+            </div>
+          </template>
 
-        <template #after>
-          <q-splitter v-model="splitInner" :limits="[30, 85]" class="full-splitter">
-            <template #before>
-              <div class="pane timeline-pane">
-                <template v-if="viewMode === 'chapters'">
-                  <template v-if="selectedChapter">
-                    <div class="panel chapter-header">
-                      <q-input dense outlined label="Titre" v-model="selectedChapter.title" />
-                      <q-input dense outlined label="Id" v-model="selectedChapter.id" class="id-input" />
-                    </div>
-
-                    <div class="panel">
-                      <div class="section-label">
-                        Condition de démarrage du chapitre (optionnel)
-                        <FieldHelp
-                          text="Ce chapitre ne démarre que si toutes ces conditions sont vraies. Rien d'ajouté = toujours autorisé."
-                        />
-                      </div>
-                      <RequiresBuilder
-                        :model-value="selectedChapter.requires"
-                        @update:model-value="(v) => (selectedChapter.requires = v)"
-                      />
-                    </div>
-
-                    <TimelineEditor :entries="selectedChapter.timeline" />
+          <template #after>
+            <q-splitter v-model="splitInner" :limits="[30, 85]" class="full-splitter">
+              <template #before>
+                <div class="pane timeline-pane">
+                  <template v-if="viewMode === 'contacts'">
+                    <ContactForm v-if="selectedContact" :contact="selectedContact" />
+                    <div v-else class="empty-state">Sélectionne un contact à gauche.</div>
                   </template>
-                  <div v-else class="empty-state">Sélectionne un chapitre à gauche.</div>
-                </template>
 
-                <template v-else-if="viewMode === 'contacts'">
-                  <ContactForm v-if="selectedContact" :contact="selectedContact" />
-                  <div v-else class="empty-state">Sélectionne un contact à gauche.</div>
-                </template>
+                  <template v-else-if="viewMode === 'threads'">
+                    <ThreadForm v-if="selectedThread" :thread="selectedThread" />
+                    <div v-else class="empty-state">Sélectionne un thread à gauche.</div>
+                  </template>
 
-                <template v-else-if="viewMode === 'threads'">
-                  <ThreadForm v-if="selectedThread" :thread="selectedThread" />
-                  <div v-else class="empty-state">Sélectionne un thread à gauche.</div>
-                </template>
+                  <GameForm v-else-if="viewMode === 'game'" :game="story.project.gameConfig" />
 
-                <GameForm v-else-if="viewMode === 'game'" :game="story.project.gameConfig" />
+                  <AssetsPanel
+                    v-else-if="viewMode === 'assets'"
+                    v-model:folder="selectedAssetFolder"
+                  />
 
-                <AssetsPanel v-else-if="viewMode === 'assets'" v-model:folder="selectedAssetFolder" />
+                  <template v-else-if="viewMode === 'i18n'">
+                    <I18nBucketEditor
+                      v-if="selectedLocale"
+                      :locale="selectedLocale"
+                      v-model:bucket="selectedBucket"
+                    />
+                    <div v-else class="empty-state">Sélectionne une langue à gauche.</div>
+                  </template>
 
-                <template v-else-if="viewMode === 'i18n'">
-                  <I18nBucketEditor v-if="selectedLocale" :locale="selectedLocale" v-model:bucket="selectedBucket" />
-                  <div v-else class="empty-state">Sélectionne une langue à gauche.</div>
-                </template>
+                  <SeedBucketEditor v-else-if="viewMode === 'seed'" :bucket="selectedSeedBucket" />
+                </div>
+              </template>
 
-                <SeedBucketEditor v-else-if="viewMode === 'seed'" :bucket="selectedSeedBucket" />
-              </div>
-            </template>
+              <template #after>
+                <div class="pane preview-pane">
+                  <div id="phone-slot-docked"></div>
+                </div>
+              </template>
+            </q-splitter>
+          </template>
+        </q-splitter>
 
-            <template #after>
-              <div class="pane preview-pane">
-                <div id="phone-slot-docked"></div>
-              </div>
-            </template>
-          </q-splitter>
-        </template>
-      </q-splitter>
-
-      <!-- defer (Vue 3.5+) — the target divs live inside the same render
+        <!-- defer (Vue 3.5+) — the target divs live inside the same render
            tree as this Teleport (nested in q-splitter slots above), not
            some pre-existing DOM node outside the component tree, so they
            don't exist yet on the very first synchronous mount pass without
@@ -162,11 +279,25 @@
            navigation into the editor, which then corrupted later renders
            (unrelated-looking "Cannot read properties of null
            (reading 'emitsOptions')" crashes on subsequent clicks were a
-           downstream symptom of the same failed mount, not a separate bug). -->
-      <Teleport defer :to="focusPreview ? '#phone-slot-focus' : '#phone-slot-docked'">
-        <PhoneShell :large="focusPreview" />
-      </Teleport>
-    </div>
+           downstream symptom of the same failed mount, not a separate bug).
+           Third target (#phone-slot-chapterpage) added for the chapter
+           full-page overlay above — its condition and its target div are
+           driven by the same reactive state (viewMode/selectedChapter), so
+           the target always exists whenever this computed points at it,
+           same safety property the original two targets already relied on. -->
+        <Teleport
+          defer
+          :to="
+            focusPreview
+              ? '#phone-slot-focus'
+              : viewMode === 'chapters' && selectedChapter
+                ? '#phone-slot-chapterpage'
+                : '#phone-slot-docked'
+          "
+        >
+          <PhoneShell :large="focusPreview" />
+        </Teleport>
+      </div>
     </template>
   </q-page>
 </template>
@@ -187,7 +318,8 @@ import {
 } from '@/project/serializeChapter'
 import { validateProject, collectAssetPaths } from '@/project/validateProject'
 import PhoneShell from '@/components/phone/PhoneShell.vue'
-import ChapterList from '@/editor/components/ChapterList.vue'
+import ChapterGraph from '@/editor/components/ChapterGraph.vue'
+import RoutePickerField from '@/editor/components/RoutePickerField.vue'
 import RequiresBuilder from '@/editor/components/RequiresBuilder.vue'
 import TimelineEditor from '@/editor/components/TimelineEditor.vue'
 import FieldHelp from '@/editor/components/FieldHelp.vue'
@@ -230,10 +362,17 @@ if (!story.project) {
 // toggle) rather than introducing routing/tabs, which have no precedent here.
 const viewMode = ref('chapters')
 
-const selectedIndex = ref(0)
-const selectedChapter = computed(() => story.project?.chapters?.[selectedIndex.value] || null)
+// `null` = nothing selected — the Chapitres tab's default state (full-bleed
+// graph, see the `graph-fullscreen` overlay above) unlike every other tab's
+// index ref, which always defaults to row 0.
+const selectedIndex = ref(null)
+const selectedChapter = computed(() =>
+  selectedIndex.value == null ? null : story.project?.chapters?.[selectedIndex.value] || null,
+)
 const selectedContactIndex = ref(0)
-const selectedContact = computed(() => story.project?.contacts?.[selectedContactIndex.value] || null)
+const selectedContact = computed(
+  () => story.project?.contacts?.[selectedContactIndex.value] || null,
+)
 const selectedThreadIndex = ref(0)
 const selectedThread = computed(() => story.project?.threads?.[selectedThreadIndex.value] || null)
 // Selected folder path within assets/ ('' = root) — same lift-state-up
@@ -355,7 +494,9 @@ async function save() {
         rootPath: story.project.rootPath,
         locale: selectedLocale.value,
         bucket: selectedBucket.value,
-        source: serializeI18nBucket(story.project.i18n[selectedLocale.value][selectedBucket.value] || {}),
+        source: serializeI18nBucket(
+          story.project.i18n[selectedLocale.value][selectedBucket.value] || {},
+        ),
       })
     } else if (viewMode.value === 'seed') {
       await window.storieAPI.saveSeedBucket({
@@ -415,20 +556,32 @@ async function computeValidation() {
   })
   for (const missingPath of missing) {
     const ref = assetRefs.find((a) => a.path === missingPath)
-    errors.push(`Fichier introuvable dans assets/ : "${missingPath}" (référencé par ${ref.labels.join(', ')})`)
+    errors.push(
+      `Fichier introuvable dans assets/ : "${missingPath}" (référencé par ${ref.labels.join(', ')})`,
+    )
   }
   return { errors, warnings }
 }
 
 function showValidationDialog(errors, warnings) {
   if (!errors.length && !warnings.length) {
-    Dialog.create({ title: 'Validation du projet', message: 'Aucun problème détecté.', ok: true, color: 'primary' })
+    Dialog.create({
+      title: 'Validation du projet',
+      message: 'Aucun problème détecté.',
+      ok: true,
+      color: 'primary',
+    })
     return
   }
   const parts = []
   if (errors.length) parts.push(`ERREURS (${errors.length}) :\n${errors.join('\n')}`)
   if (warnings.length) parts.push(`AVERTISSEMENTS (${warnings.length}) :\n${warnings.join('\n')}`)
-  Dialog.create({ title: 'Validation du projet', message: parts.join('\n\n'), ok: true, color: 'primary' })
+  Dialog.create({
+    title: 'Validation du projet',
+    message: parts.join('\n\n'),
+    ok: true,
+    color: 'primary',
+  })
 }
 
 const validating = ref(false)
@@ -451,7 +604,10 @@ async function buildGame() {
     const { errors, warnings } = await computeValidation()
     if (errors.length) {
       showValidationDialog(errors, warnings)
-      Notify.create({ type: 'negative', message: 'Build annulé — corrige les erreurs de validation d\'abord.' })
+      Notify.create({
+        type: 'negative',
+        message: "Build annulé — corrige les erreurs de validation d'abord.",
+      })
       return
     }
     if (warnings.length) {
@@ -543,9 +699,18 @@ async function buildGame() {
 }
 
 .panes {
+  position: relative;
   flex: 1;
   min-height: 0;
   display: flex;
+}
+
+.graph-fullscreen,
+.chapter-page-fullscreen {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  background: var(--color-bg);
 }
 
 .full-splitter {
@@ -587,6 +752,11 @@ async function buildGame() {
   width: 220px;
   flex-shrink: 0;
   font-family: var(--font-mono);
+}
+
+.route-select {
+  width: 220px;
+  flex-shrink: 0;
 }
 
 .section-label {

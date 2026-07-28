@@ -52,7 +52,11 @@
         >
           <template #selected>
             <span class="selected-row">
-              <span v-if="!isGroupThread(entry.thread)" class="option-dot" :style="{ background: contactColor(entry.thread) }" />
+              <span
+                v-if="!isGroupThread(entry.thread)"
+                class="option-dot"
+                :style="{ background: contactColor(entry.thread) }"
+              />
               <q-icon v-else name="group" size="16px" class="option-icon" />
               {{ threadLabel(entry.thread) }}
             </span>
@@ -60,7 +64,11 @@
           <template #option="scope">
             <q-item v-bind="scope.itemProps">
               <q-item-section avatar>
-                <span v-if="!scope.opt.group" class="option-dot" :style="{ background: contactColor(scope.opt.value) }" />
+                <span
+                  v-if="!scope.opt.group"
+                  class="option-dot"
+                  :style="{ background: contactColor(scope.opt.value) }"
+                />
                 <q-icon v-else name="group" size="16px" class="option-icon" />
               </q-item-section>
               <q-item-section>{{ scope.opt.label }}</q-item-section>
@@ -80,7 +88,9 @@
 
     <div class="section-title">
       Options de réponse
-      <FieldHelp text="Chaque option devient un bouton proposé au joueur. Le texte choisi part comme sa réponse." />
+      <FieldHelp
+        text="Chaque option devient un bouton proposé au joueur. Le texte choisi part comme sa réponse."
+      />
     </div>
     <q-expansion-item
       v-for="(option, i) in entry.options"
@@ -89,7 +99,10 @@
       class="option-card"
     >
       <template #header>
-        <q-item-section>Option {{ i + 1 }}{{ option.text ? ' — ' + option.text : ' (texte vide)' }}</q-item-section>
+        <q-item-section
+          >Option {{ i + 1
+          }}{{ option.text ? ' — ' + option.text : ' (texte vide)' }}</q-item-section
+        >
         <q-item-section side>
           <q-btn
             dense
@@ -102,7 +115,11 @@
             @click.stop="removeOption(i)"
           >
             <q-tooltip>
-              {{ entry.options.length <= 1 ? 'Un choix a besoin d\'au moins une option' : 'Supprimer cette option' }}
+              {{
+                entry.options.length <= 1
+                  ? "Un choix a besoin d'au moins une option"
+                  : 'Supprimer cette option'
+              }}
             </q-tooltip>
           </q-btn>
         </q-item-section>
@@ -115,6 +132,11 @@
           label="Texte du bouton"
           placeholder="ex: Ok, j'arrive"
           v-model="option.text"
+        />
+
+        <RoutePickerField
+          v-model="option.route"
+          label="Mène vers la route (optionnel — pour un choix clé)"
         />
 
         <q-tabs
@@ -139,15 +161,21 @@
               Ce qui se joue immédiatement après ce choix (ex: la réponse du contact) — tous les
               types d'entrée sont disponibles ici, comme dans la timeline principale.
             </p>
-            <TimelineEditor :entries="ensureThen(option)" :breadcrumb="[...breadcrumb, optionSegment(option, i)]" />
+            <TimelineEditor
+              :entries="ensureThen(option)"
+              :breadcrumb="[...breadcrumb, optionSegment(option, i)]"
+            />
           </q-tab-panel>
 
           <q-tab-panel name="effects" class="option-panel">
             <p class="tab-help">
-              Change des stats/l'état du jeu quand le joueur choisit cette option (indépendant de
-              ce qui s'affiche juste après).
+              Change des stats/l'état du jeu quand le joueur choisit cette option (indépendant de ce
+              qui s'affiche juste après).
             </p>
-            <EffectsBuilder :model-value="option.effects" @update:model-value="(v) => (option.effects = v)" />
+            <EffectsBuilder
+              :model-value="option.effects"
+              @update:model-value="(v) => (option.effects = v)"
+            />
           </q-tab-panel>
 
           <q-tab-panel name="requires" class="option-panel">
@@ -155,12 +183,23 @@
               Cette option n'est proposée que si toutes ces conditions sont vraies. Garde toujours
               au moins une option sans condition, sinon le choix peut se retrouver vide.
             </p>
-            <RequiresBuilder :model-value="option.requires" @update:model-value="(v) => (option.requires = v)" />
+            <RequiresBuilder
+              :model-value="option.requires"
+              @update:model-value="(v) => (option.requires = v)"
+            />
           </q-tab-panel>
         </q-tab-panels>
       </div>
     </q-expansion-item>
-    <q-btn dense flat no-caps icon="add" label="Ajouter une option" class="btn-ghost" @click="addOption" />
+    <q-btn
+      dense
+      flat
+      no-caps
+      icon="add"
+      label="Ajouter une option"
+      class="btn-ghost"
+      @click="addOption"
+    />
   </div>
 </template>
 
@@ -171,6 +210,7 @@ import RequiresBuilder from '@/editor/components/RequiresBuilder.vue'
 import EffectsBuilder from '@/editor/components/EffectsBuilder.vue'
 import TimelineEditor from '@/editor/components/TimelineEditor.vue'
 import FieldHelp from '@/editor/components/FieldHelp.vue'
+import RoutePickerField from '@/editor/components/RoutePickerField.vue'
 
 // `breadcrumb` — see docs/ui-ux-audit.md point 2 / TimelineEditor.vue's own
 // prop of the same name. Forwarded here (not built by TimelineEditor
@@ -180,8 +220,14 @@ const props = defineProps({
   entry: { type: Object, required: true },
   breadcrumb: { type: Array, default: () => [] },
 })
-const { contactOptionsNoMe: contactOptions, threadOptions, contactColor, contactLabel, isGroupThread, threadLabel } =
-  useContactOptions()
+const {
+  contactOptionsNoMe: contactOptions,
+  threadOptions,
+  contactColor,
+  contactLabel,
+  isGroupThread,
+  threadLabel,
+} = useContactOptions()
 
 // Controls each option's q-expansion-item (previously uncontrolled) so a
 // breadcrumb click can collapse it programmatically — see optionSegment()

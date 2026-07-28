@@ -29,12 +29,27 @@
           </q-item>
         </template>
       </q-select>
-      <q-input dense outlined class="text-input" placeholder="Texte du commentaire" v-model="c.text" @update:model-value="sync" />
+      <q-input
+        dense
+        outlined
+        class="text-input"
+        placeholder="Texte du commentaire"
+        v-model="c.text"
+        @update:model-value="sync"
+      />
       <q-btn dense flat round icon="close" size="sm" @click="removeComment(i)">
         <q-tooltip>Retirer</q-tooltip>
       </q-btn>
     </div>
-    <q-btn dense flat no-caps icon="add" label="Ajouter un commentaire" class="btn-ghost" @click="addComment" />
+    <q-btn
+      dense
+      flat
+      no-caps
+      icon="add"
+      label="Ajouter un commentaire"
+      class="btn-ghost"
+      @click="addComment"
+    />
     <q-input
       dense
       outlined

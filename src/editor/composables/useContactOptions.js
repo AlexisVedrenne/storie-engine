@@ -24,7 +24,11 @@ export function useContactOptions() {
   // which does have a color) — e.g. to show a contact's identity dot only
   // where it's meaningful. See docs/ui-design-principles.md.
   const threadOptions = computed(() => [
-    ...(story.project?.threads || []).map((t) => ({ label: `${t.name} (groupe)`, value: t.id, group: true })),
+    ...(story.project?.threads || []).map((t) => ({
+      label: `${t.name} (groupe)`,
+      value: t.id,
+      group: true,
+    })),
     ...story.contactsList
       .filter((c) => c.id !== 'me')
       .map((c) => ({ label: `${c.name} (1:1)`, value: c.id, group: false })),

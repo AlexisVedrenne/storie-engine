@@ -1,6 +1,14 @@
 <template>
   <div class="entry-form">
-    <q-select dense outlined emit-value map-options label="Qui appelle" :options="contactOptions" v-model="entry.contact">
+    <q-select
+      dense
+      outlined
+      emit-value
+      map-options
+      label="Qui appelle"
+      :options="contactOptions"
+      v-model="entry.contact"
+    >
       <template #selected>
         <span class="selected-row">
           <span class="option-dot" :style="{ background: contactColor(entry.contact) }" />
@@ -19,9 +27,13 @@
 
     <div class="section-title">
       Script de l'appel
-      <FieldHelp text="Les répliques s'affichent une par une, dans l'ordre, une fois l'appel décroché — le joueur clique pour faire avancer la conversation." />
+      <FieldHelp
+        text="Les répliques s'affichent une par une, dans l'ordre, une fois l'appel décroché — le joueur clique pour faire avancer la conversation."
+      />
     </div>
-    <div v-if="!scriptRows.length" class="empty-hint">Aucune réplique — l'appel se terminera sans dialogue.</div>
+    <div v-if="!scriptRows.length" class="empty-hint">
+      Aucune réplique — l'appel se terminera sans dialogue.
+    </div>
     <div v-for="(line, i) in scriptRows" :key="i" class="row">
       <span class="line-number">{{ i + 1 }}</span>
       <q-select
@@ -49,12 +61,27 @@
           </q-item>
         </template>
       </q-select>
-      <q-input dense outlined class="text-input" placeholder="Texte de la réplique" v-model="line.text" @update:model-value="sync" />
+      <q-input
+        dense
+        outlined
+        class="text-input"
+        placeholder="Texte de la réplique"
+        v-model="line.text"
+        @update:model-value="sync"
+      />
       <q-btn dense flat round icon="close" size="sm" @click="removeLine(i)">
         <q-tooltip>Retirer</q-tooltip>
       </q-btn>
     </div>
-    <q-btn dense flat no-caps icon="add" label="Ajouter une réplique" class="btn-ghost" @click="addLine" />
+    <q-btn
+      dense
+      flat
+      no-caps
+      icon="add"
+      label="Ajouter une réplique"
+      class="btn-ghost"
+      @click="addLine"
+    />
   </div>
 </template>
 

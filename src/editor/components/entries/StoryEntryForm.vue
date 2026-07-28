@@ -1,6 +1,14 @@
 <template>
   <div class="entry-form">
-    <q-select dense outlined emit-value map-options label="Personnage" :options="contactOptions" v-model="entry.contact">
+    <q-select
+      dense
+      outlined
+      emit-value
+      map-options
+      label="Personnage"
+      :options="contactOptions"
+      v-model="entry.contact"
+    >
       <template #selected>
         <span class="selected-row">
           <span class="option-dot" :style="{ background: contactColor(entry.contact) }" />
@@ -16,12 +24,29 @@
         </q-item>
       </template>
     </q-select>
-    <AssetField v-model="entry.media" label="Image (optionnel — sinon emoji sur fond coloré)" :contact-id="entry.contact" />
+    <AssetField
+      v-model="entry.media"
+      label="Image (optionnel — sinon emoji sur fond coloré)"
+      :contact-id="entry.contact"
+    />
     <div class="row">
-      <q-input dense outlined label="Emoji" placeholder="☕" v-model="entry.emoji" class="emoji-input" />
+      <q-input
+        dense
+        outlined
+        label="Emoji"
+        placeholder="☕"
+        v-model="entry.emoji"
+        class="emoji-input"
+      />
       <q-input dense outlined label="Couleur de fond" placeholder="#e91e63" v-model="entry.bg" />
     </div>
-    <q-input dense outlined label="Légende (optionnel)" placeholder="ex: petit dej du dimanche" v-model="entry.caption" />
+    <q-input
+      dense
+      outlined
+      label="Légende (optionnel)"
+      placeholder="ex: petit dej du dimanche"
+      v-model="entry.caption"
+    />
   </div>
 </template>
 

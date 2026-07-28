@@ -46,6 +46,7 @@ contextBridge.exposeInMainWorld("storieAPI", {
   reorderChapters: (payload) => ipcRenderer.invoke("project:reorderChapters", payload),
   saveContacts: (payload) => ipcRenderer.invoke("project:saveContacts", payload),
   saveThreads: (payload) => ipcRenderer.invoke("project:saveThreads", payload),
+  saveRoutes: (payload) => ipcRenderer.invoke("project:saveRoutes", payload),
   saveGame: (payload) => ipcRenderer.invoke("project:saveGame", payload),
   saveI18nBucket: (payload) => ipcRenderer.invoke("project:saveI18nBucket", payload),
   saveSeedBucket: (payload) => ipcRenderer.invoke("project:saveSeedBucket", payload),

@@ -10,133 +10,158 @@
 // dangling id (return a synthetic stub, never throw) — this scanner exists
 // so deleting a contact/thread can't quietly orphan a reference instead.
 
+import { childrenOf } from './routeTree.js'
+import { collectRouteTaggedOptions } from './chapterGraph.js'
+
 function pushIfContactUsed(refs, label, id, requires, effects) {
-  if (requires?.following && id in requires.following) refs.push(`${label} (condition)`);
-  if (effects?.social && id in effects.social) refs.push(`${label} (effet social)`);
-  const newFollower = effects?.newFollower;
+  if (requires?.following && id in requires.following) refs.push(`${label} (condition)`)
+  if (effects?.social && id in effects.social) refs.push(`${label} (effet social)`)
+  const newFollower = effects?.newFollower
   if (newFollower === id || (Array.isArray(newFollower) && newFollower.includes(id))) {
-    refs.push(`${label} (effet newFollower)`);
+    refs.push(`${label} (effet newFollower)`)
   }
 }
 
 function findContactReferences(project, id) {
-  const refs = [];
+  const refs = []
 
   function walkTimeline(timeline, chapterLabel) {
-    (timeline || []).forEach((entry, i) => {
-      const label = `${chapterLabel} → ${entry.type} #${i + 1}`;
+    ;(timeline || []).forEach((entry, i) => {
+      const label = `${chapterLabel} → ${entry.type} #${i + 1}`
       switch (entry.type) {
-        case "message":
-          if (entry.contact === id) refs.push(label);
-          break;
-        case "choice":
-          if (entry.contact === id) refs.push(label);
-          (entry.options || []).forEach((option, j) => {
-            const optLabel = `${label} → option ${j + 1}`;
-            pushIfContactUsed(refs, optLabel, id, option.requires, option.effects);
-            walkTimeline(option.then, optLabel);
-          });
-          break;
-        case "dm":
-          if (entry.from === id) refs.push(label);
-          break;
-        case "call":
-          if (entry.contact === id) refs.push(label);
-          if ((entry.script || []).some((line) => line.from === id)) refs.push(`${label} → script`);
-          break;
-        case "post":
-          if (entry.author === id) refs.push(label);
-          (entry.comments || []).forEach((comment, k) => {
-            if (comment.author === id) refs.push(`${label} → commentaire ${k + 1}`);
-          });
-          break;
-        case "reel":
-          if (entry.author === id) refs.push(label);
-          break;
-        case "photo":
-          if (entry.from === id) refs.push(label);
-          break;
-        case "story":
-          if (entry.contact === id) refs.push(label);
-          break;
+        case 'message':
+          if (entry.contact === id) refs.push(label)
+          break
+        case 'choice':
+          if (entry.contact === id) refs.push(label)
+          ;(entry.options || []).forEach((option, j) => {
+            const optLabel = `${label} → option ${j + 1}`
+            pushIfContactUsed(refs, optLabel, id, option.requires, option.effects)
+            walkTimeline(option.then, optLabel)
+          })
+          break
+        case 'dm':
+          if (entry.from === id) refs.push(label)
+          break
+        case 'call':
+          if (entry.contact === id) refs.push(label)
+          if ((entry.script || []).some((line) => line.from === id)) refs.push(`${label} → script`)
+          break
+        case 'post':
+          if (entry.author === id) refs.push(label)
+          ;(entry.comments || []).forEach((comment, k) => {
+            if (comment.author === id) refs.push(`${label} → commentaire ${k + 1}`)
+          })
+          break
+        case 'reel':
+          if (entry.author === id) refs.push(label)
+          break
+        case 'photo':
+          if (entry.from === id) refs.push(label)
+          break
+        case 'story':
+          if (entry.contact === id) refs.push(label)
+          break
         default:
-          break;
+          break
       }
-      pushIfContactUsed(refs, label, id, entry.requires, entry.effects);
-    });
+      pushIfContactUsed(refs, label, id, entry.requires, entry.effects)
+    })
   }
 
   for (const chapter of project.chapters || []) {
-    const label = chapter.title || chapter.id;
+    const label = chapter.title || chapter.id
     if (chapter.requires?.following && id in chapter.requires.following) {
-      refs.push(`${label} → condition de démarrage`);
+      refs.push(`${label} → condition de démarrage`)
     }
-    walkTimeline(chapter.timeline, label);
+    walkTimeline(chapter.timeline, label)
   }
 
   for (const thread of project.threads || []) {
     if ((thread.participants || []).includes(id)) {
-      refs.push(`threads.js → ${thread.name || thread.id} (participant)`);
+      refs.push(`threads.js → ${thread.name || thread.id} (participant)`)
     }
   }
 
-  const seed = project.seed || {};
+  const seed = project.seed || {}
   for (const [contactId, entries] of Object.entries(seed.messages || {})) {
-    if (contactId === id) refs.push(`seed/messages → ${contactId}`);
-    (entries || []).forEach((entry, k) => {
-      if (entry.from === id) refs.push(`seed/messages → ${contactId} (message ${k + 1})`);
-    });
+    if (contactId === id) refs.push(`seed/messages → ${contactId}`)
+    ;(entries || []).forEach((entry, k) => {
+      if (entry.from === id) refs.push(`seed/messages → ${contactId} (message ${k + 1})`)
+    })
   }
   for (const [threadId, entries] of Object.entries(seed.dms || {})) {
-    (entries || []).forEach((entry, k) => {
-      if (entry.from === id) refs.push(`seed/dms → ${threadId} (message ${k + 1})`);
-    });
+    ;(entries || []).forEach((entry, k) => {
+      if (entry.from === id) refs.push(`seed/dms → ${threadId} (message ${k + 1})`)
+    })
   }
-  for (const bucketName of ["posts", "reels"]) {
-    (seed[bucketName] || []).forEach((post, k) => {
-      if (post.author === id) refs.push(`seed/${bucketName} → #${k + 1}`);
-      (post.comments || []).forEach((comment, ck) => {
-        if (comment.author === id) refs.push(`seed/${bucketName} → #${k + 1} (commentaire ${ck + 1})`);
-      });
-    });
+  for (const bucketName of ['posts', 'reels']) {
+    ;(seed[bucketName] || []).forEach((post, k) => {
+      if (post.author === id) refs.push(`seed/${bucketName} → #${k + 1}`)
+      ;(post.comments || []).forEach((comment, ck) => {
+        if (comment.author === id)
+          refs.push(`seed/${bucketName} → #${k + 1} (commentaire ${ck + 1})`)
+      })
+    })
   }
-  (seed.photos || []).forEach((photo, k) => {
-    if (photo.from === id) refs.push(`seed/photos → #${k + 1}`);
-  });
+  ;(seed.photos || []).forEach((photo, k) => {
+    if (photo.from === id) refs.push(`seed/photos → #${k + 1}`)
+  })
 
-  return refs;
+  return refs
 }
 
 function findThreadReferences(project, id) {
-  const refs = [];
+  const refs = []
 
   function walkTimeline(timeline, chapterLabel) {
-    (timeline || []).forEach((entry, i) => {
-      const label = `${chapterLabel} → ${entry.type} #${i + 1}`;
-      if ((entry.type === "choice" || entry.type === "dm") && entry.thread === id) refs.push(label);
-      if (entry.type === "choice") {
-        (entry.options || []).forEach((option, j) => walkTimeline(option.then, `${label} → option ${j + 1}`));
+    ;(timeline || []).forEach((entry, i) => {
+      const label = `${chapterLabel} → ${entry.type} #${i + 1}`
+      if ((entry.type === 'choice' || entry.type === 'dm') && entry.thread === id) refs.push(label)
+      if (entry.type === 'choice') {
+        ;(entry.options || []).forEach((option, j) =>
+          walkTimeline(option.then, `${label} → option ${j + 1}`),
+        )
       }
-    });
+    })
   }
 
   for (const chapter of project.chapters || []) {
-    walkTimeline(chapter.timeline, chapter.title || chapter.id);
+    walkTimeline(chapter.timeline, chapter.title || chapter.id)
   }
 
   for (const threadId of Object.keys((project.seed || {}).dms || {})) {
-    if (threadId === id) refs.push(`seed/dms → ${threadId}`);
+    if (threadId === id) refs.push(`seed/dms → ${threadId}`)
   }
 
-  return refs;
+  return refs
+}
+
+// Routes are editor-only organization (no engine meaning, see
+// docs/story-engine.md's chapter.requires-based branching) — a route id can
+// be referenced by a chapter's own `route` field, or by a sub-route's
+// `parentId` (routeTree.js's childrenOf) — both block deletion.
+function findRouteReferences(project, id) {
+  const refs = []
+  for (const chapter of project.chapters || []) {
+    if (chapter.route === id) refs.push(chapter.title || chapter.id)
+    const taggedOptions = collectRouteTaggedOptions(chapter.timeline).filter((o) => o.route === id)
+    for (const option of taggedOptions) {
+      refs.push(`${chapter.title || chapter.id} → choix clé "${option.text || '(texte vide)'}"`)
+    }
+  }
+  for (const child of childrenOf(project.routes, id)) {
+    refs.push(`sous-route : ${child.name || child.id}`)
+  }
+  return refs
 }
 
 // @param project - story.project: {chapters, threads, seed}
-// @param target - {type: 'contact'|'thread', id: string}
+// @param target - {type: 'contact'|'thread'|'route', id: string}
 // @returns string[] human-readable reference locations; [] = safe to delete
 export function findReferences(project, target) {
-  if (!project) return [];
-  return target.type === "contact"
-    ? findContactReferences(project, target.id)
-    : findThreadReferences(project, target.id);
+  if (!project) return []
+  if (target.type === 'contact') return findContactReferences(project, target.id)
+  if (target.type === 'thread') return findThreadReferences(project, target.id)
+  return findRouteReferences(project, target.id)
 }

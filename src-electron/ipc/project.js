@@ -18,6 +18,7 @@ import {
   serializeChapter,
   serializeContacts,
   serializeThreads,
+  serializeRoutes,
   serializeGame,
   serializeI18nBucket,
 } from "../../src/project/serializeChapter.js";
@@ -106,6 +107,7 @@ async function loadProjectFromDisk(rootPath) {
 
   const contacts = await loadDefaultOr(path.join(rootPath, "contacts.js"), []);
   const threads = await loadDefaultOr(path.join(rootPath, "threads.js"), []);
+  const routes = await loadDefaultOr(path.join(rootPath, "routes.js"), []);
   const gameConfig = await loadDefaultOr(path.join(rootPath, "game.js"), {
     title: manifest.name || "",
   });
@@ -129,6 +131,7 @@ async function loadProjectFromDisk(rootPath) {
     chapters,
     contacts,
     threads,
+    routes,
     gameConfig,
     seed,
     i18n: i18nDict,
@@ -254,6 +257,11 @@ export function registerProjectHandlers(mainWindow) {
     return true;
   });
 
+  ipcMain.handle("project:saveRoutes", async (_evt, { rootPath, source }) => {
+    fs.writeFileSync(path.join(rootPath, "routes.js"), await formatJs(source), "utf-8");
+    return true;
+  });
+
   ipcMain.handle("project:saveGame", async (_evt, { rootPath, source }) => {
     fs.writeFileSync(path.join(rootPath, "game.js"), await formatJs(source), "utf-8");
     return true;
@@ -333,6 +341,7 @@ export function registerProjectHandlers(mainWindow) {
       "utf-8",
     );
     fs.writeFileSync(path.join(rootPath, "threads.js"), await formatJs(serializeThreads([])), "utf-8");
+    fs.writeFileSync(path.join(rootPath, "routes.js"), await formatJs(serializeRoutes([])), "utf-8");
     fs.writeFileSync(path.join(rootPath, "game.js"), await formatJs(serializeGame({ title: name })), "utf-8");
 
     return rootPath;

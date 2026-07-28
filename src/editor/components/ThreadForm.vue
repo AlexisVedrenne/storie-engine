@@ -3,7 +3,9 @@
     <div class="panel">
       <div class="section-label">
         Groupe de discussion (DM Insta)
-        <FieldHelp text="Seuls les groupes ont besoin d'une entrée ici — les DM 1:1 utilisent directement l'id du contact comme thread, sans passer par threads.js." />
+        <FieldHelp
+          text="Seuls les groupes ont besoin d'une entrée ici — les DM 1:1 utilisent directement l'id du contact comme thread, sans passer par threads.js."
+        />
       </div>
       <div class="row">
         <q-input dense outlined disabled label="Id" :model-value="thread.id" class="id-input" />

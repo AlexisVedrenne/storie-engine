@@ -41,7 +41,15 @@
         />
       </div>
     </div>
-    <q-btn dense flat no-caps icon="add" label="Ajouter une stat à modifier" class="btn-ghost" @click="addFlagRow" />
+    <q-btn
+      dense
+      flat
+      no-caps
+      icon="add"
+      label="Ajouter une stat à modifier"
+      class="btn-ghost"
+      @click="addFlagRow"
+    />
 
     <div class="section-title top-gap">Widgets du téléphone</div>
 
@@ -54,10 +62,35 @@
     >
       <div class="grid">
         <q-input dense outlined label="Ville" v-model="weather.city" @update:model-value="sync" />
-        <q-input dense outlined type="number" label="Température" v-model.number="weather.temp" @update:model-value="sync" />
-        <q-input dense outlined label="Condition" v-model="weather.condition" @update:model-value="sync" />
-        <q-input dense outlined label="Icône (emoji)" v-model="weather.icon" @update:model-value="sync" />
-        <q-input dense outlined label="Légende" v-model="weather.caption" @update:model-value="sync" />
+        <q-input
+          dense
+          outlined
+          type="number"
+          label="Température"
+          v-model.number="weather.temp"
+          @update:model-value="sync"
+        />
+        <q-input
+          dense
+          outlined
+          label="Condition"
+          v-model="weather.condition"
+          @update:model-value="sync"
+        />
+        <q-input
+          dense
+          outlined
+          label="Icône (emoji)"
+          v-model="weather.icon"
+          @update:model-value="sync"
+        />
+        <q-input
+          dense
+          outlined
+          label="Légende"
+          v-model="weather.caption"
+          @update:model-value="sync"
+        />
       </div>
     </q-expansion-item>
 
@@ -69,8 +102,22 @@
       @update:model-value="sync"
     >
       <div class="grid">
-        <q-input dense outlined type="number" label="Pas actuels" v-model.number="steps.value" @update:model-value="sync" />
-        <q-input dense outlined type="number" label="Objectif" v-model.number="steps.goal" @update:model-value="sync" />
+        <q-input
+          dense
+          outlined
+          type="number"
+          label="Pas actuels"
+          v-model.number="steps.value"
+          @update:model-value="sync"
+        />
+        <q-input
+          dense
+          outlined
+          type="number"
+          label="Objectif"
+          v-model.number="steps.goal"
+          @update:model-value="sync"
+        />
       </div>
     </q-expansion-item>
 
@@ -81,7 +128,14 @@
       v-model="sections.battery"
       @update:model-value="sync"
     >
-      <q-input dense outlined type="number" label="% batterie" v-model.number="battery.value" @update:model-value="sync" />
+      <q-input
+        dense
+        outlined
+        type="number"
+        label="% batterie"
+        v-model.number="battery.value"
+        @update:model-value="sync"
+      />
     </q-expansion-item>
 
     <q-expansion-item
@@ -92,7 +146,14 @@
       @update:model-value="sync"
     >
       <div class="grid">
-        <q-input dense outlined type="number" label="Barres (0-4)" v-model.number="network.signal" @update:model-value="sync" />
+        <q-input
+          dense
+          outlined
+          type="number"
+          label="Barres (0-4)"
+          v-model.number="network.signal"
+          @update:model-value="sync"
+        />
         <q-toggle v-model="network.wifi" label="Wi-Fi" @update:model-value="sync" />
       </div>
     </q-expansion-item>
@@ -113,7 +174,14 @@
         map-options
         @update:model-value="sync"
       />
-      <q-input v-if="clock.mode === 'set'" dense outlined label="HH:MM" v-model="clock.value" @update:model-value="sync" />
+      <q-input
+        v-if="clock.mode === 'set'"
+        dense
+        outlined
+        label="HH:MM"
+        v-model="clock.value"
+        @update:model-value="sync"
+      />
     </q-expansion-item>
 
     <q-expansion-item
@@ -132,12 +200,21 @@
         map-options
         @update:model-value="sync"
       />
-      <q-input v-if="date.mode === 'set'" dense outlined label="JJ/MM/AAAA" v-model="date.value" @update:model-value="sync" />
+      <q-input
+        v-if="date.mode === 'set'"
+        dense
+        outlined
+        label="JJ/MM/AAAA"
+        v-model="date.value"
+        @update:model-value="sync"
+      />
     </q-expansion-item>
 
     <div class="section-title top-gap">
       Réseau social (Pixly)
-      <FieldHelp text="Fait varier le nombre d'abonnés/abonnements affiché sur le profil d'un personnage." />
+      <FieldHelp
+        text="Fait varier le nombre d'abonnés/abonnements affiché sur le profil d'un personnage."
+      />
     </div>
     <div v-if="!socialRows.length" class="empty-hint">Aucun changement d'abonnés.</div>
     <div v-for="(row, i) in socialRows" :key="i" class="row-card">
@@ -171,15 +248,33 @@
             </q-item>
           </template>
         </q-select>
-        <q-input dense outlined type="number" class="num-input" label="+abonnés" v-model.number="row.followers" @update:model-value="sync" />
-        <q-input dense outlined type="number" class="num-input" label="+abonnements" v-model.number="row.following" @update:model-value="sync" />
+        <q-input
+          dense
+          outlined
+          type="number"
+          class="num-input"
+          label="+abonnés"
+          v-model.number="row.followers"
+          @update:model-value="sync"
+        />
+        <q-input
+          dense
+          outlined
+          type="number"
+          class="num-input"
+          label="+abonnements"
+          v-model.number="row.following"
+          @update:model-value="sync"
+        />
       </div>
     </div>
     <q-btn dense flat no-caps icon="add" label="Ajouter" class="btn-ghost" @click="addSocialRow" />
 
     <div class="section-title top-gap">
       Nouveaux abonnés
-      <FieldHelp text="Ces personnages se mettent à suivre le joueur — déclenche une notification 'a commencé à te suivre'." />
+      <FieldHelp
+        text="Ces personnages se mettent à suivre le joueur — déclenche une notification 'a commencé à te suivre'."
+      />
     </div>
     <q-select
       dense
@@ -259,8 +354,14 @@ const weather = reactive({ ...initial.weather })
 const steps = reactive({ value: initial.steps, goal: initial.stepsGoal })
 const battery = reactive({ value: initial.battery })
 const network = reactive({ signal: initial.network?.signal, wifi: initial.network?.wifi ?? true })
-const clock = reactive({ mode: initial.clock === null ? 'clear' : initial.clock ? 'set' : 'unset', value: initial.clock || '' })
-const date = reactive({ mode: initial.date === null ? 'clear' : initial.date ? 'set' : 'unset', value: initial.date || '' })
+const clock = reactive({
+  mode: initial.clock === null ? 'clear' : initial.clock ? 'set' : 'unset',
+  value: initial.clock || '',
+})
+const date = reactive({
+  mode: initial.date === null ? 'clear' : initial.date ? 'set' : 'unset',
+  value: initial.date || '',
+})
 
 const socialRows = reactive(
   Object.entries(initial.social || {}).map(([contactId, d]) =>
@@ -268,7 +369,11 @@ const socialRows = reactive(
   ),
 )
 const newFollowerIds = ref(
-  Array.isArray(initial.newFollower) ? [...initial.newFollower] : initial.newFollower ? [initial.newFollower] : [],
+  Array.isArray(initial.newFollower)
+    ? [...initial.newFollower]
+    : initial.newFollower
+      ? [initial.newFollower]
+      : [],
 )
 
 function addFlagRow() {
@@ -279,7 +384,9 @@ function removeFlagRow(i) {
   sync()
 }
 function addSocialRow() {
-  socialRows.push(reactive({ contactId: contactOptions.value[0]?.value || '', followers: 0, following: 0 }))
+  socialRows.push(
+    reactive({ contactId: contactOptions.value[0]?.value || '', followers: 0, following: 0 }),
+  )
 }
 function removeSocialRow(i) {
   socialRows.splice(i, 1)
@@ -299,7 +406,7 @@ function sync() {
   if (Object.keys(flags).length) effects.flags = flags
 
   if (sections.weather) {
-    const w = {};
+    const w = {}
     for (const k of ['city', 'temp', 'condition', 'icon', 'caption']) {
       if (weather[k] !== undefined && weather[k] !== '') w[k] = weather[k]
     }

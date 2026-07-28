@@ -5,18 +5,24 @@
 // without any warning. Same leaf-module convention as findReferences.js:
 // pure, no Pinia store dependency, usable from a plain button handler.
 
+import { hasCycle } from './routeTree.js'
+import { collectRouteTaggedOptions, firstChapterOfRoute } from './chapterGraph.js'
+
 function walkEffectsRequires(refs, requires, effects, label) {
   if (requires?.following) {
-    for (const id of Object.keys(requires.following)) refs.push({ kind: "contact", id, label: `${label} (condition)` });
+    for (const id of Object.keys(requires.following))
+      refs.push({ kind: 'contact', id, label: `${label} (condition)` })
   }
   if (effects?.social) {
-    for (const id of Object.keys(effects.social)) refs.push({ kind: "contact", id, label: `${label} (effet social)` });
+    for (const id of Object.keys(effects.social))
+      refs.push({ kind: 'contact', id, label: `${label} (effet social)` })
   }
-  const newFollower = effects?.newFollower;
-  if (typeof newFollower === "string") {
-    refs.push({ kind: "contact", id: newFollower, label: `${label} (effet newFollower)` });
+  const newFollower = effects?.newFollower
+  if (typeof newFollower === 'string') {
+    refs.push({ kind: 'contact', id: newFollower, label: `${label} (effet newFollower)` })
   } else if (Array.isArray(newFollower)) {
-    for (const id of newFollower) refs.push({ kind: "contact", id, label: `${label} (effet newFollower)` });
+    for (const id of newFollower)
+      refs.push({ kind: 'contact', id, label: `${label} (effet newFollower)` })
   }
 }
 
@@ -25,146 +31,218 @@ function walkEffectsRequires(refs, requires, effects, label) {
 // shape as findReferences.js, inverted: that scanner asks "does THIS id
 // appear anywhere", this one asks "what does every reference point at".
 function collectReferences(project) {
-  const refs = [];
+  const refs = []
 
   function walkTimeline(timeline, chapterLabel) {
-    (timeline || []).forEach((entry, i) => {
-      const label = `${chapterLabel} → ${entry.type} #${i + 1}`;
+    ;(timeline || []).forEach((entry, i) => {
+      const label = `${chapterLabel} → ${entry.type} #${i + 1}`
       switch (entry.type) {
-        case "message":
-          if (entry.contact) refs.push({ kind: "contact", id: entry.contact, label });
-          break;
-        case "choice":
-          if (entry.contact) refs.push({ kind: "contact", id: entry.contact, label });
-          if (entry.thread) refs.push({ kind: "thread", id: entry.thread, label });
-          (entry.options || []).forEach((option, j) => {
-            const optLabel = `${label} → option ${j + 1}`;
-            walkEffectsRequires(refs, option.requires, option.effects, optLabel);
-            walkTimeline(option.then, optLabel);
-          });
-          break;
-        case "dm":
-          if (entry.from) refs.push({ kind: "contact", id: entry.from, label });
-          if (entry.thread) refs.push({ kind: "thread", id: entry.thread, label });
-          break;
-        case "call":
-          if (entry.contact) refs.push({ kind: "contact", id: entry.contact, label });
-          (entry.script || []).forEach((line, k) => {
-            if (line.from) refs.push({ kind: "contact", id: line.from, label: `${label} → script ${k + 1}` });
-          });
-          break;
-        case "post":
-          if (entry.author) refs.push({ kind: "contact", id: entry.author, label });
-          (entry.comments || []).forEach((c, k) => {
-            if (c.author) refs.push({ kind: "contact", id: c.author, label: `${label} → commentaire ${k + 1}` });
-          });
-          break;
-        case "reel":
-          if (entry.author) refs.push({ kind: "contact", id: entry.author, label });
-          break;
-        case "photo":
-          if (entry.from) refs.push({ kind: "contact", id: entry.from, label });
-          break;
-        case "story":
-          if (entry.contact) refs.push({ kind: "contact", id: entry.contact, label });
-          break;
+        case 'message':
+          if (entry.contact) refs.push({ kind: 'contact', id: entry.contact, label })
+          break
+        case 'choice':
+          if (entry.contact) refs.push({ kind: 'contact', id: entry.contact, label })
+          if (entry.thread) refs.push({ kind: 'thread', id: entry.thread, label })
+          ;(entry.options || []).forEach((option, j) => {
+            const optLabel = `${label} → option ${j + 1}`
+            walkEffectsRequires(refs, option.requires, option.effects, optLabel)
+            walkTimeline(option.then, optLabel)
+          })
+          break
+        case 'dm':
+          if (entry.from) refs.push({ kind: 'contact', id: entry.from, label })
+          if (entry.thread) refs.push({ kind: 'thread', id: entry.thread, label })
+          break
+        case 'call':
+          if (entry.contact) refs.push({ kind: 'contact', id: entry.contact, label })
+          ;(entry.script || []).forEach((line, k) => {
+            if (line.from)
+              refs.push({ kind: 'contact', id: line.from, label: `${label} → script ${k + 1}` })
+          })
+          break
+        case 'post':
+          if (entry.author) refs.push({ kind: 'contact', id: entry.author, label })
+          ;(entry.comments || []).forEach((c, k) => {
+            if (c.author)
+              refs.push({ kind: 'contact', id: c.author, label: `${label} → commentaire ${k + 1}` })
+          })
+          break
+        case 'reel':
+          if (entry.author) refs.push({ kind: 'contact', id: entry.author, label })
+          break
+        case 'photo':
+          if (entry.from) refs.push({ kind: 'contact', id: entry.from, label })
+          break
+        case 'story':
+          if (entry.contact) refs.push({ kind: 'contact', id: entry.contact, label })
+          break
         default:
-          break;
+          break
       }
-      walkEffectsRequires(refs, entry.requires, entry.effects, label);
-    });
+      walkEffectsRequires(refs, entry.requires, entry.effects, label)
+    })
   }
 
   for (const chapter of project.chapters || []) {
-    const label = chapter.title || chapter.id;
+    const label = chapter.title || chapter.id
     if (chapter.requires?.following) {
       for (const id of Object.keys(chapter.requires.following)) {
-        refs.push({ kind: "contact", id, label: `${label} → condition de démarrage` });
+        refs.push({ kind: 'contact', id, label: `${label} → condition de démarrage` })
       }
     }
-    walkTimeline(chapter.timeline, label);
+    walkTimeline(chapter.timeline, label)
   }
 
   for (const thread of project.threads || []) {
-    (thread.participants || []).forEach((id) => {
-      refs.push({ kind: "contact", id, label: `threads.js → ${thread.name || thread.id} (participant)` });
-    });
+    ;(thread.participants || []).forEach((id) => {
+      refs.push({
+        kind: 'contact',
+        id,
+        label: `threads.js → ${thread.name || thread.id} (participant)`,
+      })
+    })
   }
 
-  const seed = project.seed || {};
+  const seed = project.seed || {}
   for (const [contactId, entries] of Object.entries(seed.messages || {})) {
-    refs.push({ kind: "contact", id: contactId, label: `seed/messages → ${contactId} (clé)` });
-    (entries || []).forEach((e, k) => {
-      if (e.from) refs.push({ kind: "contact", id: e.from, label: `seed/messages → ${contactId} (message ${k + 1})` });
-    });
+    refs.push({ kind: 'contact', id: contactId, label: `seed/messages → ${contactId} (clé)` })
+    ;(entries || []).forEach((e, k) => {
+      if (e.from)
+        refs.push({
+          kind: 'contact',
+          id: e.from,
+          label: `seed/messages → ${contactId} (message ${k + 1})`,
+        })
+    })
   }
   for (const [threadId, entries] of Object.entries(seed.dms || {})) {
-    refs.push({ kind: "thread", id: threadId, label: `seed/dms → ${threadId} (clé)` });
-    (entries || []).forEach((e, k) => {
-      if (e.from) refs.push({ kind: "contact", id: e.from, label: `seed/dms → ${threadId} (message ${k + 1})` });
-    });
+    refs.push({ kind: 'thread', id: threadId, label: `seed/dms → ${threadId} (clé)` })
+    ;(entries || []).forEach((e, k) => {
+      if (e.from)
+        refs.push({
+          kind: 'contact',
+          id: e.from,
+          label: `seed/dms → ${threadId} (message ${k + 1})`,
+        })
+    })
   }
-  for (const bucketName of ["posts", "reels"]) {
-    (seed[bucketName] || []).forEach((post, k) => {
-      if (post.author) refs.push({ kind: "contact", id: post.author, label: `seed/${bucketName} → #${k + 1}` });
-      (post.comments || []).forEach((c, ck) => {
-        if (c.author) refs.push({ kind: "contact", id: c.author, label: `seed/${bucketName} → #${k + 1} (commentaire ${ck + 1})` });
-      });
-    });
+  for (const bucketName of ['posts', 'reels']) {
+    ;(seed[bucketName] || []).forEach((post, k) => {
+      if (post.author)
+        refs.push({ kind: 'contact', id: post.author, label: `seed/${bucketName} → #${k + 1}` })
+      ;(post.comments || []).forEach((c, ck) => {
+        if (c.author)
+          refs.push({
+            kind: 'contact',
+            id: c.author,
+            label: `seed/${bucketName} → #${k + 1} (commentaire ${ck + 1})`,
+          })
+      })
+    })
   }
-  (seed.photos || []).forEach((photo, k) => {
-    if (photo.from) refs.push({ kind: "contact", id: photo.from, label: `seed/photos → #${k + 1}` });
-  });
+  ;(seed.photos || []).forEach((photo, k) => {
+    if (photo.from) refs.push({ kind: 'contact', id: photo.from, label: `seed/photos → #${k + 1}` })
+  })
 
-  return refs;
+  return refs
 }
 
 function contactExists(project, id) {
-  return id === "me" || (project.contacts || []).some((c) => c.id === id);
+  return id === 'me' || (project.contacts || []).some((c) => c.id === id)
 }
 
 // A thread id is also valid if it's a bare contact id — findThread()
 // synthesizes an implicit 1:1 thread for any id not found in threads.js.
 function threadExists(project, id) {
-  return (project.threads || []).some((t) => t.id === id) || contactExists(project, id);
+  return (project.threads || []).some((t) => t.id === id) || contactExists(project, id)
 }
 
 // @param project - story.project: {chapters, threads, seed, manifest}
 // @returns {{errors: string[], warnings: string[]}}
 export function validateProject(project) {
-  const errors = [];
-  const warnings = [];
-  if (!project) return { errors, warnings };
+  const errors = []
+  const warnings = []
+  if (!project) return { errors, warnings }
 
   for (const ref of collectReferences(project)) {
-    const ok = ref.kind === "contact" ? contactExists(project, ref.id) : threadExists(project, ref.id);
+    const ok =
+      ref.kind === 'contact' ? contactExists(project, ref.id) : threadExists(project, ref.id)
     if (!ok) {
-      const noun = ref.kind === "contact" ? "contact" : "thread";
-      errors.push(`${ref.label} → ${noun} introuvable : "${ref.id}"`);
+      const noun = ref.kind === 'contact' ? 'contact' : 'thread'
+      errors.push(`${ref.label} → ${noun} introuvable : "${ref.id}"`)
     }
   }
 
-  const chapters = project.chapters || [];
-  const chapterIds = new Set(chapters.map((c) => c.id));
-  const order = project.manifest?.chapterOrder || [];
+  const chapters = project.chapters || []
+  const chapterIds = new Set(chapters.map((c) => c.id))
+  const order = project.manifest?.chapterOrder || []
 
   for (const id of order) {
     if (!chapterIds.has(id)) {
-      errors.push(`project.json → chapterOrder contient "${id}", aucun fichier chapitre correspondant`);
+      errors.push(
+        `project.json → chapterOrder contient "${id}", aucun fichier chapitre correspondant`,
+      )
     }
   }
   for (const chapter of chapters) {
     if (!order.includes(chapter.id)) {
-      warnings.push(`Chapitre "${chapter.title || chapter.id}" absent de chapterOrder — ordre de lecture non garanti`);
+      warnings.push(
+        `Chapitre "${chapter.title || chapter.id}" absent de chapterOrder — ordre de lecture non garanti`,
+      )
     }
   }
 
-  const entryId = project.manifest?.entryChapterId;
+  const entryId = project.manifest?.entryChapterId
   if (entryId && !chapterIds.has(entryId)) {
-    errors.push(`project.json → entryChapterId "${entryId}" ne correspond à aucun chapitre — le jeu ne démarrera pas`);
+    errors.push(
+      `project.json → entryChapterId "${entryId}" ne correspond à aucun chapitre — le jeu ne démarrera pas`,
+    )
   }
 
-  return { errors, warnings };
+  // Routes are editor-only organization (no engine meaning) — a dangling
+  // `chapter.route` can't break the game, just a warning rather than an
+  // error, same severity choice as the missing-from-chapterOrder check above.
+  const routeIds = new Set((project.routes || []).map((r) => r.id))
+  for (const chapter of chapters) {
+    if (chapter.route && !routeIds.has(chapter.route)) {
+      warnings.push(
+        `Chapitre "${chapter.title || chapter.id}" → route introuvable : "${chapter.route}"`,
+      )
+    }
+  }
+  for (const route of project.routes || []) {
+    if (route.parentId && !routeIds.has(route.parentId)) {
+      warnings.push(
+        `Route "${route.name || route.id}" → route parente introuvable : "${route.parentId}"`,
+      )
+    }
+  }
+  // A key choice's `option.route` drives ChapterGraph.vue's branch edges
+  // (see chapterGraph.js) — same two failure shapes as chapter.route above,
+  // plus one specific to graph edges: a tag pointing at a route with no
+  // reachable chapter at all would just silently draw no edge for that
+  // branch, so it's worth its own message rather than folding into the
+  // dangling-id warning.
+  for (const chapter of chapters) {
+    for (const option of collectRouteTaggedOptions(chapter.timeline)) {
+      const label = `Chapitre "${chapter.title || chapter.id}" → choix clé "${option.text || '(texte vide)'}"`
+      if (!routeIds.has(option.route)) {
+        warnings.push(`${label} → route introuvable : "${option.route}"`)
+      } else if (!firstChapterOfRoute(chapters, project.routes || [], option.route)) {
+        warnings.push(`${label} → route "${option.route}" n'a aucun chapitre atteignable`)
+      }
+    }
+  }
+  // A cycle would infinite-loop routeTree.js's pathTo()/RoutePickerField.vue's tree
+  // render — RoutePickerField.vue's parent picker already excludes self+descendants, so
+  // this shouldn't be reachable through the UI, but it's a real crash risk
+  // if it ever is (hand-edited routes.js, bug elsewhere), hence an error
+  // rather than a warning.
+  if (hasCycle(project.routes || [])) {
+    errors.push(`routes.js → une ou plusieurs routes forment un cycle parent/enfant`)
+  }
+
+  return { errors, warnings }
 }
 
 // Collects every asset-relative-path field across the project, deduped by
@@ -172,42 +250,49 @@ export function validateProject(project) {
 // checked here (no fs access in the renderer); see project:checkAssets IPC.
 // @returns {{path: string, labels: string[]}[]}
 export function collectAssetPaths(project) {
-  const map = new Map();
+  const map = new Map()
   function add(assetPath, label) {
-    if (!assetPath) return;
-    if (!map.has(assetPath)) map.set(assetPath, []);
-    map.get(assetPath).push(label);
+    if (!assetPath) return
+    if (!map.has(assetPath)) map.set(assetPath, [])
+    map.get(assetPath).push(label)
   }
 
   for (const contact of project.contacts || []) {
-    add(contact.avatar, `${contact.name || contact.id} (avatar)`);
-    add(contact.socialAvatar, `${contact.name || contact.id} (avatar Pixly)`);
+    add(contact.avatar, `${contact.name || contact.id} (avatar)`)
+    add(contact.socialAvatar, `${contact.name || contact.id} (avatar Pixly)`)
   }
 
   function walkTimeline(timeline, chapterLabel) {
-    (timeline || []).forEach((entry, i) => {
-      const label = `${chapterLabel} → ${entry.type} #${i + 1}`;
-      add(entry.image, label);
-      add(entry.media, label);
-      add(entry.url, label);
-      if (entry.type === "choice") {
-        (entry.options || []).forEach((option, j) => walkTimeline(option.then, `${label} → option ${j + 1}`));
+    ;(timeline || []).forEach((entry, i) => {
+      const label = `${chapterLabel} → ${entry.type} #${i + 1}`
+      add(entry.image, label)
+      add(entry.media, label)
+      add(entry.url, label)
+      if (entry.type === 'choice') {
+        ;(entry.options || []).forEach((option, j) =>
+          walkTimeline(option.then, `${label} → option ${j + 1}`),
+        )
       }
-    });
+    })
   }
-  for (const chapter of project.chapters || []) walkTimeline(chapter.timeline, chapter.title || chapter.id);
+  for (const chapter of project.chapters || [])
+    walkTimeline(chapter.timeline, chapter.title || chapter.id)
 
-  const seed = project.seed || {};
+  const seed = project.seed || {}
   for (const [contactId, entries] of Object.entries(seed.messages || {})) {
-    (entries || []).forEach((e, k) => add(e.image, `seed/messages → ${contactId} (message ${k + 1})`));
+    ;(entries || []).forEach((e, k) =>
+      add(e.image, `seed/messages → ${contactId} (message ${k + 1})`),
+    )
   }
   for (const [threadId, entries] of Object.entries(seed.dms || {})) {
-    (entries || []).forEach((e, k) => add(e.image, `seed/dms → ${threadId} (message ${k + 1})`));
+    ;(entries || []).forEach((e, k) => add(e.image, `seed/dms → ${threadId} (message ${k + 1})`))
   }
-  for (const bucketName of ["posts", "reels"]) {
-    (seed[bucketName] || []).forEach((post, k) => add(post.image || post.media, `seed/${bucketName} → #${k + 1}`));
+  for (const bucketName of ['posts', 'reels']) {
+    ;(seed[bucketName] || []).forEach((post, k) =>
+      add(post.image || post.media, `seed/${bucketName} → #${k + 1}`),
+    )
   }
-  (seed.photos || []).forEach((photo, k) => add(photo.url, `seed/photos → #${k + 1}`));
+  ;(seed.photos || []).forEach((photo, k) => add(photo.url, `seed/photos → #${k + 1}`))
 
-  return [...map.entries()].map(([path, labels]) => ({ path, labels }));
+  return [...map.entries()].map(([path, labels]) => ({ path, labels }))
 }
