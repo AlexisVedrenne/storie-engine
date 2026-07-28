@@ -26,6 +26,7 @@
             :removable="scope.opt.value !== 'me'"
             @remove="removeParticipant(scope.opt.value)"
           >
+            <span class="chip-dot" :style="{ background: contactColor(scope.opt.value) }" />
             {{ scope.opt.label }}
           </q-chip>
         </template>
@@ -36,10 +37,19 @@
 
 <script setup>
 import { useContactOptions } from '@/editor/composables/useContactOptions'
+import { useStoryStore } from '@/engine/stores/story'
 import FieldHelp from '@/editor/components/FieldHelp.vue'
 
 const props = defineProps({ thread: { type: Object, required: true } })
+const story = useStoryStore()
 const { contactOptions } = useContactOptions()
+
+// Gives each participant chip the same color identity already used for
+// that contact everywhere else (ChapterList/ContactList's dot) — the chips
+// here were plain text with no visual identity at all before this.
+function contactColor(id) {
+  return story.getContact(id)?.color || '#999999'
+}
 
 // 'me' must always be a participant (a visible group is always one the
 // player is in, see docs/story-engine.md) — pre-included at creation and
@@ -95,5 +105,13 @@ function removeParticipant(id) {
   width: 160px;
   flex-shrink: 0;
   font-family: var(--font-mono);
+}
+
+.chip-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-right: var(--space-1);
 }
 </style>

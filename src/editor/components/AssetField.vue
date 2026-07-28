@@ -1,33 +1,30 @@
 <template>
   <div class="asset-field">
-    <div class="row">
-      <q-input
-        dense
-        outlined
-        clearable
-        class="path-input"
-        :model-value="modelValue || ''"
-        :label="label"
-        @update:model-value="(val) => emit('update:modelValue', val || undefined)"
-      />
-      <q-btn dense flat icon="upload" label="Importer…" @click="importFile">
-        <q-tooltip>Copier un fichier depuis n'importe où sur le disque dans assets/</q-tooltip>
-      </q-btn>
-      <q-btn dense flat icon="folder_open" label="Parcourir…" @click="browse">
-        <q-tooltip>Choisir un fichier déjà présent dans assets/</q-tooltip>
-      </q-btn>
-    </div>
-    <div v-if="error" class="error-text">{{ error }}</div>
+    <div class="field-label">{{ label }}</div>
 
-    <img v-if="category === 'image'" :src="resolveAssetUrl(modelValue)" class="preview" />
-    <div v-else-if="category === 'audio'" class="audio-preview">
-      <span class="audio-name" :title="modelValue">{{ modelValue }}</span>
-      <AudioPreview :src="resolveAssetUrl(modelValue)" />
+    <div v-if="category === 'image'" class="preview-box">
+      <img :src="resolveAssetUrl(modelValue)" class="preview-img" />
     </div>
-    <div v-else-if="modelValue" class="file-preview">
-      <q-icon name="insert_drive_file" size="18px" />
-      <span class="audio-name" :title="modelValue">{{ modelValue }}</span>
+    <AudioPreview v-else-if="category === 'audio'" :src="resolveAssetUrl(modelValue)" class="audio-box" />
+    <AudioPreview v-else-if="!modelValue && fallbackAudioSrc" :src="fallbackAudioSrc" class="audio-box" />
+
+    <div class="meta-row">
+      <q-icon v-if="!category && modelValue" name="insert_drive_file" size="16px" class="meta-icon" />
+      <span class="filename" :title="modelValue">
+        {{ modelValue || (fallbackAudioSrc ? 'Son par défaut du moteur' : 'Aucun fichier sélectionné') }}
+      </span>
+      <q-btn dense flat round icon="upload" size="sm" @click="importFile">
+        <q-tooltip>Importer… — copier un fichier depuis n'importe où sur le disque dans assets/</q-tooltip>
+      </q-btn>
+      <q-btn dense flat round icon="folder_open" size="sm" @click="browse">
+        <q-tooltip>Parcourir… — choisir un fichier déjà présent dans assets/</q-tooltip>
+      </q-btn>
+      <q-btn v-if="modelValue" dense flat round icon="close" size="sm" @click="clear">
+        <q-tooltip>Retirer</q-tooltip>
+      </q-btn>
     </div>
+
+    <div v-if="error" class="error-text">{{ error }}</div>
   </div>
 </template>
 
@@ -45,6 +42,11 @@ const props = defineProps({
   // matching the project's existing asset layout convention — left empty for
   // fields with no natural contact context, which import to assets/ root.
   contactId: { type: String, default: '' },
+  // Engine-bundled sound to preview/play when no override is set (see
+  // GameForm.vue's Sons section) — lets one AssetField instance stand in for
+  // both "here's the current default" and "here's your override" instead of
+  // GameForm stacking two separate blocks per sound (docs/ui-design-principles.md).
+  fallbackAudioSrc: { type: String, default: '' },
 })
 const emit = defineEmits(['update:modelValue'])
 const story = useStoryStore()
@@ -54,6 +56,10 @@ const error = ref('')
 // generic file row) instead of always assuming an image — this field is
 // now also used for sound overrides (see GameForm.vue's Sons section).
 const category = computed(() => (props.modelValue ? categorizeAsset(props.modelValue) : ''))
+
+function clear() {
+  emit('update:modelValue', undefined)
+}
 
 async function browse() {
   error.value = ''
@@ -94,14 +100,9 @@ async function importFile() {
   gap: var(--space-1);
 }
 
-.row {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-}
-
-.path-input {
-  flex: 1;
+.field-label {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
 }
 
 .error-text {
@@ -109,36 +110,56 @@ async function importFile() {
   font-size: var(--text-xs);
 }
 
-.preview {
-  max-width: 160px;
-  max-height: 120px;
+/* The preview is the point of this widget — sized to actually show the
+   picture, not squeezed under the controls (user feedback: "image en tout
+   petit, moche"). object-fit: cover so a wide/tall wallpaper still fills a
+   consistent, predictable box instead of stretching or leaving gaps. */
+.preview-box {
+  width: 100%;
+  max-height: 160px;
+  overflow: hidden;
   border-radius: var(--radius-md);
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+}
+
+.preview-img {
+  display: block;
+  width: 100%;
+  max-height: 160px;
   object-fit: cover;
 }
 
-.audio-preview,
-.file-preview {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
+.audio-box {
   padding: var(--space-2);
   background: var(--color-bg);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
+}
+
+/* Filename as a small muted caption + icon-only action buttons, instead of
+   a full-width text input (editable but rarely typed into by hand) sitting
+   next to two large label+icon buttons — the combination the user flagged
+   as the ugliest part of this widget. */
+.meta-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.meta-icon {
   color: var(--color-text-muted);
+  flex-shrink: 0;
 }
 
-.audio-preview {
-  flex-wrap: wrap;
-}
-
-.audio-name {
+.filename {
+  flex: 1;
+  min-width: 0;
   font-family: var(--font-mono);
   font-size: var(--text-xs);
+  color: var(--color-text-muted);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  max-width: 100%;
 }
-
 </style>

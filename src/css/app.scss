@@ -27,6 +27,35 @@
   color: var(--color-text-muted);
 }
 
+// Flattens every `outlined` field (used in 24+ editor form files) from a
+// fully-boxed input to a minimal underline — one global override instead
+// of touching every form, requested after a "the inputs look boxy/heavy"
+// pass (icon-first, low-chrome direction, ComfyUI-style settings panels
+// as the reference point). Targets Quasar's own internal field classes
+// (verified against the shipped quasar.css) rather than editing the
+// `outlined` prop anywhere — the floating-label mechanism is unaffected,
+// only the border rendering changes.
+.q-field--outlined .q-field__control {
+  padding: 0 4px;
+  border-radius: 0;
+}
+
+.q-field--outlined .q-field__control:before {
+  border: none;
+  border-bottom: 1px solid var(--color-border);
+  border-radius: 0;
+}
+
+.q-field--outlined .q-field__control:hover:before {
+  border-bottom-color: var(--color-text-muted);
+}
+
+.q-field--outlined .q-field__control:after {
+  border: none;
+  border-bottom: 2px solid var(--color-accent);
+  border-radius: 0;
+}
+
 // This simulates a phone screen — no browser chrome behavior (text
 // selection, scrollbars) should leak through and break the illusion.
 // Scoped to .phone-frame (PhoneShell's root) rather than html/body like

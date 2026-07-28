@@ -18,34 +18,29 @@
       <span class="project-name">{{ story.project?.manifest?.name || '(projet)' }}</span>
       <span v-if="dirty" class="dirty-dot" title="Modifications non enregistrées">●</span>
 
-      <q-btn-toggle
+      <q-tabs
         dense
         no-caps
-        unelevated
         v-model="viewMode"
-        class="view-toggle"
-        :options="[
-          { label: 'Chapitres', value: 'chapters', attrs: { 'aria-label': 'Chapitres' } },
-          { label: 'Contacts', value: 'contacts', attrs: { 'aria-label': 'Contacts' } },
-          { label: 'Groupes', value: 'threads', attrs: { 'aria-label': 'Groupes' } },
-          { label: 'Jeu', value: 'game', attrs: { 'aria-label': 'Jeu' } },
-          { label: 'Ressources', value: 'assets', attrs: { 'aria-label': 'Ressources' } },
-          { label: 'Traductions', value: 'i18n', attrs: { 'aria-label': 'Traductions' } },
-          { label: 'Contenu initial', value: 'seed', attrs: { 'aria-label': 'Contenu initial' } },
-        ]"
-      />
+        class="view-tabs"
+        active-color="primary"
+        indicator-color="primary"
+        align="left"
+      >
+        <q-tab name="chapters" icon="auto_stories" label="Chapitres" />
+        <q-tab name="contacts" icon="contacts" label="Contacts" />
+        <q-tab name="threads" icon="groups" label="Groupes" />
+        <q-tab name="game" icon="sports_esports" label="Jeu" />
+        <q-tab name="assets" icon="folder" label="Ressources" />
+        <q-tab name="i18n" icon="translate" label="Traductions" />
+        <q-tab name="seed" icon="inventory_2" label="Contenu initial" />
+      </q-tabs>
 
       <div class="spacer" />
 
-      <q-btn
-        dense
-        flat
-        no-caps
-        :icon="focusPreview ? 'visibility_off' : 'smartphone'"
-        :label="focusPreview ? `Afficher l'édition` : 'Aperçu seul'"
-        class="btn-ghost"
-        @click="focusPreview = !focusPreview"
-      />
+      <q-btn dense flat round :icon="focusPreview ? 'visibility_off' : 'smartphone'" class="btn-ghost" @click="focusPreview = !focusPreview">
+        <q-tooltip>{{ focusPreview ? `Afficher l'édition` : 'Aperçu seul' }}</q-tooltip>
+      </q-btn>
       <q-toggle dense v-model="autosave" label="Sauvegarde auto" color="primary" />
       <q-btn dense flat no-caps round icon="refresh" class="btn-ghost" @click="restartPreview">
         <q-tooltip>Relancer l'aperçu</q-tooltip>
@@ -53,34 +48,17 @@
 
       <div class="topbar-divider" />
 
-      <q-btn
-        dense
-        outline
-        no-caps
-        icon="fact_check"
-        label="Valider le projet"
-        class="btn-ghost"
-        :loading="validating"
-        @click="runValidation"
-      >
-        <q-tooltip>Cherche les références cassées (contact/thread/image introuvable) et les problèmes de chapitres</q-tooltip>
+      <q-btn dense flat round icon="fact_check" class="btn-ghost" :loading="validating" @click="runValidation">
+        <q-tooltip>Valider le projet — cherche les références cassées (contact/thread/image introuvable) et les problèmes de chapitres</q-tooltip>
       </q-btn>
 
       <q-btn dense unelevated no-caps icon="save" label="Enregistrer" color="primary" :disable="!dirty" @click="save" />
-      <q-btn
-        dense
-        outline
-        no-caps
-        icon="rocket_launch"
-        label="Build"
-        color="primary"
-        :loading="building"
-        :disable="building"
-        @click="buildGame"
-      >
-        <q-tooltip>Exporter ce projet en jeu jouable (app Electron packagée)</q-tooltip>
+      <q-btn dense flat round icon="rocket_launch" color="primary" :loading="building" :disable="building" @click="buildGame">
+        <q-tooltip>Build — exporter ce projet en jeu jouable (app Electron packagée)</q-tooltip>
       </q-btn>
-      <q-btn dense flat no-caps icon="folder_open" label="Changer de projet" class="btn-ghost" :disable="building" @click="closeProject" />
+      <q-btn dense flat round icon="folder_open" class="btn-ghost" :disable="building" @click="closeProject">
+        <q-tooltip>Changer de projet</q-tooltip>
+      </q-btn>
     </div>
 
     <div class="panes">
@@ -545,7 +523,7 @@ async function buildGame() {
   font-size: var(--text-sm);
 }
 
-.view-toggle {
+.view-tabs {
   margin-left: var(--space-3);
 }
 

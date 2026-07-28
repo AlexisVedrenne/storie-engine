@@ -1,62 +1,81 @@
 <template>
   <div class="game-form">
-    <div class="panel">
-      <div class="section-label">Jeu</div>
-      <q-input dense outlined label="Titre (affiché sur l'écran verrouillé)" v-model="game.title" />
-    </div>
-
-    <div class="panel">
-      <div class="section-label">
-        Icône du build
-        <FieldHelp text="Icône du fichier .exe exporté. Format .ico recommandé pour l'icône Windows (Explorateur/barre des tâches) — un .png fonctionne aussi mais ne donnera que l'icône de la fenêtre pendant l'exécution, pas celle du fichier .exe lui-même." />
+    <q-expansion-item default-opened dense-toggle icon="title" label="Titre" class="panel">
+      <div class="panel-body">
+        <q-input dense outlined label="Titre (affiché sur l'écran verrouillé)" v-model="game.title" />
       </div>
-      <AssetField v-model="game.icon" label="Icône (.ico recommandé, .png accepté)" />
-    </div>
+    </q-expansion-item>
 
-    <div class="panel">
-      <div class="section-label">Fond d'écran du téléphone</div>
-      <AssetField v-model="game.wallpaper" label="Fond d'écran (verrouillage + accueil)" />
-    </div>
-
-    <div class="panel">
-      <div class="section-label">
-        Couleur d'interface
-        <FieldHelp text="Recolore les éléments d'accent du téléphone (bulles de message envoyées, DM, égaliseur...). Laisse vide pour garder la couleur par défaut du moteur." />
+    <q-expansion-item dense-toggle icon="apps" label="Icône du build" class="panel">
+      <template #header>
+        <q-item-section avatar><q-icon name="apps" /></q-item-section>
+        <q-item-section>
+          Icône du build
+          <FieldHelp text="Icône du fichier .exe exporté. Format .ico recommandé pour l'icône Windows (Explorateur/barre des tâches) — un .png fonctionne aussi mais ne donnera que l'icône de la fenêtre pendant l'exécution, pas celle du fichier .exe lui-même." />
+        </q-item-section>
+      </template>
+      <div class="panel-body">
+        <AssetField v-model="game.icon" label="Icône (.ico recommandé, .png accepté)" />
       </div>
-      <q-input dense outlined clearable label="Couleur (hex)" placeholder="#4c8bf5" v-model="game.accentColor">
-        <template #prepend>
-          <div class="swatch" :style="{ background: game.accentColor || 'transparent' }">
-            <q-popup-proxy cover transition-show="scale" transition-hide="scale">
-              <q-color v-model="game.accentColor" default-value="#4c8bf5" no-header no-footer />
-            </q-popup-proxy>
-          </div>
-        </template>
-      </q-input>
-    </div>
+    </q-expansion-item>
 
-    <div class="panel">
-      <div class="section-label">
-        Sons
-        <FieldHelp text="Remplace un son d'interface par défaut du moteur par un fichier audio du projet. Laisse vide pour garder le son par défaut." />
+    <q-expansion-item dense-toggle icon="wallpaper" label="Fond d'écran du téléphone" class="panel">
+      <div class="panel-body">
+        <AssetField v-model="game.wallpaper" label="Fond d'écran (verrouillage + accueil)" />
       </div>
-      <div v-for="sound in SOUND_KEYS" :key="sound.key" class="sound-row">
-        <!-- Default bundled sound + play button — shown until overridden;
-             once game.sounds[key] is set, AssetField's own preview below
-             already shows/plays THAT file, so this default player steps
-             aside instead of duplicating a second <audio> control. -->
-        <div v-if="!game.sounds[sound.key]" class="sound-current">
-          <span class="sound-current-label">Son par défaut du moteur — {{ sound.label }}</span>
-          <AudioPreview :src="SOUND_FILES[sound.key]" />
+    </q-expansion-item>
+
+    <q-expansion-item dense-toggle icon="palette" class="panel">
+      <template #header>
+        <q-item-section avatar><q-icon name="palette" /></q-item-section>
+        <q-item-section>
+          Couleur d'interface
+          <FieldHelp text="Recolore les éléments d'accent du téléphone (bulles de message envoyées, DM, égaliseur...). Laisse vide pour garder la couleur par défaut du moteur." />
+        </q-item-section>
+      </template>
+      <div class="panel-body">
+        <div class="swatch-box" :style="{ background: game.accentColor || '#4c8bf5' }">
+          <q-popup-proxy cover transition-show="scale" transition-hide="scale">
+            <q-color v-model="game.accentColor" default-value="#4c8bf5" no-header no-footer />
+          </q-popup-proxy>
         </div>
-        <AssetField v-model="game.sounds[sound.key]" :label="sound.label" />
+        <div class="meta-row">
+          <span class="filename">{{ game.accentColor || 'Par défaut (#4c8bf5)' }}</span>
+          <q-btn v-if="game.accentColor" dense flat round icon="close" size="sm" @click="game.accentColor = undefined">
+            <q-tooltip>Revenir à la couleur par défaut</q-tooltip>
+          </q-btn>
+        </div>
       </div>
-    </div>
+    </q-expansion-item>
+
+    <q-expansion-item dense-toggle icon="volume_up" class="panel">
+      <template #header>
+        <q-item-section avatar><q-icon name="volume_up" /></q-item-section>
+        <q-item-section>
+          Sons
+          <FieldHelp text="Remplace un son d'interface par défaut du moteur par un fichier audio du projet. Laisse vide pour garder le son par défaut." />
+        </q-item-section>
+      </template>
+      <div class="panel-body">
+        <!-- One AssetField per sound, no separate "default" block stacked
+             next to it — fallback-audio-src makes it preview/play the
+             engine default when there's no override, and the field's own
+             label already names the sound once (docs/ui-design-principles.md). -->
+        <AssetField
+          v-for="sound in SOUND_KEYS"
+          :key="sound.key"
+          v-model="game.sounds[sound.key]"
+          :label="sound.label"
+          :fallback-audio-src="SOUND_FILES[sound.key]"
+          class="sound-row"
+        />
+      </div>
+    </q-expansion-item>
   </div>
 </template>
 
 <script setup>
 import AssetField from '@/editor/components/AssetField.vue'
-import AudioPreview from '@/editor/components/AudioPreview.vue'
 import FieldHelp from '@/editor/components/FieldHelp.vue'
 import { SOUND_FILES } from '@/engine/utils/sound'
 
@@ -98,55 +117,46 @@ const SOUND_KEYS = [
 }
 
 .panel {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
+}
+
+.panel-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
   padding: var(--space-3);
 }
 
-.section-label {
-  display: flex;
-  align-items: center;
-  font-size: var(--text-xs);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--color-text-muted);
-}
-
-.swatch {
-  width: 18px;
-  height: 18px;
-  border-radius: var(--radius-sm);
+/* Same shape as AssetField.vue's own preview-box/meta-row (see
+   docs/ui-design-principles.md) — big clickable preview, value as a small
+   muted caption, actions as icon-only buttons, not a color-picker input
+   with a tiny prepended chip. */
+.swatch-box {
+  width: 100%;
+  height: 48px;
+  border-radius: var(--radius-md);
   border: 1px solid var(--color-border);
   cursor: pointer;
+}
+
+.meta-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.meta-row .filename {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
 }
 
 .sound-row + .sound-row {
   padding-top: var(--space-2);
   border-top: 1px solid var(--color-border);
-}
-
-.sound-row {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-
-.sound-current {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-  padding: var(--space-2);
-  background: var(--color-bg);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-}
-
-.sound-current-label {
-  font-size: var(--text-xs);
-  color: var(--color-text-muted);
 }
 </style>
