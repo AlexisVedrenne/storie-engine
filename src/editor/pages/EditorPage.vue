@@ -187,6 +187,20 @@
                           <EmojiPickerBtn @pick="(e) => (selectedChapter.title = insertEmojiAtCaret(chapterTitleInputRef, selectedChapter.title, e))" />
                         </template>
                       </q-input>
+                      <q-btn
+                        dense
+                        flat
+                        round
+                        icon="play_arrow"
+                        color="primary"
+                        class="btn-ghost"
+                        @click="previewFrom(selectedChapter.id)"
+                      >
+                        <q-tooltip>Prévisualiser depuis ce chapitre</q-tooltip>
+                      </q-btn>
+                      <q-btn dense flat round icon="flag" class="btn-ghost" @click="flagsDialogOpen = true">
+                        <q-tooltip>Flags — catalogue de toutes les stats du joueur utilisées dans le projet</q-tooltip>
+                      </q-btn>
                     </div>
 
                     <TimelineEditor :entries="selectedChapter.timeline" />
@@ -349,6 +363,28 @@
           <PhoneShell large />
         </Teleport>
       </div>
+
+      <!-- Opened from the chapter-header "flag" button (not a tab — flags
+           are project-wide, but the author wants them a click away while
+           actually writing a chapter's conditions/effects, not a context
+           switch to a whole separate view). Saves gameConfig straight to
+           disk on close: this dialog can be open while viewMode is still
+           'chapters', so the normal dirty/save watch (armed on
+           selectedChapter, see activeResource) never sees gameConfig
+           change on its own. -->
+      <q-dialog v-model="flagsDialogOpen" @hide="onFlagsDialogHide">
+        <q-card class="flags-dialog-card">
+          <q-card-section>
+            <div class="text-subtitle1">Flags du projet</div>
+          </q-card-section>
+          <q-card-section class="flags-dialog-body scroll">
+            <FlagsPanel :game="story.project.gameConfig" />
+          </q-card-section>
+          <q-card-actions align="right">
+            <q-btn flat label="Fermer" color="primary" v-close-popup />
+          </q-card-actions>
+        </q-card>
+      </q-dialog>
     </template>
   </q-page>
 </template>
@@ -377,6 +413,7 @@ import ContactForm from '@/editor/components/ContactForm.vue'
 import ThreadList from '@/editor/components/ThreadList.vue'
 import ThreadForm from '@/editor/components/ThreadForm.vue'
 import GameForm from '@/editor/components/GameForm.vue'
+import FlagsPanel from '@/editor/components/FlagsPanel.vue'
 import EventList from '@/editor/components/EventList.vue'
 import EventForm from '@/editor/components/EventForm.vue'
 import AssetsPanel from '@/editor/components/AssetsPanel.vue'
@@ -401,6 +438,18 @@ const router = useRouter()
 const story = useStoryStore()
 const phone = usePhoneStore()
 const chapterTitleInputRef = ref(null)
+
+const flagsDialogOpen = ref(false)
+// Explicit persist — this dialog opens on top of the 'chapters' tab, whose
+// dirty/save watch is armed on `selectedChapter`, not on `gameConfig` (see
+// activeResource below), so editing a flag's label here needs its own
+// write, same IPC call as the 'game'/'events' tabs' own save() branch.
+async function onFlagsDialogHide() {
+  await window.storieAPI.saveGame({
+    rootPath: story.project.rootPath,
+    source: serializeGame(story.project.gameConfig),
+  })
+}
 
 // See the template comment above the v-if="!story.project" guard — this
 // sends the user back to pick/reload a project instead of leaving them on
@@ -945,5 +994,16 @@ async function buildGame() {
 
 .preview-exit-hint:hover {
   color: var(--color-text);
+}
+
+.flags-dialog-card {
+  min-width: 480px;
+  max-width: 90vw;
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.flags-dialog-body {
+  max-height: 70vh;
 }
 </style>

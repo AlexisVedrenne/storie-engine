@@ -20,11 +20,28 @@
         <q-item-section class="text-grey">Tape pour créer un nouveau flag</q-item-section>
       </q-item>
     </template>
+    <!-- Purely visual — the option's underlying value is still the plain
+         key string (see story.allFlagNames), this just shows the author's
+         label + observed usage from story.flagCatalog next to it so
+         picking from the list doesn't require remembering what a cryptic
+         key like `trustClara` actually tracks. -->
+    <template #option="scope">
+      <q-item v-bind="scope.itemProps">
+        <q-item-section>
+          <q-item-label>{{ scope.opt }}</q-item-label>
+          <q-item-label v-if="catalogHint(scope.opt)" caption>{{ catalogHint(scope.opt) }}</q-item-label>
+        </q-item-section>
+      </q-item>
+    </template>
   </q-select>
+  <div v-if="selectedHint" class="flag-hint">
+    <q-icon name="info" size="12px" />
+    {{ selectedHint }}
+  </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useStoryStore } from '@/engine/stores/story'
 
 // Combobox over every flag already used anywhere in the project
@@ -32,7 +49,7 @@ import { useStoryStore } from '@/engine/stores/story'
 // flag from a dropdown instead of retyping its exact name by hand every
 // time (typo-prone), while `new-value-mode="add-unique"` still lets you
 // type a brand new flag name freely.
-defineProps({ modelValue: { type: String, default: '' } })
+const props = defineProps({ modelValue: { type: String, default: '' } })
 const emit = defineEmits(['update:modelValue'])
 const story = useStoryStore()
 
@@ -47,11 +64,38 @@ function filterFn(val, update) {
     filteredOptions.value = story.allFlagNames.filter((f) => f.toLowerCase().includes(needle))
   })
 }
+
+// Label + observed type/range for a flag key, e.g. "Confiance de Clara —
+// numérique, vu de -2 à 12" — see collectFlags.js for how min/max are
+// derived (every exact/min/max value ever authored against it, not a
+// runtime simulation of accumulated effects).
+function hintFor(key) {
+  const entry = story.flagCatalog.find((f) => f.key === key)
+  if (!entry) return ''
+  const parts = []
+  if (entry.label) parts.push(entry.label)
+  if (entry.isNumeric) parts.push(`numérique, vu de ${entry.min} à ${entry.max}`)
+  else if (entry.isBoolean) parts.push('booléen')
+  return parts.join(' — ')
+}
+function catalogHint(key) {
+  return hintFor(key)
+}
+const selectedHint = computed(() => (props.modelValue ? hintFor(props.modelValue) : ''))
 </script>
 
 <style scoped>
 .flag-name-field {
   flex: 1;
   min-width: 140px;
+}
+
+.flag-hint {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  margin-top: 2px;
 }
 </style>

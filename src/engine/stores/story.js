@@ -7,6 +7,7 @@ import { ALL_APP_IDS, ENTRY_TYPE_APP } from '@/engine/apps/appIds'
 import { CUSTOM_ENTRY_TYPE_BY_TYPE } from '@/engine/apps/entryTypeRegistry'
 import { on as onEngineEvent, clear as clearEngineEvents, emit as emitEngineEvent, ENGINE_TRIGGERS } from '@/engine/events/eventManager'
 import { findMatchingEvents } from '@/engine/events/matchEvent'
+import { collectFlags } from '@/project/collectFlags'
 
 // Phase 1: this store is project-agnostic — it holds no hardcoded chapters/
 // contacts/threads/seed/i18n of its own. All of that lives in `state.project`,
@@ -91,37 +92,6 @@ function findThread(project, id) {
 // handle when the contact has one, the real `name` otherwise.
 function pseudoHandle(contact) {
   return contact.pseudo ? `@${contact.pseudo}` : contact.name
-}
-
-// Project-wide flag registry (editor only) — scans every chapter for every
-// flag name referenced in a `requires`/`effects`, so the editor's flag
-// pickers (RequiresBuilder/EffectsBuilder) can offer a dropdown of flags
-// already in use instead of forcing free-text everywhere. Purely derived,
-// no schema/metadata stored anywhere — a flag is "known" simply by having
-// been typed somewhere already.
-function addFlagKeys(container, set) {
-  if (container?.flags) for (const key of Object.keys(container.flags)) set.add(key)
-}
-function collectFlagsFromTimeline(timeline, set) {
-  for (const entry of timeline || []) {
-    addFlagKeys(entry.requires, set)
-    if (entry.type === 'effect') addFlagKeys(entry.effects, set)
-    if (entry.type === 'choice') {
-      for (const option of entry.options || []) {
-        addFlagKeys(option.requires, set)
-        addFlagKeys(option.effects, set)
-        collectFlagsFromTimeline(option.then, set)
-      }
-    }
-  }
-}
-function collectAllFlagNames(chapters) {
-  const set = new Set()
-  for (const chapter of chapters || []) {
-    addFlagKeys(chapter.requires, set)
-    collectFlagsFromTimeline(chapter.timeline, set)
-  }
-  return [...set].sort()
 }
 
 function defaultState() {
@@ -268,9 +238,15 @@ export const useStoryStore = defineStore('story', {
       return ALL_APP_IDS.filter((id) => !disabled.includes(id))
     },
 
-    // Editor-only: every flag name already used anywhere in the project,
-    // alphabetically sorted — see collectAllFlagNames above.
-    allFlagNames: (state) => collectAllFlagNames(state.project?.chapters),
+    // Editor-only: full project-wide flag catalog (see collectFlags.js) —
+    // one entry per flag name referenced anywhere (chapters, edges, choice
+    // options, events), with observed boolean/numeric usage and an
+    // optional author-given label (game.flags[key].label).
+    flagCatalog: (state) => collectFlags(state.project),
+
+    // Editor-only: just the names, alphabetically sorted — the shape
+    // FlagNameField.vue's autocomplete already expects.
+    allFlagNames: (state) => collectFlags(state.project).map((f) => f.key),
 
     // narrative content (chapters, contacts bios) is always written in
     // French — `bucket` defaults to the current chapter but can be passed
