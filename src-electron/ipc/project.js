@@ -291,7 +291,7 @@ export function registerProjectHandlers(mainWindow) {
     fs.mkdirSync(path.join(rootPath, "chapters"), { recursive: true });
     fs.mkdirSync(path.join(rootPath, "assets"), { recursive: true });
 
-    writeManifest(rootPath, { name, entryChapterId: "chapter1" });
+    writeManifest(rootPath, { name, entryChapterId: "chapter1", version: "1.0.0" });
 
     const chapter = {
       id: "chapter1",

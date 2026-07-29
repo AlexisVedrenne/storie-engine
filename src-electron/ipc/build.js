@@ -114,13 +114,36 @@ async function assembleShell(tmpDir, rootPath) {
   }
 
   // Name the generated app after the project rather than the generic
-  // template default.
+  // template default, and stamp its version (bumped by buildGame() below,
+  // BEFORE this runs) onto the packaged .exe's own file version metadata —
+  // electron-packager reads package.json's plain "version" field for that.
   const manifestPath = path.join(rootPath, "project.json");
   const manifest = fs.existsSync(manifestPath) ? JSON.parse(fs.readFileSync(manifestPath, "utf-8")) : {};
   const pkgPath = path.join(tmpDir, "package.json");
   const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf-8"));
   pkg.productName = manifest.name || pkg.productName;
+  if (manifest.version) pkg.version = manifest.version;
   fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + "\n", "utf-8");
+}
+
+// 'none' | 'patch' | 'minor' | 'major' — the choice offered at build time
+// (see EditorPage.vue's buildGame()). Missing/malformed current version
+// falls back to "1.0.0" as the baseline, so a project's very first build
+// with 'none' selected still ends up versioned rather than staying blank.
+function bumpVersion(current, bumpType) {
+  const [major, minor, patch] = String(current || "1.0.0")
+    .split(".")
+    .map((n) => parseInt(n, 10) || 0);
+  switch (bumpType) {
+    case "major":
+      return `${major + 1}.0.0`;
+    case "minor":
+      return `${major}.${minor + 1}.0`;
+    case "patch":
+      return `${major}.${minor}.${patch + 1}`;
+    default:
+      return `${major}.${minor}.${patch}`;
+  }
 }
 
 function slugify(name) {
@@ -159,7 +182,17 @@ async function cleanupWithRetry(dir) {
   }
 }
 
-async function buildGame(rootPath, destPath) {
+async function buildGame(rootPath, destPath, bumpType) {
+  // Bumped and written back to the PROJECT's own project.json (not just the
+  // temp build copy) before anything else — a build is what "release cut"
+  // means here, so the version increment has to actually stick for next
+  // time, same file assembleShell() below reads moments later to stamp the
+  // packaged .exe's own version metadata.
+  const manifestPath = path.join(rootPath, "project.json");
+  const manifest = fs.existsSync(manifestPath) ? JSON.parse(fs.readFileSync(manifestPath, "utf-8")) : {};
+  manifest.version = bumpVersion(manifest.version, bumpType);
+  fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + "\n", "utf-8");
+
   const tmpDir = path.join(os.tmpdir(), `storie-engine-build-${Date.now()}`);
   try {
     await assembleShell(tmpDir, rootPath);
@@ -173,11 +206,9 @@ async function buildGame(rootPath, destPath) {
       throw new Error("Le build a réussi mais le dossier packagé est introuvable (dist/electron/Packaged).");
     }
 
-    const manifestPath = path.join(rootPath, "project.json");
-    const manifest = fs.existsSync(manifestPath) ? JSON.parse(fs.readFileSync(manifestPath, "utf-8")) : {};
     const outDir = path.join(destPath, slugify(manifest.name));
     fs.cpSync(packagedDir, outDir, { recursive: true });
-    return outDir;
+    return { outDir, manifest };
   } finally {
     // Never let a cleanup failure override/mask the actual build result —
     // this used to be a plain `fs.rmSync(...)` here, which on a Windows
@@ -188,14 +219,13 @@ async function buildGame(rootPath, destPath) {
 }
 
 export function registerBuildHandlers(mainWindow) {
-  ipcMain.handle("project:build", async (_evt, { rootPath }) => {
+  ipcMain.handle("project:build", async (_evt, { rootPath, bumpType }) => {
     const result = await dialog.showOpenDialog(mainWindow, {
       properties: ["openDirectory", "createDirectory"],
       title: "Choisir où exporter le jeu",
     });
     if (result.canceled || !result.filePaths[0]) return null;
 
-    const outDir = await buildGame(rootPath, result.filePaths[0]);
-    return outDir;
+    return buildGame(rootPath, result.filePaths[0], bumpType);
   });
 }

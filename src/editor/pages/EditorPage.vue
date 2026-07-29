@@ -697,9 +697,43 @@ async function buildGame() {
       if (!proceed) return
     }
 
-    const outDir = await window.storieAPI.buildGame({ rootPath: story.project.rootPath })
-    if (outDir) {
-      Notify.create({ type: 'positive', message: `Jeu exporté dans ${outDir}`, timeout: 6000 })
+    // A build IS the release cut — the version bump happens here, not as a
+    // separate manual step, so it can never be forgotten before an export.
+    // 'none' is still an explicit choice (a rebuild — packaging fix, no
+    // content change) rather than the bump silently being skipped.
+    const currentVersion = story.project.manifest?.version || '1.0.0'
+    const bumpType = await new Promise((resolve) => {
+      Dialog.create({
+        title: 'Version du build',
+        message: `Version actuelle : ${currentVersion}`,
+        options: {
+          type: 'radio',
+          model: 'patch',
+          items: [
+            { label: 'Rebuild — pas de montée de version', value: 'none' },
+            { label: 'Version normale (patch)', value: 'patch' },
+            { label: 'Mineure', value: 'minor' },
+            { label: 'Majeure', value: 'major' },
+          ],
+        },
+        cancel: true,
+        persistent: true,
+        color: 'primary',
+        ok: 'Build',
+      })
+        .onOk((v) => resolve(v))
+        .onCancel(() => resolve(null))
+    })
+    if (!bumpType) return
+
+    const result = await window.storieAPI.buildGame({ rootPath: story.project.rootPath, bumpType })
+    if (result) {
+      story.project.manifest = result.manifest
+      Notify.create({
+        type: 'positive',
+        message: `Jeu exporté en v${result.manifest.version} dans ${result.outDir}`,
+        timeout: 6000,
+      })
     }
   } catch (err) {
     Notify.create({ type: 'negative', message: err.message || String(err), timeout: 8000 })
