@@ -174,9 +174,10 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useStoryStore } from '@/engine/stores/story'
+import { APP_REGISTRY } from '@/engine/apps/registry'
 
 const story = useStoryStore()
 const { t } = useI18n()
@@ -243,12 +244,13 @@ function connectWifi() {
 
 // --- fake account sync — justifies the phone already having contacts/apps --
 const accountState = ref('connecting') // 'connecting' | 'syncing' | 'done'
-const syncApps = [
-  { id: 'messages', icon: 'sms', color: '#4caf50' },
-  { id: 'social', icon: 'photo_camera', color: 'linear-gradient(135deg,#f093fb,#f5576c)' },
-  { id: 'gallery', icon: 'image', color: 'linear-gradient(135deg,#ffb300,#f4511e,#8e24aa,#1e88e5)' },
-  { id: 'calls', icon: 'call', color: '#8bc34a' }
-]
+// Settings is deliberately excluded — it's not "content" being synced from
+// an account, unlike the other 4. Sourced from the shared registry
+// (registry.js), filtered by the project's enabledAppIds, so a disabled app
+// doesn't get a fake sync icon for something the player will never see.
+const syncApps = computed(() =>
+  APP_REGISTRY.filter((app) => app.id !== 'settings' && story.enabledAppIds.includes(app.id)),
+)
 
 // --- accent color ----------------------------------------------------------
 // colorChoices[0] is duplicated as a literal in EditorPage.vue's

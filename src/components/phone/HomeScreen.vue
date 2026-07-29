@@ -28,6 +28,7 @@ import { useI18n } from 'vue-i18n'
 import { usePhoneStore } from '@/engine/stores/phone'
 import { useStoryStore } from '@/engine/stores/story'
 import { resolveAssetUrl } from '@/engine/assets'
+import { APP_REGISTRY } from '@/engine/apps/registry'
 import HomeWidgets from './HomeWidgets.vue'
 
 const phone = usePhoneStore()
@@ -42,43 +43,18 @@ const wallpaperStyle = computed(() =>
   wallpaperUrl.value ? { backgroundImage: `url(${wallpaperUrl.value})` } : {},
 )
 
-const apps = computed(() => [
-  {
-    id: 'messages',
-    label: t('home.apps.messages'),
-    icon: 'sms',
-    color: '#4caf50',
-    badge: story.totalUnread || 0
-  },
-  {
-    id: 'social',
-    label: t('home.apps.social'),
-    icon: 'photo_camera',
-    color: 'linear-gradient(135deg,#f093fb,#f5576c)',
-    badge: story.totalDmUnread || 0
-  },
-  {
-    id: 'gallery',
-    label: t('home.apps.gallery'),
-    icon: 'image',
-    color: 'linear-gradient(135deg,#ffb300,#f4511e,#8e24aa,#1e88e5)',
-    badge: 0
-  },
-  {
-    id: 'calls',
-    label: t('home.apps.calls'),
-    icon: 'call',
-    color: '#8bc34a',
-    badge: story.pendingCall ? 1 : 0
-  },
-  {
-    id: 'settings',
-    label: t('home.apps.settings'),
-    icon: 'settings',
-    color: '#8e8e93',
-    badge: 0
-  }
-])
+// Which apps show up at all (and in what order) now comes from the shared
+// registry, filtered by the project's own enabledAppIds — see
+// registry.js's own comment and GameForm.vue's "Applications" panel.
+const apps = computed(() =>
+  APP_REGISTRY.filter((app) => story.enabledAppIds.includes(app.id)).map((app) => ({
+    id: app.id,
+    label: t(app.labelKey),
+    icon: app.icon,
+    color: app.color,
+    badge: app.badge(story)
+  })),
+)
 </script>
 
 <style scoped>

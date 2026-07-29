@@ -1,6 +1,15 @@
 # Storie Engine — roadmap apps modulaires + système d'événements
 
-## Statut : proposition, rien d'implémenté
+## Statut : Phase 1 (activation/désactivation) implémentée, reste proposition
+
+**Fait (2026-07-29)** : registre partagé `src/engine/apps/registry.js`
+(component + icône + couleur + badge + clé i18n par app, remplace 3 listes
+dupliquées dans `PhoneShell.vue`/`HomeScreen.vue`/`SetupWizard.vue`) + toggle
+par app dans l'onglet Jeu (`game.disabledApps`) + `story.enabledAppIds`.
+Volontairement pas encore : `manifest.json` par app, apps custom/plugins,
+event system (phases 2-4 ci-dessous) — le registre est pensé pour absorber
+ça sans retouche de ce qui existe déjà (voir commentaire en tête de
+`registry.js`).
 
 Note apportée par l'utilisateur le 2026-07-29, consignée telle quelle comme
 référence pour une future session. Vision cible : passer d'un moteur à 5

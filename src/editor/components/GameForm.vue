@@ -52,6 +52,26 @@
       </div>
     </q-expansion-item>
 
+    <q-expansion-item dense-toggle icon="apps" class="panel">
+      <template #header>
+        <q-item-section avatar><q-icon name="apps" /></q-item-section>
+        <q-item-section>
+          Applications
+          <FieldHelp text="Désactive une app du téléphone pour ce projet — elle disparaît de l'écran d'accueil et de l'animation de démarrage. Rien ne détecte automatiquement du contenu qui pointerait encore vers une app désactivée (ex: un SMS alors que Messages est coupé) — à l'auteur de vérifier." />
+        </q-item-section>
+      </template>
+      <div class="panel-body">
+        <q-toggle
+          v-for="app in APP_REGISTRY"
+          :key="app.id"
+          dense
+          :label="t(app.labelKey)"
+          :model-value="!isAppDisabled(app.id)"
+          @update:model-value="(v) => setAppEnabled(app.id, v)"
+        />
+      </div>
+    </q-expansion-item>
+
     <q-expansion-item dense-toggle icon="volume_up" class="panel">
       <template #header>
         <q-item-section avatar><q-icon name="volume_up" /></q-item-section>
@@ -80,14 +100,32 @@
 
 <script setup>
 import { ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import AssetField from '@/editor/components/AssetField.vue'
 import FieldHelp from '@/editor/components/FieldHelp.vue'
 import EmojiPickerBtn from '@/editor/components/EmojiPickerBtn.vue'
 import { insertEmojiAtCaret } from '@/editor/utils/emojiInsert'
 import { SOUND_FILES } from '@/engine/utils/sound'
+import { APP_REGISTRY } from '@/engine/apps/registry'
 
 const props = defineProps({ game: { type: Object, required: true } })
+const { t } = useI18n()
 const titleInputRef = ref(null)
+
+// `disabledApps` is an explicit opt-out list (same "absent = default"
+// convention as contact.hasSocial/followedByDefault, see ContactForm.vue) —
+// every project created before this feature existed keeps all 5 apps
+// enabled with zero migration needed. Mirrored by story.js's
+// enabledAppIds getter, which is what the phone shell actually reads.
+function isAppDisabled(id) {
+  return (props.game.disabledApps || []).includes(id)
+}
+function setAppEnabled(id, enabled) {
+  const disabled = new Set(props.game.disabledApps || [])
+  if (enabled) disabled.delete(id)
+  else disabled.add(id)
+  props.game.disabledApps = disabled.size ? [...disabled] : undefined
+}
 
 // game.sounds is optional/absent on any project created before this
 // feature — ensure it exists before the sound rows below bind into it,

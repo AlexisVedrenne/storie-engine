@@ -59,11 +59,7 @@ import HomeScreen from './HomeScreen.vue'
 import NotificationBanner from './NotificationBanner.vue'
 
 import IncomingCallScreen from '@/components/apps/calls/IncomingCallScreen.vue'
-import MessagesApp from '@/components/apps/messages/MessagesApp.vue'
-import SocialApp from '@/components/apps/social/SocialApp.vue'
-import GalleryApp from '@/components/apps/gallery/GalleryApp.vue'
-import CallsApp from '@/components/apps/calls/CallsApp.vue'
-import SettingsApp from '@/components/apps/settings/SettingsApp.vue'
+import { APP_REGISTRY } from '@/engine/apps/registry'
 
 // `large` lets a caller (EditorPage.vue's "Aperçu seul" mode) raise the
 // phone-frame's hard size cap — see docs/ui-ux-audit.md point 10: the
@@ -76,15 +72,13 @@ const props = defineProps({ large: { type: Boolean, default: false } })
 const phone = usePhoneStore()
 const story = useStoryStore()
 
-const appComponents = {
-  messages: MessagesApp,
-  social: SocialApp,
-  gallery: GalleryApp,
-  calls: CallsApp,
-  settings: SettingsApp
-}
-
-const currentAppComponent = computed(() => appComponents[phone.currentApp])
+// Renders whatever app is open regardless of enabledAppIds — a project
+// disabling an app after the player already navigated into it (or a stale
+// save) shouldn't render a blank screen; HomeScreen.vue's icon grid is what
+// actually gates reachability going forward.
+const currentAppComponent = computed(
+  () => APP_REGISTRY.find((app) => app.id === phone.currentApp)?.component,
+)
 
 // the boot animation + setup wizard are a one-time first-run sequence, not
 // something a real phone replays on every reload once it's already set up —

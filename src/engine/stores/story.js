@@ -3,6 +3,7 @@ import { usePhoneStore } from './phone'
 import { i18n, persistLocale } from '@/engine/i18n/instance'
 import { DEFAULT_LOCALE, SUPPORTED_LOCALES } from '@/engine/i18n/locales'
 import { playSound, startLoop, stopSound } from '@/engine/utils/sound'
+import { ALL_APP_IDS, ENTRY_TYPE_APP } from '@/engine/apps/appIds'
 
 // Phase 1: this store is project-agnostic — it holds no hardcoded chapters/
 // contacts/threads/seed/i18n of its own. All of that lives in `state.project`,
@@ -235,6 +236,16 @@ export const useStoryStore = defineStore('story', {
     socialHandle: () => (contact) => pseudoHandle(contact),
     contactsList: (state) => state.project?.contacts ?? [],
     gameConfig: (state) => state.project?.gameConfig ?? { title: '' },
+
+    // Which built-in phone apps this project ships with — `disabledApps` is
+    // an explicit opt-out list (same "absent = default" convention as
+    // contact.hasSocial/followedByDefault), not an opt-in one, so every
+    // project created before this feature existed keeps showing all 5 apps
+    // with zero migration needed.
+    enabledAppIds: (state) => {
+      const disabled = state.project?.gameConfig?.disabledApps || []
+      return ALL_APP_IDS.filter((id) => !disabled.includes(id))
+    },
 
     // Editor-only: every flag name already used anywhere in the project,
     // alphabetically sorted — see collectAllFlagNames above.
@@ -602,6 +613,18 @@ export const useStoryStore = defineStore('story', {
           continue
         }
 
+        // An entry whose app was disabled after it was authored (game.
+        // disabledApps, see GameForm.vue's "Applications" panel) stays in
+        // the chapter's data untouched — the author might re-enable the app
+        // later, or is fixing content elsewhere first — but must not play
+        // out at runtime for an app that no longer exists on the phone.
+        // Same silent-skip treatment as a failed `requires`.
+        const entryApp = ENTRY_TYPE_APP[entry.type]
+        if (entryApp && !this.enabledAppIds.includes(entryApp)) {
+          this.timelineIndex++
+          continue
+        }
+
         // incoming SMS/DM get a "typing..." beat before they land, timed by
         // length — see scheduleMessage/scheduleDm. Index isn't incremented
         // until the timer fires, so a reload mid-typing just re-triggers it.
@@ -740,6 +763,14 @@ export const useStoryStore = defineStore('story', {
       }
       const entry = list[i]
       if (!this.checkConditions(entry.requires)) {
+        this.runThen(list, i + 1, chapter, resume)
+        return
+      }
+      // Same disabled-app skip as advance() above — a `then` entry is just
+      // as much "already-authored content for an app that's gone" as a
+      // top-level one.
+      const entryApp = ENTRY_TYPE_APP[entry.type]
+      if (entryApp && !this.enabledAppIds.includes(entryApp)) {
         this.runThen(list, i + 1, chapter, resume)
         return
       }

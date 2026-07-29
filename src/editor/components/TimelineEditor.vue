@@ -78,8 +78,9 @@
 </template>
 
 <script setup>
-import { reactive } from 'vue'
+import { computed, reactive } from 'vue'
 import { useStoryStore } from '@/engine/stores/story'
+import { ENTRY_TYPE_APP } from '@/engine/apps/appIds'
 import RequiresBuilder from '@/editor/components/RequiresBuilder.vue'
 import FieldHelp from '@/editor/components/FieldHelp.vue'
 import MessageEntryForm from '@/editor/components/entries/MessageEntryForm.vue'
@@ -165,7 +166,7 @@ function helpFor(type) {
   return ENTRY_HELP[type] || ''
 }
 
-const TYPE_OPTIONS = [
+const ALL_TYPE_OPTIONS = [
   { label: 'Message (SMS)', value: 'message' },
   { label: 'Choix (choice)', value: 'choice' },
   { label: 'Publication (post)', value: 'post' },
@@ -177,6 +178,19 @@ const TYPE_OPTIONS = [
   { label: 'Effet (effect)', value: 'effect' },
   { label: 'Ellipse temporelle (timeskip)', value: 'timeskip' },
 ]
+
+// Authoring an SMS/post/reel/etc. for an app the project doesn't even ship
+// makes no sense — hide it from the "add entry" picker rather than let an
+// author build content nothing will ever show. Existing entries of a
+// since-disabled type are left in the chapter's data untouched (not deleted
+// or hidden here) — story.js's advance()/runThen() are what actually skip
+// them at runtime, same silent-skip as a failed `requires`.
+const TYPE_OPTIONS = computed(() =>
+  ALL_TYPE_OPTIONS.filter((opt) => {
+    const app = ENTRY_TYPE_APP[opt.value]
+    return !app || story.enabledAppIds.includes(app)
+  }),
+)
 
 function firstContactId() {
   return story.contactsList.find((c) => c.id !== 'me')?.id
