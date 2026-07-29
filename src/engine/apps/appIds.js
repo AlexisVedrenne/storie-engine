@@ -1,8 +1,9 @@
-// Single literal list of the phone's built-in app ids — registry.js (icons/
-// components) and story.js's enabledAppIds getter both derive from this one
-// array instead of each re-typing the 5 ids themselves, so adding/removing a
-// built-in app only ever means editing it in one place.
-export const ALL_APP_IDS = ['messages', 'social', 'gallery', 'calls', 'settings']
+import { APP_REGISTRY } from '@/engine/apps/registry'
+
+// Derived from the auto-discovered registry (see registry.js) rather than a
+// separate hand-typed list — a contributed app module needs zero edits here
+// to count as "enabled by default" in story.js's enabledAppIds getter.
+export const ALL_APP_IDS = APP_REGISTRY.map((app) => app.id)
 
 // Which app a timeline entry type belongs to — used both to hide a type from
 // TimelineEditor.vue's "add entry" picker and to have story.js's advance()

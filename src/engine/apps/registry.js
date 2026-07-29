@@ -1,57 +1,48 @@
-// Single source of truth for the phone's built-in apps — component to
-// render, home-screen icon/color, unread badge, i18n label key. Every place
-// that used to keep its own hardcoded copy of this list (PhoneShell.vue's
-// component map, HomeScreen.vue's icon grid, SetupWizard.vue's fake
-// "syncing accounts" animation) now reads from here instead, so a project
-// disabling an app (game.disabledApps, see GameForm.vue's "Applications"
-// panel and story.js's enabledAppIds getter) only has to be taught to this
-// one array — and it's the seed of a future real app-plugin registry
-// (docs/roadmap-modular-apps-events.md), not a detour from it.
-import MessagesApp from '@/components/apps/messages/MessagesApp.vue'
-import SocialApp from '@/components/apps/social/SocialApp.vue'
-import GalleryApp from '@/components/apps/gallery/GalleryApp.vue'
-import CallsApp from '@/components/apps/calls/CallsApp.vue'
-import SettingsApp from '@/components/apps/settings/SettingsApp.vue'
+// Auto-discovers every phone app instead of hand-maintaining a list —
+// ANY folder at src/components/apps/<id>/ with a manifest.js (default-
+// exporting {id, order, labelKey, icon, color, badge(story)}) and an
+// App.vue shows up here automatically, no other file needs editing. This
+// is what makes the engine genuinely extensible for an open-source
+// contributor: add a properly-shaped folder, get a working app — not just
+// toggleable, actually pluggable at the source level.
+//
+// Root-absolute glob patterns (the leading `/`) resolve against whichever
+// project Vite is currently building, not against this file's own location
+// — so this still works unmodified inside the temp shell src-electron/ipc/
+// build.js assembles for an exported game (it copies src/components/apps
+// and src/engine wholesale, then runs its own `quasar build` on that copy).
+// A contributed app added to the editor's own source is therefore shipped
+// in every exported game from that point on (until toggled off per-project
+// via game.disabledApps, see GameForm.vue's "Applications" panel).
+//
+// Every consumer (PhoneShell.vue, HomeScreen.vue, SetupWizard.vue,
+// GameForm.vue) reads APP_REGISTRY — none of them hardcode the app list
+// anymore.
+const manifestModules = import.meta.glob('/src/components/apps/*/manifest.js', { eager: true })
+const componentModules = import.meta.glob('/src/components/apps/*/App.vue', { eager: true })
 
-export const APP_REGISTRY = [
-  {
-    id: 'messages',
-    labelKey: 'home.apps.messages',
-    icon: 'sms',
-    color: '#4caf50',
-    component: MessagesApp,
-    badge: (story) => story.totalUnread || 0,
-  },
-  {
-    id: 'social',
-    labelKey: 'home.apps.social',
-    icon: 'photo_camera',
-    color: 'linear-gradient(135deg,#f093fb,#f5576c)',
-    component: SocialApp,
-    badge: (story) => story.totalDmUnread || 0,
-  },
-  {
-    id: 'gallery',
-    labelKey: 'home.apps.gallery',
-    icon: 'image',
-    color: 'linear-gradient(135deg,#ffb300,#f4511e,#8e24aa,#1e88e5)',
-    component: GalleryApp,
-    badge: () => 0,
-  },
-  {
-    id: 'calls',
-    labelKey: 'home.apps.calls',
-    icon: 'call',
-    color: '#8bc34a',
-    component: CallsApp,
-    badge: (story) => (story.pendingCall ? 1 : 0),
-  },
-  {
-    id: 'settings',
-    labelKey: 'home.apps.settings',
-    icon: 'settings',
-    color: '#8e8e93',
-    component: SettingsApp,
-    badge: () => 0,
-  },
-]
+const MANIFEST_SUFFIX = '/manifest.js'
+const APPS_ROOT = '/src/components/apps/'
+
+function appDirFromManifestPath(path) {
+  return path.slice(APPS_ROOT.length, path.length - MANIFEST_SUFFIX.length)
+}
+
+export const APP_REGISTRY = Object.entries(manifestModules)
+  .map(([path, mod]) => {
+    const dir = appDirFromManifestPath(path)
+    const component = componentModules[`${APPS_ROOT}${dir}/App.vue`]?.default
+    if (!component) {
+      // A manifest with no matching App.vue is a broken/half-written app
+      // module — skip it rather than register something with nothing to
+      // render (PhoneShell.vue would just show a blank screen for it).
+      console.warn(`[storie-engine] app "${dir}" has a manifest.js but no App.vue — skipped`)
+      return null
+    }
+    return { ...mod.default, component }
+  })
+  .filter(Boolean)
+  // `order` is optional — an app that doesn't set one sorts after every one
+  // that does, in whatever order import.meta.glob happened to enumerate
+  // them (stable sort keeps that enumeration order among ties).
+  .sort((a, b) => (a.order ?? Infinity) - (b.order ?? Infinity))

@@ -1,15 +1,31 @@
 # Storie Engine — roadmap apps modulaires + système d'événements
 
-## Statut : Phase 1 (activation/désactivation) implémentée, reste proposition
+## Statut : Phase 1 (modularisation + activation) implémentée, reste proposition
 
-**Fait (2026-07-29)** : registre partagé `src/engine/apps/registry.js`
-(component + icône + couleur + badge + clé i18n par app, remplace 3 listes
-dupliquées dans `PhoneShell.vue`/`HomeScreen.vue`/`SetupWizard.vue`) + toggle
-par app dans l'onglet Jeu (`game.disabledApps`) + `story.enabledAppIds`.
-Volontairement pas encore : `manifest.json` par app, apps custom/plugins,
-event system (phases 2-4 ci-dessous) — le registre est pensé pour absorber
-ça sans retouche de ce qui existe déjà (voir commentaire en tête de
-`registry.js`).
+**Fait (2026-07-29)** :
+- Toggle par app dans l'onglet Jeu (`game.disabledApps`, absent = tout
+  activé) + `story.enabledAppIds`.
+- Entrées de timeline liées à une app désactivée : masquées du menu
+  "Ajouter une entrée" (`TimelineEditor.vue`) et sautées silencieusement à
+  l'exécution si déjà présentes (`story.js` `advance()`/`runThen()`, même
+  traitement qu'une condition `requires` ratée) — jamais supprimées du
+  fichier chapitre.
+- **Vraie modularisation** : `src/engine/apps/registry.js` scanne
+  automatiquement (`import.meta.glob`) tout dossier
+  `src/components/apps/<id>/` contenant un `manifest.js` (id/order/label/
+  icône/couleur/badge) + `App.vue` — plus aucune liste d'apps à maintenir
+  à la main. Un contributeur qui ajoute un dossier bien formé au dépôt
+  obtient une app fonctionnelle, activable/désactivable comme les 5
+  historiques, sans toucher `PhoneShell.vue`/`HomeScreen.vue`/
+  `SetupWizard.vue`/`GameForm.vue`. Ça survit tel quel à la copie faite par
+  `src-electron/ipc/build.js` (glob root-absolu, résolu contre le shell
+  temporaire au moment de son propre build).
+
+Volontairement pas fait : permissions/sandboxing (pas de bénéfice réel dans
+une appli Electron mono-utilisateur), chargement dynamique à l'exécution
+d'un plugin non présent dans le dépôt (ça reste une extension du moteur
+open-source via contribution/build, pas un vrai plugin installable par un
+joueur). Event system (phases 2-4 ci-dessous) reste à faire.
 
 Note apportée par l'utilisateur le 2026-07-29, consignée telle quelle comme
 référence pour une future session. Vision cible : passer d'un moteur à 5
