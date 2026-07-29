@@ -22,18 +22,32 @@
           dense
           no-caps
           v-model="viewMode"
-          class="view-tabs"
+          class="view-tabs q-pa-sm"
           active-color="primary"
           indicator-color="primary"
           align="left"
         >
-          <q-tab name="chapters" icon="auto_stories" label="Chapitres" />
-          <q-tab name="contacts" icon="contacts" label="Contacts" />
-          <q-tab name="threads" icon="groups" label="Groupes" />
-          <q-tab name="game" icon="sports_esports" label="Jeu" />
-          <q-tab name="assets" icon="folder" label="Ressources" />
-          <q-tab name="i18n" icon="translate" label="Traductions" />
-          <q-tab name="seed" icon="inventory_2" label="Contenu initial" />
+          <q-tab name="chapters" icon="auto_stories">
+            <q-tooltip>Chapitres</q-tooltip>
+          </q-tab>
+          <q-tab name="contacts" icon="contacts">
+            <q-tooltip>Contacts</q-tooltip>
+          </q-tab>
+          <q-tab name="threads" icon="groups">
+            <q-tooltip>Groupes</q-tooltip>
+          </q-tab>
+          <q-tab name="game" icon="sports_esports">
+            <q-tooltip>Jeu</q-tooltip>
+          </q-tab>
+          <q-tab name="assets" icon="folder">
+            <q-tooltip>Ressources</q-tooltip>
+          </q-tab>
+          <q-tab name="i18n" icon="translate">
+            <q-tooltip>Traductions</q-tooltip>
+          </q-tab>
+          <q-tab name="seed" icon="inventory_2">
+            <q-tooltip>Contenu initial</q-tooltip>
+          </q-tab>
         </q-tabs>
 
         <div class="spacer" />
@@ -135,7 +149,10 @@
              field access for when this is hidden and selectedChapter is
              null) — #phone-slot-chapterpage itself must stay permanently
              in the DOM regardless of which of the two states is active. -->
-        <div v-show="!focusPreview && viewMode === 'chapters' && selectedChapter" class="chapter-page-fullscreen">
+        <div
+          v-show="!focusPreview && viewMode === 'chapters' && selectedChapter"
+          class="chapter-page-fullscreen"
+        >
           <q-splitter v-model="splitInner" :limits="[30, 85]" class="full-splitter">
             <template #before>
               <div class="pane timeline-pane">
@@ -361,7 +378,9 @@ const selectedChapter = computed(() =>
 // actually on screen — passed to ChapterGraph.vue as `active` too, so it
 // can re-fit the view on every transition into this state, not just once
 // on first mount (see its own comment).
-const graphActive = computed(() => !focusPreview.value && viewMode.value === 'chapters' && !selectedChapter.value)
+const graphActive = computed(
+  () => !focusPreview.value && viewMode.value === 'chapters' && !selectedChapter.value,
+)
 const selectedContactIndex = ref(0)
 const selectedContact = computed(
   () => story.project?.contacts?.[selectedContactIndex.value] || null,
