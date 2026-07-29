@@ -19,7 +19,6 @@
       :nodes-connectable="true"
       :edges-updatable="false"
       :edges-focusable="true"
-      fit-view-on-init
       class="flow"
       @connect="onConnect"
       @node-drag-stop="onNodeDragStop"
@@ -74,8 +73,8 @@
 </template>
 
 <script setup>
-import { computed, markRaw, reactive, ref } from 'vue'
-import { VueFlow } from '@vue-flow/core'
+import { computed, markRaw, nextTick, reactive, ref, watch } from 'vue'
+import { VueFlow, useVueFlow } from '@vue-flow/core'
 import { Controls } from '@vue-flow/controls'
 import '@vue-flow/core/dist/style.css'
 import '@vue-flow/core/dist/theme-default.css'
@@ -89,9 +88,30 @@ import RequiresBuilder from '@/editor/components/RequiresBuilder.vue'
 
 // `null` = nothing selected (the graph's default, full-bleed state driven
 // by EditorPage.vue) — no strict `type` so Vue doesn't warn on that value.
-const props = defineProps({ modelValue: { default: null } })
+// `active` — whether this graph is the thing actually on screen right now
+// (EditorPage.vue's own v-show condition, passed through as a prop too):
+// this component stays permanently mounted (v-show, never v-if, see
+// EditorPage.vue's Teleport notes), so vue-flow's own `fit-view-on-init`
+// only ever fires once, at first mount — switching back to this tab later
+// (from another main tab, or "← Retour au graphe") left the pan/zoom
+// wherever it happened to be. Re-fitting on every `active` transition
+// instead covers both cases with one mechanism.
+const props = defineProps({ modelValue: { default: null }, active: { type: Boolean, default: true } })
 const emit = defineEmits(['update:modelValue', 'preview-from'])
 const story = useStoryStore()
+const { fitView } = useVueFlow()
+
+watch(
+  () => props.active,
+  (active) => {
+    if (!active) return
+    // wait for the v-show display:none -> block flip to actually land in
+    // the DOM first — fitView() measures the container, which is still
+    // zero-size the instant this watcher fires.
+    nextTick(() => fitView({ duration: 300 }))
+  },
+  { immediate: true },
+)
 
 const chapters = story.project.chapters
 

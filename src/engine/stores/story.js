@@ -1272,8 +1272,21 @@ export const useStoryStore = defineStore('story', {
       return false
     },
 
+    // Settings app's "reset phone" — a fresh save within the CURRENTLY
+    // LOADED project, not closing it. `defaultState()`'s `project` field is
+    // `null` (see loadProject()'s own doc comment above), so a bare
+    // `Object.assign(this, defaultState())` was wiping the loaded project
+    // out from under the editor too — EditorPage.vue's `if (!story.project)
+    // router.replace(...)` guard then bounced straight back to
+    // open-project, which (via the last-opened-project auto-reload) tried
+    // to load a project with no rootPath, loop + error. Same
+    // preserve-project pattern loadProject() itself uses when switching
+    // projects, just keeping the SAME project instead of swapping in a new
+    // one.
     resetSave() {
+      const project = this.project
       Object.assign(this, defaultState())
+      this.project = project
     },
   },
 })

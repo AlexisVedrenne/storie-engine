@@ -125,8 +125,8 @@
              `selectedIndex`, which hides this overlay and reveals the
              chapter-page overlay below (which has a "← Retour au graphe"
              button to come back). -->
-        <div v-show="!focusPreview && viewMode === 'chapters' && !selectedChapter" class="graph-fullscreen">
-          <ChapterGraph v-model="selectedIndex" @preview-from="previewFrom" />
+        <div v-show="graphActive" class="graph-fullscreen">
+          <ChapterGraph v-model="selectedIndex" :active="graphActive" @preview-from="previewFrom" />
         </div>
 
         <!-- Once a chapter IS selected: a full-page 2-pane layout (form |
@@ -181,6 +181,14 @@
            same bug already fixed once for viewMode tab switches — see the
            note below — this is the other place it still existed). -->
         <div v-show="focusPreview" class="pane preview-pane focus-mode">
+          <!-- The topbar's "Aperçu seul" toggle does the exact same thing,
+               but it's easy to miss once you're staring at a full-screen
+               phone — a small "click to exit" hint right where the eye
+               already is doesn't require reading the toolbar first. -->
+          <button class="preview-exit-hint" @click="focusPreview = false">
+            <q-icon name="visibility_off" size="14px" />
+            Aperçu — cliquer pour revenir à l'édition
+          </button>
           <div id="phone-slot-focus"></div>
         </div>
 
@@ -299,6 +307,7 @@ import {
   serializeSeedBucket,
 } from '@/project/serializeChapter'
 import { validateProject, collectAssetPaths } from '@/project/validateProject'
+import { DEFAULT_LOCALE } from '@/engine/i18n/locales'
 import PhoneShell from '@/components/phone/PhoneShell.vue'
 import ChapterGraph from '@/editor/components/ChapterGraph.vue'
 import TimelineEditor from '@/editor/components/TimelineEditor.vue'
@@ -348,6 +357,11 @@ const selectedIndex = ref(null)
 const selectedChapter = computed(() =>
   selectedIndex.value == null ? null : story.project?.chapters?.[selectedIndex.value] || null,
 )
+// Whether the chapter graph (not a chapter's own 2-pane form) is the thing
+// actually on screen — passed to ChapterGraph.vue as `active` too, so it
+// can re-fit the view on every transition into this state, not just once
+// on first mount (see its own comment).
+const graphActive = computed(() => !focusPreview.value && viewMode.value === 'chapters' && !selectedChapter.value)
 const selectedContactIndex = ref(0)
 const selectedContact = computed(
   () => story.project?.contacts?.[selectedContactIndex.value] || null,
@@ -503,6 +517,37 @@ function restartPreview() {
 }
 
 function previewFrom(chapterId) {
+  // Always fired from a graph node (see ChapterGraph.vue/ChapterGraphNode.vue
+  // — no chapter selected at that moment), so the Teleport target below
+  // would otherwise resolve to '#phone-slot-docked', which sits in the
+  // splitter that the full-bleed graph overlay covers (see graphActive) —
+  // the phone would run (sounds, flags...) completely out of sight.
+  // Focus mode is always visible and takes the overlay down with it
+  // (graphActive depends on !focusPreview), so this is the one Teleport
+  // target guaranteed to actually show something right after this call.
+  focusPreview.value = true
+
+  // A brand-new save has no playerName yet, so PhoneShell would show the
+  // first-boot Setup Wizard instead of the phone — story.startChapter()
+  // below doesn't wait for that, it starts advancing (and playing sounds)
+  // immediately regardless of what's on screen, which is exactly the "I
+  // hear it but see nothing, stuck at the wizard" bug. Auto-fill it with
+  // throwaway preview defaults instead of forcing a manual click-through
+  // every time: OS locale if it's one of the project's, else the engine
+  // default; a fixed placeholder name; the wizard's own first color swatch
+  // (SetupWizard.vue's `colorChoices[0]`). phone.requestReboot() replays
+  // the boot animation, which is what actually re-evaluates playerName and
+  // routes to 'ready' instead of 'setup' (see PhoneShell.vue's onBootDone).
+  if (!story.playerName) {
+    const osLocale = story.availableLocales.some((l) => l.code === navigator.language)
+      ? navigator.language
+      : DEFAULT_LOCALE
+    story.setLocale(osLocale)
+    story.setPlayerName('DemoName')
+    story.setPlayerColor('#9c27b0')
+    phone.requestReboot()
+  }
+
   story.startChapter(chapterId)
 }
 
@@ -759,7 +804,32 @@ async function buildGame() {
 }
 
 .preview-pane.focus-mode {
+  position: relative;
   width: 100%;
   padding: var(--space-8);
+}
+
+.preview-exit-hint {
+  position: absolute;
+  top: var(--space-3);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  border: none;
+  border-radius: var(--radius-md);
+  padding: var(--space-1) var(--space-3);
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  cursor: pointer;
+  transition: color var(--transition-fast);
+}
+
+.preview-exit-hint:hover {
+  color: var(--color-text);
 }
 </style>

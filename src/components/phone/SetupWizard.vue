@@ -251,6 +251,9 @@ const syncApps = [
 ]
 
 // --- accent color ----------------------------------------------------------
+// colorChoices[0] is duplicated as a literal in EditorPage.vue's
+// previewFrom() (auto-filled wizard default for graph previews) — keep
+// that in sync if this list's first entry ever changes.
 const colorChoices = ['#9c27b0', '#3f51b5', '#4caf50', '#f44336', '#ff9800', '#00bcd4']
 const selectedColor = ref('')
 
