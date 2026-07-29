@@ -8,6 +8,7 @@ export const usePhoneStore = defineStore('phone', {
   state: () => ({
     locked: true,
     currentApp: null, // null = home screen, else 'messages' | 'social' | 'gallery' | 'calls' | 'settings'
+    appOpenedAt: null, // Date.now() when currentApp was opened — drives 'app.closed's `seconds` payload
     activeConversation: null, // contactId when inside an SMS chat thread
     activeDmThread: null, // threadId when inside an Insta DM thread
     rebootCount: 0 // bumped by requestReboot() — PhoneShell watches this to replay the boot sequence
@@ -17,14 +18,29 @@ export const usePhoneStore = defineStore('phone', {
     unlock() {
       this.locked = false
     },
+
+    // Shared by every place below that stops showing `currentApp` (switching
+    // apps, going home, locking, rebooting) — emits 'app.closed' with how
+    // long the player was actually in it, only when there was one open.
+    closeCurrentApp() {
+      if (this.currentApp && this.appOpenedAt) {
+        const seconds = Math.round((Date.now() - this.appOpenedAt) / 1000)
+        emit('app.closed', { app: this.currentApp, seconds })
+      }
+      this.appOpenedAt = null
+    },
+
     lock() {
+      this.closeCurrentApp()
       this.locked = true
       this.currentApp = null
       this.activeConversation = null
       this.activeDmThread = null
     },
     openApp(appId) {
+      this.closeCurrentApp()
       this.currentApp = appId
+      this.appOpenedAt = Date.now()
       this.activeConversation = null
       this.activeDmThread = null
       // Fires unconditionally, whether or not any project.events reaction
@@ -33,6 +49,7 @@ export const usePhoneStore = defineStore('phone', {
       emit('app.opened', { app: appId })
     },
     goHome() {
+      this.closeCurrentApp()
       this.currentApp = null
       this.activeConversation = null
       this.activeDmThread = null
@@ -55,6 +72,7 @@ export const usePhoneStore = defineStore('phone', {
     // fresh save correctly goes through setup again instead of leaving the
     // phone sitting unlocked with a wiped story underneath it.
     requestReboot() {
+      this.closeCurrentApp()
       this.locked = true
       this.currentApp = null
       this.activeConversation = null

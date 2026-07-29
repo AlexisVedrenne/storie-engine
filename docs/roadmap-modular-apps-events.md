@@ -91,6 +91,109 @@ n'a plus besoin d'être écrit à la main.
   tant que les events restent indépendants les uns des autres (pas de
   branchement event → event à représenter visuellement pour l'instant).
 
+**Restructuration liste/détail + catalogue par app (même jour)** : le
+placeholder "listés à droite, pas ici" a été remplacé par le vrai panneau
+gauche, même patron que Contacts/Threads.
+- `src/engine/events/triggers.js` — catalogue central (nom, app propriétaire,
+  label, champ de correspondance + `optionsFrom: 'apps'|'contacts'`).
+  `eventManager.js`/`EventList.vue`/`EventForm.vue` en dérivent tous —
+  ajouter un vrai trigger = une entrée ici, rien d'autre.
+- 2 nouveaux triggers réels câblés : `post.liked` (`story.toggleLike()`,
+  seulement au moment du like, pas du unlike) et `contact.followed`
+  (`story.toggleFollow()`, idem).
+- `EventList.vue` (gauche) : events déjà créés (clic → sélection) +
+  "Ajouter par application" — clique une app, un event pré-rempli pour son
+  trigger principal est créé et sélectionné direct.
+- `EventForm.vue` (droite) : le formulaire d'un seul event, toujours
+  déplié (comme `ContactForm.vue`) — le champ de correspondance devient un
+  vrai sélecteur (apps ou contacts) au lieu d'un id à taper à l'aveugle,
+  quand `optionsFrom` le permet (`postId`/`photoId` restent en texte libre,
+  pas de liste connue à l'auteur pour l'instant).
+- Ancien `EventsEditor.vue` (liste+cartes en un seul panneau) supprimé,
+  remplacé par ces deux composants.
+
+**Correction du menu "Ajouter" (même jour, après retour utilisateur)** :
+le premier jet montrait `app.opened` sous CHAQUE app (redondant) et un
+seul trigger par app pré-rempli à corriger après coup. Structure demandée
+et faite : "Commun" en premier (triggers cross-app), puis un groupe par
+app listant SES triggers propres, cliquables directement (pas d'étape
+intermédiaire "choisis l'app puis corrige").
+- Nouveaux triggers réels : `app.closed` (Commun — délai passé dans
+  N'IMPORTE quelle app avant de la quitter, seuil minimum en secondes),
+  `profile.opened` (Pixly — `ProfileScreen`), `conversation.opened`
+  (Messages — ouverture d'une conversation SMS).
+- `phone.js` trackait déjà `currentApp` mais pas depuis quand — ajout de
+  `appOpenedAt` + `closeCurrentApp()` (appelé par `openApp`/`goHome`/
+  `lock`/`requestReboot`) pour calculer les secondes réellement passées.
+- `matchEvent.js` généralisé : un champ de correspondance peut être
+  `numeric` (seuil minimum, `payload ≥ valeur`) au lieu d'égalité stricte —
+  nécessaire pour "au moins N secondes", réutilisable pour un futur trigger
+  du même genre (compteurs, durées). Testé en Node (4 assertions vertes).
+- `triggers.js` reste l'unique catalogue : `commonTriggers()`/
+  `triggersForApp()` remplacent l'ancien comportement qui rajoutait
+  `app.opened` partout.
+
+**Filtres plus fins + titre d'event (même jour, 2ᵉ retour utilisateur)** :
+- `matchField` (singulier) → `matchFields` (tableau) — `app.closed` a
+  maintenant 2 filtres (application optionnelle + délai minimum), tous les
+  autres triggers en ont 1 (pas de cas spécial dans le code, juste un
+  tableau à un seul élément). Testé en Node (5 assertions vertes, filtres
+  combinés `app` + `seconds` ET `authorId`).
+- `post.liked` filtre maintenant par **auteur** (`authorId`, liste
+  déroulante des contacts) plutôt que par `postId` opaque — `story.js`
+  `toggleLike()` retrouve l'auteur dans `feedPosts`/`reels` au moment du
+  like.
+- `photo.viewed` filtre par **chemin d'asset** (`url`) avec vraie liste
+  déroulante à miniatures, pas par id — l'id d'une entrée `photo` est
+  auto-généré si non renseigné (`story.js` `processEntry`), donc
+  impossible à deviner de façon fiable depuis l'éditeur. Nouveau
+  `src/project/collectPhotoOptions.js` (pur) scanne chapitres + seed pour
+  lister toutes les photos authored.
+- **Titre optionnel** sur chaque event (`evt.title`, avec bouton emoji
+  comme tous les autres champs texte) — prioritaire dans le résumé de la
+  liste, pour distinguer plusieurs events sur le même trigger.
+- `post.liked` et `photo.viewed` acceptent maintenant une publication/photo
+  **existante OU à venir** (combobox liste+saisie libre, même patron que
+  `FlagNameField.vue`) — `PostEntryForm.vue` a un nouveau champ Id
+  optionnel pour ça (`collectPostOptions.js`, même limite que les photos :
+  seules les entrées avec un id explicite sont listables, l'id
+  auto-généré n'est pas prévisible statiquement).
+
+**Le bug de collision documenté plus haut est corrigé (même jour, 3ᵉ
+retour utilisateur)** : un choix/appel de la timeline principale ET un
+choix/appel déclenché par un Event peuvent maintenant être en attente en
+même temps sans que l'un écrase l'autre.
+- `activeChoice`/`pendingCall`/`timelineResume` étaient 3 champs uniques
+  partagés — le 2ᵉ qui tentait de s'afficher écrasait silencieusement
+  l'état du 1er, qui restait bloqué pour de bon.
+- Ajout d'une file `pendingInteractions[]` + `presentBlockingEntry()`
+  (affiche tout de suite si le téléphone est libre, sinon met en file) +
+  `presentNextQueuedInteraction()` (appelée par `makeChoice`/`declineCall`/
+  `endCall` juste après avoir libéré le téléphone).
+- Point d'attention traité : capturer et vider `timelineResume` AVANT
+  d'appeler `presentNextQueuedInteraction()` (qui pose son propre
+  `timelineResume` pour l'élément suivant) — sinon le "resume" repris
+  aurait été le mauvais.
+- Vérifié par simulation Node autonome (scénario exact : choix principal
+  en attente + choix d'event qui tente de s'afficher en même temps → mis
+  en file, pas écrasé → répondre au premier révèle le second → les deux
+  "resume" se déclenchent une fois chacun, rien perdu).
+
+**Posts sans id explicite maintenant listés (même jour, 4ᵉ retour)** :
+`collectPostOptions.js` recalcule le même id que `story.js` utiliserait à
+l'exécution (`entry.id || `${chapitre}-post-${index}``) au lieu d'exiger un
+id posé à la main — un post nested dans un `then` de choix hérite de
+l'index du choix englobant (le moteur n'avance jamais `timelineIndex`
+dedans), donc plusieurs posts sans id sous la même option partagent le
+même id de repli — pas un bug introduit ici, juste rendu fidèle au
+comportement réel du moteur. Testé en Node (4 assertions vertes,
+top-level/id-explicite/nested tous corrects). Les photos n'avaient pas ce
+problème : elles étaient déjà indexées par chemin d'asset (`url`), pas par
+id, donc toujours listées peu importe si un id a été renseigné.
+
+Onglet **Events** déplacé juste après **Chapitres** dans la barre
+d'onglets de l'éditeur.
+
 Reste à faire : apps externes/plugins post-build (phase 4, cf. discussion
 "marketplace" — mis de côté pour l'instant, modèle actuel = extension du
 dépôt source + rebuild).

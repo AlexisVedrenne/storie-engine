@@ -34,9 +34,7 @@ export function clear() {
   listeners.clear()
 }
 
-// Every trigger name the engine itself ever emits — the fixed vocabulary a
-// project's authored `gameConfig.events[].trigger` can match against.
-// Adding a new one is a deliberate engine-level change (a new emit() call
-// site somewhere), the same weight as adding a built-in app or entry type —
-// not something project data can invent on its own.
-export const ENGINE_TRIGGERS = ['app.opened', 'photo.viewed']
+// Re-exported for existing importers — the actual catalog (name, owning
+// app, label, match field) lives in triggers.js now, single source of
+// truth shared with EventList.vue/EventForm.vue's per-app grouping.
+export { ENGINE_TRIGGERS } from '@/engine/events/triggers'

@@ -48,6 +48,7 @@ import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { usePhoneStore } from '@/engine/stores/phone'
 import { useStoryStore } from '@/engine/stores/story'
+import { emit } from '@/engine/events/eventManager'
 import AppTitleBar from '@/components/phone/AppTitleBar.vue'
 import AppAvatar from '@/components/phone/AppAvatar.vue'
 import ChatThread from './ChatThread.vue'
@@ -91,6 +92,7 @@ const filteredConversations = computed(() => {
 function open(id) {
   phone.openConversation(id)
   story.markRead(id)
+  emit('conversation.opened', { contactId: id })
 }
 </script>
 

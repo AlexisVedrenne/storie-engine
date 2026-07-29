@@ -96,6 +96,7 @@ import { ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { usePhoneStore } from '@/engine/stores/phone'
 import { useStoryStore } from '@/engine/stores/story'
+import { emit } from '@/engine/events/eventManager'
 import PostCard from './PostCard.vue'
 import StoriesBar from './StoriesBar.vue'
 import StoryViewer from './StoryViewer.vue'
@@ -128,11 +129,13 @@ function openProfile(contactId) {
   profileContact.value = contactId
   profileBackTo.value = null
   screen.value = 'profile'
+  emit('profile.opened', { contactId })
 }
 
 function openProfileFromDm(contactId) {
   profileContact.value = contactId
   profileBackTo.value = 'dmThread'
+  emit('profile.opened', { contactId })
   screen.value = 'profile'
 }
 

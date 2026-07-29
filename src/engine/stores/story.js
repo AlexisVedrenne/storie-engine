@@ -5,7 +5,7 @@ import { DEFAULT_LOCALE, SUPPORTED_LOCALES } from '@/engine/i18n/locales'
 import { playSound, startLoop, stopSound } from '@/engine/utils/sound'
 import { ALL_APP_IDS, ENTRY_TYPE_APP } from '@/engine/apps/appIds'
 import { CUSTOM_ENTRY_TYPE_BY_TYPE } from '@/engine/apps/entryTypeRegistry'
-import { on as onEngineEvent, clear as clearEngineEvents, ENGINE_TRIGGERS } from '@/engine/events/eventManager'
+import { on as onEngineEvent, clear as clearEngineEvents, emit as emitEngineEvent, ENGINE_TRIGGERS } from '@/engine/events/eventManager'
 import { findMatchingEvents } from '@/engine/events/matchEvent'
 
 // Phase 1: this store is project-agnostic — it holds no hardcoded chapters/
@@ -161,6 +161,16 @@ function defaultState() {
     activeChoice: null, // { id, contact, prompt, options } blocking the timeline
     timelineResume: null, // fn to call once the current blocking choice/call is fully resolved —
     // set right before activeChoice/pendingCall; not persisted, same as those (see makeChoice/declineCall/endCall)
+
+    // Choice/call entries queued instead of shown, because the phone was
+    // already busy with another one when they tried to present — e.g. an
+    // Event's reaction (story.js handleEngineEvent) firing while the main
+    // chapter timeline already has its own choice/call on screen. Each item
+    // is { entry, chapter, resume }; see presentBlockingEntry()/
+    // presentNextQueuedInteraction() below. Not persisted — `resume` is a
+    // closure, can't survive a reload anyway (same reason timelineResume
+    // isn't saved either).
+    pendingInteractions: [],
     notifications: [], // transient home-screen banners
     typingContact: null, // contactId currently shown as "typing..." in SMS — transient, not saved
     typingDm: null, // { thread, contact } currently shown as "typing..." in Insta DM — transient, not saved
@@ -202,6 +212,7 @@ function defaultState() {
 // player progress and goes in the save file (see save()/load() below).
 const NON_PERSISTED_KEYS = new Set([
   'project',
+  'pendingInteractions',
   'activeChoice',
   'timelineResume',
   'pendingCall',
@@ -697,8 +708,6 @@ export const useStoryStore = defineStore('story', {
           return
         }
 
-        this.processEntry(entry, chapter)
-
         // a choice or a ringing call blocks progress until the player acts.
         // Keep the index pointing AT this entry (don't increment) so that a
         // page reload — which doesn't persist activeChoice/pendingCall —
@@ -706,14 +715,22 @@ export const useStoryStore = defineStore('story', {
         // Save right here too — without this, closing the tab mid-chapter
         // (very common while testing) lost all progress, since save() used
         // to only run once every available chapter was exhausted.
+        //
+        // presentBlockingEntry (not processEntry directly) — if the phone
+        // is already showing another choice/call (typically one an Event's
+        // reaction presented, see handleEngineEvent), this queues instead
+        // of clobbering it; presentNextQueuedInteraction() shows it once
+        // the phone frees up (see makeChoice/declineCall/endCall).
         if (entry.type === 'choice' || entry.type === 'call') {
-          this.timelineResume = () => {
+          this.presentBlockingEntry(entry, chapter, () => {
             this.timelineIndex++
             this.advance()
-          }
+          })
           this.save()
           return
         }
+
+        this.processEntry(entry, chapter)
 
         // everything else (post, photo, story, reel, effect) lands instantly
         // but still gets a light pause before the next entry, so a run of
@@ -829,14 +846,42 @@ export const useStoryStore = defineStore('story', {
       // a nested choice/call blocks just like a top-level one — set the
       // continuation to "carry on with the rest of this `then` list" and
       // stop here until the player answers/hangs up (see makeChoice /
-      // declineCall / endCall).
+      // declineCall / endCall). presentBlockingEntry queues instead of
+      // clobbering if the phone is already busy — see advance()'s own
+      // comment on the same helper.
       if (entry.type === 'choice' || entry.type === 'call') {
-        this.processEntry(entry, chapter)
-        this.timelineResume = () => this.runThen(list, i + 1, chapter, resume)
+        this.presentBlockingEntry(entry, chapter, () => this.runThen(list, i + 1, chapter, resume))
         return
       }
       this.processEntry(entry, chapter)
       setTimeout(() => this.runThen(list, i + 1, chapter, resume), PACE_DELAY)
+    },
+
+    // Shows a blocking entry (choice/call) right now if the phone is free,
+    // or queues it if the player is already mid-choice/mid-call — this is
+    // what lets the main chapter timeline and an Event's own reaction
+    // (handleEngineEvent) each have a pending choice/call without one
+    // clobbering the other's activeChoice/pendingCall/timelineResume (they
+    // used to share those 3 fields directly, so whichever presented second
+    // silently ate the first one's state). The queued one is shown by
+    // presentNextQueuedInteraction() below, once the current one resolves.
+    presentBlockingEntry(entry, chapter, resume) {
+      if (this.activeChoice || this.pendingCall) {
+        this.pendingInteractions.push({ entry, chapter, resume })
+        return
+      }
+      this.timelineResume = resume
+      this.processEntry(entry, chapter)
+    },
+
+    // Called by makeChoice/declineCall/endCall right after they free the
+    // phone (activeChoice/pendingCall back to null) — presents whatever
+    // queued up behind the one that just resolved, if anything did.
+    presentNextQueuedInteraction() {
+      const next = this.pendingInteractions.shift()
+      if (!next) return
+      this.timelineResume = next.resume
+      this.processEntry(next.entry, next.chapter)
     },
 
     processEntry(entry, chapter) {
@@ -1041,8 +1086,13 @@ export const useStoryStore = defineStore('story', {
       if (option.effects) this.applyEffects(option.effects)
 
       this.activeChoice = null
+      // Capture + clear BEFORE presentNextQueuedInteraction() — that call
+      // may itself set a NEW this.timelineResume (for whatever it just
+      // presented), so `resume` has to already be a plain local by then or
+      // it would silently pick up the wrong continuation.
       const resume = this.timelineResume
       this.timelineResume = null
+      this.presentNextQueuedInteraction()
       this.runThen(option.then || [], 0, chapter, resume)
     },
 
@@ -1078,8 +1128,10 @@ export const useStoryStore = defineStore('story', {
         contact: this.pendingCall.contact,
       })
       this.pendingCall = null
+      // Same capture-before-queue-check ordering as makeChoice() above.
       const resume = this.timelineResume
       this.timelineResume = null
+      this.presentNextQueuedInteraction()
       resume()
     },
 
@@ -1088,6 +1140,7 @@ export const useStoryStore = defineStore('story', {
       this.pendingCall = null
       const resume = this.timelineResume
       this.timelineResume = null
+      this.presentNextQueuedInteraction()
       resume()
     },
 
@@ -1115,12 +1168,24 @@ export const useStoryStore = defineStore('story', {
 
     toggleLike(postId) {
       this.likedPosts[postId] = !this.likedPosts[postId]
-      if (this.likedPosts[postId]) playSound('social-like')
+      if (this.likedPosts[postId]) {
+        playSound('social-like')
+        // Only on the like itself, not the unlike — matches the
+        // 'post.liked' trigger's own name (see triggers.js). authorId is
+        // looked up (works for both a feed post and a reel, same id space)
+        // so an authored event can filter "liked something by THIS
+        // contact" — a post's own id is otherwise opaque/unknown to an
+        // author picking a match value in the editor.
+        const authorId = this.feedPosts.find((p) => p.id === postId)?.author ?? this.reels.find((r) => r.id === postId)?.author
+        emitEngineEvent('post.liked', { postId, authorId })
+      }
       this.save()
     },
 
     toggleFollow(contactId) {
-      this.followingContacts[contactId] = !this.isFollowing(contactId)
+      const nowFollowing = !this.isFollowing(contactId)
+      this.followingContacts[contactId] = nowFollowing
+      if (nowFollowing) emitEngineEvent('contact.followed', { contactId })
       this.save()
     },
 

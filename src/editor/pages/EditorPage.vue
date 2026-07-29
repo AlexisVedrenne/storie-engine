@@ -30,6 +30,9 @@
           <q-tab name="chapters" icon="auto_stories">
             <q-tooltip>Chapitres</q-tooltip>
           </q-tab>
+          <q-tab name="events" icon="sensors">
+            <q-tooltip>Events — réactions aux actions du joueur (hors timeline)</q-tooltip>
+          </q-tab>
           <q-tab name="contacts" icon="contacts">
             <q-tooltip>Contacts</q-tooltip>
           </q-tab>
@@ -38,9 +41,6 @@
           </q-tab>
           <q-tab name="game" icon="sports_esports">
             <q-tooltip>Jeu</q-tooltip>
-          </q-tab>
-          <q-tab name="events" icon="sensors">
-            <q-tooltip>Events — réactions aux actions du joueur (hors timeline)</q-tooltip>
           </q-tab>
           <q-tab name="assets" icon="folder">
             <q-tooltip>Ressources</q-tooltip>
@@ -235,6 +235,9 @@
         >
           <template #before>
             <q-tab-panels class="pane chapters-pane" v-model="viewMode" animated>
+              <q-tab-panel name="events">
+                <EventList v-model="selectedEventIndex" />
+              </q-tab-panel>
               <q-tab-panel name="contacts">
                 <ContactList v-model="selectedContactIndex"
               /></q-tab-panel>
@@ -243,9 +246,6 @@
               /></q-tab-panel>
               <q-tab-panel name="game">
                 <div class="empty-state">Le titre du jeu est un champ unique — pas de liste.</div>
-              </q-tab-panel>
-              <q-tab-panel name="events">
-                <div class="empty-state">Les events sont listés à droite, pas ici.</div>
               </q-tab-panel>
               <q-tab-panel name="assets">
                 <AssetTree v-model="selectedAssetFolder" />
@@ -267,6 +267,11 @@
                   transition-next="fade"
                   class="pane timeline-pane"
                 >
+                  <q-tab-panel name="events">
+                    <EventForm v-if="selectedEvent" :event="selectedEvent" />
+                    <div v-else class="empty-state">Sélectionne ou crée un event à gauche.</div>
+                  </q-tab-panel>
+
                   <q-tab-panel name="contacts">
                     <ContactForm v-if="selectedContact" :contact="selectedContact" />
                     <div v-else class="empty-state">Sélectionne un contact à gauche.</div>
@@ -279,10 +284,6 @@
 
                   <q-tab-panel name="game">
                     <GameForm :game="story.project.gameConfig" />
-                  </q-tab-panel>
-
-                  <q-tab-panel name="events">
-                    <EventsEditor />
                   </q-tab-panel>
 
                   <q-tab-panel name="assets">
@@ -376,7 +377,8 @@ import ContactForm from '@/editor/components/ContactForm.vue'
 import ThreadList from '@/editor/components/ThreadList.vue'
 import ThreadForm from '@/editor/components/ThreadForm.vue'
 import GameForm from '@/editor/components/GameForm.vue'
-import EventsEditor from '@/editor/components/EventsEditor.vue'
+import EventList from '@/editor/components/EventList.vue'
+import EventForm from '@/editor/components/EventForm.vue'
 import AssetsPanel from '@/editor/components/AssetsPanel.vue'
 import AssetTree from '@/editor/components/AssetTree.vue'
 import LocaleList from '@/editor/components/LocaleList.vue'
@@ -434,6 +436,10 @@ const selectedContact = computed(
 )
 const selectedThreadIndex = ref(0)
 const selectedThread = computed(() => story.project?.threads?.[selectedThreadIndex.value] || null)
+const selectedEventIndex = ref(0)
+const selectedEvent = computed(
+  () => story.project?.gameConfig?.events?.[selectedEventIndex.value] || null,
+)
 // Selected folder path within assets/ ('' = root) — same lift-state-up
 // pattern as the selection refs above, shared between AssetTree (left pane)
 // and AssetsPanel (middle pane, filters its grid to this folder).

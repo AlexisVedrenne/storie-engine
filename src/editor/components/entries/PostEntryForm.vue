@@ -38,6 +38,13 @@
         <EmojiPickerBtn @pick="(e) => (entry.content = insertEmojiAtCaret(contentInputRef, entry.content, e))" />
       </template>
     </q-input>
+    <q-input
+      dense
+      outlined
+      label="Id (optionnel — pour cibler cette publication précise depuis un Event)"
+      placeholder="ex: post-plage-erwan"
+      v-model="entry.id"
+    />
     <AssetField v-model="entry.image" label="Image (optionnel)" :contact-id="entry.author" />
     <q-input
       dense

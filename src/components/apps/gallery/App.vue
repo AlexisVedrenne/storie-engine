@@ -49,7 +49,12 @@ const selected = ref(null)
 
 function openPhoto(p) {
   selected.value = p
-  emit('photo.viewed', { photoId: p.id })
+  // `url` (the authored asset path) is what an event's match field
+  // actually filters on — `photoId` is often auto-generated at runtime
+  // (see story.js processEntry's 'photo' case) and unpredictable from the
+  // editor's static project data, so it's kept in the payload but not
+  // offered as a picker (see collectPhotoOptions.js).
+  emit('photo.viewed', { photoId: p.id, url: p.url })
 }
 
 const photoCountLabel = computed(() => {
