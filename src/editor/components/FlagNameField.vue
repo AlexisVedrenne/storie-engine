@@ -21,10 +21,10 @@
       </q-item>
     </template>
     <!-- Purely visual — the option's underlying value is still the plain
-         key string (see story.allFlagNames), this just shows the author's
-         label + observed usage from story.flagCatalog next to it so
-         picking from the list doesn't require remembering what a cryptic
-         key like `trustClara` actually tracks. -->
+         key string (see allFlagNames above), this just shows the author's
+         label + observed usage from flagCatalog next to it so picking from
+         the list doesn't require remembering what a cryptic key like
+         `trustClara` actually tracks. -->
     <template #option="scope">
       <q-item v-bind="scope.itemProps">
         <q-item-section>
@@ -43,25 +43,37 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { useStoryStore } from '@/engine/stores/story'
+import { collectFlags } from '@/project/collectFlags'
 
-// Combobox over every flag already used anywhere in the project
-// (story.allFlagNames, see src/engine/stores/story.js) — picks an existing
-// flag from a dropdown instead of retyping its exact name by hand every
-// time (typo-prone), while `new-value-mode="add-unique"` still lets you
-// type a brand new flag name freely.
+// Combobox over every flag already used anywhere in the project — picks an
+// existing flag from a dropdown instead of retyping its exact name by hand
+// every time (typo-prone), while `new-value-mode="add-unique"` still lets
+// you type a brand new flag name freely.
+//
+// `collectFlags` is computed HERE, not exposed as a story.js getter —
+// story.js is copied wholesale into every built game (see build.js), but
+// collectFlags.js lives under src/project/, which is editor-only tooling
+// never copied into a shipped game's shell. A story.js getter that imports
+// it would silently break every future build (unresolved module) even
+// though nothing at runtime ever calls it. Same reason EventForm.vue calls
+// collectPhotoOptions/collectPostOptions directly instead of through a
+// store getter.
 const props = defineProps({ modelValue: { type: String, default: '' } })
 const emit = defineEmits(['update:modelValue'])
 const story = useStoryStore()
 
-const filteredOptions = ref(story.allFlagNames)
+const flagCatalog = computed(() => collectFlags(story.project))
+const allFlagNames = computed(() => flagCatalog.value.map((f) => f.key))
+
+const filteredOptions = ref(allFlagNames.value)
 function filterFn(val, update) {
   update(() => {
     if (!val) {
-      filteredOptions.value = story.allFlagNames
+      filteredOptions.value = allFlagNames.value
       return
     }
     const needle = val.toLowerCase()
-    filteredOptions.value = story.allFlagNames.filter((f) => f.toLowerCase().includes(needle))
+    filteredOptions.value = allFlagNames.value.filter((f) => f.toLowerCase().includes(needle))
   })
 }
 
@@ -70,7 +82,7 @@ function filterFn(val, update) {
 // counts EFFECTS that set the flag, never a condition that merely reads it
 // (a `>= 3` check elsewhere doesn't mean the flag has ever been 3).
 function hintFor(key) {
-  const entry = story.flagCatalog.find((f) => f.key === key)
+  const entry = flagCatalog.value.find((f) => f.key === key)
   if (!entry) return ''
   const parts = []
   if (entry.label) parts.push(entry.label)

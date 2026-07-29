@@ -66,8 +66,8 @@
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useStoryStore } from '@/engine/stores/story'
-import EmojiPickerBtn from '@/editor/components/EmojiPickerBtn.vue'
-import { insertEmojiAtCaret } from '@/editor/utils/emojiInsert'
+import EmojiPickerBtn from '@/components/shared/EmojiPickerBtn.vue'
+import { insertEmojiAtCaret } from '@/components/shared/emojiInsert'
 
 // Shared with EditorPage.vue's "Changer de projet" (clears this key) — a
 // deliberate exit shouldn't be silently undone by auto-reopening the same

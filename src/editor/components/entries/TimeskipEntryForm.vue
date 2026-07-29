@@ -33,8 +33,8 @@
 <script setup>
 import { ref } from 'vue'
 import FieldHelp from '@/editor/components/FieldHelp.vue'
-import EmojiPickerBtn from '@/editor/components/EmojiPickerBtn.vue'
-import { insertEmojiAtCaret } from '@/editor/utils/emojiInsert'
+import EmojiPickerBtn from '@/components/shared/EmojiPickerBtn.vue'
+import { insertEmojiAtCaret } from '@/components/shared/emojiInsert'
 
 defineProps({ entry: { type: Object, required: true } })
 const labelInputRef = ref(null)

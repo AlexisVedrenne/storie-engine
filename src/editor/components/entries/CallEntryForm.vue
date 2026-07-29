@@ -92,10 +92,10 @@
 
 <script setup>
 import { reactive } from 'vue'
-import { useContactOptions } from '@/editor/composables/useContactOptions'
+import { useContactOptions } from '@/components/shared/useContactOptions'
 import FieldHelp from '@/editor/components/FieldHelp.vue'
-import EmojiPickerBtn from '@/editor/components/EmojiPickerBtn.vue'
-import { insertEmojiAtCaret } from '@/editor/utils/emojiInsert'
+import EmojiPickerBtn from '@/components/shared/EmojiPickerBtn.vue'
+import { insertEmojiAtCaret } from '@/components/shared/emojiInsert'
 
 const props = defineProps({ entry: { type: Object, required: true } })
 const {

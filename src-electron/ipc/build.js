@@ -56,6 +56,16 @@ async function assembleShell(tmpDir, rootPath) {
   copyIfExists(path.join(APP_ROOT, "src", "engine"), path.join(tmpDir, "src", "engine"));
   copyIfExists(path.join(APP_ROOT, "src", "components", "phone"), path.join(tmpDir, "src", "components", "phone"));
   copyIfExists(path.join(APP_ROOT, "src", "components", "apps"), path.join(tmpDir, "src", "components", "apps"));
+  // Small utilities genuinely shared between the editor's own authoring
+  // forms AND a plug-in app's EntryForm.vue (e.g. src/components/apps/
+  // email/EmailEntryForm.vue) — entryTypeRegistry.js eagerly globs every
+  // app's entryType.js (see src/engine/apps/entryTypeRegistry.js), which
+  // statically imports that form component, so it's part of the RUNTIME
+  // bundle graph too, not just the editor's. Living under src/editor/
+  // (never copied here) broke every build the moment the email app was
+  // added — moved here specifically so `quasar build -m electron` inside
+  // this temp shell can actually resolve it.
+  copyIfExists(path.join(APP_ROOT, "src", "components", "shared"), path.join(tmpDir, "src", "components", "shared"));
   copyIfExists(path.join(APP_ROOT, "src", "boot"), path.join(tmpDir, "src", "boot"));
   copyIfExists(path.join(APP_ROOT, "src", "i18n"), path.join(tmpDir, "src", "i18n"));
   copyIfExists(path.join(APP_ROOT, "src", "css"), path.join(tmpDir, "src", "css"));

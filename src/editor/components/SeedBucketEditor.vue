@@ -118,11 +118,11 @@
 <script setup>
 import { computed, reactive, ref, watch } from 'vue'
 import { useStoryStore } from '@/engine/stores/story'
-import { useContactOptions } from '@/editor/composables/useContactOptions'
+import { useContactOptions } from '@/components/shared/useContactOptions'
 import AssetField from '@/editor/components/AssetField.vue'
 import CommentsListField from '@/editor/components/CommentsListField.vue'
-import EmojiPickerBtn from '@/editor/components/EmojiPickerBtn.vue'
-import { insertEmojiAtCaret } from '@/editor/utils/emojiInsert'
+import EmojiPickerBtn from '@/components/shared/EmojiPickerBtn.vue'
+import { insertEmojiAtCaret } from '@/components/shared/emojiInsert'
 
 const props = defineProps({ bucket: { type: String, required: true } })
 // Plain object (not reactive) — per-card DOM ref bag for EmojiPickerBtn's

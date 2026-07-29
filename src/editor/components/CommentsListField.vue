@@ -68,9 +68,9 @@
 
 <script setup>
 import { reactive } from 'vue'
-import { useContactOptions } from '@/editor/composables/useContactOptions'
-import EmojiPickerBtn from '@/editor/components/EmojiPickerBtn.vue'
-import { insertEmojiAtCaret } from '@/editor/utils/emojiInsert'
+import { useContactOptions } from '@/components/shared/useContactOptions'
+import EmojiPickerBtn from '@/components/shared/EmojiPickerBtn.vue'
+import { insertEmojiAtCaret } from '@/components/shared/emojiInsert'
 
 const props = defineProps({
   modelValue: { type: Array, default: () => [] },

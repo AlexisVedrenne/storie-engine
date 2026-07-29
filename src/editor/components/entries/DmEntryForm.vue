@@ -78,10 +78,10 @@
 
 <script setup>
 import { ref } from 'vue'
-import { useContactOptions } from '@/editor/composables/useContactOptions'
+import { useContactOptions } from '@/components/shared/useContactOptions'
 import AssetField from '@/editor/components/AssetField.vue'
-import EmojiPickerBtn from '@/editor/components/EmojiPickerBtn.vue'
-import { insertEmojiAtCaret } from '@/editor/utils/emojiInsert'
+import EmojiPickerBtn from '@/components/shared/EmojiPickerBtn.vue'
+import { insertEmojiAtCaret } from '@/components/shared/emojiInsert'
 
 defineProps({ entry: { type: Object, required: true } })
 const {

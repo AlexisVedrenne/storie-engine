@@ -43,7 +43,7 @@ import { useI18n } from 'vue-i18n'
 import { useStoryStore } from '@/engine/stores/story'
 import { APP_REGISTRY } from '@/engine/apps/registry'
 import { triggerDef, commonTriggers, triggersForApp } from '@/engine/events/triggers'
-import { useContactOptions } from '@/editor/composables/useContactOptions'
+import { useContactOptions } from '@/components/shared/useContactOptions'
 
 defineProps({ modelValue: { type: Number, default: 0 } })
 const emit = defineEmits(['update:modelValue'])

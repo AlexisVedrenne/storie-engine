@@ -87,18 +87,22 @@
 import { computed, reactive } from 'vue'
 import { Dialog } from 'quasar'
 import { useStoryStore } from '@/engine/stores/story'
+import { collectFlags } from '@/project/collectFlags'
 
 // `game` — same prop signature as GameForm.vue (story.project.gameConfig),
 // mutated directly for the write side (flag labels). The read side (which
-// flags exist, their observed type/range) comes from story.flagCatalog
-// instead, since it's derived from the WHOLE project (chapters/edges/
-// events), not just this one bucket — see collectFlags.js.
+// flags exist, their observed type/range) is collectFlags(story.project)
+// computed locally, NOT a story.js getter — story.js ships wholesale into
+// every built game (see build.js), but collectFlags.js lives under
+// src/project/, editor-only tooling never copied into a shipped game's
+// shell. A store getter importing it would silently break every future
+// build (unresolved module) even though nothing at runtime calls it.
 const props = defineProps({ game: { type: Object, required: true } })
 const story = useStoryStore()
 
 if (!props.game.flags) props.game.flags = {}
 
-const flags = computed(() => story.flagCatalog)
+const flags = computed(() => collectFlags(story.project))
 const unusedCount = computed(() => flags.value.filter((f) => !f.isUsed).length)
 
 // Which flags' "where is this called" list is open — collapsed by default

@@ -104,8 +104,8 @@ import { buildChapterGraph } from '@/project/chapterGraph'
 import { serializeChapter } from '@/project/serializeChapter'
 import ChapterGraphNode from '@/editor/components/ChapterGraphNode.vue'
 import RequiresBuilder from '@/editor/components/RequiresBuilder.vue'
-import EmojiPickerBtn from '@/editor/components/EmojiPickerBtn.vue'
-import { insertEmojiAtCaret } from '@/editor/utils/emojiInsert'
+import EmojiPickerBtn from '@/components/shared/EmojiPickerBtn.vue'
+import { insertEmojiAtCaret } from '@/components/shared/emojiInsert'
 
 // `null` = nothing selected (the graph's default, full-bleed state driven
 // by EditorPage.vue) — no strict `type` so Vue doesn't warn on that value.

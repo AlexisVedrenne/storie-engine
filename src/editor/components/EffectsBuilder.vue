@@ -307,7 +307,7 @@
 
 <script setup>
 import { reactive, ref } from 'vue'
-import { useContactOptions } from '@/editor/composables/useContactOptions'
+import { useContactOptions } from '@/components/shared/useContactOptions'
 import FieldHelp from '@/editor/components/FieldHelp.vue'
 import FlagNameField from '@/editor/components/FlagNameField.vue'
 

@@ -50,8 +50,8 @@
 
 <script setup>
 import { ref, computed, nextTick } from 'vue'
-import { EMOJI_CATEGORIES, ALL_EMOJI } from '@/editor/data/emojiList'
-import { loadRecentEmoji, pushRecentEmoji } from '@/editor/utils/emojiInsert'
+import { EMOJI_CATEGORIES, ALL_EMOJI } from '@/components/shared/emojiList'
+import { loadRecentEmoji, pushRecentEmoji } from '@/components/shared/emojiInsert'
 
 const emit = defineEmits(['pick'])
 

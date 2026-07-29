@@ -7,7 +7,6 @@ import { ALL_APP_IDS, ENTRY_TYPE_APP } from '@/engine/apps/appIds'
 import { CUSTOM_ENTRY_TYPE_BY_TYPE } from '@/engine/apps/entryTypeRegistry'
 import { on as onEngineEvent, clear as clearEngineEvents, emit as emitEngineEvent, ENGINE_TRIGGERS } from '@/engine/events/eventManager'
 import { findMatchingEvents } from '@/engine/events/matchEvent'
-import { collectFlags } from '@/project/collectFlags'
 
 // Phase 1: this store is project-agnostic — it holds no hardcoded chapters/
 // contacts/threads/seed/i18n of its own. All of that lives in `state.project`,
@@ -237,16 +236,6 @@ export const useStoryStore = defineStore('story', {
       const disabled = state.project?.gameConfig?.disabledApps || []
       return ALL_APP_IDS.filter((id) => !disabled.includes(id))
     },
-
-    // Editor-only: full project-wide flag catalog (see collectFlags.js) —
-    // one entry per flag name referenced anywhere (chapters, edges, choice
-    // options, events), with observed boolean/numeric usage and an
-    // optional author-given label (game.flags[key].label).
-    flagCatalog: (state) => collectFlags(state.project),
-
-    // Editor-only: just the names, alphabetically sorted — the shape
-    // FlagNameField.vue's autocomplete already expects.
-    allFlagNames: (state) => collectFlags(state.project).map((f) => f.key),
 
     // narrative content (chapters, contacts bios) is always written in
     // French — `bucket` defaults to the current chapter but can be passed

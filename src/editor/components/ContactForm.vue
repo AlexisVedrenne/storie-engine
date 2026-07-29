@@ -68,8 +68,8 @@
 import { ref } from 'vue'
 import AssetField from '@/editor/components/AssetField.vue'
 import FieldHelp from '@/editor/components/FieldHelp.vue'
-import EmojiPickerBtn from '@/editor/components/EmojiPickerBtn.vue'
-import { insertEmojiAtCaret } from '@/editor/utils/emojiInsert'
+import EmojiPickerBtn from '@/components/shared/EmojiPickerBtn.vue'
+import { insertEmojiAtCaret } from '@/components/shared/emojiInsert'
 
 defineProps({ contact: { type: Object, required: true } })
 const nameInputRef = ref(null)

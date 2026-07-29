@@ -137,8 +137,8 @@ import { computed, ref, watch } from 'vue'
 import { useStoryStore } from '@/engine/stores/story'
 import { extractTranslatableStrings, extractCommonCategories } from '@/project/extractTranslatableStrings'
 import FieldHelp from '@/editor/components/FieldHelp.vue'
-import EmojiPickerBtn from '@/editor/components/EmojiPickerBtn.vue'
-import { insertEmojiAtCaret } from '@/editor/utils/emojiInsert'
+import EmojiPickerBtn from '@/components/shared/EmojiPickerBtn.vue'
+import { insertEmojiAtCaret } from '@/components/shared/emojiInsert'
 
 const props = defineProps({
   locale: { type: String, required: true },

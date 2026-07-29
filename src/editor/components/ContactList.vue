@@ -72,8 +72,8 @@ import { Dialog, Notify } from 'quasar'
 import { useStoryStore } from '@/engine/stores/story'
 import { findReferences } from '@/project/findReferences'
 import { serializeContacts } from '@/project/serializeChapter'
-import EmojiPickerBtn from '@/editor/components/EmojiPickerBtn.vue'
-import { insertEmojiAtCaret } from '@/editor/utils/emojiInsert'
+import EmojiPickerBtn from '@/components/shared/EmojiPickerBtn.vue'
+import { insertEmojiAtCaret } from '@/components/shared/emojiInsert'
 
 defineProps({ modelValue: { type: Number, default: 0 } })
 const emit = defineEmits(['update:modelValue'])
