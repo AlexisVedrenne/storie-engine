@@ -1,4 +1,4 @@
-import { app, BrowserWindow, protocol, session, net } from 'electron'
+import { app, BrowserWindow, Menu, protocol, session, net } from 'electron'
 import path from 'node:path'
 import os from 'node:os'
 import { pathToFileURL } from 'node:url'
@@ -44,11 +44,14 @@ async function createWindow () {
     await mainWindow.loadFile('index.html')
   }
 
-  if (import.meta.env.QUASAR_DEBUG) {
-    // if on DEV or Production with debug enabled
+  // app.isPackaged is Electron's own runtime signal (true for a real
+  // packaged .exe, false for `quasar dev`/`quasar build --skip-pkg`) —
+  // checked instead of relying only on the build tool's compile-time
+  // QUASAR_DEBUG constant, so devtools stay closed in a packaged build no
+  // matter how they'd otherwise get triggered.
+  if (!app.isPackaged && import.meta.env.QUASAR_DEBUG) {
     mainWindow.webContents.openDevTools()
   } else {
-    // we're on production; no access to devtools pls
     mainWindow.webContents.on('devtools-opened', () => {
       mainWindow.webContents.closeDevTools()
     })
@@ -59,6 +62,12 @@ async function createWindow () {
 
 void app.whenReady().then(async () => {
   registerQuasarRuntime()
+
+  // No File/Edit/View/Window menu bar — this is an editor with its own
+  // topbar/toolbar, Electron's default template menu (and the "Toggle
+  // Developer Tools" item it carries) is just unused chrome sitting on
+  // top of it, not a real command surface for this app.
+  Menu.setApplicationMenu(null)
 
   // Serves the currently-open project's assets/ folder to the renderer
   // (resolveAssetUrl() in src/engine/assets.js builds `storie-asset://...`

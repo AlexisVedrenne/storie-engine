@@ -4,16 +4,21 @@
 // src/components (never a hand-maintained second copy of the phone engine,
 // see the plan doc's "principe" section), copies the open project's
 // content into it, then runs `quasar build -m electron` inside it.
-import { ipcMain, dialog } from "electron";
+import { app, ipcMain, dialog } from "electron";
 import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
 import { spawn } from "node:child_process";
 import { pathToFileURL } from "node:url";
 
-// storie-engine's own source root. Only valid while the editor runs from
-// source via `pnpm run dev:electron` — see docs/phase3-plan.md risk #3.
-const APP_ROOT = process.cwd();
+// storie-engine's own source root — `templates/game-shell` and the engine
+// source this pipeline copies both live here. Running from source
+// (`pnpm run dev:electron`, or a --skip-pkg build), that's the repo root
+// (process.cwd()). Once packaged, none of that raw source exists inside the
+// app's asar — it's shipped alongside it instead, via quasar.config.js's
+// `electron.packager.extraResource: ['src', 'templates']`, which lands
+// unpacked at process.resourcesPath/{src,templates} (see app.isPackaged).
+const APP_ROOT = app.isPackaged ? process.resourcesPath : process.cwd();
 const TEMPLATE_DIR = path.join(APP_ROOT, "templates", "game-shell");
 
 function run(cmd, args, cwd) {

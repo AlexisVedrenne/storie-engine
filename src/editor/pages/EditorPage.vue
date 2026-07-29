@@ -139,9 +139,19 @@
              `selectedIndex`, which hides this overlay and reveals the
              chapter-page overlay below (which has a "← Retour au graphe"
              button to come back). -->
-        <div v-show="graphActive" class="graph-fullscreen">
-          <ChapterGraph v-model="selectedIndex" :active="graphActive" @preview-from="previewFrom" />
-        </div>
+        <!-- `<transition>` works fine wrapping a v-show'd element — it only
+             toggles CSS classes around the show/hide, the element itself
+             never unmounts, so this doesn't reopen the Teleport-target risk
+             the comments below are so careful about. -->
+        <transition name="pane-fade">
+          <div v-show="graphActive" class="graph-fullscreen">
+            <ChapterGraph
+              v-model="selectedIndex"
+              :active="graphActive"
+              @preview-from="previewFrom"
+            />
+          </div>
+        </transition>
 
         <!-- Once a chapter IS selected: a full-page 2-pane layout (form |
              phone), no graph column at all. v-show on the wrapper (see
@@ -149,39 +159,41 @@
              field access for when this is hidden and selectedChapter is
              null) — #phone-slot-chapterpage itself must stay permanently
              in the DOM regardless of which of the two states is active. -->
-        <div
-          v-show="!focusPreview && viewMode === 'chapters' && selectedChapter"
-          class="chapter-page-fullscreen"
-        >
-          <q-splitter v-model="splitInner" :limits="[30, 85]" class="full-splitter">
-            <template #before>
-              <div class="pane timeline-pane">
-                <template v-if="selectedChapter">
-                  <div class="panel chapter-header">
-                    <q-btn
-                      dense
-                      flat
-                      round
-                      icon="arrow_back"
-                      class="btn-ghost"
-                      @click="selectedIndex = null"
-                    >
-                      <q-tooltip>Retour au graphe</q-tooltip>
-                    </q-btn>
-                    <q-input dense outlined label="Titre" v-model="selectedChapter.title" />
-                  </div>
+        <transition name="pane-fade">
+          <div
+            v-show="!focusPreview && viewMode === 'chapters' && selectedChapter"
+            class="chapter-page-fullscreen"
+          >
+            <q-splitter v-model="splitInner" :limits="[30, 85]" class="full-splitter">
+              <template #before>
+                <div class="pane timeline-pane">
+                  <template v-if="selectedChapter">
+                    <div class="panel chapter-header">
+                      <q-btn
+                        dense
+                        flat
+                        round
+                        icon="arrow_back"
+                        class="btn-ghost"
+                        @click="selectedIndex = null"
+                      >
+                        <q-tooltip>Retour au graphe</q-tooltip>
+                      </q-btn>
+                      <q-input dense outlined label="Titre" v-model="selectedChapter.title" />
+                    </div>
 
-                  <TimelineEditor :entries="selectedChapter.timeline" />
-                </template>
-              </div>
-            </template>
-            <template #after>
-              <div class="pane preview-pane">
-                <div id="phone-slot-chapterpage"></div>
-              </div>
-            </template>
-          </q-splitter>
-        </div>
+                    <TimelineEditor :entries="selectedChapter.timeline" />
+                  </template>
+                </div>
+              </template>
+              <template #after>
+                <div class="pane preview-pane">
+                  <div id="phone-slot-chapterpage"></div>
+                </div>
+              </template>
+            </q-splitter>
+          </div>
+        </transition>
 
         <!-- Both layouts stay permanently mounted (v-show, not v-if/v-else) —
            only their CSS display toggles with focusPreview. A single
@@ -215,50 +227,67 @@
           class="full-splitter"
         >
           <template #before>
-            <div class="pane chapters-pane">
-              <ContactList v-if="viewMode === 'contacts'" v-model="selectedContactIndex" />
-              <ThreadList v-else-if="viewMode === 'threads'" v-model="selectedThreadIndex" />
-              <div v-else-if="viewMode === 'game'" class="empty-state">
-                Le titre du jeu est un champ unique — pas de liste.
-              </div>
-              <AssetTree v-else-if="viewMode === 'assets'" v-model="selectedAssetFolder" />
-              <LocaleList v-else-if="viewMode === 'i18n'" v-model="selectedLocale" />
-              <SeedBucketList v-else-if="viewMode === 'seed'" v-model="selectedSeedBucket" />
-            </div>
+            <q-tab-panels class="pane chapters-pane" v-model="viewMode" animated>
+              <q-tab-panel name="contacts">
+                <ContactList v-model="selectedContactIndex"
+              /></q-tab-panel>
+              <q-tab-panel name="threads">
+                <ThreadList v-model="selectedThreadIndex"
+              /></q-tab-panel>
+              <q-tab-panel name="game">
+                <div class="empty-state">Le titre du jeu est un champ unique — pas de liste.</div>
+              </q-tab-panel>
+              <q-tab-panel name="assets">
+                <AssetTree v-model="selectedAssetFolder" />
+              </q-tab-panel>
+              <q-tab-panel name="i18n"><LocaleList v-model="selectedLocale" /> </q-tab-panel>
+              <q-tab-panel name="seed"
+                ><SeedBucketList v-model="selectedSeedBucket" />
+              </q-tab-panel>
+            </q-tab-panels>
           </template>
 
           <template #after>
             <q-splitter v-model="splitInner" :limits="[30, 85]" class="full-splitter">
               <template #before>
-                <div class="pane timeline-pane">
-                  <template v-if="viewMode === 'contacts'">
+                <q-tab-panels
+                  v-model="viewMode"
+                  animated
+                  transition-prev="fade"
+                  transition-next="fade"
+                  class="pane timeline-pane"
+                >
+                  <q-tab-panel name="contacts">
                     <ContactForm v-if="selectedContact" :contact="selectedContact" />
                     <div v-else class="empty-state">Sélectionne un contact à gauche.</div>
-                  </template>
+                  </q-tab-panel>
 
-                  <template v-else-if="viewMode === 'threads'">
+                  <q-tab-panel name="threads">
                     <ThreadForm v-if="selectedThread" :thread="selectedThread" />
                     <div v-else class="empty-state">Sélectionne un thread à gauche.</div>
-                  </template>
+                  </q-tab-panel>
 
-                  <GameForm v-else-if="viewMode === 'game'" :game="story.project.gameConfig" />
+                  <q-tab-panel name="game">
+                    <GameForm :game="story.project.gameConfig" />
+                  </q-tab-panel>
 
-                  <AssetsPanel
-                    v-else-if="viewMode === 'assets'"
-                    v-model:folder="selectedAssetFolder"
-                  />
+                  <q-tab-panel name="assets">
+                    <AssetsPanel v-model:folder="selectedAssetFolder" />
+                  </q-tab-panel>
 
-                  <template v-else-if="viewMode === 'i18n'">
+                  <q-tab-panel name="i18n">
                     <I18nBucketEditor
                       v-if="selectedLocale"
                       :locale="selectedLocale"
                       v-model:bucket="selectedBucket"
                     />
                     <div v-else class="empty-state">Sélectionne une langue à gauche.</div>
-                  </template>
+                  </q-tab-panel>
 
-                  <SeedBucketEditor v-else-if="viewMode === 'seed'" :bucket="selectedSeedBucket" />
-                </div>
+                  <q-tab-panel name="seed">
+                    <SeedBucketEditor :bucket="selectedSeedBucket" />
+                  </q-tab-panel>
+                </q-tab-panels>
               </template>
 
               <template #after>
@@ -747,6 +776,16 @@ async function buildGame() {
   inset: 0;
   z-index: 5;
   background: var(--color-bg);
+}
+
+.pane-fade-enter-active,
+.pane-fade-leave-active {
+  transition: opacity var(--transition-base);
+}
+
+.pane-fade-enter-from,
+.pane-fade-leave-to {
+  opacity: 0;
 }
 
 .full-splitter {

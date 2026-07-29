@@ -29,8 +29,8 @@ Rendu visuel de `PhoneShell` dans l'exe généré, chargement d'image, autonomie
 
 ## Risques restants
 
-- **Racine de storie-engine résolue via `process.cwd()`** — valide tant que l'éditeur tourne via `pnpm run dev:electron` depuis les sources. Si l'éditeur est un jour lui-même packagé/distribué, ce chemin devra pointer vers des ressources embarquées (`extraResources`) — hors scope.
-- **Pas d'icône d'app custom** — le build affiche un avertissement bénin ("Could not find icon..."), utilise l'icône Electron par défaut. Cosmétique, à améliorer en Phase 4 si besoin.
+- ~~Racine de storie-engine résolue via `process.cwd()`~~ — **résolu** : l'éditeur lui-même est maintenant packagé/distribué, ce qui a fait apparaître exactement le problème prévu ici (`ENOENT ... templates/game-shell` dans l'exe packagé). `src-electron/ipc/build.js`'s `APP_ROOT` bascule sur `process.resourcesPath` via `app.isPackaged` ; `templates/` et `src/` sont copiés dans les ressources du package via `quasar.config.js`'s `electron.packager.extraResource`.
+- ~~Pas d'icône d'app custom~~ — **résolu**, icône storie-engine en place (`src-electron/electron-assets/icons/`).
 - **Temps de build** (~20-40s dans ce test, dépend du cache pnpm) — pas de barre de progression détaillée, juste le spinner du bouton Build.
 
 ## Checklist de vérification (passée avec succès)

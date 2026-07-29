@@ -1,6 +1,7 @@
 // Configuration for your app
 // https://v2.quasar.dev/quasar-cli-vite/quasar-config-file
 
+import path from 'node:path'
 import { defineConfig } from '#q-app'
 
 export default defineConfig((ctx) => {
@@ -226,6 +227,25 @@ export default defineConfig((ctx) => {
         // protocol: 'myapp://path',
         // Windows only
         // win32metadata: { ... }
+
+        // src-electron/ipc/build.js (the "export this project as a
+        // playable game" pipeline) reads templates/game-shell/ + this
+        // editor's own src/engine, src/components/{phone,apps}, src/boot,
+        // src/i18n, src/css, src/utils at runtime, rooted at APP_ROOT
+        // (process.cwd() in dev, process.resourcesPath once packaged — see
+        // that file). None of that is otherwise bundled by
+        // @quasar/app-vite's own build (it only compiles what's actually
+        // imported into the editor's SPA output), so it has to be copied in
+        // as raw extra resources or a packaged storie-engine.exe can build
+        // projects at all (was a known, documented gap — docs/phase3-plan.md
+        // — until the editor itself started getting packaged). Whole `src`
+        // rather than just the needed subfolders, on purpose: build.js's own
+        // comment is explicit that the engine copy must never be a
+        // hand-maintained duplicate, always "fresh from the editor's own
+        // current source" — carving out a separate pre-staged subset would
+        // reintroduce exactly that drift risk for a few hundred KB of
+        // editor-only source it doesn't hurt to also carry.
+        extraResource: [path.join(import.meta.dirname, 'src'), path.join(import.meta.dirname, 'templates')],
       },
 
       builder: {
