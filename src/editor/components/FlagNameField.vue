@@ -66,16 +66,17 @@ function filterFn(val, update) {
 }
 
 // Label + observed type/range for a flag key, e.g. "Confiance de Clara —
-// numérique, vu de -2 à 12" — see collectFlags.js for how min/max are
-// derived (every exact/min/max value ever authored against it, not a
-// runtime simulation of accumulated effects).
+// numérique, modifié entre -2 et 12" — see collectFlags.js: the range only
+// counts EFFECTS that set the flag, never a condition that merely reads it
+// (a `>= 3` check elsewhere doesn't mean the flag has ever been 3).
 function hintFor(key) {
   const entry = story.flagCatalog.find((f) => f.key === key)
   if (!entry) return ''
   const parts = []
   if (entry.label) parts.push(entry.label)
-  if (entry.isNumeric) parts.push(`numérique, vu de ${entry.min} à ${entry.max}`)
+  if (entry.isNumeric) parts.push(`numérique, modifié entre ${entry.min} et ${entry.max}`)
   else if (entry.isBoolean) parts.push('booléen')
+  if (entry.neverModified) parts.push('⚠ lu, jamais modifié par un effet')
   return parts.join(' — ')
 }
 function catalogHint(key) {

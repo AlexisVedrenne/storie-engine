@@ -3,8 +3,9 @@
     <p class="intro">
       Tous les flags utilisés quelque part dans le projet (chapitres, flèches du graphe, choix, events) —
       donne un libellé à chacun pour t'y retrouver dans les conditions/effets. Pour un flag numérique, la
-      plage affichée est la valeur la plus basse et la plus haute jamais tapées dans une condition ou un
-      effet à travers tout le projet — pas une simulation de sa valeur réelle en jeu.
+      plage affichée ne compte QUE les effets qui le modifient (pas les conditions qui le lisent) — une
+      condition « ≥ 3 » sur une flèche n'apparaît pas dans cette plage, elle indique juste qu'un effet est
+      censé exister ailleurs.
     </p>
 
     <div v-if="!flags.length" class="empty-state">
@@ -28,12 +29,26 @@
       <div class="flag-row-top">
         <span class="flag-key">{{ flag.key }}</span>
         <span v-if="flag.isBoolean" class="badge">booléen</span>
-        <span v-if="flag.isNumeric" class="badge badge-numeric">{{ flag.min }} → {{ flag.max }}</span>
+        <span v-if="flag.isNumeric" class="badge badge-numeric">effets: {{ flag.min }} → {{ flag.max }}</span>
+        <span v-if="flag.neverModified" class="badge badge-warning">
+          <q-icon name="warning" size="11px" /> lu, jamais modifié
+          <q-tooltip>Une condition lit ce flag quelque part, mais aucun effet ne le modifie nulle part dans le projet.</q-tooltip>
+        </span>
         <span v-if="!flag.isUsed" class="badge badge-unused">
           <q-icon name="link_off" size="11px" /> non utilisé
         </span>
         <div class="spacer" />
-        <span v-if="flag.isUsed" class="flag-count">{{ flag.count }} usage{{ flag.count > 1 ? 's' : '' }}</span>
+        <q-btn
+          v-if="flag.isUsed"
+          dense
+          flat
+          no-caps
+          size="sm"
+          class="where-btn"
+          :icon="expanded.has(flag.key) ? 'expand_less' : 'expand_more'"
+          :label="`${flag.count} usage${flag.count > 1 ? 's' : ''}`"
+          @click="toggleExpanded(flag.key)"
+        />
         <q-btn
           v-if="!flag.isUsed"
           dense
@@ -54,12 +69,22 @@
         :model-value="flag.label"
         @update:model-value="(v) => setLabel(flag.key, v)"
       />
+      <!-- Hidden by default — "where is this called from" is useful but
+           noisy if shown for every flag at once, especially on a project
+           with many chapters. -->
+      <div v-if="expanded.has(flag.key)" class="locations">
+        <div v-for="loc in flag.locations" :key="loc.type + loc.label" class="location-row">
+          <q-icon :name="loc.type === 'event' ? 'sensors' : 'auto_stories'" size="14px" />
+          <span>{{ loc.label }}</span>
+          <span v-if="loc.count > 1" class="location-count">×{{ loc.count }}</span>
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, reactive } from 'vue'
 import { Dialog } from 'quasar'
 import { useStoryStore } from '@/engine/stores/story'
 
@@ -75,6 +100,15 @@ if (!props.game.flags) props.game.flags = {}
 
 const flags = computed(() => story.flagCatalog)
 const unusedCount = computed(() => flags.value.filter((f) => !f.isUsed).length)
+
+// Which flags' "where is this called" list is open — collapsed by default
+// for every flag (see template), keyed by flag key so it survives the
+// catalog's own re-derivation on every project edit.
+const expanded = reactive(new Set())
+function toggleExpanded(key) {
+  if (expanded.has(key)) expanded.delete(key)
+  else expanded.add(key)
+}
 
 function setLabel(key, label) {
   const trimmed = (label || '').trim()
@@ -162,7 +196,8 @@ function confirmRemoveAllUnused() {
   font-weight: 600;
 }
 
-.badge-unused {
+.badge-unused,
+.badge-warning {
   display: inline-flex;
   align-items: center;
   gap: 2px;
@@ -181,7 +216,7 @@ function confirmRemoveAllUnused() {
   flex: 1;
 }
 
-.flag-count {
+.where-btn {
   font-size: var(--text-xs);
   color: var(--color-text-muted);
   flex-shrink: 0;
@@ -189,5 +224,26 @@ function confirmRemoveAllUnused() {
 
 .cleanup-btn {
   align-self: flex-start;
+}
+
+.locations {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: var(--space-2);
+  border-top: 1px solid var(--color-border);
+}
+
+.location-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+
+.location-count {
+  color: var(--color-text-muted);
+  opacity: 0.7;
 }
 </style>
