@@ -61,7 +61,19 @@
     <q-dialog v-model="edgeDialogOpen" @hide="onEdgeDialogHide">
       <q-card class="edge-dialog-card">
         <q-card-section>
-          <div class="text-subtitle1">Condition de cette flèche</div>
+          <q-input
+            dense
+            outlined
+            ref="edgeLabelInputRef"
+            label="Libellé (optionnel)"
+            v-model="edgeDraft.label"
+            hint="Affiché sur la flèche à la place de la condition. Vide = comportement inchangé."
+          >
+            <template #append>
+              <EmojiPickerBtn @pick="(e) => (edgeDraft.label = insertEmojiAtCaret(edgeLabelInputRef, edgeDraft.label, e))" />
+            </template>
+          </q-input>
+          <div class="text-subtitle1 q-mt-md">Condition de cette flèche</div>
           <RequiresBuilder v-model="edgeDraft.requires" />
         </q-card-section>
         <q-card-actions align="right">
@@ -166,7 +178,8 @@ async function onNodeDragStop({ node }) {
 }
 
 const edgeDialogOpen = ref(false)
-const edgeDraft = reactive({ sourceId: null, index: -1, requires: null })
+const edgeDraft = reactive({ sourceId: null, index: -1, requires: null, label: '' })
+const edgeLabelInputRef = ref(null)
 // Set right before deleteEdge() closes the dialog — onEdgeDialogHide (fired
 // by the same v-model flip) must NOT then also try to write edgeDraft back
 // onto chapter.next[edgeDraft.index], since that index either no longer
@@ -178,6 +191,7 @@ function onEdgeClick({ edge }) {
   edgeDraft.sourceId = edge.source
   edgeDraft.index = Number(indexStr)
   edgeDraft.requires = edge.data?.requires ?? null
+  edgeDraft.label = edge.data?.label || ''
   edgeDeleted = false
   edgeDialogOpen.value = true
 }
@@ -193,6 +207,7 @@ async function onEdgeDialogHide() {
   const link = chapter?.next?.[edgeDraft.index]
   if (link) {
     link.requires = edgeDraft.requires
+    link.label = edgeDraft.label.trim() || undefined
     await persistChapter(chapter)
   }
 }
@@ -244,6 +259,24 @@ function confirmDelete(chapter) {
   })
 }
 
+// Full deep copy — timeline, next (same outgoing arrows/conditions/labels
+// as the original), everything — the author almost always wants a variant
+// to tweak, not a blank chapter with the same title. Dropped just below
+// and to the right of the original (same cascading idea as a brand new
+// chapter) so the two don't sit exactly on top of each other on the graph.
+async function duplicateChapter(chapter) {
+  const title = `${chapter.title || chapter.id} (copie)`
+  const id = generateChapterId(title)
+  // eslint-disable-next-line no-unused-vars
+  const { __sourceFile, position, ...rest } = chapter
+  const clone = JSON.parse(JSON.stringify(rest))
+  clone.id = id
+  clone.title = title
+  clone.position = position ? { x: position.x + 40, y: position.y + 40 } : { x: 40 * chapters.length, y: 40 * (chapters.length % 5) }
+  const ok = await persistNewChapter(clone)
+  if (ok) emit('update:modelValue', chapters.length - 1)
+}
+
 // Enriches buildChapterGraph()'s plain {chapter,isEnding} data with the
 // callbacks the node component needs — kept out of chapterGraph.js on
 // purpose (it stays a pure, Vue/story-free module).
@@ -259,6 +292,7 @@ const displayNodes = computed(() =>
         isActive: index === props.modelValue,
         onSelect: () => emit('update:modelValue', index),
         onPreview: () => previewFrom(chapter),
+        onDuplicate: () => duplicateChapter(chapter),
         onDelete: () => confirmDelete(chapter),
       },
     }

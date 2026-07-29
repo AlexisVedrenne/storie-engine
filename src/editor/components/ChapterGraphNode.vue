@@ -24,6 +24,9 @@
       >
         <q-tooltip>Prévisualiser depuis ce chapitre</q-tooltip>
       </q-btn>
+      <q-btn dense flat round icon="content_copy" size="xs" @click.stop="data.onDuplicate">
+        <q-tooltip>Dupliquer</q-tooltip>
+      </q-btn>
       <q-btn dense flat round icon="delete" size="xs" color="negative" @click.stop="data.onDelete">
         <q-tooltip>Supprimer</q-tooltip>
       </q-btn>

@@ -87,8 +87,10 @@ export function buildChapterGraph(chapters) {
         source: chapter.id,
         target: link.to,
         type: 'smoothstep',
-        label: requiresLabel(link.requires),
-        data: { requires: link.requires },
+        // authored label wins; falls back to the auto-derived condition
+        // summary exactly like before this field existed.
+        label: link.label || requiresLabel(link.requires),
+        data: { requires: link.requires, label: link.label },
       })
     })
   }

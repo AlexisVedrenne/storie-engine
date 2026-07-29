@@ -1,5 +1,5 @@
 <template>
-  <div class="timeline-editor">
+  <div class="timeline-editor" @dragover="onRootDragOver" @drop="performDrop">
     <div v-if="breadcrumb.length" class="breadcrumb-bar">
       <template v-for="(seg, si) in breadcrumb" :key="si">
         <span class="crumb" @click="seg.collapse">{{ seg.label }}</span>
@@ -7,46 +7,140 @@
       </template>
     </div>
 
-    <div v-for="(entry, i) in entries" :key="i" class="entry-card" :class="{ open: expanded[i] }">
-      <div class="entry-header" @click="toggle(i)">
-        <q-icon :name="expanded[i] ? 'expand_less' : 'expand_more'" size="18px" class="chevron" />
-        <q-icon :name="iconFor(entry.type)" size="16px" class="type-icon" />
-        <span class="type-badge">{{ entry.type }}</span>
-        <span class="summary" :title="summaryFor(entry)">{{ summaryFor(entry) }}</span>
-        <span v-if="entry.requires" class="requires-badge" title="Cette entrée a une condition d'affichage">
-          <q-icon name="rule" size="12px" /> condition
-        </span>
-        <div class="spacer" />
-        <div class="row-actions">
-          <q-btn dense flat round icon="arrow_upward" size="sm" :disable="i === 0" @click.stop="moveUp(i)">
-            <q-tooltip>Monter</q-tooltip>
+    <div v-if="selected.size >= 2" class="selection-bar">
+      <span>{{ selected.size }} entrée{{ selected.size > 1 ? 's' : '' }} sélectionnée{{ selected.size > 1 ? 's' : '' }}</span>
+      <q-btn dense flat no-caps icon="create_new_folder" label="Grouper en accordéon" size="sm" color="primary" @click="groupSelection" />
+      <q-btn dense flat no-caps label="Annuler" size="sm" @click="selected.clear()" />
+    </div>
+
+    <template v-for="(block, bi) in blocks" :key="block.kind + '-' + block.id">
+      <!-- Group block: a contiguous run of entries sharing entry.group.id,
+           rendered as one accordion. Only ever created from entries that
+           were adjacent to begin with (see groupSelection) — reordering
+           always moves the whole block together (moveBlock/onBlockDrop),
+           so the contiguity invariant never breaks on its own. -->
+      <div
+        v-if="dropLine && dropLine.scope === 'top' && dropLine.blockIdx === bi && dropLine.edge === 'before'"
+        class="drop-line"
+      />
+      <div
+        v-if="block.kind === 'group'"
+        class="group-block"
+        :class="{ 'drag-source': dragBlockIdx === bi }"
+        draggable="true"
+        @dragstart="onBlockDragStart(bi, $event)"
+        @dragover="onBlockDragOver(bi, $event)"
+        @drop="performDrop"
+        @dragend="clearDrag"
+      >
+        <div class="group-header">
+          <q-icon name="drag_indicator" size="18px" class="drag-handle" />
+          <q-icon
+            :name="groupCollapsed[block.id] ? 'expand_more' : 'expand_less'"
+            size="18px"
+            class="chevron"
+            @click="groupCollapsed[block.id] = !groupCollapsed[block.id]"
+          />
+          <q-icon name="folder" size="16px" class="group-icon" />
+          <q-input
+            v-if="renamingGroupId === block.id"
+            dense
+            borderless
+            autofocus
+            class="group-label-input"
+            v-model="groupLabelDraft"
+            @blur="commitRename(block)"
+            @keyup.enter="commitRename(block)"
+            @click.stop
+          />
+          <span v-else class="group-label" @click="startRename(block)">
+            {{ entries[block.start].group.label }}
+            <q-icon name="edit" size="12px" />
+          </span>
+          <span class="group-count">{{ block.end - block.start + 1 }} entrées</span>
+          <div class="spacer" />
+          <q-btn dense flat round icon="link_off" size="sm" @click.stop="ungroup(block)">
+            <q-tooltip>Dissoudre le groupe</q-tooltip>
           </q-btn>
-          <q-btn dense flat round icon="arrow_downward" size="sm" :disable="i === entries.length - 1" @click.stop="moveDown(i)">
-            <q-tooltip>Descendre</q-tooltip>
-          </q-btn>
-          <q-btn dense flat round icon="content_copy" size="sm" @click.stop="duplicate(i)">
-            <q-tooltip>Dupliquer</q-tooltip>
-          </q-btn>
-          <q-btn dense flat round icon="delete" size="sm" color="negative" @click.stop="remove(i)">
-            <q-tooltip>Supprimer</q-tooltip>
-          </q-btn>
+        </div>
+
+        <div v-if="!groupCollapsed[block.id]" class="group-members">
+          <template v-for="i in memberRange(block)" :key="i">
+            <div
+              v-if="dropLine && dropLine.scope === 'member' && dropLine.groupId === block.id && dropLine.index === i && dropLine.edge === 'before'"
+              class="drop-line"
+            />
+            <div
+              :class="{ 'drag-source': dragMemberIdx === i }"
+              draggable="true"
+              @dragstart.stop="onMemberDragStart(i, $event)"
+              @dragover.stop="onMemberDragOver(block, i, $event)"
+              @drop.stop="performDrop"
+              @dragend.stop="clearDrag"
+            >
+              <TimelineEntryCard
+                :entry="entries[i]"
+                :expanded="expandedSet.has(entries[i])"
+                :breadcrumb="breadcrumb"
+                :icon-for="iconFor"
+                :help-for="helpFor"
+                :form-for="formFor"
+                :summary-for="summaryFor"
+                :can-move-up="i > block.start"
+                :can-move-down="i < block.end"
+                @toggle="toggleExpand(entries[i])"
+                @close="expandedSet.delete(entries[i])"
+                @move-up="moveMember(i, -1, block)"
+                @move-down="moveMember(i, 1, block)"
+                @duplicate="duplicate(i)"
+                @remove="remove(i)"
+              />
+            </div>
+            <div
+              v-if="dropLine && dropLine.scope === 'member' && dropLine.groupId === block.id && dropLine.index === i && dropLine.edge === 'after'"
+              class="drop-line"
+            />
+          </template>
         </div>
       </div>
 
-      <div v-if="expanded[i]" class="entry-body">
-        <p class="entry-help">{{ helpFor(entry.type) }}</p>
-        <component
-          :is="formFor(entry.type)"
-          :entry="entry"
-          v-bind="entry.type === 'choice' ? { breadcrumb: [...breadcrumb, choiceSegment(entry, i)] } : {}"
+      <!-- Single (ungrouped) entry. -->
+      <div
+        v-else
+        class="single-block"
+        :class="{ 'drag-source': dragBlockIdx === bi }"
+        draggable="true"
+        @dragstart="onBlockDragStart(bi, $event)"
+        @dragover="onBlockDragOver(bi, $event)"
+        @drop="performDrop"
+        @dragend="clearDrag"
+      >
+        <TimelineEntryCard
+          :entry="entries[block.start]"
+          :expanded="expandedSet.has(entries[block.start])"
+          :breadcrumb="breadcrumb"
+          :icon-for="iconFor"
+          :help-for="helpFor"
+          :form-for="formFor"
+          :summary-for="summaryFor"
+          :can-move-up="bi > 0"
+          :can-move-down="bi < blocks.length - 1"
+          show-checkbox
+          :checked="selected.has(entries[block.start])"
+          @toggle="toggleExpand(entries[block.start])"
+          @close="expandedSet.delete(entries[block.start])"
+          @move-up="moveBlock(bi, -1)"
+          @move-down="moveBlock(bi, 1)"
+          @duplicate="duplicate(block.start)"
+          @remove="remove(block.start)"
+          @check="(v) => toggleSelect(entries[block.start], v)"
         />
-        <div class="section-label">
-          Condition d'affichage (optionnel)
-          <FieldHelp text="N'affiche cette entrée que si toutes les conditions sont vraies. Rien d'ajouté = toujours affichée." />
-        </div>
-        <RequiresBuilder :model-value="entry.requires" @update:model-value="(v) => (entry.requires = v)" />
       </div>
-    </div>
+      <div
+        v-if="dropLine && dropLine.scope === 'top' && dropLine.blockIdx === bi && dropLine.edge === 'after'"
+        class="drop-line"
+      />
+    </template>
 
     <q-select
       dense
@@ -78,12 +172,12 @@
 </template>
 
 <script setup>
-import { computed, reactive } from 'vue'
+import { computed, reactive, ref } from 'vue'
+import { Notify } from 'quasar'
 import { useStoryStore } from '@/engine/stores/story'
 import { ENTRY_TYPE_APP } from '@/engine/apps/appIds'
 import { CUSTOM_ENTRY_TYPES, CUSTOM_ENTRY_TYPE_BY_TYPE } from '@/engine/apps/entryTypeRegistry'
-import RequiresBuilder from '@/editor/components/RequiresBuilder.vue'
-import FieldHelp from '@/editor/components/FieldHelp.vue'
+import TimelineEntryCard from '@/editor/components/TimelineEntryCard.vue'
 import MessageEntryForm from '@/editor/components/entries/MessageEntryForm.vue'
 import ChoiceEntryForm from '@/editor/components/entries/ChoiceEntryForm.vue'
 import PostEntryForm from '@/editor/components/entries/PostEntryForm.vue'
@@ -98,7 +192,7 @@ import TimeskipEntryForm from '@/editor/components/entries/TimeskipEntryForm.vue
 // `entries` is mutated in place (push/splice/swap) — the caller passes the
 // actual reactive array (chapter.timeline, or an option's `then`), never a
 // copy, so edits here are immediately visible to the live PhoneShell preview
-// reading the same story.project data (see docs/phase2-plan.md).
+// reading the same story data (see docs/phase2-plan.md).
 // `breadcrumb` — ancestry of {label, collapse} segments built by whichever
 // parent (a choice option's own TimelineEditor, ultimately) mounted THIS
 // instance nested inside its "Juste après" tab. Plain prop-drilling, not
@@ -108,6 +202,12 @@ import TimeskipEntryForm from '@/editor/components/entries/TimeskipEntryForm.vue
 // path to share). Empty at the top level (mounted directly in
 // EditorPage.vue), so the chapter view is unaffected. See
 // docs/ui-ux-audit.md point 2.
+//
+// Grouping (accordion sections, readability only) is layered on top without
+// touching any of that: a group is just a contiguous run of entries sharing
+// `entry.group = { id, label }` — pure editor metadata, ignored at runtime
+// like any other unknown field, so chapter.timeline stays exactly as flat
+// as story.js's index-based advance() expects. See `blocks` below.
 const props = defineProps({
   entries: { type: Array, required: true },
   breadcrumb: { type: Array, default: () => [] },
@@ -234,38 +334,37 @@ function defaultEntry(type) {
   }
 }
 
-const expanded = reactive({})
-function toggle(i) {
-  expanded[i] = !expanded[i]
-}
-
-// Breadcrumb segment for a `choice` entry — `collapse` closes THIS
-// entry, which hides everything nested under it (its options' own "Juste
-// après" sub-timelines included) since the entry-body is gated on
-// `expanded[i]` above.
-function choiceSegment(entry, i) {
-  return { label: `Choix : ${entry.prompt || '(prompt vide)'}`, collapse: () => (expanded[i] = false) }
+// Keyed by entry object reference, not by array index — an index-keyed map
+// would silently point at the wrong entry the moment anything reorders
+// (moveUp/moveDown already did; drag/group-move only added more ways to).
+const expandedSet = reactive(new Set())
+function toggleExpand(entry) {
+  if (expandedSet.has(entry)) expandedSet.delete(entry)
+  else expandedSet.add(entry)
 }
 
 function addEntry(type) {
-  props.entries.push(defaultEntry(type))
-  expanded[props.entries.length - 1] = true
+  const entry = defaultEntry(type)
+  props.entries.push(entry)
+  expandedSet.add(entry)
 }
+
+// Removing the last-but-one member of a group leaves a "group" of 1, which
+// is pointless clutter — auto-dissolve it rather than require an explicit
+// "Dissoudre" click for something the author didn't really ask to keep.
 function remove(i) {
+  const removed = props.entries[i]
   props.entries.splice(i, 1)
+  expandedSet.delete(removed)
+  selected.delete(removed)
+  if (removed.group) {
+    const gid = removed.group.id
+    const remaining = props.entries.filter((e) => e.group?.id === gid)
+    if (remaining.length === 1) remaining[0].group = undefined
+  }
 }
 function duplicate(i) {
   props.entries.splice(i + 1, 0, JSON.parse(JSON.stringify(props.entries[i])))
-}
-function moveUp(i) {
-  if (i === 0) return
-  const [item] = props.entries.splice(i, 1)
-  props.entries.splice(i - 1, 0, item)
-}
-function moveDown(i) {
-  if (i === props.entries.length - 1) return
-  const [item] = props.entries.splice(i, 1)
-  props.entries.splice(i + 1, 0, item)
 }
 
 function summaryFor(entry) {
@@ -293,6 +392,215 @@ function summaryFor(entry) {
     default:
       return ''
   }
+}
+
+// --- blocks: entries collapsed into { single } or { group } units --------
+// A "block" is the unit that moves atomically: one ungrouped entry, or one
+// whole contiguous group. Top-level move/drag operates on blocks so a
+// group can never be split apart by an ordinary reorder — only `ungroup()`
+// removes the `.group` tag.
+const blocks = computed(() => {
+  const out = []
+  const list = props.entries
+  let i = 0
+  while (i < list.length) {
+    const gid = list[i].group?.id
+    if (gid) {
+      let j = i
+      while (j < list.length && list[j].group?.id === gid) j++
+      out.push({ kind: 'group', id: gid, start: i, end: j - 1 })
+      i = j
+    } else {
+      out.push({ kind: 'single', id: `e${i}`, start: i, end: i })
+      i++
+    }
+  }
+  return out
+})
+
+function memberRange(block) {
+  const out = []
+  for (let i = block.start; i <= block.end; i++) out.push(i)
+  return out
+}
+
+// Moves the whole block at `blockIdx` one slot up/down among top-level
+// blocks — a group moves as a unit, exactly like a single entry does.
+function moveBlock(blockIdx, dir) {
+  const list = blocks.value
+  const block = list[blockIdx]
+  const targetIdx = blockIdx + dir
+  if (targetIdx < 0 || targetIdx >= list.length) return
+  const other = list[targetIdx]
+  const len = block.end - block.start + 1
+  const slice = props.entries.splice(block.start, len)
+  let otherStart = other.start
+  if (block.start < other.start) otherStart -= len
+  const insertAt = dir < 0 ? otherStart : otherStart + (other.end - other.start + 1)
+  props.entries.splice(insertAt, 0, ...slice)
+}
+
+// `dropLine` — where the dragged block/member would land, recomputed on
+// every dragover from cursor position vs the hovered row's own midpoint
+// (top half → before it, bottom half → after it), so the author sees
+// exactly which gap it'll drop into instead of always "before whatever I'm
+// over" (a fixed rule reads as jumpy once a block is more than one row).
+//
+// Drop handling itself is centralized at the ROOT element (see
+// onRootDragOver/performDrop below), not on each row — the flex `gap`
+// between rows belongs to no element's box, so a dragover/drop bound only
+// to individual rows left literal dead pixels where the browser shows its
+// native "not allowed" cursor and rejects the drop outright. The root's
+// box covers that gap space too, so a single root-level handler that
+// always preventDefault()s while one of OUR OWN drags is in flight (and
+// falls back to the last precise `dropLine`) closes that hole. Per-row
+// dragover handlers still run (bubbling up first) to keep `dropLine`
+// precise while hovering an actual row.
+const dropLine = ref(null)
+function clearDrag() {
+  dragBlockIdx = null
+  dragMemberIdx = null
+  dropLine.value = null
+}
+function edgeFromEvent(ev) {
+  const rect = ev.currentTarget.getBoundingClientRect()
+  return ev.clientY - rect.top < rect.height / 2 ? 'before' : 'after'
+}
+
+let dragBlockIdx = null
+function onBlockDragStart(blockIdx, ev) {
+  dragBlockIdx = blockIdx
+  dragMemberIdx = null
+  if (ev.dataTransfer) {
+    ev.dataTransfer.effectAllowed = 'move'
+    // Some browsers (Firefox in particular) refuse to complete a drag with
+    // no data at all — harmless placeholder, we never read it back.
+    ev.dataTransfer.setData('text/plain', '')
+  }
+}
+function onBlockDragOver(blockIdx, ev) {
+  if (dragBlockIdx === null && dragMemberIdx === null) return // not one of our own drags
+  ev.preventDefault()
+  if (dragBlockIdx === null) return // a member-drag hovering outside its own group — root's fallback covers it
+  dropLine.value = { scope: 'top', blockIdx, edge: edgeFromEvent(ev) }
+}
+
+// Reordering within a single group's span only — a member never leaves its
+// group via drag (only `ungroup()` does that).
+function moveMember(i, dir, block) {
+  const j = i + dir
+  if (j < block.start || j > block.end) return
+  const [item] = props.entries.splice(i, 1)
+  props.entries.splice(j, 0, item)
+}
+
+let dragMemberIdx = null
+function onMemberDragStart(i, ev) {
+  dragMemberIdx = i
+  dragBlockIdx = null
+  if (ev.dataTransfer) {
+    ev.dataTransfer.effectAllowed = 'move'
+    ev.dataTransfer.setData('text/plain', '')
+  }
+}
+function onMemberDragOver(block, i, ev) {
+  if (dragBlockIdx === null && dragMemberIdx === null) return
+  ev.preventDefault()
+  if (dragMemberIdx === null || dragMemberIdx < block.start || dragMemberIdx > block.end) return
+  dropLine.value = { scope: 'member', groupId: block.id, index: i, edge: edgeFromEvent(ev) }
+}
+
+// Root-level fallback — see the comment on `dropLine` above. Bound on the
+// component's outermost element so its box covers every dead-pixel gap
+// between rows.
+function onRootDragOver(ev) {
+  if (dragBlockIdx === null && dragMemberIdx === null) return
+  ev.preventDefault()
+}
+function performDrop() {
+  if (dragBlockIdx !== null) dropBlock()
+  else if (dragMemberIdx !== null) dropMember()
+  else clearDrag()
+}
+function dropBlock() {
+  const line = dropLine.value
+  if (!line || line.scope !== 'top' || dragBlockIdx === line.blockIdx) {
+    clearDrag()
+    return
+  }
+  const list = blocks.value
+  const src = list[dragBlockIdx]
+  const target = list[line.blockIdx]
+  const len = src.end - src.start + 1
+  const slice = props.entries.splice(src.start, len)
+  let targetStart = target.start
+  let targetEnd = target.end
+  if (src.start < targetStart) {
+    targetStart -= len
+    targetEnd -= len
+  }
+  const insertAt = line.edge === 'before' ? targetStart : targetEnd + 1
+  props.entries.splice(insertAt, 0, ...slice)
+  clearDrag()
+}
+function dropMember() {
+  const line = dropLine.value
+  if (!line || line.scope !== 'member') {
+    clearDrag()
+    return
+  }
+  const block = blocks.value.find((b) => b.kind === 'group' && b.id === line.groupId)
+  if (!block || dragMemberIdx < block.start || dragMemberIdx > block.end) {
+    clearDrag()
+    return
+  }
+  const [item] = props.entries.splice(dragMemberIdx, 1)
+  let target = dragMemberIdx < line.index ? line.index - 1 : line.index
+  if (line.edge === 'after') target += 1
+  props.entries.splice(target, 0, item)
+  clearDrag()
+}
+
+// --- grouping (accordion sections) ---------------------------------------
+const selected = reactive(new Set())
+function toggleSelect(entry, checked) {
+  if (checked) selected.add(entry)
+  else selected.delete(entry)
+}
+
+const groupCollapsed = reactive({})
+const renamingGroupId = ref(null)
+const groupLabelDraft = ref('')
+
+function groupSelection() {
+  const indices = [...selected].map((e) => props.entries.indexOf(e)).sort((a, b) => a - b)
+  if (indices.length < 2) return
+  const contiguous = indices.every((idx, k) => idx === indices[0] + k)
+  if (!contiguous) {
+    Notify.create({
+      type: 'negative',
+      message: 'Ces entrées doivent être adjacentes pour former un groupe — réordonne-les d’abord.',
+    })
+    return
+  }
+  const id = `grp-${Date.now().toString(36)}${Math.floor(Math.random() * 1000)}`
+  for (const idx of indices) props.entries[idx].group = { id, label: 'Nouveau groupe' }
+  selected.clear()
+}
+
+function startRename(block) {
+  renamingGroupId.value = block.id
+  groupLabelDraft.value = props.entries[block.start].group.label
+}
+function commitRename(block) {
+  if (renamingGroupId.value !== block.id) return // already committed via keyup.enter before the blur fired
+  const label = groupLabelDraft.value.trim() || 'Groupe'
+  for (let k = block.start; k <= block.end; k++) props.entries[k].group.label = label
+  renamingGroupId.value = null
+}
+
+function ungroup(block) {
+  for (let k = block.start; k <= block.end; k++) props.entries[k].group = undefined
 }
 </script>
 
@@ -328,111 +636,94 @@ function summaryFor(entry) {
   color: var(--color-text-muted);
 }
 
-.entry-card {
+.selection-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-accent-tint, var(--color-surface));
+  border: 1px solid var(--color-accent);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+}
+
+.group-block {
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   overflow: hidden;
-  background: var(--color-surface);
+  background: var(--color-surface-alt, var(--color-bg));
 }
 
-.entry-card.open {
-  border-color: var(--color-accent);
-}
-
-.entry-header {
+.group-header {
   display: flex;
   align-items: center;
   gap: var(--space-2);
   min-height: var(--row-height);
   padding: 0 var(--space-2) 0 var(--space-1);
+}
+
+.group-icon {
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+}
+
+.drag-handle {
+  color: var(--color-text-muted);
+  cursor: grab;
+  flex-shrink: 0;
+}
+
+.chevron {
+  color: var(--color-text-muted);
   cursor: pointer;
-  transition: background-color var(--transition-fast);
-}
-
-.entry-header:hover {
-  background: var(--color-surface-hover);
-}
-
-.chevron,
-.type-icon {
-  color: var(--color-text-muted);
   flex-shrink: 0;
 }
 
-.type-badge {
-  font-size: var(--text-xs);
-  font-weight: 700;
-  text-transform: uppercase;
-  color: var(--color-text-muted);
-  flex-shrink: 0;
-}
-
-.requires-badge {
+.group-label {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  cursor: text;
   display: inline-flex;
   align-items: center;
-  gap: 2px;
-  font-size: 10px;
-  padding: 1px 6px;
-  border-radius: var(--radius-sm);
-  background: var(--color-warning-tint);
-  color: var(--color-warning);
-  flex-shrink: 0;
+  gap: 4px;
 }
 
-.summary {
+.group-label-input {
   flex: 1;
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: var(--text-sm);
-  color: var(--color-text);
+}
+
+.group-count {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
 }
 
 .spacer {
   flex: 1;
 }
 
-.row-actions {
-  display: flex;
-  align-items: center;
-  opacity: 0;
-  transition: opacity var(--transition-fast);
-}
-
-.entry-header:hover .row-actions {
-  opacity: 1;
-}
-
-.entry-body {
-  padding: var(--space-3);
+.group-members {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: var(--space-2);
+  padding: var(--space-2);
+  padding-left: calc(var(--space-2) + 18px);
   border-top: 1px solid var(--color-border);
-  background: var(--color-bg);
-}
-
-.section-label {
-  display: flex;
-  align-items: center;
-  font-size: var(--text-xs);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--color-text-muted);
-  margin-top: var(--space-1);
-  padding-top: var(--space-3);
-  border-top: 1px solid var(--color-border);
-}
-
-.entry-help {
-  margin: 0;
-  font-size: var(--text-xs);
-  color: var(--color-text-muted);
-  line-height: 1.5;
 }
 
 .add-select {
   margin-top: var(--space-2);
+}
+
+.drop-line {
+  height: 3px;
+  margin: -1px 0;
+  border-radius: 2px;
+  background: var(--color-accent);
+  flex-shrink: 0;
+}
+
+.drag-source {
+  opacity: 0.4;
 }
 </style>
