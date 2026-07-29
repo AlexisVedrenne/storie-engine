@@ -39,6 +39,9 @@
           <q-tab name="game" icon="sports_esports">
             <q-tooltip>Jeu</q-tooltip>
           </q-tab>
+          <q-tab name="events" icon="sensors">
+            <q-tooltip>Events — réactions aux actions du joueur (hors timeline)</q-tooltip>
+          </q-tab>
           <q-tab name="assets" icon="folder">
             <q-tooltip>Ressources</q-tooltip>
           </q-tab>
@@ -241,6 +244,9 @@
               <q-tab-panel name="game">
                 <div class="empty-state">Le titre du jeu est un champ unique — pas de liste.</div>
               </q-tab-panel>
+              <q-tab-panel name="events">
+                <div class="empty-state">Les events sont listés à droite, pas ici.</div>
+              </q-tab-panel>
               <q-tab-panel name="assets">
                 <AssetTree v-model="selectedAssetFolder" />
               </q-tab-panel>
@@ -273,6 +279,10 @@
 
                   <q-tab-panel name="game">
                     <GameForm :game="story.project.gameConfig" />
+                  </q-tab-panel>
+
+                  <q-tab-panel name="events">
+                    <EventsEditor />
                   </q-tab-panel>
 
                   <q-tab-panel name="assets">
@@ -366,6 +376,7 @@ import ContactForm from '@/editor/components/ContactForm.vue'
 import ThreadList from '@/editor/components/ThreadList.vue'
 import ThreadForm from '@/editor/components/ThreadForm.vue'
 import GameForm from '@/editor/components/GameForm.vue'
+import EventsEditor from '@/editor/components/EventsEditor.vue'
 import AssetsPanel from '@/editor/components/AssetsPanel.vue'
 import AssetTree from '@/editor/components/AssetTree.vue'
 import LocaleList from '@/editor/components/LocaleList.vue'
@@ -443,6 +454,10 @@ const activeResource = computed(() => {
     case 'threads':
       return story.project?.threads || null
     case 'game':
+    case 'events':
+      // Events live inside game.js too (gameConfig.events, see
+      // EventsEditor.vue) — same file on disk, same dirty/save flow as the
+      // Jeu tab, not a separate resource.
       return story.project?.gameConfig || null
     case 'assets':
       // Assets tab has no dirty/save flow — imports/deletes are immediate
@@ -531,7 +546,7 @@ async function save() {
         rootPath: story.project.rootPath,
         source: serializeThreads(story.project.threads),
       })
-    } else if (viewMode.value === 'game') {
+    } else if (viewMode.value === 'game' || viewMode.value === 'events') {
       await window.storieAPI.saveGame({
         rootPath: story.project.rootPath,
         source: serializeGame(story.project.gameConfig),

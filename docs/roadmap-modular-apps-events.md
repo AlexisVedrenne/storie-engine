@@ -71,12 +71,29 @@ d'éditeur graphique.
   principale est DÉJÀ bloquée sur son propre choix/appel au même moment —
   pas résolu génériquement ; garder les réactions d'event à du non-bloquant
   (message/dm/post/photo/story/reel/effect) pour l'instant.
-- Pas encore construit : éditeur graphique Vue Flow pour `game.events`
-  (phase 3) — s'auteure à la main dans `game.js` en attendant.
+**Phase 3 — authoring (2026-07-29, en liste, pas en graphe)** : `game.events`
+n'a plus besoin d'être écrit à la main.
+- `src/editor/components/EventsEditor.vue` — nouvel onglet "Events" dans
+  l'éditeur, entre Jeu et Ressources. Liste de cartes dépliables (même
+  patron que `SeedBucketEditor.vue`) : sélecteur de trigger, champ de
+  correspondance optionnel (`match`) selon le trigger choisi, puis 3
+  onglets réutilisant tel quel `RequiresBuilder`/`EffectsBuilder`/
+  `TimelineEditor` — exactement le même trio qu'une option de `choice`.
+  Zéro nouveau composant de condition/effet/timeline créé.
+  Ajouter un 3ᵉ trigger = ajouter une entrée dans `TRIGGER_LABELS`/
+  `MATCH_FIELD_BY_TRIGGER` du fichier, même poids que l'ajouter dans
+  `ENGINE_TRIGGERS`.
+- Persistance : les events vivent dans `gameConfig` (même fichier que le
+  reste de l'onglet Jeu) — branché sur le dirty-tracking/autosave existant
+  d'`EditorPage.vue` (`activeResource`/`save()`), pas de nouveau flux IPC.
+- **Pas fait** (délibérément, pas demandé) : la vraie visualisation en
+  graphe Vue Flow imaginée dans le brouillon original — la liste suffit
+  tant que les events restent indépendants les uns des autres (pas de
+  branchement event → event à représenter visuellement pour l'instant).
 
-Reste à faire : éditeur graphique de l'Event System (phase 3), apps
-externes/plugins post-build (phase 4, cf. discussion "marketplace" — mis de
-côté pour l'instant, modèle actuel = extension du dépôt source + rebuild).
+Reste à faire : apps externes/plugins post-build (phase 4, cf. discussion
+"marketplace" — mis de côté pour l'instant, modèle actuel = extension du
+dépôt source + rebuild).
 
 Note apportée par l'utilisateur le 2026-07-29, consignée telle quelle comme
 référence pour une future session. Vision cible : passer d'un moteur à 5
