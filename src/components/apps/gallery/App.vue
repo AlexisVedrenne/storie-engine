@@ -19,7 +19,7 @@
           :key="p.id"
           class="thumb"
           :style="{ animationDelay: `${i * 30}ms` }"
-          @click="selected = p"
+          @click="openPhoto(p)"
         >
           <img :src="resolveAssetUrl(p.url)" />
         </button>
@@ -39,12 +39,18 @@ import { useI18n } from 'vue-i18n'
 import { usePhoneStore } from '@/engine/stores/phone'
 import { useStoryStore } from '@/engine/stores/story'
 import { resolveAssetUrl } from '@/engine/assets'
+import { emit } from '@/engine/events/eventManager'
 import AppTitleBar from '@/components/phone/AppTitleBar.vue'
 
 const phone = usePhoneStore()
 const story = useStoryStore()
 const { t } = useI18n()
 const selected = ref(null)
+
+function openPhoto(p) {
+  selected.value = p
+  emit('photo.viewed', { photoId: p.id })
+}
 
 const photoCountLabel = computed(() => {
   const n = story.photos.length

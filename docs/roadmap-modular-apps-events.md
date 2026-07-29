@@ -51,7 +51,32 @@ plug-and-play aussi — additif, pas une migration.
   Fonctionne, togglable comme les 5 historiques, buildé et vérifié présent
   dans le bundle.
 
-Reste à faire : event system (phases 2-4 ci-dessous).
+**Phase 2 — EventManager (2026-07-29, MVP)** : fait, prouvé, pas encore
+d'éditeur graphique.
+- `src/engine/events/eventManager.js` — bus pub/sub minimal (`on`/`emit`/
+  `clear`), pas un Pinia store (pas besoin de réactivité, évite une
+  dépendance store-à-store entre `phone.js` et `story.js`).
+- 2 triggers réels câblés : `app.opened` (`phone.js` `openApp()`),
+  `photo.viewed` (Galerie, à l'ouverture d'une photo).
+- `story.js` `handleEngineEvent()` — réutilise `checkConditions`/
+  `applyEffects`/`runThen` déjà là (principe §5 : pas de deuxième système
+  narratif). Les réactions sont lues depuis `game.events[]` (même bucket
+  libre-schéma que `game.disabledApps`/`game.sounds` — zéro nouveau fichier
+  projet, zéro plomberie IPC/build.js supplémentaire).
+- `findMatchingEvents()` (`src/engine/events/matchEvent.js`) extrait en
+  fonction pure, testée en Node standalone (6 assertions, toutes vertes) —
+  même précédent que la phase 5.
+- **Limite connue, assumée pour ce premier jet** : une réaction dont le
+  `then` bloque (choice/call) écrase `timelineResume` si la timeline
+  principale est DÉJÀ bloquée sur son propre choix/appel au même moment —
+  pas résolu génériquement ; garder les réactions d'event à du non-bloquant
+  (message/dm/post/photo/story/reel/effect) pour l'instant.
+- Pas encore construit : éditeur graphique Vue Flow pour `game.events`
+  (phase 3) — s'auteure à la main dans `game.js` en attendant.
+
+Reste à faire : éditeur graphique de l'Event System (phase 3), apps
+externes/plugins post-build (phase 4, cf. discussion "marketplace" — mis de
+côté pour l'instant, modèle actuel = extension du dépôt source + rebuild).
 
 Note apportée par l'utilisateur le 2026-07-29, consignée telle quelle comme
 référence pour une future session. Vision cible : passer d'un moteur à 5

@@ -5,6 +5,8 @@ import { DEFAULT_LOCALE, SUPPORTED_LOCALES } from '@/engine/i18n/locales'
 import { playSound, startLoop, stopSound } from '@/engine/utils/sound'
 import { ALL_APP_IDS, ENTRY_TYPE_APP } from '@/engine/apps/appIds'
 import { CUSTOM_ENTRY_TYPE_BY_TYPE } from '@/engine/apps/entryTypeRegistry'
+import { on as onEngineEvent, clear as clearEngineEvents, ENGINE_TRIGGERS } from '@/engine/events/eventManager'
+import { findMatchingEvents } from '@/engine/events/matchEvent'
 
 // Phase 1: this store is project-agnostic — it holds no hardcoded chapters/
 // contacts/threads/seed/i18n of its own. All of that lives in `state.project`,
@@ -402,6 +404,40 @@ export const useStoryStore = defineStore('story', {
     loadProject(projectData) {
       Object.assign(this, defaultState())
       this.project = projectData
+
+      // clear() first — without it, reopening/reloading a project (or the
+      // editor's live preview re-running this on every save) would stack a
+      // fresh set of subscriptions on top of the previous ones, and an
+      // authored reaction would fire once per accumulated reload instead of
+      // once per real event.
+      clearEngineEvents()
+      for (const trigger of ENGINE_TRIGGERS) {
+        onEngineEvent(trigger, (payload) => this.handleEngineEvent(trigger, payload))
+      }
+    },
+
+    // Reacts to an engine-emitted trigger (eventManager.js) by running
+    // whichever authored entries in game.events matched it — reuses
+    // checkConditions/applyEffects/runThen exactly as any built-in timeline
+    // entry would, per docs/roadmap-modular-apps-events.md §5 ("ne crée pas
+    // un deuxième système narratif"). `game.events[]` shape: { trigger,
+    // match?, requires?, effects?, then? } — `match` is an optional shallow
+    // filter on the trigger's payload (see matchEvent.js).
+    //
+    // Known limitation: a `then` entry here that blocks (choice/call) sets
+    // `this.timelineResume` the same way a top-level blocking entry does —
+    // if the MAIN timeline is also currently blocked on its own choice/call
+    // when this fires, one would silently clobber the other. Fine for this
+    // first cut (keep event reactions to non-blocking entries: message/dm/
+    // post/photo/story/reel/effect/custom types); not solved generically yet.
+    handleEngineEvent(trigger, payload) {
+      const chapter = this.currentChapter
+      const events = this.project?.gameConfig?.events
+      for (const evt of findMatchingEvents(events, trigger, payload)) {
+        if (!this.checkConditions(evt.requires)) continue
+        if (evt.effects) this.applyEffects(evt.effects)
+        if (evt.then?.length) this.runThen(evt.then, 0, chapter, () => {})
+      }
     },
 
     // --- lifecycle -------------------------------------------------------

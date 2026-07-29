@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia'
+import { emit } from '@/engine/events/eventManager'
 
 // Pure UI/navigation state for the phone shell — separate from story.js
 // (the narrative engine) so "which screen am I on" never gets persisted
@@ -26,6 +27,10 @@ export const usePhoneStore = defineStore('phone', {
       this.currentApp = appId
       this.activeConversation = null
       this.activeDmThread = null
+      // Fires unconditionally, whether or not any project.events reaction
+      // actually listens for it (emit() is a no-op with zero subscribers) —
+      // see src/engine/events/eventManager.js.
+      emit('app.opened', { app: appId })
     },
     goHome() {
       this.currentApp = null
