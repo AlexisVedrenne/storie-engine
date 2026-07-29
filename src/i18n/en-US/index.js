@@ -87,6 +87,7 @@ export default {
       gallery: "Photos",
       calls: "Phone",
       settings: "Settings",
+      email: "Email",
     },
     stepsUnit: "steps",
     musicTitle: "Evening Vibes",
@@ -101,6 +102,14 @@ export default {
     empty: "No conversations yet.",
     noResults: 'No results for "{query}".',
     waitingFor: "Waiting for a reply from {name}...",
+  },
+
+  email: {
+    title: "Email",
+    searchPlaceholder: "Search",
+    empty: "No emails yet.",
+    noResults: 'No results for "{query}".',
+    back: "Back",
   },
 
   calls: {

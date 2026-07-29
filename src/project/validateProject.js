@@ -6,6 +6,8 @@
 // findReferences.js: pure, no Pinia store dependency, usable from a plain
 // button handler.
 
+import { CUSTOM_ENTRY_TYPE_BY_TYPE } from '@/engine/apps/entryTypeRegistry'
+
 function walkEffectsRequires(refs, requires, effects, label) {
   if (requires?.following) {
     for (const id of Object.keys(requires.following))
@@ -74,8 +76,16 @@ function collectReferences(project) {
         case 'story':
           if (entry.contact) refs.push({ kind: 'contact', id: entry.contact, label })
           break
-        default:
+        default: {
+          // Additive fallback for plug-in entry types (see
+          // src/engine/apps/entryTypeRegistry.js) — only reached for a
+          // type none of the cases above matches.
+          const customType = CUSTOM_ENTRY_TYPE_BY_TYPE[entry.type]
+          for (const ref of customType?.collectReferences?.(entry) || []) {
+            refs.push({ ...ref, label: ref.label || label })
+          }
           break
+        }
       }
       walkEffectsRequires(refs, entry.requires, entry.effects, label)
     })

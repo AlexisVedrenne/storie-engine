@@ -81,6 +81,7 @@
 import { computed, reactive } from 'vue'
 import { useStoryStore } from '@/engine/stores/story'
 import { ENTRY_TYPE_APP } from '@/engine/apps/appIds'
+import { CUSTOM_ENTRY_TYPES, CUSTOM_ENTRY_TYPE_BY_TYPE } from '@/engine/apps/entryTypeRegistry'
 import RequiresBuilder from '@/editor/components/RequiresBuilder.vue'
 import FieldHelp from '@/editor/components/FieldHelp.vue'
 import MessageEntryForm from '@/editor/components/entries/MessageEntryForm.vue'
@@ -125,8 +126,11 @@ const FORM_BY_TYPE = {
   effect: EffectEntryForm,
   timeskip: TimeskipEntryForm,
 }
+// Additive merge, never replacing the hardcoded 10 — a plug-in entry type
+// (src/engine/apps/entryTypeRegistry.js) just adds its own `type` key on
+// top, same pattern in all 4 maps below.
 function formFor(type) {
-  return FORM_BY_TYPE[type] || null
+  return FORM_BY_TYPE[type] || CUSTOM_ENTRY_TYPE_BY_TYPE[type]?.form || null
 }
 
 // Material icon per entry type — lets a 30-entry timeline be scanned by eye
@@ -144,7 +148,7 @@ const ICON_BY_TYPE = {
   timeskip: 'update',
 }
 function iconFor(type) {
-  return ICON_BY_TYPE[type] || 'help_outline'
+  return ICON_BY_TYPE[type] || CUSTOM_ENTRY_TYPE_BY_TYPE[type]?.icon || 'help_outline'
 }
 
 // One-line plain-language reminder of what each entry type does, shown
@@ -163,7 +167,7 @@ const ENTRY_HELP = {
   timeskip: 'Une ellipse temporelle — verrouille le téléphone et avance l’heure/date.',
 }
 function helpFor(type) {
-  return ENTRY_HELP[type] || ''
+  return ENTRY_HELP[type] || CUSTOM_ENTRY_TYPE_BY_TYPE[type]?.help || ''
 }
 
 const ALL_TYPE_OPTIONS = [
@@ -177,6 +181,9 @@ const ALL_TYPE_OPTIONS = [
   { label: 'Appel (call)', value: 'call' },
   { label: 'Effet (effect)', value: 'effect' },
   { label: 'Ellipse temporelle (timeskip)', value: 'timeskip' },
+  // Plug-in entry types (entryTypeRegistry.js) tacked on, not merged in place
+  // — keeps the 10 built-ins' own authored order untouched.
+  ...CUSTOM_ENTRY_TYPES.map((def) => ({ label: def.label, value: def.type })),
 ]
 
 // Authoring an SMS/post/reel/etc. for an app the project doesn't even ship
@@ -218,8 +225,12 @@ function defaultEntry(type) {
       return { type, effects: {} }
     case 'timeskip':
       return { type }
-    default:
-      return { type }
+    default: {
+      // Additive fallback for plug-in entry types — reached only for a
+      // type none of the cases above matches.
+      const customType = CUSTOM_ENTRY_TYPE_BY_TYPE[type]
+      return customType ? customType.defaultEntry({ firstContactId }) : { type }
+    }
   }
 }
 

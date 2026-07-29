@@ -4,6 +4,7 @@ import { i18n, persistLocale } from '@/engine/i18n/instance'
 import { DEFAULT_LOCALE, SUPPORTED_LOCALES } from '@/engine/i18n/locales'
 import { playSound, startLoop, stopSound } from '@/engine/utils/sound'
 import { ALL_APP_IDS, ENTRY_TYPE_APP } from '@/engine/apps/appIds'
+import { CUSTOM_ENTRY_TYPE_BY_TYPE } from '@/engine/apps/entryTypeRegistry'
 
 // Phase 1: this store is project-agnostic — it holds no hardcoded chapters/
 // contacts/threads/seed/i18n of its own. All of that lives in `state.project`,
@@ -177,6 +178,13 @@ function defaultState() {
     stepsGoal: 6000,
     battery: 43,
     network: { signal: 4, wifi: true }, // signal: 0-4 bars, wifi: on/off
+
+    // Free-form namespace for plug-in entry types (see
+    // src/engine/apps/entryTypeRegistry.js) to read/write their own state —
+    // e.g. an "email" entry type keeps `customData.emails`. Persisted like
+    // everything else here (not in NON_PERSISTED_KEYS below); a plug-in
+    // author is responsible for keeping whatever they put here JSON-safe.
+    customData: {},
     clockTime: null, // 'HH:MM' override, null = real device time
     clockDate: null, // 'DD/MM/YYYY' override, null = real device date
     clockOffsetMinutes: 0, // minutes added on top of the base time, ticks up as messages/dms land
@@ -956,8 +964,19 @@ export const useStoryStore = defineStore('story', {
           break
         }
 
-        default:
-          console.warn('[story] unknown timeline entry type:', entry.type)
+        default: {
+          // Additive fallback for plug-in entry types (see
+          // src/engine/apps/entryTypeRegistry.js) — the 10 cases above are
+          // never reached for a plug-in type (they only match their own
+          // hardcoded literal), so this only ever runs for a type this
+          // switch itself doesn't know about.
+          const customType = CUSTOM_ENTRY_TYPE_BY_TYPE[entry.type]
+          if (customType) {
+            customType.process(entry, { story: this, chapter })
+          } else {
+            console.warn('[story] unknown timeline entry type:', entry.type)
+          }
+        }
       }
     },
 

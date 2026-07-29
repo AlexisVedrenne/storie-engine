@@ -87,6 +87,7 @@ export default {
       gallery: "Photos",
       calls: "Téléphone",
       settings: "Réglages",
+      email: "Email",
     },
     stepsUnit: "pas",
     musicTitle: "Vibes du soir",
@@ -101,6 +102,14 @@ export default {
     empty: "Aucune conversation pour l'instant.",
     noResults: "Aucun résultat pour « {query} ».",
     waitingFor: "En attente d'une réponse de {name}...",
+  },
+
+  email: {
+    title: "Email",
+    searchPlaceholder: "Rechercher",
+    empty: "Aucun email pour l'instant.",
+    noResults: "Aucun résultat pour « {query} ».",
+    back: "Retour",
   },
 
   calls: {

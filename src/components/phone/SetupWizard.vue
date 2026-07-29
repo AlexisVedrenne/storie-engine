@@ -120,8 +120,9 @@
               class="sync-app"
               :style="{ animationDelay: `${i * 150}ms` }"
             >
-              <div class="sync-icon" :style="{ background: a.color }">
-                <q-icon :name="a.icon" size="20px" color="white" />
+              <div class="sync-icon" :style="{ background: a.iconImage ? 'transparent' : a.color }">
+                <img v-if="a.iconImage" :src="a.iconImage" class="sync-icon-img" alt="" />
+                <q-icon v-else :name="a.icon" size="20px" color="white" />
               </div>
               <q-icon
                 name="check_circle"
@@ -554,9 +555,16 @@ p {
   width: 44px;
   height: 44px;
   border-radius: 12px;
+  overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.sync-icon-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .sync-check {

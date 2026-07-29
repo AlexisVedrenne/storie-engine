@@ -8,6 +8,8 @@
 // too, even though seed comments (seedFill) ARE included. Pure, no store
 // dependency — same leaf-module convention as findReferences.js.
 
+import { CUSTOM_ENTRY_TYPE_BY_TYPE } from "@/engine/apps/entryTypeRegistry";
+
 function addChapterStrings(timeline, set) {
   for (const entry of timeline || []) {
     switch (entry.type) {
@@ -44,8 +46,18 @@ function addChapterStrings(timeline, set) {
       case "timeskip":
         if (entry.label) set.add(entry.label);
         break;
-      default:
+      default: {
+        // Additive fallback for plug-in entry types (see
+        // src/engine/apps/entryTypeRegistry.js) — only reached for a type
+        // none of the cases above matches.
+        const customType = CUSTOM_ENTRY_TYPE_BY_TYPE[entry.type];
+        if (customType?.extractText) {
+          for (const text of customType.extractText(entry) || []) {
+            if (text) set.add(text);
+          }
+        }
         break;
+      }
     }
   }
 }

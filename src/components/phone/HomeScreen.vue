@@ -11,8 +11,11 @@
           :style="{ animationDelay: `${i * 45}ms` }"
           @click="phone.openApp(app.id)"
         >
-          <div class="app-icon" :style="{ background: app.color }">
-            <q-icon :name="app.icon" size="28px" color="white" />
+          <div class="app-icon">
+            <div class="app-icon-inner" :style="{ background: app.iconImage ? 'transparent' : app.color }">
+              <img v-if="app.iconImage" :src="app.iconImage" class="app-icon-img" alt="" />
+              <q-icon v-else :name="app.icon" size="28px" color="white" />
+            </div>
             <span v-if="app.badge" class="badge">{{ app.badge }}</span>
           </div>
           <span class="app-label">{{ app.label }}</span>
@@ -178,11 +181,32 @@ const apps = computed(() =>
   position: relative;
   width: 54px;
   height: 54px;
+  transition: transform 0.12s ease;
+}
+
+/* The rounded clip lives on this inner wrapper, not `.app-icon` itself —
+   the unread badge is `position: absolute` on `.app-icon` with a negative
+   offset (see `.badge` below) so it can sit half outside the tile; an
+   overflow:hidden on the same element that positions the badge would clip
+   it right off. */
+.app-icon-inner {
+  width: 100%;
+  height: 100%;
   border-radius: 14px;
+  overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: transform 0.12s ease;
+}
+
+/* A PNG/custom-image app icon (app.iconImage, see registry.js) fills the
+   whole rounded-square tile instead of sitting small/centered like the
+   Material icon glyph does — the image is the branding, not a decoration
+   on top of a colored background. */
+.app-icon-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .app-icon-btn:active .app-icon {

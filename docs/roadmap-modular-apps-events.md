@@ -25,7 +25,33 @@ Volontairement pas fait : permissions/sandboxing (pas de bénéfice réel dans
 une appli Electron mono-utilisateur), chargement dynamique à l'exécution
 d'un plugin non présent dans le dépôt (ça reste une extension du moteur
 open-source via contribution/build, pas un vrai plugin installable par un
-joueur). Event system (phases 2-4 ci-dessous) reste à faire.
+joueur).
+
+**Aussi fait (2026-07-29, même jour)** : les nouveaux types d'entrée de
+timeline (contenu scriptable depuis un chapitre) sont maintenant
+plug-and-play aussi — additif, pas une migration.
+- `src/engine/apps/entryTypeRegistry.js` scanne (glob) tout
+  `src/components/apps/*/entryType.js` (contrat : type/app/icon/label/help/
+  form/defaultEntry/process/extractText/collectReferences).
+- Les 5 fichiers moteur concernés (`story.js`, `TimelineEditor.vue`,
+  `extractTranslatableStrings.js`, `validateProject.js`, `appIds.js`) ont
+  chacun reçu UNE ligne de repli additive (`default:` du switch existant →
+  regarde le registre) — les 10 types historiques (message/dm/choice/post/
+  photo/story/reel/call/effect/timeskip) restent 100% codés en dur,
+  intouchés, **volontairement** : ils encodent des mécaniques fines
+  (délai de frappe, blocage sur action joueur, cinématique timeskip) qu'un
+  nouveau type n'a pas besoin de réinventer — un type plug-in obtient le
+  traitement "instantané + pause", comme post/photo/story/reel/effect.
+- `story.js` a un nouveau bucket générique `state.customData` (persisté,
+  jamais touché par le moteur lui-même) où un type plug-in range ses
+  propres données.
+- **Preuve concrète** : app "Email" complète (`src/components/apps/email/`
+  — manifest.js, App.vue, entryType.js, EmailEntryForm.vue) construite en
+  suivant UNIQUEMENT ces deux contrats, zéro autre édition moteur.
+  Fonctionne, togglable comme les 5 historiques, buildé et vérifié présent
+  dans le bundle.
+
+Reste à faire : event system (phases 2-4 ci-dessous).
 
 Note apportée par l'utilisateur le 2026-07-29, consignée telle quelle comme
 référence pour une future session. Vision cible : passer d'un moteur à 5

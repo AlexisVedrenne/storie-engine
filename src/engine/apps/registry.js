@@ -6,6 +6,19 @@
 // contributor: add a properly-shaped folder, get a working app — not just
 // toggleable, actually pluggable at the source level.
 //
+// `icon` is a Material icon name (rendered via q-icon) — for a custom
+// image instead, add an `iconImage` field pointing at an imported asset
+// (`import icon from './icon.png'` at the top of manifest.js, then
+// `iconImage: icon`) and leave `icon` unset. HomeScreen.vue/SetupWizard.vue
+// render `iconImage` (a full-bleed image tile) in preference to `icon`
+// (a centered glyph on a `color` background) when both are absent/present.
+//
+// App.vue's own styling can be a single inline <style scoped> block like
+// the 5 built-ins use, or — for anyone who'd rather keep markup/script/
+// style in separate files — Vue's native
+// `<style scoped src="./App.css"></style>` works unmodified here too;
+// nothing about this registry cares either way.
+//
 // Root-absolute glob patterns (the leading `/`) resolve against whichever
 // project Vite is currently building, not against this file's own location
 // — so this still works unmodified inside the temp shell src-electron/ipc/
