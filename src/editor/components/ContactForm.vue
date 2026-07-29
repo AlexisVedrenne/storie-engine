@@ -4,7 +4,11 @@
       <div class="section-label">Identité</div>
       <div class="row">
         <q-input dense outlined disabled label="Id" :model-value="contact.id" class="id-input" />
-        <q-input dense outlined label="Nom" v-model="contact.name" class="grow" />
+        <q-input dense outlined ref="nameInputRef" label="Nom" v-model="contact.name" class="grow">
+          <template #append>
+            <EmojiPickerBtn @pick="(e) => (contact.name = insertEmojiAtCaret(nameInputRef, contact.name, e))" />
+          </template>
+        </q-input>
       </div>
       <div class="field-label">Couleur (hex)</div>
       <!-- #999999 matches the fallback ContactList.vue's dot / ThreadForm.vue's
@@ -26,7 +30,11 @@
 
     <div class="panel">
       <div class="section-label">Bio</div>
-      <q-input dense outlined type="textarea" autogrow label="Bio (profil Pixly)" v-model="contact.bio" />
+      <q-input dense outlined ref="bioInputRef" type="textarea" autogrow label="Bio (profil Pixly)" v-model="contact.bio">
+        <template #append>
+          <EmojiPickerBtn @pick="(e) => (contact.bio = insertEmojiAtCaret(bioInputRef, contact.bio, e))" />
+        </template>
+      </q-input>
     </div>
 
     <div class="panel">
@@ -57,10 +65,15 @@
 </template>
 
 <script setup>
+import { ref } from 'vue'
 import AssetField from '@/editor/components/AssetField.vue'
 import FieldHelp from '@/editor/components/FieldHelp.vue'
+import EmojiPickerBtn from '@/editor/components/EmojiPickerBtn.vue'
+import { insertEmojiAtCaret } from '@/editor/utils/emojiInsert'
 
 defineProps({ contact: { type: Object, required: true } })
+const nameInputRef = ref(null)
+const bioInputRef = ref(null)
 </script>
 
 <style scoped>

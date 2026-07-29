@@ -38,7 +38,11 @@
         <q-card-section>
           <div class="text-subtitle1">Nouveau thread (groupe)</div>
           <q-input dense outlined label="Identifiant (id)" v-model="newId" class="q-mt-sm" />
-          <q-input dense outlined label="Nom du groupe" v-model="newName" class="q-mt-sm" />
+          <q-input dense outlined ref="newNameInputRef" label="Nom du groupe" v-model="newName" class="q-mt-sm">
+            <template #append>
+              <EmojiPickerBtn @pick="(e) => (newName = insertEmojiAtCaret(newNameInputRef, newName, e))" />
+            </template>
+          </q-input>
         </q-card-section>
         <q-card-actions align="right">
           <q-btn flat label="Annuler" v-close-popup />
@@ -55,6 +59,8 @@ import { Dialog, Notify } from 'quasar'
 import { useStoryStore } from '@/engine/stores/story'
 import { findReferences } from '@/project/findReferences'
 import { serializeThreads } from '@/project/serializeChapter'
+import EmojiPickerBtn from '@/editor/components/EmojiPickerBtn.vue'
+import { insertEmojiAtCaret } from '@/editor/utils/emojiInsert'
 
 defineProps({ modelValue: { type: Number, default: 0 } })
 const emit = defineEmits(['update:modelValue'])
@@ -64,6 +70,7 @@ const threads = story.project.threads
 const newDialog = ref(false)
 const newId = ref('')
 const newName = ref('')
+const newNameInputRef = ref(null)
 
 async function persist() {
   await window.storieAPI.saveThreads({ rootPath: story.project.rootPath, source: serializeThreads(threads) })

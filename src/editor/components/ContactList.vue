@@ -50,7 +50,11 @@
         <q-card-section>
           <div class="text-subtitle1">Nouveau contact</div>
           <q-input dense outlined label="Identifiant (id)" v-model="newId" class="q-mt-sm" />
-          <q-input dense outlined label="Nom" v-model="newName" class="q-mt-sm" />
+          <q-input dense outlined ref="newNameInputRef" label="Nom" v-model="newName" class="q-mt-sm">
+            <template #append>
+              <EmojiPickerBtn @pick="(e) => (newName = insertEmojiAtCaret(newNameInputRef, newName, e))" />
+            </template>
+          </q-input>
           <q-input dense outlined label="Couleur (hex)" placeholder="#4c8bf5" v-model="newColor" class="q-mt-sm" />
         </q-card-section>
         <q-card-actions align="right">
@@ -68,6 +72,8 @@ import { Dialog, Notify } from 'quasar'
 import { useStoryStore } from '@/engine/stores/story'
 import { findReferences } from '@/project/findReferences'
 import { serializeContacts } from '@/project/serializeChapter'
+import EmojiPickerBtn from '@/editor/components/EmojiPickerBtn.vue'
+import { insertEmojiAtCaret } from '@/editor/utils/emojiInsert'
 
 defineProps({ modelValue: { type: Number, default: 0 } })
 const emit = defineEmits(['update:modelValue'])
@@ -77,6 +83,7 @@ const contacts = story.project.contacts
 const newDialog = ref(false)
 const newId = ref('')
 const newName = ref('')
+const newNameInputRef = ref(null)
 const newColor = ref('#4c8bf5')
 
 async function persist() {

@@ -9,7 +9,11 @@
       </div>
       <div class="row">
         <q-input dense outlined disabled label="Id" :model-value="thread.id" class="id-input" />
-        <q-input dense outlined label="Nom du groupe" v-model="thread.name" class="grow" />
+        <q-input dense outlined ref="nameInputRef" label="Nom du groupe" v-model="thread.name" class="grow">
+          <template #append>
+            <EmojiPickerBtn @pick="(e) => (thread.name = insertEmojiAtCaret(nameInputRef, thread.name, e))" />
+          </template>
+        </q-input>
       </div>
       <q-select
         dense
@@ -38,11 +42,15 @@
 </template>
 
 <script setup>
+import { ref } from 'vue'
 import { useContactOptions } from '@/editor/composables/useContactOptions'
 import FieldHelp from '@/editor/components/FieldHelp.vue'
+import EmojiPickerBtn from '@/editor/components/EmojiPickerBtn.vue'
+import { insertEmojiAtCaret } from '@/editor/utils/emojiInsert'
 
 const props = defineProps({ thread: { type: Object, required: true } })
 const { contactOptions, contactColor } = useContactOptions()
+const nameInputRef = ref(null)
 
 // 'me' must always be a participant (a visible group is always one the
 // player is in, see docs/story-engine.md) — pre-included at creation and

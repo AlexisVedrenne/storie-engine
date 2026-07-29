@@ -47,7 +47,11 @@
       <q-card class="new-project-card">
         <q-card-section>
           <div class="text-subtitle1">Nouveau projet</div>
-          <q-input dense outlined autofocus label="Nom du projet" v-model="newName" class="q-mt-sm" @keyup.enter="createProject" />
+          <q-input dense outlined ref="newNameInputRef" autofocus label="Nom du projet" v-model="newName" class="q-mt-sm" @keyup.enter="createProject">
+            <template #append>
+              <EmojiPickerBtn @pick="(e) => (newName = insertEmojiAtCaret(newNameInputRef, newName, e))" />
+            </template>
+          </q-input>
         </q-card-section>
         <q-card-actions align="right">
           <q-btn flat label="Annuler" v-close-popup />
@@ -62,6 +66,8 @@
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useStoryStore } from '@/engine/stores/story'
+import EmojiPickerBtn from '@/editor/components/EmojiPickerBtn.vue'
+import { insertEmojiAtCaret } from '@/editor/utils/emojiInsert'
 
 // Shared with EditorPage.vue's "Changer de projet" (clears this key) — a
 // deliberate exit shouldn't be silently undone by auto-reopening the same
@@ -75,6 +81,7 @@ const error = ref('')
 const reopening = ref(false)
 const newProjectDialog = ref(false)
 const newName = ref('')
+const newNameInputRef = ref(null)
 
 const hasStorieApi = typeof window !== 'undefined' && !!window.storieAPI
 

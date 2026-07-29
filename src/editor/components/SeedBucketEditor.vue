@@ -50,7 +50,11 @@
                 <q-select dense outlined emit-value map-options label="De" :options="contactOptions" v-model="entry.from" class="grow" />
                 <q-input dense outlined type="number" step="0.5" label="Il y a N jours" v-model.number="entry.daysAgo" class="days-input" />
               </div>
-              <q-input dense outlined type="textarea" autogrow label="Texte" v-model="entry.text" />
+              <q-input dense outlined :ref="(el) => (fieldRefs[i] = el)" type="textarea" autogrow label="Texte" v-model="entry.text">
+                <template #append>
+                  <EmojiPickerBtn @pick="(e) => (entry.text = insertEmojiAtCaret(fieldRefs[i], entry.text, e))" />
+                </template>
+              </q-input>
               <AssetField v-model="entry.image" label="Photo jointe (optionnel)" :contact-id="entry.from" />
             </template>
 
@@ -59,7 +63,11 @@
                 <q-select dense outlined emit-value map-options label="Auteur" :options="contactOptions" v-model="entry.author" class="grow" />
                 <q-input dense outlined type="number" step="0.5" label="Il y a N jours" v-model.number="entry.daysAgo" class="days-input" />
               </div>
-              <q-input dense outlined type="textarea" autogrow label="Légende" v-model="entry.content" />
+              <q-input dense outlined :ref="(el) => (fieldRefs[i] = el)" type="textarea" autogrow label="Légende" v-model="entry.content">
+                <template #append>
+                  <EmojiPickerBtn @pick="(e) => (entry.content = insertEmojiAtCaret(fieldRefs[i], entry.content, e))" />
+                </template>
+              </q-input>
               <AssetField v-model="entry.image" label="Image (optionnel)" :contact-id="entry.author" />
               <q-input dense outlined type="number" label="Nombre de likes (optionnel — sinon aléatoire)" v-model.number="entry.likes" />
               <CommentsListField
@@ -74,7 +82,11 @@
                 <q-select dense outlined emit-value map-options label="Auteur" :options="contactOptions" v-model="entry.author" class="grow" />
                 <q-input dense outlined type="number" step="0.5" label="Il y a N jours" v-model.number="entry.daysAgo" class="days-input" />
               </div>
-              <q-input dense outlined type="textarea" autogrow label="Légende" v-model="entry.caption" />
+              <q-input dense outlined :ref="(el) => (fieldRefs[i] = el)" type="textarea" autogrow label="Légende" v-model="entry.caption">
+                <template #append>
+                  <EmojiPickerBtn @pick="(e) => (entry.caption = insertEmojiAtCaret(fieldRefs[i], entry.caption, e))" />
+                </template>
+              </q-input>
               <AssetField v-model="entry.media" label="Média (vidéo/image)" :contact-id="entry.author" />
               <q-input dense outlined label="Musique (optionnel)" v-model="entry.music" />
               <q-input dense outlined type="number" label="Nombre de likes (optionnel — sinon aléatoire)" v-model.number="entry.likes" />
@@ -88,7 +100,11 @@
             <template v-else-if="bucket === 'photos'">
               <q-select dense outlined emit-value map-options label="Envoyée par" :options="contactOptions" v-model="entry.from" />
               <AssetField v-model="entry.url" label="Image" :contact-id="entry.from" />
-              <q-input dense outlined label="Légende (optionnel)" v-model="entry.caption" />
+              <q-input dense outlined :ref="(el) => (fieldRefs[i] = el)" label="Légende (optionnel)" v-model="entry.caption">
+                <template #append>
+                  <EmojiPickerBtn @pick="(e) => (entry.caption = insertEmojiAtCaret(fieldRefs[i], entry.caption, e))" />
+                </template>
+              </q-input>
             </template>
           </div>
         </div>
@@ -105,8 +121,13 @@ import { useStoryStore } from '@/engine/stores/story'
 import { useContactOptions } from '@/editor/composables/useContactOptions'
 import AssetField from '@/editor/components/AssetField.vue'
 import CommentsListField from '@/editor/components/CommentsListField.vue'
+import EmojiPickerBtn from '@/editor/components/EmojiPickerBtn.vue'
+import { insertEmojiAtCaret } from '@/editor/utils/emojiInsert'
 
 const props = defineProps({ bucket: { type: String, required: true } })
+// Plain object (not reactive) — per-card DOM ref bag for EmojiPickerBtn's
+// caret insertion, keyed by card index (v-for can't bind a static template ref).
+const fieldRefs = {}
 const story = useStoryStore()
 const { contactOptions, contactOptionsNoMe, threadOptions } = useContactOptions()
 

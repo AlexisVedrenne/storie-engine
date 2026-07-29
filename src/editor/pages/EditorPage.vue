@@ -179,7 +179,11 @@
                       >
                         <q-tooltip>Retour au graphe</q-tooltip>
                       </q-btn>
-                      <q-input dense outlined label="Titre" v-model="selectedChapter.title" />
+                      <q-input dense outlined ref="chapterTitleInputRef" label="Titre" v-model="selectedChapter.title">
+                        <template #append>
+                          <EmojiPickerBtn @pick="(e) => (selectedChapter.title = insertEmojiAtCaret(chapterTitleInputRef, selectedChapter.title, e))" />
+                        </template>
+                      </q-input>
                     </div>
 
                     <TimelineEditor :entries="selectedChapter.timeline" />
@@ -368,6 +372,8 @@ import LocaleList from '@/editor/components/LocaleList.vue'
 import I18nBucketEditor from '@/editor/components/I18nBucketEditor.vue'
 import SeedBucketList from '@/editor/components/SeedBucketList.vue'
 import SeedBucketEditor from '@/editor/components/SeedBucketEditor.vue'
+import EmojiPickerBtn from '@/editor/components/EmojiPickerBtn.vue'
+import { insertEmojiAtCaret } from '@/editor/utils/emojiInsert'
 
 const AUTOSAVE_KEY = 'storie-engine-autosave'
 const SPLIT_OUTER_KEY = 'storie-engine-split-outer'
@@ -381,6 +387,7 @@ const LAST_PROJECT_KEY = 'storie-engine-last-project'
 const router = useRouter()
 const story = useStoryStore()
 const phone = usePhoneStore()
+const chapterTitleInputRef = ref(null)
 
 // See the template comment above the v-if="!story.project" guard — this
 // sends the user back to pick/reload a project instead of leaving them on

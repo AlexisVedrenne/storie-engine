@@ -56,10 +56,15 @@
                 <q-input
                   dense
                   outlined
+                  :ref="(el) => (translationRefs[frText] = el)"
                   class="translation-input"
                   :model-value="getValue(frText)"
                   @update:model-value="(v) => setValue(frText, v)"
-                />
+                >
+                  <template #append>
+                    <EmojiPickerBtn @pick="(e) => setValue(frText, insertEmojiAtCaret(translationRefs[frText], getValue(frText), e))" />
+                  </template>
+                </q-input>
                 <span class="badge" :class="getValue(frText) ? 'badge-translated' : 'badge-missing'">
                   {{ getValue(frText) ? 'Traduit' : 'Manquant' }}
                 </span>
@@ -80,10 +85,15 @@
             <q-input
               dense
               outlined
+              :ref="(el) => (translationRefs[frText] = el)"
               class="translation-input"
               :model-value="getValue(frText)"
               @update:model-value="(v) => setValue(frText, v)"
-            />
+            >
+              <template #append>
+                <EmojiPickerBtn @pick="(e) => setValue(frText, insertEmojiAtCaret(translationRefs[frText], getValue(frText), e))" />
+              </template>
+            </q-input>
             <span class="badge" :class="getValue(frText) ? 'badge-translated' : 'badge-missing'">
               {{ getValue(frText) ? 'Traduit' : 'Manquant' }}
             </span>
@@ -127,6 +137,8 @@ import { computed, ref, watch } from 'vue'
 import { useStoryStore } from '@/engine/stores/story'
 import { extractTranslatableStrings, extractCommonCategories } from '@/project/extractTranslatableStrings'
 import FieldHelp from '@/editor/components/FieldHelp.vue'
+import EmojiPickerBtn from '@/editor/components/EmojiPickerBtn.vue'
+import { insertEmojiAtCaret } from '@/editor/utils/emojiInsert'
 
 const props = defineProps({
   locale: { type: String, required: true },
@@ -134,6 +146,10 @@ const props = defineProps({
 })
 const emit = defineEmits(['update:bucket'])
 const story = useStoryStore()
+// Plain object (not reactive) — per-row DOM ref bag for EmojiPickerBtn's
+// caret insertion, keyed by source string since rows aren't index-stable
+// (filtering/sorting can reorder them).
+const translationRefs = {}
 
 const bucketOptions = computed(() => [
   { label: 'Commun', value: 'common' },

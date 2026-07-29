@@ -27,12 +27,17 @@
     <q-input
       dense
       outlined
+      ref="contentInputRef"
       type="textarea"
       autogrow
       label="Légende"
       placeholder="ex: dernière lumière du soir ✨"
       v-model="entry.content"
-    />
+    >
+      <template #append>
+        <EmojiPickerBtn @pick="(e) => (entry.content = insertEmojiAtCaret(contentInputRef, entry.content, e))" />
+      </template>
+    </q-input>
     <AssetField v-model="entry.image" label="Image (optionnel)" :contact-id="entry.author" />
     <q-input
       dense
@@ -50,12 +55,16 @@
 </template>
 
 <script setup>
+import { ref } from 'vue'
 import { useContactOptions } from '@/editor/composables/useContactOptions'
 import AssetField from '@/editor/components/AssetField.vue'
 import CommentsListField from '@/editor/components/CommentsListField.vue'
+import EmojiPickerBtn from '@/editor/components/EmojiPickerBtn.vue'
+import { insertEmojiAtCaret } from '@/editor/utils/emojiInsert'
 
 defineProps({ entry: { type: Object, required: true } })
 const { contactOptions, contactColor, contactLabel } = useContactOptions()
+const contentInputRef = ref(null)
 </script>
 
 <style scoped>

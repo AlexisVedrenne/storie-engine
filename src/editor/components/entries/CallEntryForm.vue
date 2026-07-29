@@ -64,11 +64,16 @@
       <q-input
         dense
         outlined
+        :ref="(el) => (lineTextRefs[i] = el)"
         class="text-input"
         placeholder="Texte de la réplique"
         v-model="line.text"
         @update:model-value="sync"
-      />
+      >
+        <template #append>
+          <EmojiPickerBtn @pick="(e) => { line.text = insertEmojiAtCaret(lineTextRefs[i], line.text, e); sync() }" />
+        </template>
+      </q-input>
       <q-btn dense flat round icon="close" size="sm" @click="removeLine(i)">
         <q-tooltip>Retirer</q-tooltip>
       </q-btn>
@@ -89,6 +94,8 @@
 import { reactive } from 'vue'
 import { useContactOptions } from '@/editor/composables/useContactOptions'
 import FieldHelp from '@/editor/components/FieldHelp.vue'
+import EmojiPickerBtn from '@/editor/components/EmojiPickerBtn.vue'
+import { insertEmojiAtCaret } from '@/editor/utils/emojiInsert'
 
 const props = defineProps({ entry: { type: Object, required: true } })
 const {
@@ -100,6 +107,10 @@ const {
 const fromOptions = contactOptionsAll
 
 const scriptRows = reactive((props.entry.script || []).map((l) => reactive({ ...l })))
+// Plain object (not reactive) — per-row DOM ref bag for EmojiPickerBtn's
+// caret insertion, keyed by row index since v-for can't bind one static
+// template ref per line.
+const lineTextRefs = {}
 
 function addLine() {
   scriptRows.push(reactive({ from: 'me', text: '' }))

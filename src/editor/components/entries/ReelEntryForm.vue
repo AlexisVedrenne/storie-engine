@@ -28,10 +28,15 @@
     <q-input
       dense
       outlined
+      ref="captionInputRef"
       label="Légende (optionnel)"
       placeholder="ex: lundi matin ☕"
       v-model="entry.caption"
-    />
+    >
+      <template #append>
+        <EmojiPickerBtn @pick="(e) => (entry.caption = insertEmojiAtCaret(captionInputRef, entry.caption, e))" />
+      </template>
+    </q-input>
     <q-input
       dense
       outlined
@@ -55,12 +60,16 @@
 </template>
 
 <script setup>
+import { ref } from 'vue'
 import { useContactOptions } from '@/editor/composables/useContactOptions'
 import AssetField from '@/editor/components/AssetField.vue'
 import CommentsListField from '@/editor/components/CommentsListField.vue'
+import EmojiPickerBtn from '@/editor/components/EmojiPickerBtn.vue'
+import { insertEmojiAtCaret } from '@/editor/utils/emojiInsert'
 
 defineProps({ entry: { type: Object, required: true } })
 const { contactOptions, contactColor, contactLabel } = useContactOptions()
+const captionInputRef = ref(null)
 </script>
 
 <style scoped>

@@ -32,11 +32,16 @@
       <q-input
         dense
         outlined
+        :ref="(el) => (textRefs[i] = el)"
         class="text-input"
         placeholder="Texte du commentaire"
         v-model="c.text"
         @update:model-value="sync"
-      />
+      >
+        <template #append>
+          <EmojiPickerBtn @pick="(e) => { c.text = insertEmojiAtCaret(textRefs[i], c.text, e); sync() }" />
+        </template>
+      </q-input>
       <q-btn dense flat round icon="close" size="sm" @click="removeComment(i)">
         <q-tooltip>Retirer</q-tooltip>
       </q-btn>
@@ -64,6 +69,8 @@
 <script setup>
 import { reactive } from 'vue'
 import { useContactOptions } from '@/editor/composables/useContactOptions'
+import EmojiPickerBtn from '@/editor/components/EmojiPickerBtn.vue'
+import { insertEmojiAtCaret } from '@/editor/utils/emojiInsert'
 
 const props = defineProps({
   modelValue: { type: Array, default: () => [] },
@@ -73,6 +80,9 @@ const emit = defineEmits(['update:modelValue', 'update:commentsCount'])
 const { contactOptions, contactColor, contactLabel } = useContactOptions()
 
 const comments = reactive((props.modelValue || []).map((c) => reactive({ ...c })))
+// Plain object (not reactive) — per-row DOM ref bag for EmojiPickerBtn's
+// caret insertion, keyed by row index (v-for can't bind a static template ref).
+const textRefs = {}
 
 function addComment() {
   comments.push(reactive({ author: contactOptions.value[0]?.value || '', text: '' }))

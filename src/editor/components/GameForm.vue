@@ -2,7 +2,11 @@
   <div class="game-form">
     <q-expansion-item default-opened dense-toggle icon="title" label="Titre" class="panel">
       <div class="panel-body">
-        <q-input dense outlined label="Titre (affiché sur l'écran verrouillé)" v-model="game.title" />
+        <q-input dense outlined ref="titleInputRef" label="Titre (affiché sur l'écran verrouillé)" v-model="game.title">
+          <template #append>
+            <EmojiPickerBtn @pick="(e) => (game.title = insertEmojiAtCaret(titleInputRef, game.title, e))" />
+          </template>
+        </q-input>
       </div>
     </q-expansion-item>
 
@@ -75,11 +79,15 @@
 </template>
 
 <script setup>
+import { ref } from 'vue'
 import AssetField from '@/editor/components/AssetField.vue'
 import FieldHelp from '@/editor/components/FieldHelp.vue'
+import EmojiPickerBtn from '@/editor/components/EmojiPickerBtn.vue'
+import { insertEmojiAtCaret } from '@/editor/utils/emojiInsert'
 import { SOUND_FILES } from '@/engine/utils/sound'
 
 const props = defineProps({ game: { type: Object, required: true } })
+const titleInputRef = ref(null)
 
 // game.sounds is optional/absent on any project created before this
 // feature — ensure it exists before the sound rows below bind into it,

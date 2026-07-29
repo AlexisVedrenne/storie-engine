@@ -8,10 +8,15 @@
     <q-input
       dense
       outlined
+      ref="labelInputRef"
       label="Label affiché sur le lock screen (optionnel)"
       placeholder="ex: Le lendemain"
       v-model="entry.label"
-    />
+    >
+      <template #append>
+        <EmojiPickerBtn @pick="(e) => (entry.label = insertEmojiAtCaret(labelInputRef, entry.label, e))" />
+      </template>
+    </q-input>
     <div class="toggle-row">
       <q-toggle
         :model-value="entry.blocking !== false"
@@ -26,9 +31,13 @@
 </template>
 
 <script setup>
+import { ref } from 'vue'
 import FieldHelp from '@/editor/components/FieldHelp.vue'
+import EmojiPickerBtn from '@/editor/components/EmojiPickerBtn.vue'
+import { insertEmojiAtCaret } from '@/editor/utils/emojiInsert'
 
 defineProps({ entry: { type: Object, required: true } })
+const labelInputRef = ref(null)
 </script>
 
 <style scoped>

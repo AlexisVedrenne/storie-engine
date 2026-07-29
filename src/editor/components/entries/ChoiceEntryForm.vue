@@ -81,10 +81,15 @@
     <q-input
       dense
       outlined
+      ref="promptInputRef"
       label="Question posée au joueur"
       placeholder="ex: Que réponds-tu ?"
       v-model="entry.prompt"
-    />
+    >
+      <template #append>
+        <EmojiPickerBtn @pick="(e) => (entry.prompt = insertEmojiAtCaret(promptInputRef, entry.prompt, e))" />
+      </template>
+    </q-input>
 
     <div class="section-title">
       Options de réponse
@@ -129,10 +134,15 @@
         <q-input
           dense
           outlined
+          :ref="(el) => (optionTextRefs[i] = el)"
           label="Texte du bouton"
           placeholder="ex: Ok, j'arrive"
           v-model="option.text"
-        />
+        >
+          <template #append>
+            <EmojiPickerBtn @pick="(e) => (option.text = insertEmojiAtCaret(optionTextRefs[i], option.text, e))" />
+          </template>
+        </q-input>
 
         <q-tabs
           :model-value="tabFor(i)"
@@ -199,12 +209,14 @@
 </template>
 
 <script setup>
-import { computed, reactive } from 'vue'
+import { computed, reactive, ref } from 'vue'
 import { useContactOptions } from '@/editor/composables/useContactOptions'
 import RequiresBuilder from '@/editor/components/RequiresBuilder.vue'
 import EffectsBuilder from '@/editor/components/EffectsBuilder.vue'
 import TimelineEditor from '@/editor/components/TimelineEditor.vue'
 import FieldHelp from '@/editor/components/FieldHelp.vue'
+import EmojiPickerBtn from '@/editor/components/EmojiPickerBtn.vue'
+import { insertEmojiAtCaret } from '@/editor/utils/emojiInsert'
 
 // `breadcrumb` — see docs/ui-ux-audit.md point 2 / TimelineEditor.vue's own
 // prop of the same name. Forwarded here (not built by TimelineEditor
@@ -227,6 +239,11 @@ const {
 // breadcrumb click can collapse it programmatically — see optionSegment()
 // below.
 const expandedOptions = reactive({})
+const promptInputRef = ref(null)
+// Plain object, not reactive() — just a per-index DOM ref bag for
+// EmojiPickerBtn's caret insertion, same as promptInputRef but keyed by
+// option index since v-for can't bind one static template ref per row.
+const optionTextRefs = {}
 
 function optionSegment(option, i) {
   return {
