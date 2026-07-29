@@ -31,8 +31,7 @@
       <q-card class="new-chapter-card">
         <q-card-section>
           <div class="text-subtitle1">Nouveau chapitre</div>
-          <q-input dense outlined label="Identifiant (id)" v-model="newId" class="q-mt-sm" />
-          <q-input dense outlined label="Titre" v-model="newTitle" class="q-mt-sm" />
+          <q-input dense outlined label="Titre" v-model="newTitle" class="q-mt-sm" autofocus />
         </q-card-section>
         <q-card-actions align="right">
           <q-btn flat label="Annuler" v-close-popup />
@@ -40,7 +39,7 @@
             flat
             label="Créer"
             color="primary"
-            :disable="!newId"
+            :disable="!newTitle.trim()"
             @click="createChapter"
             v-close-popup
           />
@@ -245,13 +244,36 @@ const displayNodes = computed(() =>
 )
 
 const newChapterDialog = ref(false)
-const newId = ref('')
 const newTitle = ref('')
 
+function slugify(text) {
+  return (
+    text
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '') || 'chapter'
+  )
+}
+
+// The id only ever needs to be stable+unique (it drives next[].to, the
+// i18n bucket filename, __sourceFile...), never something the author reads
+// or types — a slug of the title, deduped against every id already in use,
+// covers that with zero manual input. Existing hand-typed ids are left
+// alone; this only applies going forward.
+function generateChapterId(title) {
+  const base = slugify(title)
+  const existing = new Set(chapters.map((c) => c.id))
+  if (!existing.has(base)) return base
+  let n = 2
+  while (existing.has(`${base}-${n}`)) n++
+  return `${base}-${n}`
+}
+
 async function createChapter() {
-  const id = newId.value.trim()
-  if (!id) return
-  const title = newTitle.value.trim() || id
+  const title = newTitle.value.trim()
+  if (!title) return
+  const id = generateChapterId(title)
   // Small cascading offset so freshly-created chapters don't stack exactly
   // on top of each other — the author drags it wherever it actually
   // belongs right after creating it anyway.
@@ -269,7 +291,6 @@ async function createChapter() {
     // clicking any other node, and you almost always want to start writing
     // it immediately after creating it.
     emit('update:modelValue', chapters.length - 1)
-    newId.value = ''
     newTitle.value = ''
     Notify.create({ type: 'positive', message: 'Chapitre créé.' })
   } catch (err) {

@@ -169,13 +169,6 @@
                       <q-tooltip>Retour au graphe</q-tooltip>
                     </q-btn>
                     <q-input dense outlined label="Titre" v-model="selectedChapter.title" />
-                    <q-input
-                      dense
-                      outlined
-                      label="Id"
-                      v-model="selectedChapter.id"
-                      class="id-input"
-                    />
                   </div>
 
                   <TimelineEditor :entries="selectedChapter.timeline" />
@@ -789,12 +782,6 @@ async function buildGame() {
 .chapter-header {
   display: flex;
   gap: var(--space-3);
-}
-
-.id-input {
-  width: 220px;
-  flex-shrink: 0;
-  font-family: var(--font-mono);
 }
 
 .section-label {
