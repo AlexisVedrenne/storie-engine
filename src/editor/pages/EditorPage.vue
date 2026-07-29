@@ -159,24 +159,6 @@
                       v-model="selectedChapter.id"
                       class="id-input"
                     />
-                    <RoutePickerField
-                      v-model="selectedChapter.route"
-                      label="Route (optionnel)"
-                      class="route-select"
-                    />
-                  </div>
-
-                  <div class="panel">
-                    <div class="section-label">
-                      Condition de démarrage du chapitre (optionnel)
-                      <FieldHelp
-                        text="Ce chapitre ne démarre que si toutes ces conditions sont vraies. Rien d'ajouté = toujours autorisé."
-                      />
-                    </div>
-                    <RequiresBuilder
-                      :model-value="selectedChapter.requires"
-                      @update:model-value="(v) => (selectedChapter.requires = v)"
-                    />
                   </div>
 
                   <TimelineEditor :entries="selectedChapter.timeline" />
@@ -319,10 +301,7 @@ import {
 import { validateProject, collectAssetPaths } from '@/project/validateProject'
 import PhoneShell from '@/components/phone/PhoneShell.vue'
 import ChapterGraph from '@/editor/components/ChapterGraph.vue'
-import RoutePickerField from '@/editor/components/RoutePickerField.vue'
-import RequiresBuilder from '@/editor/components/RequiresBuilder.vue'
 import TimelineEditor from '@/editor/components/TimelineEditor.vue'
-import FieldHelp from '@/editor/components/FieldHelp.vue'
 import ContactList from '@/editor/components/ContactList.vue'
 import ContactForm from '@/editor/components/ContactForm.vue'
 import ThreadList from '@/editor/components/ThreadList.vue'
@@ -752,11 +731,6 @@ async function buildGame() {
   width: 220px;
   flex-shrink: 0;
   font-family: var(--font-mono);
-}
-
-.route-select {
-  width: 220px;
-  flex-shrink: 0;
 }
 
 .section-label {

@@ -1,12 +1,10 @@
 // Scans a loaded project for broken references and structural chapter
 // problems the engine won't catch — findContact()/findThread()
 // (engine/stores/story.js) fail *silently* on a bad id (synthetic stub, no
-// error), and a chapter dropped from chapterOrder just stops being reachable
-// without any warning. Same leaf-module convention as findReferences.js:
-// pure, no Pinia store dependency, usable from a plain button handler.
-
-import { hasCycle } from './routeTree.js'
-import { collectRouteTaggedOptions, firstChapterOfRoute } from './chapterGraph.js'
+// error), and a chapter with no path in from entryChapterId just stops being
+// reachable without any warning. Same leaf-module convention as
+// findReferences.js: pure, no Pinia store dependency, usable from a plain
+// button handler.
 
 function walkEffectsRequires(refs, requires, effects, label) {
   if (requires?.following) {
@@ -85,11 +83,9 @@ function collectReferences(project) {
 
   for (const chapter of project.chapters || []) {
     const label = chapter.title || chapter.id
-    if (chapter.requires?.following) {
-      for (const id of Object.keys(chapter.requires.following)) {
-        refs.push({ kind: 'contact', id, label: `${label} → condition de démarrage` })
-      }
-    }
+    ;(chapter.next || []).forEach((link, j) => {
+      walkEffectsRequires(refs, link.requires, undefined, `${label} → flèche ${j + 1}`)
+    })
     walkTimeline(chapter.timeline, label)
   }
 
@@ -175,22 +171,6 @@ export function validateProject(project) {
 
   const chapters = project.chapters || []
   const chapterIds = new Set(chapters.map((c) => c.id))
-  const order = project.manifest?.chapterOrder || []
-
-  for (const id of order) {
-    if (!chapterIds.has(id)) {
-      errors.push(
-        `project.json → chapterOrder contient "${id}", aucun fichier chapitre correspondant`,
-      )
-    }
-  }
-  for (const chapter of chapters) {
-    if (!order.includes(chapter.id)) {
-      warnings.push(
-        `Chapitre "${chapter.title || chapter.id}" absent de chapterOrder — ordre de lecture non garanti`,
-      )
-    }
-  }
 
   const entryId = project.manifest?.entryChapterId
   if (entryId && !chapterIds.has(entryId)) {
@@ -199,47 +179,45 @@ export function validateProject(project) {
     )
   }
 
-  // Routes are editor-only organization (no engine meaning) — a dangling
-  // `chapter.route` can't break the game, just a warning rather than an
-  // error, same severity choice as the missing-from-chapterOrder check above.
-  const routeIds = new Set((project.routes || []).map((r) => r.id))
+  // Every authored arrow (chapter.next) must point at a real chapter — a
+  // dangling one would make startChapter() a silent no-op at runtime
+  // (see story.js's advance()), so this is an error, not a warning.
   for (const chapter of chapters) {
-    if (chapter.route && !routeIds.has(chapter.route)) {
-      warnings.push(
-        `Chapitre "${chapter.title || chapter.id}" → route introuvable : "${chapter.route}"`,
-      )
-    }
+    ;(chapter.next || []).forEach((link, j) => {
+      if (!chapterIds.has(link.to)) {
+        errors.push(
+          `Chapitre "${chapter.title || chapter.id}" → flèche ${j + 1} pointe vers un chapitre introuvable : "${link.to}"`,
+        )
+      }
+    })
   }
-  for (const route of project.routes || []) {
-    if (route.parentId && !routeIds.has(route.parentId)) {
-      warnings.push(
-        `Route "${route.name || route.id}" → route parente introuvable : "${route.parentId}"`,
-      )
-    }
-  }
-  // A key choice's `option.route` drives ChapterGraph.vue's branch edges
-  // (see chapterGraph.js) — same two failure shapes as chapter.route above,
-  // plus one specific to graph edges: a tag pointing at a route with no
-  // reachable chapter at all would just silently draw no edge for that
-  // branch, so it's worth its own message rather than folding into the
-  // dangling-id warning.
-  for (const chapter of chapters) {
-    for (const option of collectRouteTaggedOptions(chapter.timeline)) {
-      const label = `Chapitre "${chapter.title || chapter.id}" → choix clé "${option.text || '(texte vide)'}"`
-      if (!routeIds.has(option.route)) {
-        warnings.push(`${label} → route introuvable : "${option.route}"`)
-      } else if (!firstChapterOfRoute(chapters, project.routes || [], option.route)) {
-        warnings.push(`${label} → route "${option.route}" n'a aucun chapitre atteignable`)
+
+  // Reachability from entryChapterId, following every `next.to` regardless
+  // of its `requires` (a path existing at all is what matters here — which
+  // branch a given player takes is a runtime question, not a structural
+  // one). A chapter no arrow ever leads to (and that isn't the entry
+  // itself) is unreachable by construction — worth a warning since nothing
+  // else in the editor would surface it (see docs/routes-and-branching.md).
+  if (entryId && chapterIds.has(entryId)) {
+    const byId = new Map(chapters.map((c) => [c.id, c]))
+    const seen = new Set([entryId])
+    const queue = [entryId]
+    while (queue.length) {
+      const chapter = byId.get(queue.shift())
+      for (const link of chapter?.next || []) {
+        if (link.to && chapterIds.has(link.to) && !seen.has(link.to)) {
+          seen.add(link.to)
+          queue.push(link.to)
+        }
       }
     }
-  }
-  // A cycle would infinite-loop routeTree.js's pathTo()/RoutePickerField.vue's tree
-  // render — RoutePickerField.vue's parent picker already excludes self+descendants, so
-  // this shouldn't be reachable through the UI, but it's a real crash risk
-  // if it ever is (hand-edited routes.js, bug elsewhere), hence an error
-  // rather than a warning.
-  if (hasCycle(project.routes || [])) {
-    errors.push(`routes.js → une ou plusieurs routes forment un cycle parent/enfant`)
+    for (const chapter of chapters) {
+      if (!seen.has(chapter.id)) {
+        warnings.push(
+          `Chapitre "${chapter.title || chapter.id}" inatteignable depuis le début de l'histoire (aucune flèche n'y mène)`,
+        )
+      }
+    }
   }
 
   return { errors, warnings }

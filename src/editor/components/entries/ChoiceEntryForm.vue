@@ -134,11 +134,6 @@
           v-model="option.text"
         />
 
-        <RoutePickerField
-          v-model="option.route"
-          label="Mène vers la route (optionnel — pour un choix clé)"
-        />
-
         <q-tabs
           :model-value="tabFor(i)"
           dense
@@ -210,7 +205,6 @@ import RequiresBuilder from '@/editor/components/RequiresBuilder.vue'
 import EffectsBuilder from '@/editor/components/EffectsBuilder.vue'
 import TimelineEditor from '@/editor/components/TimelineEditor.vue'
 import FieldHelp from '@/editor/components/FieldHelp.vue'
-import RoutePickerField from '@/editor/components/RoutePickerField.vue'
 
 // `breadcrumb` — see docs/ui-ux-audit.md point 2 / TimelineEditor.vue's own
 // prop of the same name. Forwarded here (not built by TimelineEditor

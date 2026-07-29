@@ -219,13 +219,6 @@ export const useStoryStore = defineStore('story', {
     getThread: (state) => (id) => findThread(state.project, id),
     socialHandle: () => (contact) => pseudoHandle(contact),
     contactsList: (state) => state.project?.contacts ?? [],
-    // Routes are editor-only organization (see docs/story-engine.md's
-    // chapter.requires-based branching, which is the actual engine
-    // mechanism) — unlike findContact/findThread, no synthetic fallback
-    // stub: a chapter with no route (or a dangling route id) must resolve
-    // to `null`, not a fake "route" object.
-    routesList: (state) => state.project?.routes ?? [],
-    getRoute: (state) => (id) => state.project?.routes?.find((r) => r.id === id) || null,
     gameConfig: (state) => state.project?.gameConfig ?? { title: '' },
 
     // Editor-only: every flag name already used anywhere in the project,
@@ -648,16 +641,13 @@ export const useStoryStore = defineStore('story', {
         return
       }
 
-      // chapter finished — find the next chapter whose `requires` is met.
-      // Scans forward past any branch chapters that don't apply (e.g. a
-      // "low trust" branch when the player is high-trust) instead of only
-      // checking the immediate next slot, so branches can sit side by side
-      // in the array without blocking each other.
-      const chaptersList = this.project?.chapters ?? []
-      const idx = chaptersList.findIndex((c) => c.id === chapter.id)
-      for (let i = idx + 1; i < chaptersList.length; i++) {
-        if (this.checkConditions(chaptersList[i].requires)) {
-          this.startChapter(chaptersList[i].id)
+      // chapter finished — take the first authored outgoing edge whose
+      // `requires` passes (see chapter.next, authored as arrows in
+      // ChapterGraph.vue). No edges, or none whose requires currently
+      // holds, means this chapter is where the story ends for this player.
+      for (const edge of chapter.next || []) {
+        if (this.checkConditions(edge.requires)) {
+          this.startChapter(edge.to)
           return
         }
       }

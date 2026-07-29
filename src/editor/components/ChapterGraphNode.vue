@@ -5,7 +5,6 @@
     @click="data.onSelect"
   >
     <Handle type="target" :position="Position.Left" />
-    <div class="color-bar" :style="{ background: data.color }" />
     <div class="node-body">
       <div class="node-title" :title="data.chapter.title || data.chapter.id">
         {{ data.chapter.title || data.chapter.id }}
@@ -14,28 +13,6 @@
       <span v-if="data.isEnding" class="ending-badge">FIN</span>
     </div>
     <div class="node-actions">
-      <q-btn
-        dense
-        flat
-        round
-        icon="arrow_upward"
-        size="xs"
-        :disable="!data.canMoveUp"
-        @click.stop="data.onMoveUp"
-      >
-        <q-tooltip>Monter (même route)</q-tooltip>
-      </q-btn>
-      <q-btn
-        dense
-        flat
-        round
-        icon="arrow_downward"
-        size="xs"
-        :disable="!data.canMoveDown"
-        @click.stop="data.onMoveDown"
-      >
-        <q-tooltip>Descendre (même route)</q-tooltip>
-      </q-btn>
       <q-btn
         dense
         flat
@@ -83,11 +60,6 @@ defineProps({
 
 .chapter-node.ending {
   border-style: dashed;
-}
-
-.color-bar {
-  width: 4px;
-  flex-shrink: 0;
 }
 
 .node-body {

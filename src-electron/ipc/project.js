@@ -18,7 +18,6 @@ import {
   serializeChapter,
   serializeContacts,
   serializeThreads,
-  serializeRoutes,
   serializeGame,
   serializeI18nBucket,
 } from "../../src/project/serializeChapter.js";
@@ -89,25 +88,10 @@ async function loadProjectFromDisk(rootPath) {
     : { name: path.basename(rootPath) };
 
   const chaptersDir = path.join(rootPath, "chapters");
-  let chapters = fs.existsSync(chaptersDir) ? await scanChapters(chaptersDir) : [];
-
-  // deterministic ordering: honor project.json's chapterOrder if present,
-  // otherwise fall back to directory-scan order (not cross-platform
-  // guaranteed — a phase 2 concern to make explicit/editable in the UI).
-  if (Array.isArray(manifest.chapterOrder) && manifest.chapterOrder.length) {
-    const byId = new Map(chapters.map((c) => [c.id, c]));
-    const ordered = manifest.chapterOrder.map((id) => byId.get(id)).filter(Boolean);
-    const remaining = chapters.filter((c) => !manifest.chapterOrder.includes(c.id));
-    chapters = [...ordered, ...remaining];
-  } else {
-    console.warn(
-      "[storie-engine] project.json has no chapterOrder — chapter order follows directory scan, which is not guaranteed stable across platforms.",
-    );
-  }
+  const chapters = fs.existsSync(chaptersDir) ? await scanChapters(chaptersDir) : [];
 
   const contacts = await loadDefaultOr(path.join(rootPath, "contacts.js"), []);
   const threads = await loadDefaultOr(path.join(rootPath, "threads.js"), []);
-  const routes = await loadDefaultOr(path.join(rootPath, "routes.js"), []);
   const gameConfig = await loadDefaultOr(path.join(rootPath, "game.js"), {
     title: manifest.name || "",
   });
@@ -131,7 +115,6 @@ async function loadProjectFromDisk(rootPath) {
     chapters,
     contacts,
     threads,
-    routes,
     gameConfig,
     seed,
     i18n: i18nDict,
@@ -202,10 +185,10 @@ export function registerProjectHandlers(mainWindow) {
     return true;
   });
 
-  // Creates a new (empty) chapter file + registers it in project.json's
-  // chapterOrder. `source` is the already-serialized `export default {...}`
-  // for `{ id, title, requires: null, timeline: [] }`, built renderer-side
-  // with the same serializeChapter() used for saves.
+  // Creates a new (empty) chapter file. `source` is the already-serialized
+  // `export default {...}` for `{ id, title, timeline: [], next: [],
+  // position }`, built renderer-side with the same serializeChapter() used
+  // for saves.
   ipcMain.handle("project:createChapter", async (_evt, { rootPath, id, source }) => {
     const manifest = readManifest(rootPath);
     const sourceFile = `${slugify(id)}.js`;
@@ -216,32 +199,18 @@ export function registerProjectHandlers(mainWindow) {
     fs.mkdirSync(path.dirname(dest), { recursive: true });
     fs.writeFileSync(dest, await formatJs(source), "utf-8");
 
-    manifest.chapterOrder = Array.isArray(manifest.chapterOrder) ? manifest.chapterOrder : [];
-    manifest.chapterOrder.push(id);
-    writeManifest(rootPath, manifest);
-
     return { manifest, sourceFile };
   });
 
   // Deletion confirmation is the renderer's job (a q-dialog before this is
-  // ever called) — this handler just does the actual file removal.
-  ipcMain.handle("project:deleteChapter", async (_evt, { rootPath, sourceFile, id }) => {
+  // ever called) — this handler just does the actual file removal. Any
+  // dangling `next` edge left pointing at this chapter on other chapters is
+  // cleaned up renderer-side (see ChapterGraph.vue's confirmDelete), each
+  // via its own project:saveChapter call.
+  ipcMain.handle("project:deleteChapter", async (_evt, { rootPath, sourceFile }) => {
     const target = path.join(rootPath, "chapters", sourceFile);
     if (fs.existsSync(target)) fs.unlinkSync(target);
-
-    const manifest = readManifest(rootPath);
-    if (Array.isArray(manifest.chapterOrder)) {
-      manifest.chapterOrder = manifest.chapterOrder.filter((cid) => cid !== id);
-    }
-    writeManifest(rootPath, manifest);
-    return manifest;
-  });
-
-  ipcMain.handle("project:reorderChapters", async (_evt, { rootPath, chapterOrder }) => {
-    const manifest = readManifest(rootPath);
-    manifest.chapterOrder = chapterOrder;
-    writeManifest(rootPath, manifest);
-    return manifest;
+    return true;
   });
 
   // contacts.js / threads.js / game.js are flat single files (no per-item
@@ -254,11 +223,6 @@ export function registerProjectHandlers(mainWindow) {
 
   ipcMain.handle("project:saveThreads", async (_evt, { rootPath, source }) => {
     fs.writeFileSync(path.join(rootPath, "threads.js"), await formatJs(source), "utf-8");
-    return true;
-  });
-
-  ipcMain.handle("project:saveRoutes", async (_evt, { rootPath, source }) => {
-    fs.writeFileSync(path.join(rootPath, "routes.js"), await formatJs(source), "utf-8");
     return true;
   });
 
@@ -327,9 +291,15 @@ export function registerProjectHandlers(mainWindow) {
     fs.mkdirSync(path.join(rootPath, "chapters"), { recursive: true });
     fs.mkdirSync(path.join(rootPath, "assets"), { recursive: true });
 
-    writeManifest(rootPath, { name, entryChapterId: "chapter1", chapterOrder: ["chapter1"] });
+    writeManifest(rootPath, { name, entryChapterId: "chapter1" });
 
-    const chapter = { id: "chapter1", title: "Chapitre 1", requires: null, timeline: [] };
+    const chapter = {
+      id: "chapter1",
+      title: "Chapitre 1",
+      timeline: [],
+      next: [],
+      position: { x: 0, y: 0 },
+    };
     fs.writeFileSync(
       path.join(rootPath, "chapters", "chapter1.js"),
       await formatJs(serializeChapter(chapter)),
@@ -341,7 +311,6 @@ export function registerProjectHandlers(mainWindow) {
       "utf-8",
     );
     fs.writeFileSync(path.join(rootPath, "threads.js"), await formatJs(serializeThreads([])), "utf-8");
-    fs.writeFileSync(path.join(rootPath, "routes.js"), await formatJs(serializeRoutes([])), "utf-8");
     fs.writeFileSync(path.join(rootPath, "game.js"), await formatJs(serializeGame({ title: name })), "utf-8");
 
     return rootPath;

@@ -15,14 +15,17 @@
       :nodes="displayNodes"
       :edges="graph.edges"
       :node-types="nodeTypes"
-      :nodes-draggable="false"
-      :nodes-connectable="false"
+      :nodes-draggable="true"
+      :nodes-connectable="true"
       :edges-updatable="false"
-      :edges-focusable="false"
+      :edges-focusable="true"
       fit-view-on-init
       class="flow"
+      @connect="onConnect"
+      @node-drag-stop="onNodeDragStop"
+      @edge-click="onEdgeClick"
     >
-      <Controls :show-interactive="false" />
+      <Controls />
     </VueFlow>
 
     <q-dialog v-model="newChapterDialog">
@@ -45,11 +48,33 @@
         </q-card-actions>
       </q-card>
     </q-dialog>
+
+    <!-- Editing an arrow's condition — same RequiresBuilder used everywhere
+         else (chapter.requires used to bind here before routes/chapter-level
+         requires were removed; now it's the edge itself, chapter.next[i]). -->
+    <q-dialog v-model="edgeDialogOpen">
+      <q-card class="edge-dialog-card">
+        <q-card-section>
+          <div class="text-subtitle1">Condition de cette flèche</div>
+          <RequiresBuilder v-model="edgeDraft.requires" />
+        </q-card-section>
+        <q-card-actions align="right">
+          <q-btn
+            flat
+            label="Supprimer cette flèche"
+            color="negative"
+            class="delete-edge-btn"
+            @click="deleteEdge"
+          />
+          <q-btn flat label="Fermer" color="primary" @click="closeEdgeDialog" v-close-popup />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
   </div>
 </template>
 
 <script setup>
-import { computed, markRaw, ref } from 'vue'
+import { computed, markRaw, reactive, ref } from 'vue'
 import { VueFlow } from '@vue-flow/core'
 import { Controls } from '@vue-flow/controls'
 import '@vue-flow/core/dist/style.css'
@@ -57,71 +82,88 @@ import '@vue-flow/core/dist/theme-default.css'
 import '@vue-flow/controls/dist/style.css'
 import { Dialog, Notify } from 'quasar'
 import { useStoryStore } from '@/engine/stores/story'
-import { useRouteOptions } from '@/editor/composables/useRouteOptions'
 import { buildChapterGraph } from '@/project/chapterGraph'
 import { serializeChapter } from '@/project/serializeChapter'
 import ChapterGraphNode from '@/editor/components/ChapterGraphNode.vue'
+import RequiresBuilder from '@/editor/components/RequiresBuilder.vue'
 
 // `null` = nothing selected (the graph's default, full-bleed state driven
 // by EditorPage.vue) — no strict `type` so Vue doesn't warn on that value.
 const props = defineProps({ modelValue: { default: null } })
 const emit = defineEmits(['update:modelValue', 'preview-from'])
 const story = useStoryStore()
-const { routeColor } = useRouteOptions()
 
 const chapters = story.project.chapters
-const routes = story.project.routes
 
 // markRaw — vue-flow's node-types map is read once, no need for the
 // component itself to be reactive (it never changes).
 const nodeTypes = { chapter: markRaw(ChapterGraphNode) }
 
-// Recomputed whenever chapters/routes/timelines change — buildChapterGraph
-// is pure (src/project/chapterGraph.js), reading the reactive `chapters`/
-// `routes` arrays inside a computed gives fine-grained reactivity for free
-// (same as the old ChapterList.vue's `visibleChapters` computed did).
-const graph = computed(() => buildChapterGraph(chapters, routes))
+// Recomputed whenever chapters (their `next`/`position`/timeline) change —
+// buildChapterGraph is pure (src/project/chapterGraph.js), reading the
+// reactive `chapters` array inside a computed gives fine-grained
+// reactivity for free.
+const graph = computed(() => buildChapterGraph(chapters))
 
-// Chapters filed under the same route, in chapterOrder's relative order —
-// same "nearest visible sibling" swap logic ChapterList.vue used, just
-// keyed off a route id directly instead of a "current folder" ref (there's
-// no folder concept anymore, the graph shows everything at once).
-function sameRouteSiblings(routeId) {
-  return chapters
-    .map((chapter, index) => ({ chapter, index }))
-    .filter(({ chapter }) => (chapter.route || '') === (routeId || ''))
-}
-function siblingPosition(index, routeId) {
-  return sameRouteSiblings(routeId).findIndex((s) => s.index === index)
+function findChapter(id) {
+  return chapters.find((c) => c.id === id)
 }
 
-async function persistOrder() {
-  const chapterOrder = chapters.map((c) => c.id)
-  story.project.manifest.chapterOrder = chapterOrder
-  await window.storieAPI.reorderChapters({ rootPath: story.project.rootPath, chapterOrder })
+async function persistChapter(chapter) {
+  await window.storieAPI.saveChapter({
+    rootPath: story.project.rootPath,
+    sourceFile: chapter.__sourceFile,
+    source: serializeChapter(chapter),
+  })
 }
 
-// Swaps with the nearest sibling of the SAME route (not the array-adjacent
-// chapter) — leaves every other chapter's position untouched, result is
-// still the real play order. See ChapterList.vue's prior version of this
-// same logic (superseded by this file).
-async function moveUp(index) {
-  const routeId = chapters[index].route
-  const siblings = sameRouteSiblings(routeId)
-  const si = siblingPosition(index, routeId)
-  if (si <= 0) return
-  const otherIndex = siblings[si - 1].index
-  ;[chapters[index], chapters[otherIndex]] = [chapters[otherIndex], chapters[index]]
-  await persistOrder()
+// Dragging a new arrow from one node's source handle to another's target
+// handle (the <Handle> anchors already rendered by ChapterGraphNode.vue) —
+// this is the sole way a `next` entry gets created; nothing infers it.
+async function onConnect({ source, target }) {
+  if (source === target) return
+  const chapter = findChapter(source)
+  if (!chapter) return
+  if (!chapter.next) chapter.next = []
+  chapter.next.push({ to: target })
+  await persistChapter(chapter)
 }
-async function moveDown(index) {
-  const routeId = chapters[index].route
-  const siblings = sameRouteSiblings(routeId)
-  const si = siblingPosition(index, routeId)
-  if (si === -1 || si >= siblings.length - 1) return
-  const otherIndex = siblings[si + 1].index
-  ;[chapters[index], chapters[otherIndex]] = [chapters[otherIndex], chapters[index]]
-  await persistOrder()
+
+async function onNodeDragStop({ node }) {
+  const chapter = findChapter(node.id)
+  if (!chapter) return
+  chapter.position = { x: node.position.x, y: node.position.y }
+  await persistChapter(chapter)
+}
+
+const edgeDialogOpen = ref(false)
+const edgeDraft = reactive({ sourceId: null, index: -1, requires: null })
+
+function onEdgeClick({ edge }) {
+  const [, indexStr] = edge.id.split('->')
+  edgeDraft.sourceId = edge.source
+  edgeDraft.index = Number(indexStr)
+  edgeDraft.requires = edge.data?.requires ?? null
+  edgeDialogOpen.value = true
+}
+
+async function closeEdgeDialog() {
+  const chapter = findChapter(edgeDraft.sourceId)
+  const link = chapter?.next?.[edgeDraft.index]
+  if (link) {
+    link.requires = edgeDraft.requires
+    await persistChapter(chapter)
+  }
+  edgeDialogOpen.value = false
+}
+
+async function deleteEdge() {
+  const chapter = findChapter(edgeDraft.sourceId)
+  if (chapter?.next) {
+    chapter.next.splice(edgeDraft.index, 1)
+    await persistChapter(chapter)
+  }
+  edgeDialogOpen.value = false
 }
 
 function previewFrom(chapter) {
@@ -143,31 +185,38 @@ function confirmDelete(chapter) {
       id: chapter.id,
     })
     chapters.splice(idx, 1)
-    story.project.manifest.chapterOrder = chapters.map((c) => c.id)
-    Notify.create({ type: 'positive', message: 'Chapitre supprimé.' })
+
+    // Strip any arrow left pointing at the now-deleted chapter, on every
+    // other chapter that had one — otherwise `next[].to` would dangle.
+    const affected = chapters.filter((c) => (c.next || []).some((link) => link.to === chapter.id))
+    for (const other of affected) {
+      other.next = other.next.filter((link) => link.to !== chapter.id)
+      await persistChapter(other)
+    }
+
+    Notify.create({
+      type: 'positive',
+      message: affected.length
+        ? `Chapitre supprimé (${affected.length} flèche${affected.length > 1 ? 's' : ''} pendante${affected.length > 1 ? 's' : ''} retirée${affected.length > 1 ? 's' : ''}).`
+        : 'Chapitre supprimé.',
+    })
   })
 }
 
-// Enriches buildChapterGraph()'s plain {chapter,index,route,isEnding} data
-// with the callbacks/derived flags the node component needs — kept out of
-// chapterGraph.js on purpose (it stays a pure, Vue/story-free module).
+// Enriches buildChapterGraph()'s plain {chapter,isEnding} data with the
+// callbacks the node component needs — kept out of chapterGraph.js on
+// purpose (it stays a pure, Vue/story-free module).
 const displayNodes = computed(() =>
   graph.value.nodes.map((node) => {
-    const { chapter, index, route, isEnding } = node.data
-    const siblings = sameRouteSiblings(route)
-    const si = siblingPosition(index, route)
+    const { chapter, isEnding } = node.data
+    const index = chapters.indexOf(chapter)
     return {
       ...node,
       data: {
         chapter,
         isEnding,
-        color: routeColor(route),
         isActive: index === props.modelValue,
-        canMoveUp: si > 0,
-        canMoveDown: si !== -1 && si < siblings.length - 1,
         onSelect: () => emit('update:modelValue', index),
-        onMoveUp: () => moveUp(index),
-        onMoveDown: () => moveDown(index),
         onPreview: () => previewFrom(chapter),
         onDelete: () => confirmDelete(chapter),
       },
@@ -183,7 +232,11 @@ async function createChapter() {
   const id = newId.value.trim()
   if (!id) return
   const title = newTitle.value.trim() || id
-  const chapter = { id, title, requires: null, timeline: [] }
+  // Small cascading offset so freshly-created chapters don't stack exactly
+  // on top of each other — the author drags it wherever it actually
+  // belongs right after creating it anyway.
+  const position = { x: 40 * chapters.length, y: 40 * (chapters.length % 5) }
+  const chapter = { id, title, timeline: [], next: [], position }
   try {
     const result = await window.storieAPI.createChapter({
       rootPath: story.project.rootPath,
@@ -224,9 +277,14 @@ async function createChapter() {
   z-index: 5;
 }
 
-.new-chapter-card {
+.new-chapter-card,
+.edge-dialog-card {
   min-width: 320px;
   background: var(--color-surface);
   color: var(--color-text);
+}
+
+.delete-edge-btn {
+  margin-right: auto;
 }
 </style>

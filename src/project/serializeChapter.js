@@ -59,10 +59,6 @@ export function serializeThreads(threads) {
   return `export default ${toJsLiteral(threads)};\n`
 }
 
-export function serializeRoutes(routes) {
-  return `export default ${toJsLiteral(routes)};\n`
-}
-
 export function serializeGame(game) {
   return `export default ${toJsLiteral(game)};\n`
 }

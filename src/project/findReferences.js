@@ -10,9 +10,6 @@
 // dangling id (return a synthetic stub, never throw) — this scanner exists
 // so deleting a contact/thread can't quietly orphan a reference instead.
 
-import { childrenOf } from './routeTree.js'
-import { collectRouteTaggedOptions } from './chapterGraph.js'
-
 function pushIfContactUsed(refs, label, id, requires, effects) {
   if (requires?.following && id in requires.following) refs.push(`${label} (condition)`)
   if (effects?.social && id in effects.social) refs.push(`${label} (effet social)`)
@@ -71,9 +68,9 @@ function findContactReferences(project, id) {
 
   for (const chapter of project.chapters || []) {
     const label = chapter.title || chapter.id
-    if (chapter.requires?.following && id in chapter.requires.following) {
-      refs.push(`${label} → condition de démarrage`)
-    }
+    ;(chapter.next || []).forEach((link, j) => {
+      pushIfContactUsed(refs, `${label} → flèche ${j + 1}`, id, link.requires, undefined)
+    })
     walkTimeline(chapter.timeline, label)
   }
 
@@ -137,31 +134,11 @@ function findThreadReferences(project, id) {
   return refs
 }
 
-// Routes are editor-only organization (no engine meaning, see
-// docs/story-engine.md's chapter.requires-based branching) — a route id can
-// be referenced by a chapter's own `route` field, or by a sub-route's
-// `parentId` (routeTree.js's childrenOf) — both block deletion.
-function findRouteReferences(project, id) {
-  const refs = []
-  for (const chapter of project.chapters || []) {
-    if (chapter.route === id) refs.push(chapter.title || chapter.id)
-    const taggedOptions = collectRouteTaggedOptions(chapter.timeline).filter((o) => o.route === id)
-    for (const option of taggedOptions) {
-      refs.push(`${chapter.title || chapter.id} → choix clé "${option.text || '(texte vide)'}"`)
-    }
-  }
-  for (const child of childrenOf(project.routes, id)) {
-    refs.push(`sous-route : ${child.name || child.id}`)
-  }
-  return refs
-}
-
 // @param project - story.project: {chapters, threads, seed}
-// @param target - {type: 'contact'|'thread'|'route', id: string}
+// @param target - {type: 'contact'|'thread', id: string}
 // @returns string[] human-readable reference locations; [] = safe to delete
 export function findReferences(project, target) {
   if (!project) return []
   if (target.type === 'contact') return findContactReferences(project, target.id)
-  if (target.type === 'thread') return findThreadReferences(project, target.id)
-  return findRouteReferences(project, target.id)
+  return findThreadReferences(project, target.id)
 }
