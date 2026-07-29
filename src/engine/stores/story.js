@@ -185,6 +185,21 @@ function defaultState() {
   }
 }
 
+// Fields explicitly marked above as transient/not-persisted, plus `project`
+// itself (static per-launch data, reloaded fresh every time — see
+// loadProject()'s own comment) — everything else in defaultState() is real
+// player progress and goes in the save file (see save()/load() below).
+const NON_PERSISTED_KEYS = new Set([
+  'project',
+  'activeChoice',
+  'timelineResume',
+  'pendingCall',
+  'notifications',
+  'typingContact',
+  'typingDm',
+  'timeSkipFading',
+])
+
 export const useStoryStore = defineStore('story', {
   state: () => defaultState(),
 
@@ -1261,15 +1276,37 @@ export const useStoryStore = defineStore('story', {
     },
 
     // --- persistence ---------------------------------------------------------
-    // Phase 1: the editor preview is entirely in-memory, reset via
-    // loadProject() whenever a project is (re)opened — no localStorage
-    // round-trip. Kept as no-ops (rather than removed) so every call site
-    // above (save() after each mutation, etc.) doesn't need touching; a real
-    // save/load story (per-project slots) is out of scope for phase 1.
-    save() {},
+    // window.storieGameSave only exists in a shipped/exported game (see
+    // templates/game-shell/src-electron/electron-{main,preload}.js) — the
+    // editor's own live preview has no such bridge and stays purely
+    // in-memory, reset via loadProject() whenever a project is (re)opened,
+    // exactly like before. A real save is a single small JSON file at
+    // app.getPath('userData')/save.json (Roaming, keyed by productName —
+    // survives a reinstall/update, unlike anything next to the .exe).
+    save() {
+      if (!window.storieGameSave) return
+      const snapshot = {}
+      for (const [key, value] of Object.entries(this.$state)) {
+        if (!NON_PERSISTED_KEYS.has(key)) snapshot[key] = value
+      }
+      // Pinia state holds reactive proxies — Electron's IPC uses the
+      // structured clone algorithm, which can't clone those directly (same
+      // reasoning as project.js's loadProjectFromDisk JSON round-trip).
+      // This also conveniently drops any stray `undefined`.
+      window.storieGameSave.write(JSON.parse(JSON.stringify(snapshot)))
+    },
 
+    // Synchronous — called from init(), itself called synchronously before
+    // PhoneShell ever mounts (see GamePage.vue), so playerName is already
+    // known by the time PhoneShell decides whether to show the first-boot
+    // wizard. window.storieGameSave.load() is a blocking IPC round-trip for
+    // exactly that reason (see electron-preload.js).
     load() {
-      return false
+      if (!window.storieGameSave) return false
+      const snapshot = window.storieGameSave.load()
+      if (!snapshot) return false
+      Object.assign(this, snapshot)
+      return true
     },
 
     // Settings app's "reset phone" — a fresh save within the CURRENTLY
@@ -1287,6 +1324,11 @@ export const useStoryStore = defineStore('story', {
       const project = this.project
       Object.assign(this, defaultState())
       this.project = project
+      // Persists the reset immediately rather than waiting for the wizard's
+      // own setPlayerName()/setLocale() calls to do it — otherwise quitting
+      // between the reset and finishing the wizard leaves the OLD save on
+      // disk, silently undoing the reset on next launch.
+      this.save()
     },
   },
 })

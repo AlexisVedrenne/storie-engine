@@ -76,6 +76,13 @@ story.loadProject({
   i18n,
   assetsRoot: 'assets'
 })
+
+// Resumes a local save if one exists (see story.js's save()/load(),
+// window.storieGameSave in electron-preload.js) — must run synchronously,
+// right here, before <PhoneShell/> mounts below: PhoneShell decides whether
+// to show the first-boot Setup Wizard from story.playerName at its own
+// setup() time, so that has to already be resolved by the time it mounts.
+story.init()
 </script>
 
 <style scoped>
