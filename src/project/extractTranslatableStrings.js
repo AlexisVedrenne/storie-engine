@@ -52,6 +52,12 @@ function addChapterStrings(timeline, set) {
 
 function addCommonStrings(project, set) {
   for (const contact of project.contacts || []) {
+    // Matches story.js's contactName getter, which resolves a contact's
+    // display name (Messages/Appels — not Pixly, which uses `pseudo`
+    // instead) through the 'common' bucket too, same as `bio` — a
+    // translated name (e.g. "Maman" -> "Mom") was previously never
+    // extracted, so it always showed up as a false "unused" orphan.
+    if (contact.name) set.add(contact.name);
     if (contact.bio) set.add(contact.bio);
   }
   for (const thread of project.threads || []) {
@@ -77,6 +83,64 @@ function addCommonStrings(project, set) {
   for (const photo of seed.photos || []) {
     if (photo.caption) set.add(photo.caption);
   }
+}
+
+// Same French strings as extractTranslatableStrings(project).common, just
+// organized by where each one comes from instead of one flat alphabetical
+// list — the "commun" bucket mixes contact names/bios, group thread names,
+// and every seed sub-type, which becomes unreadable past a few dozen
+// entries with no origin marker at all.
+// @param project - story.project: {contacts, threads, seed}
+// @returns {{label: string, items: string[]}[]} only non-empty groups, in a
+// fixed reading order (contacts first, then seed content types)
+export function extractCommonCategories(project) {
+  const groups = [];
+  function push(label, items) {
+    const list = [...new Set(items.filter(Boolean))].sort();
+    if (list.length) groups.push({ label, items: list });
+  }
+
+  push(
+    "Noms des contacts",
+    (project.contacts || []).map((c) => c.name),
+  );
+  push(
+    "Bios des contacts",
+    (project.contacts || []).map((c) => c.bio),
+  );
+  push(
+    "Noms de groupes",
+    (project.threads || []).filter((t) => t.group).map((t) => t.name),
+  );
+
+  const seed = project.seed || {};
+  const seedTexts = (bucketName) =>
+    Object.values(seed[bucketName] || {}).flatMap((entries) =>
+      (entries || []).map((m) => m.text),
+    );
+  push("Messages (contenu initial)", seedTexts("messages"));
+  push("DM (contenu initial)", seedTexts("dms"));
+
+  const postTexts = [];
+  for (const post of seed.posts || []) {
+    if (post.content) postTexts.push(post.content);
+    for (const c of post.comments || []) if (c.text) postTexts.push(c.text);
+  }
+  push("Posts (contenu initial)", postTexts);
+
+  const reelTexts = [];
+  for (const reel of seed.reels || []) {
+    if (reel.caption) reelTexts.push(reel.caption);
+    for (const c of reel.comments || []) if (c.text) reelTexts.push(c.text);
+  }
+  push("Reels (contenu initial)", reelTexts);
+
+  push(
+    "Photos (contenu initial)",
+    (seed.photos || []).map((p) => p.caption),
+  );
+
+  return groups;
 }
 
 // @param project - story.project: {chapters, contacts, threads, seed}
