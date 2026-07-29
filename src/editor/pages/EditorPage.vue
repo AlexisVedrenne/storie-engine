@@ -324,7 +324,14 @@
                 : '#phone-slot-docked'
           "
         >
-          <PhoneShell :large="focusPreview" />
+          <!-- Always the raised size cap (600x1200 vs. 480x960 default, see
+               PhoneShell.vue's own `large` comment) — not just in focus
+               mode. The docked/chapter-page panes are user-resizable
+               splitters with plenty of room on anything but a small window,
+               and PhoneShell's own min(94vw, cap, 94vh*9/18) sizing already
+               shrinks it back down on a narrower one — so there was never a
+               real reason to cap it lower there specifically. -->
+          <PhoneShell large />
         </Teleport>
       </div>
     </template>

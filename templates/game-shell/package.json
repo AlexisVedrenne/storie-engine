@@ -11,6 +11,8 @@
   "dependencies": {
     "vue-i18n": "^11.3.0",
     "pinia": "^4.0.2",
+    "@fontsource/fira-code": "^5.3.0",
+    "@fontsource/inter": "^5.3.0",
     "@quasar/extras": "^2.0.0",
     "quasar": "^2.23.1",
     "vue": "^3.5.22",

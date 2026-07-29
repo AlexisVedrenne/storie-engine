@@ -1,11 +1,21 @@
 <template>
   <q-page class="game-stage flex flex-center">
-    <PhoneShell />
+    <div class="stage-glow-wrap">
+      <div class="stage-glow theme-home" :class="{ active: theme === 'home' }" />
+      <div class="stage-glow theme-messages" :class="{ active: theme === 'messages' }" />
+      <div class="stage-glow theme-social" :class="{ active: theme === 'social' }" />
+      <div class="stage-glow theme-gallery" :class="{ active: theme === 'gallery' }" />
+      <div class="stage-glow theme-calls" :class="{ active: theme === 'calls' }" />
+      <div class="stage-glow theme-settings" :class="{ active: theme === 'settings' }" />
+    </div>
+    <PhoneShell large />
   </q-page>
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import { useStoryStore } from '../engine/stores/story'
+import { usePhoneStore } from '../engine/stores/phone'
 import PhoneShell from '../components/phone/PhoneShell.vue'
 
 // Static equivalent of the editor's OpenProjectPage.vue — instead of an IPC
@@ -24,14 +34,19 @@ import seedPosts from '../project-data/seed/posts.js'
 import seedReels from '../project-data/seed/reels.js'
 import seedPhotos from '../project-data/seed/photos.js'
 
-// Chapters matched by `id`, not by file path — sidesteps any glob-ordering
-// ambiguity, consistent with how the editor's main process resolves
-// `project.json`'s chapterOrder (see src-electron/ipc/project.js).
+// Ported from NTR's own PhonePage.vue — a soft blurred-blob glow behind the
+// phone that crossfades to a different palette per currently-open app,
+// rather than one flat static background for the whole game.
+const phone = usePhoneStore()
+const theme = computed(() => phone.currentApp || 'home')
+
+// Chapter reading order is no longer array-position-based — each chapter's
+// own `next` (authored graph edges the editor draws as arrows) and
+// `manifest.entryChapterId` drive everything the engine actually needs.
+// Glob order itself is irrelevant, so no sorting/filtering step is needed
+// here at all — every chapter file found just goes in.
 const chapterModules = import.meta.glob('../project-data/chapters/**/*.js', { eager: true })
-const allChapters = Object.values(chapterModules).map((m) => m.default)
-const chapters = (manifest.chapterOrder || [])
-  .map((id) => allChapters.find((c) => c.id === id))
-  .filter(Boolean)
+const chapters = Object.values(chapterModules).map((m) => m.default)
 
 const i18nModules = import.meta.glob('../project-data/i18n/*/*.js', { eager: true })
 const i18n = {}
@@ -65,9 +80,87 @@ story.loadProject({
 
 <style scoped>
 .game-stage {
+  position: relative;
   height: 100vh;
   width: 100%;
   background: #101018;
   overflow: hidden;
+}
+
+.stage-glow-wrap {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.stage-glow {
+  position: absolute;
+  inset: 0;
+  filter: blur(90px);
+  opacity: 0;
+  transition: opacity 1s ease;
+  animation: stage-drift 30s ease-in-out infinite;
+}
+
+.stage-glow.active {
+  opacity: 0.5;
+}
+
+.theme-home {
+  background:
+    radial-gradient(circle at 20% 20%, #7b5cff 0%, transparent 45%),
+    radial-gradient(circle at 80% 15%, #f5576c 0%, transparent 40%),
+    radial-gradient(circle at 25% 85%, #1e88e5 0%, transparent 45%),
+    radial-gradient(circle at 80% 85%, #ffb300 0%, transparent 40%);
+}
+
+.theme-messages {
+  background:
+    radial-gradient(circle at 25% 20%, #4caf50 0%, transparent 45%),
+    radial-gradient(circle at 80% 80%, #1b5e20 0%, transparent 45%);
+}
+
+.theme-social {
+  background:
+    radial-gradient(circle at 20% 15%, #f093fb 0%, transparent 45%),
+    radial-gradient(circle at 85% 80%, #f5576c 0%, transparent 45%),
+    radial-gradient(circle at 75% 15%, #6228d7 0%, transparent 40%);
+}
+
+.theme-gallery {
+  background:
+    radial-gradient(circle at 20% 20%, #ffb300 0%, transparent 40%),
+    radial-gradient(circle at 75% 15%, #f4511e 0%, transparent 40%),
+    radial-gradient(circle at 25% 85%, #8e24aa 0%, transparent 40%),
+    radial-gradient(circle at 80% 85%, #1e88e5 0%, transparent 40%);
+}
+
+.theme-calls {
+  background:
+    radial-gradient(circle at 25% 20%, #8bc34a 0%, transparent 45%),
+    radial-gradient(circle at 80% 80%, #33691e 0%, transparent 45%);
+}
+
+.theme-settings {
+  background:
+    radial-gradient(circle at 25% 20%, #8e8e93 0%, transparent 45%),
+    radial-gradient(circle at 80% 80%, #3a3a3f 0%, transparent 45%);
+}
+
+@keyframes stage-drift {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(-3%, 3%) scale(1.06);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stage-glow {
+    animation: none;
+  }
 }
 </style>

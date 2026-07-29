@@ -8,6 +8,12 @@
 // the real .mp3 in later with zero code changes. A missing file just fails
 // the play() promise quietly (see playSound/startLoop), same as a real
 // notification sound nobody's recorded yet.
+//
+// Relative, not root-absolute ("./sounds/..." not "/sounds/..."): a packaged
+// Electron app loads index.html via `file://`, where a leading "/" resolves
+// to the filesystem root, not the app folder — same reasoning as
+// engine-overrides/assets.js's resolveAssetUrl (its own comment already
+// flagged this exact file as having the same bug, unfixed until now).
 import { useStoryStore } from "@/engine/stores/story";
 import { resolveAssetUrl } from "@/engine/assets";
 
@@ -15,21 +21,21 @@ import { resolveAssetUrl } from "@/engine/assets";
 // bundled default for a slot before/instead of overriding it — same paths
 // getAudio() falls back to when a project sets no override.
 export const SOUND_FILES = {
-  "sms-receive": "/sounds/sms-receive.mp3",
-  "sms-send": "/sounds/sms-send.mp3",
-  "dm-receive": "/sounds/dm-receive.mp3",
-  "social-send": "/sounds/social-send.mp3",
-  "call-ringtone": "/sounds/call-ringtone.mp3",
-  "call-accept": "/sounds/call-accept.mp3",
-  "call-end": "/sounds/call-end.mp3",
-  "social-like": "/sounds/social-like.mp3",
-  "social-new-follower": "/sounds/social-new-follower.mp3",
-  "social-story-tap": "/sounds/social-story-tap.mp3",
-  "social-post-share": "/sounds/social-post-share.mp3",
-  "system-boot": "/sounds/system-boot.mp3",
-  "system-unlock": "/sounds/system-unlock.mp3",
-  "system-notification": "/sounds/system-notification.mp3",
-  "system-low-battery": "/sounds/system-low-battery.mp3",
+  "sms-receive": "./sounds/sms-receive.mp3",
+  "sms-send": "./sounds/sms-send.mp3",
+  "dm-receive": "./sounds/dm-receive.mp3",
+  "social-send": "./sounds/social-send.mp3",
+  "call-ringtone": "./sounds/call-ringtone.mp3",
+  "call-accept": "./sounds/call-accept.mp3",
+  "call-end": "./sounds/call-end.mp3",
+  "social-like": "./sounds/social-like.mp3",
+  "social-new-follower": "./sounds/social-new-follower.mp3",
+  "social-story-tap": "./sounds/social-story-tap.mp3",
+  "social-post-share": "./sounds/social-post-share.mp3",
+  "system-boot": "./sounds/system-boot.mp3",
+  "system-unlock": "./sounds/system-unlock.mp3",
+  "system-notification": "./sounds/system-notification.mp3",
+  "system-low-battery": "./sounds/system-low-battery.mp3",
 };
 
 // one <audio> element per sound, reused across plays instead of recreated

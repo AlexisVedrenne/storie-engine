@@ -31,11 +31,17 @@ async function createWindow () {
     width: 1000,
     height: 600,
     useContentSize: true,
+    show: false, // maximized (see 'ready-to-show' below) before it's ever shown, no visible resize-then-jump
     webPreferences: {
       contextIsolation: true,
       // https://v2.quasar.dev/quasar-cli-vite/developing-electron-apps/electron-preload-script
       preload: path.join(import.meta.dirname, 'electron-preload.cjs')
     }
+  })
+
+  mainWindow.once('ready-to-show', () => {
+    mainWindow.maximize()
+    mainWindow.show()
   })
 
   if (import.meta.env.QUASAR_DEV) {

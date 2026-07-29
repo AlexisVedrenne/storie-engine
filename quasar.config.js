@@ -244,8 +244,18 @@ export default defineConfig((ctx) => {
         // hand-maintained duplicate, always "fresh from the editor's own
         // current source" — carving out a separate pre-staged subset would
         // reintroduce exactly that drift risk for a few hundred KB of
-        // editor-only source it doesn't hurt to also carry.
-        extraResource: [path.join(import.meta.dirname, 'src'), path.join(import.meta.dirname, 'templates')],
+        // editor-only source it doesn't hurt to also carry. `public` too —
+        // assembleShell() also copies APP_ROOT/public/{icons,sounds} and
+        // favicon.ico into the exported game (engine sound effects live in
+        // public/sounds/, see src/engine/utils/sound.js) — missing from
+        // this list originally, which made a packaged storie-engine.exe
+        // silently ship every exported game with zero sound files
+        // (copyIfExists() no-ops when the source doesn't exist, no error).
+        extraResource: [
+          path.join(import.meta.dirname, 'src'),
+          path.join(import.meta.dirname, 'templates'),
+          path.join(import.meta.dirname, 'public'),
+        ],
       },
 
       builder: {
