@@ -1,16 +1,16 @@
 <template>
   <div class="entry-form">
-    <p class="intro">Verrouille le téléphone et fait avancer l'heure/la date d'un coup.</p>
+    <p class="intro">{{ t('entries.timeskip.intro') }}</p>
     <div class="row">
-      <q-input dense outlined label="Heure (optionnel)" placeholder="08:00" v-model="entry.clock" />
-      <q-input dense outlined label="Date (optionnel)" placeholder="19/07/2026" v-model="entry.date" />
+      <q-input dense outlined :label="t('entries.timeskip.clockLabel')" placeholder="08:00" v-model="entry.clock" />
+      <q-input dense outlined :label="t('entries.timeskip.dateLabel')" placeholder="19/07/2026" v-model="entry.date" />
     </div>
     <q-input
       dense
       outlined
       ref="labelInputRef"
-      label="Label affiché sur le lock screen (optionnel)"
-      placeholder="ex: Le lendemain"
+      :label="t('entries.timeskip.labelLabel')"
+      :placeholder="t('entries.timeskip.labelPlaceholder')"
       v-model="entry.label"
     >
       <template #append>
@@ -20,12 +20,10 @@
     <div class="toggle-row">
       <q-toggle
         :model-value="entry.blocking !== false"
-        label="Bloque la timeline jusqu'au déverrouillage"
+        :label="t('entries.timeskip.blockingLabel')"
         @update:model-value="(v) => (entry.blocking = v ? undefined : false)"
       />
-      <FieldHelp
-        text="Activé (par défaut) : l'histoire attend que le joueur déverrouille avant de continuer — coupure nette. Désactivé : la suite se joue en coulisses derrière l'écran verrouillé (messages/DM/appel s'accumulent normalement), comme un vrai téléphone dans une poche."
-      />
+      <FieldHelp :text="t('entries.timeskip.blockingHelp')" />
     </div>
   </div>
 </template>
@@ -35,7 +33,9 @@ import { ref } from 'vue'
 import FieldHelp from '@/editor/components/FieldHelp.vue'
 import EmojiPickerBtn from '@/components/shared/EmojiPickerBtn.vue'
 import { insertEmojiAtCaret } from '@/components/shared/emojiInsert'
+import { useEditorI18n } from '@/editor/i18n'
 
+const { t } = useEditorI18n()
 defineProps({ entry: { type: Object, required: true } })
 const labelInputRef = ref(null)
 </script>

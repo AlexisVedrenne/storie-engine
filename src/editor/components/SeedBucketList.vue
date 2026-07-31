@@ -1,6 +1,6 @@
 <template>
   <div class="seed-list">
-    <div class="pane-label">Contenu initial</div>
+    <div class="pane-label">{{ t('editorPage.tabSeed') }}</div>
 
     <div
       v-for="bucket in buckets"
@@ -13,7 +13,7 @@
       <q-icon :name="bucket.icon" size="16px" class="bucket-icon" />
       <div class="bucket-info">
         <div class="bucket-name">{{ bucket.label }}</div>
-        <div class="bucket-count">{{ countFor(bucket.value) }} entrée(s)</div>
+        <div class="bucket-count">{{ t('seedBucketList.entryCount', { n: countFor(bucket.value) }) }}</div>
       </div>
     </div>
   </div>
@@ -22,6 +22,9 @@
 <script setup>
 import { computed } from 'vue'
 import { useStoryStore } from '@/engine/stores/story'
+import { useEditorI18n } from '@/editor/i18n'
+
+const { t } = useEditorI18n()
 
 // Fixed set, not user-creatable — unlike every other list pane so far
 // (chapters/contacts/threads/locales), these 5 buckets are dictated by the
@@ -31,13 +34,13 @@ defineProps({ modelValue: { type: String, default: 'messages' } })
 const emit = defineEmits(['update:modelValue'])
 const story = useStoryStore()
 
-const buckets = [
-  { value: 'messages', label: 'Messages', icon: 'sms' },
-  { value: 'dms', label: 'DM Insta', icon: 'send' },
-  { value: 'posts', label: 'Publications', icon: 'dynamic_feed' },
-  { value: 'reels', label: 'Reels', icon: 'movie' },
-  { value: 'photos', label: 'Galerie', icon: 'photo' },
-]
+const buckets = computed(() => [
+  { value: 'messages', label: t('seedBucketList.messages'), icon: 'sms' },
+  { value: 'dms', label: t('seedBucketList.dms'), icon: 'send' },
+  { value: 'posts', label: t('seedBucketList.posts'), icon: 'dynamic_feed' },
+  { value: 'reels', label: t('seedBucketList.reels'), icon: 'movie' },
+  { value: 'photos', label: t('seedBucketList.photos'), icon: 'photo' },
+])
 
 const seed = computed(() => story.project?.seed || {})
 function countFor(bucketName) {

@@ -1,7 +1,7 @@
 <template>
   <div class="comments-field">
-    <div class="section-title">Commentaires (optionnel)</div>
-    <div v-if="!comments.length" class="empty-hint">Aucun commentaire écrit à la main.</div>
+    <div class="section-title">{{ t('commentsListField.title') }}</div>
+    <div v-if="!comments.length" class="empty-hint">{{ t('commentsListField.empty') }}</div>
     <div v-for="(c, i) in comments" :key="i" class="row">
       <q-select
         dense
@@ -9,7 +9,7 @@
         emit-value
         map-options
         class="author-select"
-        label="Auteur"
+        :label="t('seedBucketEditor.authorLabel')"
         :options="contactOptions"
         v-model="c.author"
         @update:model-value="sync"
@@ -34,7 +34,7 @@
         outlined
         :ref="(el) => (textRefs[i] = el)"
         class="text-input"
-        placeholder="Texte du commentaire"
+        :placeholder="t('commentsListField.textPlaceholder')"
         v-model="c.text"
         @update:model-value="sync"
       >
@@ -43,7 +43,7 @@
         </template>
       </q-input>
       <q-btn dense flat round icon="close" size="sm" @click="removeComment(i)">
-        <q-tooltip>Retirer</q-tooltip>
+        <q-tooltip>{{ t('assetField.removeTooltip') }}</q-tooltip>
       </q-btn>
     </div>
     <q-btn
@@ -51,7 +51,7 @@
       flat
       no-caps
       icon="add"
-      label="Ajouter un commentaire"
+      :label="t('commentsListField.addComment')"
       class="btn-ghost"
       @click="addComment"
     />
@@ -59,7 +59,7 @@
       dense
       outlined
       type="number"
-      label="Nombre de commentaires affiché (optionnel — sinon = nombre réel ci-dessus)"
+      :label="t('commentsListField.countLabel')"
       :model-value="commentsCount"
       @update:model-value="(v) => emit('update:commentsCount', v === '' ? undefined : Number(v))"
     />
@@ -71,7 +71,9 @@ import { reactive } from 'vue'
 import { useContactOptions } from '@/components/shared/useContactOptions'
 import EmojiPickerBtn from '@/components/shared/EmojiPickerBtn.vue'
 import { insertEmojiAtCaret } from '@/components/shared/emojiInsert'
+import { useEditorI18n } from '@/editor/i18n'
 
+const { t } = useEditorI18n()
 const props = defineProps({
   modelValue: { type: Array, default: () => [] },
   commentsCount: { type: Number, default: undefined },

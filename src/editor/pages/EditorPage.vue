@@ -10,13 +10,13 @@
          URL) without going through OpenProjectPage's load flow first. -->
     <div v-if="!story.project" class="editor-empty">
       <q-spinner color="primary" size="32px" />
-      <p>Aucun projet chargé — redirection…</p>
+      <p>{{ t('editorPage.noProject') }}</p>
     </div>
 
     <template v-else>
       <div class="topbar">
-        <span class="project-name">{{ story.project?.manifest?.name || '(projet)' }}</span>
-        <span v-if="dirty" class="dirty-dot" title="Modifications non enregistrées">●</span>
+        <span class="project-name">{{ story.project?.manifest?.name || t('editorPage.untitledProject') }}</span>
+        <span v-if="dirty" class="dirty-dot" :title="t('editorPage.unsavedTooltip')">●</span>
 
         <q-tabs
           dense
@@ -28,32 +28,34 @@
           align="left"
         >
           <q-tab name="chapters" icon="auto_stories">
-            <q-tooltip>Chapitres</q-tooltip>
+            <q-tooltip>{{ t('editorPage.tabChapters') }}</q-tooltip>
           </q-tab>
           <q-tab name="events" icon="sensors">
-            <q-tooltip>Events — réactions aux actions du joueur (hors timeline)</q-tooltip>
+            <q-tooltip>{{ t('editorPage.tabEvents') }}</q-tooltip>
           </q-tab>
           <q-tab name="contacts" icon="contacts">
-            <q-tooltip>Contacts</q-tooltip>
+            <q-tooltip>{{ t('editorPage.tabContacts') }}</q-tooltip>
           </q-tab>
           <q-tab name="threads" icon="groups">
-            <q-tooltip>Groupes</q-tooltip>
+            <q-tooltip>{{ t('editorPage.tabThreads') }}</q-tooltip>
           </q-tab>
           <q-tab name="game" icon="sports_esports">
-            <q-tooltip>Jeu</q-tooltip>
+            <q-tooltip>{{ t('editorPage.tabGame') }}</q-tooltip>
           </q-tab>
           <q-tab name="assets" icon="folder">
-            <q-tooltip>Ressources</q-tooltip>
+            <q-tooltip>{{ t('editorPage.tabAssets') }}</q-tooltip>
           </q-tab>
           <q-tab name="i18n" icon="translate">
-            <q-tooltip>Traductions</q-tooltip>
+            <q-tooltip>{{ t('editorPage.tabI18n') }}</q-tooltip>
           </q-tab>
           <q-tab name="seed" icon="inventory_2">
-            <q-tooltip>Contenu initial</q-tooltip>
+            <q-tooltip>{{ t('editorPage.tabSeed') }}</q-tooltip>
           </q-tab>
         </q-tabs>
 
         <div class="spacer" />
+
+        <EditorLangSwitch />
 
         <q-btn
           dense
@@ -63,11 +65,11 @@
           class="btn-ghost"
           @click="focusPreview = !focusPreview"
         >
-          <q-tooltip>{{ focusPreview ? `Afficher l'édition` : 'Aperçu seul' }}</q-tooltip>
+          <q-tooltip>{{ focusPreview ? t('editorPage.showEditing') : t('editorPage.previewOnly') }}</q-tooltip>
         </q-btn>
-        <q-toggle dense v-model="autosave" label="Sauvegarde auto" color="primary" />
+        <q-toggle dense v-model="autosave" :label="t('editorPage.autosaveLabel')" color="primary" />
         <q-btn dense flat no-caps round icon="refresh" class="btn-ghost" @click="restartPreview">
-          <q-tooltip>Relancer l'aperçu</q-tooltip>
+          <q-tooltip>{{ t('editorPage.restartPreviewTooltip') }}</q-tooltip>
         </q-btn>
 
         <div class="topbar-divider" />
@@ -81,10 +83,7 @@
           :loading="validating"
           @click="runValidation"
         >
-          <q-tooltip
-            >Valider le projet — cherche les références cassées (contact/thread/image introuvable)
-            et les problèmes de chapitres</q-tooltip
-          >
+          <q-tooltip>{{ t('editorPage.validateTooltip') }}</q-tooltip>
         </q-btn>
 
         <q-btn
@@ -92,7 +91,7 @@
           unelevated
           no-caps
           icon="save"
-          label="Enregistrer"
+          :label="t('editorPage.saveBtn')"
           color="primary"
           :disable="!dirty"
           @click="save"
@@ -107,7 +106,7 @@
           :disable="building"
           @click="buildGame"
         >
-          <q-tooltip>Build — exporter ce projet en jeu jouable (app Electron packagée)</q-tooltip>
+          <q-tooltip>{{ t('editorPage.buildTooltip') }}</q-tooltip>
         </q-btn>
         <q-btn
           dense
@@ -118,7 +117,7 @@
           :disable="building"
           @click="closeProject"
         >
-          <q-tooltip>Changer de projet</q-tooltip>
+          <q-tooltip>{{ t('editorPage.switchProjectTooltip') }}</q-tooltip>
         </q-btn>
       </div>
 
@@ -180,9 +179,9 @@
                         class="btn-ghost"
                         @click="selectedIndex = null"
                       >
-                        <q-tooltip>Retour au graphe</q-tooltip>
+                        <q-tooltip>{{ t('editorPage.backToGraphTooltip') }}</q-tooltip>
                       </q-btn>
-                      <q-input dense outlined ref="chapterTitleInputRef" label="Titre" v-model="selectedChapter.title">
+                      <q-input dense outlined ref="chapterTitleInputRef" :label="t('editorPage.chapterTitleLabel')" v-model="selectedChapter.title">
                         <template #append>
                           <EmojiPickerBtn @pick="(e) => (selectedChapter.title = insertEmojiAtCaret(chapterTitleInputRef, selectedChapter.title, e))" />
                         </template>
@@ -196,10 +195,10 @@
                         class="btn-ghost"
                         @click="previewFrom(selectedChapter.id)"
                       >
-                        <q-tooltip>Prévisualiser depuis ce chapitre</q-tooltip>
+                        <q-tooltip>{{ t('editorPage.previewFromChapterTooltip') }}</q-tooltip>
                       </q-btn>
                       <q-btn dense flat round icon="flag" class="btn-ghost" @click="flagsDialogOpen = true">
-                        <q-tooltip>Flags — catalogue de toutes les stats du joueur utilisées dans le projet</q-tooltip>
+                        <q-tooltip>{{ t('editorPage.flagsTooltip') }}</q-tooltip>
                       </q-btn>
                     </div>
 
@@ -230,7 +229,7 @@
                already is doesn't require reading the toolbar first. -->
           <button class="preview-exit-hint" @click="focusPreview = false">
             <q-icon name="visibility_off" size="14px" />
-            Aperçu — cliquer pour revenir à l'édition
+            {{ t('editorPage.previewExitHint') }}
           </button>
           <div id="phone-slot-focus"></div>
         </div>
@@ -259,7 +258,7 @@
                 <ThreadList v-model="selectedThreadIndex"
               /></q-tab-panel>
               <q-tab-panel name="game">
-                <div class="empty-state">Le titre du jeu est un champ unique — pas de liste.</div>
+                <div class="empty-state">{{ t('editorPage.gameEmptyState') }}</div>
               </q-tab-panel>
               <q-tab-panel name="assets">
                 <AssetTree v-model="selectedAssetFolder" />
@@ -283,17 +282,17 @@
                 >
                   <q-tab-panel name="events">
                     <EventForm v-if="selectedEvent" :event="selectedEvent" />
-                    <div v-else class="empty-state">Sélectionne ou crée un event à gauche.</div>
+                    <div v-else class="empty-state">{{ t('editorPage.eventsEmptyState') }}</div>
                   </q-tab-panel>
 
                   <q-tab-panel name="contacts">
                     <ContactForm v-if="selectedContact" :contact="selectedContact" />
-                    <div v-else class="empty-state">Sélectionne un contact à gauche.</div>
+                    <div v-else class="empty-state">{{ t('editorPage.contactsEmptyState') }}</div>
                   </q-tab-panel>
 
                   <q-tab-panel name="threads">
                     <ThreadForm v-if="selectedThread" :thread="selectedThread" />
-                    <div v-else class="empty-state">Sélectionne un thread à gauche.</div>
+                    <div v-else class="empty-state">{{ t('editorPage.threadsEmptyState') }}</div>
                   </q-tab-panel>
 
                   <q-tab-panel name="game">
@@ -310,7 +309,7 @@
                       :locale="selectedLocale"
                       v-model:bucket="selectedBucket"
                     />
-                    <div v-else class="empty-state">Sélectionne une langue à gauche.</div>
+                    <div v-else class="empty-state">{{ t('editorPage.i18nEmptyState') }}</div>
                   </q-tab-panel>
 
                   <q-tab-panel name="seed">
@@ -375,13 +374,13 @@
       <q-dialog v-model="flagsDialogOpen" @hide="onFlagsDialogHide">
         <q-card class="flags-dialog-card">
           <q-card-section>
-            <div class="text-subtitle1">Flags du projet</div>
+            <div class="text-subtitle1">{{ t('editorPage.flagsDialogTitle') }}</div>
           </q-card-section>
           <q-card-section class="flags-dialog-body scroll">
             <FlagsPanel :game="story.project.gameConfig" />
           </q-card-section>
           <q-card-actions align="right">
-            <q-btn flat label="Fermer" color="primary" v-close-popup />
+            <q-btn flat :label="t('common.close')" color="primary" v-close-popup />
           </q-card-actions>
         </q-card>
       </q-dialog>
@@ -424,6 +423,10 @@ import SeedBucketList from '@/editor/components/SeedBucketList.vue'
 import SeedBucketEditor from '@/editor/components/SeedBucketEditor.vue'
 import EmojiPickerBtn from '@/components/shared/EmojiPickerBtn.vue'
 import { insertEmojiAtCaret } from '@/components/shared/emojiInsert'
+import EditorLangSwitch from '@/editor/components/EditorLangSwitch.vue'
+import { useEditorI18n } from '@/editor/i18n'
+
+const { t } = useEditorI18n()
 
 const AUTOSAVE_KEY = 'storie-engine-autosave'
 const SPLIT_OUTER_KEY = 'storie-engine-split-outer'
@@ -624,7 +627,7 @@ async function save() {
       })
     }
     dirty.value = false
-    Notify.create({ type: 'positive', message: 'Enregistré.' })
+    Notify.create({ type: 'positive', message: t('editorPage.saved') })
   } catch (err) {
     Notify.create({ type: 'negative', message: err.message || String(err) })
   }
@@ -705,9 +708,7 @@ async function computeValidation() {
   })
   for (const missingPath of missing) {
     const ref = assetRefs.find((a) => a.path === missingPath)
-    errors.push(
-      `Fichier introuvable dans assets/ : "${missingPath}" (référencé par ${ref.labels.join(', ')})`,
-    )
+    errors.push(t('editorPage.missingAssetError', { path: missingPath, labels: ref.labels.join(', ') }))
   }
   return { errors, warnings }
 }
@@ -715,18 +716,18 @@ async function computeValidation() {
 function showValidationDialog(errors, warnings) {
   if (!errors.length && !warnings.length) {
     Dialog.create({
-      title: 'Validation du projet',
-      message: 'Aucun problème détecté.',
+      title: t('editorPage.validationTitle'),
+      message: t('editorPage.validationNone'),
       ok: true,
       color: 'primary',
     })
     return
   }
   const parts = []
-  if (errors.length) parts.push(`ERREURS (${errors.length}) :\n${errors.join('\n')}`)
-  if (warnings.length) parts.push(`AVERTISSEMENTS (${warnings.length}) :\n${warnings.join('\n')}`)
+  if (errors.length) parts.push(`${t('editorPage.validationErrorsHeader', { n: errors.length })}\n${errors.join('\n')}`)
+  if (warnings.length) parts.push(`${t('editorPage.validationWarningsHeader', { n: warnings.length })}\n${warnings.join('\n')}`)
   Dialog.create({
-    title: 'Validation du projet',
+    title: t('editorPage.validationTitle'),
     message: parts.join('\n\n'),
     ok: true,
     color: 'primary',
@@ -755,15 +756,15 @@ async function buildGame() {
       showValidationDialog(errors, warnings)
       Notify.create({
         type: 'negative',
-        message: "Build annulé — corrige les erreurs de validation d'abord.",
+        message: t('editorPage.buildCancelled'),
       })
       return
     }
     if (warnings.length) {
       const proceed = await new Promise((resolve) => {
         Dialog.create({
-          title: 'Avertissements de validation',
-          message: `${warnings.length} avertissement(s) détecté(s) :\n\n${warnings.join('\n')}\n\nLancer le build quand même ?`,
+          title: t('editorPage.warningsDialogTitle'),
+          message: t('editorPage.warningsDialogMessage', { n: warnings.length, list: warnings.join('\n') }),
           cancel: true,
           persistent: true,
           color: 'primary',
@@ -781,22 +782,22 @@ async function buildGame() {
     const currentVersion = story.project.manifest?.version || '1.0.0'
     const bumpType = await new Promise((resolve) => {
       Dialog.create({
-        title: 'Version du build',
-        message: `Version actuelle : ${currentVersion}`,
+        title: t('editorPage.versionDialogTitle'),
+        message: t('editorPage.versionDialogMessage', { version: currentVersion }),
         options: {
           type: 'radio',
           model: 'patch',
           items: [
-            { label: 'Rebuild — pas de montée de version', value: 'none' },
-            { label: 'Version normale (patch)', value: 'patch' },
-            { label: 'Mineure', value: 'minor' },
-            { label: 'Majeure', value: 'major' },
+            { label: t('editorPage.versionNone'), value: 'none' },
+            { label: t('editorPage.versionPatch'), value: 'patch' },
+            { label: t('editorPage.versionMinor'), value: 'minor' },
+            { label: t('editorPage.versionMajor'), value: 'major' },
           ],
         },
         cancel: true,
         persistent: true,
         color: 'primary',
-        ok: 'Build',
+        ok: t('editorPage.buildOk'),
       })
         .onOk((v) => resolve(v))
         .onCancel(() => resolve(null))
@@ -808,7 +809,7 @@ async function buildGame() {
       story.project.manifest = result.manifest
       Notify.create({
         type: 'positive',
-        message: `Jeu exporté en v${result.manifest.version} dans ${result.outDir}`,
+        message: t('editorPage.buildExported', { version: result.manifest.version, outDir: result.outDir }),
         timeout: 6000,
       })
     }

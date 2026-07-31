@@ -2,21 +2,21 @@
   <div class="assets-panel">
     <div class="panel toolbar">
       <div class="breadcrumb">
-        <span class="section-label">Ressources</span>
+        <span class="section-label">{{ t('editorPage.tabAssets') }}</span>
         <span class="path mono" :title="folder ? `assets/${folder}` : 'assets/'">{{ folder ? `assets/${folder}` : 'assets/' }}</span>
-        <span class="count">{{ visibleFolders.length }} dossier(s), {{ visibleFiles.length }} fichier(s), {{ orphanCount }} orphelin(s) au total</span>
+        <span class="count">{{ t('assetsPanel.countSummary', { folders: visibleFolders.length, files: visibleFiles.length, orphans: orphanCount }) }}</span>
       </div>
       <div class="spacer" />
-      <q-btn dense flat no-caps icon="upload" label="Importer un fichier" @click="importFile" />
+      <q-btn dense flat no-caps icon="upload" :label="t('assetsPanel.importFile')" @click="importFile" />
       <q-btn dense flat round icon="refresh" @click="refresh">
-        <q-tooltip>Recharger la liste depuis le disque</q-tooltip>
+        <q-tooltip>{{ t('assetsPanel.refreshTooltip') }}</q-tooltip>
       </q-btn>
     </div>
 
     <div v-if="error" class="error-text">{{ error }}</div>
 
     <div v-if="!visibleFolders.length && !visibleFiles.length && folder === ''" class="empty-state">
-      Aucun fichier ni dossier dans assets/.
+      {{ t('assetsPanel.empty') }}
     </div>
 
     <div v-else class="grid">
@@ -24,7 +24,7 @@
         <div class="thumb thumb-placeholder">
           <q-icon name="drive_file_move_rtl" size="32px" />
         </div>
-        <div class="asset-name">.. (dossier parent)</div>
+        <div class="asset-name">{{ t('assetsPanel.parentFolder') }}</div>
       </div>
 
       <div v-for="sub in visibleFolders" :key="sub.path" class="asset-card folder-card" @click="goTo(sub.path)">
@@ -43,7 +43,7 @@
         <div class="asset-name" :title="item.path">{{ item.name }}</div>
         <div class="asset-footer">
           <span class="badge" :class="item.used ? 'badge-used' : 'badge-orphan'">
-            {{ item.used ? 'Utilisé' : 'Orphelin' }}
+            {{ item.used ? t('assetsPanel.used') : t('assetsPanel.orphan') }}
           </span>
           <q-btn
             v-if="!item.used"
@@ -55,7 +55,7 @@
             color="negative"
             @click="confirmDelete(item)"
           >
-            <q-tooltip>Supprimer ce fichier inutilisé</q-tooltip>
+            <q-tooltip>{{ t('assetsPanel.deleteUnusedTooltip') }}</q-tooltip>
           </q-btn>
         </div>
       </div>
@@ -72,6 +72,9 @@ import { collectAssetPaths } from '@/project/validateProject'
 import { useAssetLibrary } from '@/editor/composables/useAssetLibrary'
 import { categorizeAsset } from '@/editor/utils/assetCategory'
 import AudioPreview from '@/editor/components/AudioPreview.vue'
+import { useEditorI18n } from '@/editor/i18n'
+
+const { t } = useEditorI18n()
 
 // Real explorer behavior: this pane shows the CURRENT folder's direct
 // subfolders (click to descend) and direct files, plus a ".." tile to go
@@ -142,8 +145,8 @@ async function importFile() {
 
 function confirmDelete(item) {
   Dialog.create({
-    title: 'Supprimer ce fichier ?',
-    message: `« ${item.path} » n'est référencé nulle part dans le projet. Il sera supprimé du disque. Cette action est irréversible.`,
+    title: t('assetsPanel.confirmDeleteTitle'),
+    message: t('assetsPanel.confirmDeleteMessage', { path: item.path }),
     cancel: true,
     persistent: true,
     color: 'negative',
@@ -155,7 +158,7 @@ function confirmDelete(item) {
         path: item.path,
       })
       await refresh()
-      Notify.create({ type: 'positive', message: 'Fichier supprimé.' })
+      Notify.create({ type: 'positive', message: t('assetsPanel.fileDeleted') })
     } catch (err) {
       Notify.create({ type: 'negative', message: err.message || String(err) })
     }

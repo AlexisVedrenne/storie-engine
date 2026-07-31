@@ -1,20 +1,15 @@
 <template>
   <div class="effects-builder">
-    <p class="intro">
-      Modifie l'état du jeu quand cette entrée se joue — rien n'est montré au joueur, contrairement
-      à un message ou une story. Toutes les sections ci-dessous sont optionnelles.
-    </p>
+    <p class="intro">{{ t('effectsBuilder.intro') }}</p>
 
     <div class="section-title">
-      Stats du joueur (flags)
-      <FieldHelp
-        text="Un flag est une valeur mémorisée (nombre qui s'accumule, ou vrai/faux ponctuel) — relis-la plus tard via une Condition (requires) pour faire varier l'histoire."
-      />
+      {{ t('requiresBuilder.flagsTitle') }}
+      <FieldHelp :text="t('effectsBuilder.flagsHelp')" />
     </div>
-    <div v-if="!flagRows.length" class="empty-hint">Aucune stat modifiée.</div>
+    <div v-if="!flagRows.length" class="empty-hint">{{ t('effectsBuilder.noFlagChange') }}</div>
     <div v-for="(row, i) in flagRows" :key="i" class="row-card">
       <q-btn dense flat round icon="close" size="sm" class="row-remove" @click="removeFlagRow(i)">
-        <q-tooltip>Retirer</q-tooltip>
+        <q-tooltip>{{ t('common.delete') }}</q-tooltip>
       </q-btn>
       <div class="row-fields">
         <FlagNameField v-model="row.key" @update:model-value="sync" />
@@ -22,7 +17,7 @@
           dense
           outlined
           class="mode-select"
-          label="Action"
+          :label="t('effectsBuilder.actionLabel')"
           v-model="row.mode"
           :options="FLAG_EFFECT_MODES"
           emit-value
@@ -46,48 +41,48 @@
       flat
       no-caps
       icon="add"
-      label="Ajouter une stat à modifier"
+      :label="t('effectsBuilder.addFlagChange')"
       class="btn-ghost"
       @click="addFlagRow"
     />
 
-    <div class="section-title top-gap">Widgets du téléphone</div>
+    <div class="section-title top-gap">{{ t('effectsBuilder.widgetsTitle') }}</div>
 
     <q-expansion-item
       dense-toggle
-      label="Météo"
-      caption="Change le widget météo de l'écran d'accueil"
+      :label="t('effectsBuilder.weatherLabel')"
+      :caption="t('effectsBuilder.weatherCaption')"
       v-model="sections.weather"
       @update:model-value="sync"
     >
       <div class="grid">
-        <q-input dense outlined label="Ville" v-model="weather.city" @update:model-value="sync" />
+        <q-input dense outlined :label="t('effectsBuilder.cityLabel')" v-model="weather.city" @update:model-value="sync" />
         <q-input
           dense
           outlined
           type="number"
-          label="Température"
+          :label="t('effectsBuilder.tempLabel')"
           v-model.number="weather.temp"
           @update:model-value="sync"
         />
         <q-input
           dense
           outlined
-          label="Condition"
+          :label="t('effectsBuilder.conditionLabel')"
           v-model="weather.condition"
           @update:model-value="sync"
         />
         <q-input
           dense
           outlined
-          label="Icône (emoji)"
+          :label="t('effectsBuilder.iconLabel')"
           v-model="weather.icon"
           @update:model-value="sync"
         />
         <q-input
           dense
           outlined
-          label="Légende"
+          :label="t('effectsBuilder.captionLabel')"
           v-model="weather.caption"
           @update:model-value="sync"
         />
@@ -96,8 +91,8 @@
 
     <q-expansion-item
       dense-toggle
-      label="Pas (steps)"
-      caption="Widget podomètre de l'écran d'accueil"
+      :label="t('effectsBuilder.stepsLabel')"
+      :caption="t('effectsBuilder.stepsCaption')"
       v-model="sections.steps"
       @update:model-value="sync"
     >
@@ -106,7 +101,7 @@
           dense
           outlined
           type="number"
-          label="Pas actuels"
+          :label="t('effectsBuilder.currentStepsLabel')"
           v-model.number="steps.value"
           @update:model-value="sync"
         />
@@ -114,7 +109,7 @@
           dense
           outlined
           type="number"
-          label="Objectif"
+          :label="t('effectsBuilder.goalLabel')"
           v-model.number="steps.goal"
           @update:model-value="sync"
         />
@@ -123,8 +118,8 @@
 
     <q-expansion-item
       dense-toggle
-      label="Batterie"
-      caption="Fixe le % affiché — utile pour une tension narrative (batterie qui se vide)"
+      :label="t('effectsBuilder.batteryLabel')"
+      :caption="t('effectsBuilder.batteryCaption')"
       v-model="sections.battery"
       @update:model-value="sync"
     >
@@ -132,7 +127,7 @@
         dense
         outlined
         type="number"
-        label="% batterie"
+        :label="t('effectsBuilder.batteryPercentLabel')"
         v-model.number="battery.value"
         @update:model-value="sync"
       />
@@ -140,8 +135,8 @@
 
     <q-expansion-item
       dense-toggle
-      label="Réseau"
-      caption="Barres de réseau + Wi-Fi affichés dans la barre de statut"
+      :label="t('effectsBuilder.networkLabel')"
+      :caption="t('effectsBuilder.networkCaption')"
       v-model="sections.network"
       @update:model-value="sync"
     >
@@ -150,7 +145,7 @@
           dense
           outlined
           type="number"
-          label="Barres (0-4)"
+          :label="t('effectsBuilder.signalLabel')"
           v-model.number="network.signal"
           @update:model-value="sync"
         />
@@ -160,8 +155,8 @@
 
     <q-expansion-item
       dense-toggle
-      label="Horloge"
-      caption="Fige l'heure affichée (verrouillage, barre de statut) au lieu de l'heure réelle"
+      :label="t('effectsBuilder.clockLabel')"
+      :caption="t('effectsBuilder.clockCaption')"
       v-model="sections.clock"
       @update:model-value="sync"
     >
@@ -186,8 +181,8 @@
 
     <q-expansion-item
       dense-toggle
-      label="Date"
-      caption="Fige la date affichée au lieu de la date réelle"
+      :label="t('effectsBuilder.dateLabel')"
+      :caption="t('effectsBuilder.dateCaption')"
       v-model="sections.date"
       @update:model-value="sync"
     >
@@ -211,15 +206,13 @@
     </q-expansion-item>
 
     <div class="section-title top-gap">
-      Réseau social (Pixly)
-      <FieldHelp
-        text="Fait varier le nombre d'abonnés/abonnements affiché sur le profil d'un personnage."
-      />
+      {{ t('effectsBuilder.socialTitle') }}
+      <FieldHelp :text="t('effectsBuilder.socialHelp')" />
     </div>
-    <div v-if="!socialRows.length" class="empty-hint">Aucun changement d'abonnés.</div>
+    <div v-if="!socialRows.length" class="empty-hint">{{ t('effectsBuilder.noSocialChange') }}</div>
     <div v-for="(row, i) in socialRows" :key="i" class="row-card">
       <q-btn dense flat round icon="close" size="sm" class="row-remove" @click="removeSocialRow(i)">
-        <q-tooltip>Retirer</q-tooltip>
+        <q-tooltip>{{ t('common.delete') }}</q-tooltip>
       </q-btn>
       <div class="row-fields">
         <q-select
@@ -230,7 +223,7 @@
           :options="contactOptions"
           emit-value
           map-options
-          label="Personnage"
+          :label="t('entries.story.characterLabel')"
           @update:model-value="sync"
         >
           <template #selected>
@@ -253,7 +246,7 @@
           outlined
           type="number"
           class="num-input"
-          label="+abonnés"
+          :label="t('effectsBuilder.followersLabel')"
           v-model.number="row.followers"
           @update:model-value="sync"
         />
@@ -262,19 +255,17 @@
           outlined
           type="number"
           class="num-input"
-          label="+abonnements"
+          :label="t('effectsBuilder.followingLabel')"
           v-model.number="row.following"
           @update:model-value="sync"
         />
       </div>
     </div>
-    <q-btn dense flat no-caps icon="add" label="Ajouter" class="btn-ghost" @click="addSocialRow" />
+    <q-btn dense flat no-caps icon="add" :label="t('common.add')" class="btn-ghost" @click="addSocialRow" />
 
     <div class="section-title top-gap">
-      Nouveaux abonnés
-      <FieldHelp
-        text="Ces personnages se mettent à suivre le joueur — déclenche une notification 'a commencé à te suivre'."
-      />
+      {{ t('effectsBuilder.newFollowersTitle') }}
+      <FieldHelp :text="t('effectsBuilder.newFollowersHelp')" />
     </div>
     <q-select
       dense
@@ -282,7 +273,7 @@
       multiple
       emit-value
       map-options
-      placeholder="Aucun"
+      :placeholder="t('effectsBuilder.noneOption')"
       :options="contactOptions"
       v-model="newFollowerIds"
       @update:model-value="sync"
@@ -306,10 +297,13 @@
 </template>
 
 <script setup>
-import { reactive, ref } from 'vue'
+import { computed, reactive, ref } from 'vue'
 import { useContactOptions } from '@/components/shared/useContactOptions'
 import FieldHelp from '@/editor/components/FieldHelp.vue'
 import FlagNameField from '@/editor/components/FlagNameField.vue'
+import { useEditorI18n } from '@/editor/i18n'
+
+const { t } = useEditorI18n()
 
 // `effects: { flags?, weather?, steps?, stepsGoal?, battery?, network?,
 // clock?, date?, social?, newFollower? }` — see NTR docs/story-engine.md
@@ -317,16 +311,17 @@ import FlagNameField from '@/editor/components/FlagNameField.vue'
 // RequiresBuilder.vue, no reactive round-trip watcher.
 const props = defineProps({ modelValue: { type: Object, default: null } })
 const emit = defineEmits(['update:modelValue'])
-const FLAG_EFFECT_MODES = [
-  { label: 'ajoute/retire (nombre)', value: 'delta' },
-  { label: 'passe à vrai', value: 'true' },
-  { label: 'passe à faux', value: 'false' },
-]
-const CLOCK_MODES = [
-  { label: 'ne pas toucher', value: 'unset' },
-  { label: 'fixer à…', value: 'set' },
-  { label: 'libérer (revenir à l’heure réelle)', value: 'clear' },
-]
+// computed, not plain consts — see RequiresBuilder.vue's FLAG_MODES comment.
+const FLAG_EFFECT_MODES = computed(() => [
+  { label: t('effectsBuilder.modeDelta'), value: 'delta' },
+  { label: t('effectsBuilder.modeTrue'), value: 'true' },
+  { label: t('effectsBuilder.modeFalse'), value: 'false' },
+])
+const CLOCK_MODES = computed(() => [
+  { label: t('effectsBuilder.clockUnset'), value: 'unset' },
+  { label: t('effectsBuilder.clockSet'), value: 'set' },
+  { label: t('effectsBuilder.clockClear'), value: 'clear' },
+])
 
 const { contactOptions, contactColor, contactLabel } = useContactOptions()
 const initial = props.modelValue || {}

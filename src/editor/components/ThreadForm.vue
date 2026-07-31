@@ -2,14 +2,12 @@
   <div class="thread-form">
     <div class="panel">
       <div class="section-label">
-        Groupe de discussion (DM Insta)
-        <FieldHelp
-          text="Seuls les groupes ont besoin d'une entrée ici — les DM 1:1 utilisent directement l'id du contact comme thread, sans passer par threads.js."
-        />
+        {{ t('threadForm.title') }}
+        <FieldHelp :text="t('threadForm.help')" />
       </div>
       <div class="row">
         <q-input dense outlined disabled label="Id" :model-value="thread.id" class="id-input" />
-        <q-input dense outlined ref="nameInputRef" label="Nom du groupe" v-model="thread.name" class="grow">
+        <q-input dense outlined ref="nameInputRef" :label="t('threadList.groupNameLabel')" v-model="thread.name" class="grow">
           <template #append>
             <EmojiPickerBtn @pick="(e) => (thread.name = insertEmojiAtCaret(nameInputRef, thread.name, e))" />
           </template>
@@ -21,7 +19,7 @@
         multiple
         emit-value
         map-options
-        label="Participants"
+        :label="t('threadForm.participantsLabel')"
         :options="contactOptions"
         :model-value="thread.participants || []"
         @update:model-value="setParticipants"
@@ -47,7 +45,9 @@ import { useContactOptions } from '@/components/shared/useContactOptions'
 import FieldHelp from '@/editor/components/FieldHelp.vue'
 import EmojiPickerBtn from '@/components/shared/EmojiPickerBtn.vue'
 import { insertEmojiAtCaret } from '@/components/shared/emojiInsert'
+import { useEditorI18n } from '@/editor/i18n'
 
+const { t } = useEditorI18n()
 const props = defineProps({ thread: { type: Object, required: true } })
 const { contactOptions, contactColor } = useContactOptions()
 const nameInputRef = ref(null)

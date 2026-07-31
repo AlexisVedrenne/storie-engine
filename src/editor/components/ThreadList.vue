@@ -1,6 +1,6 @@
 <template>
   <div class="thread-list">
-    <div class="pane-label">Groupes</div>
+    <div class="pane-label">{{ t('editorPage.tabThreads') }}</div>
 
     <div
       v-for="(thread, i) in threads"
@@ -17,7 +17,7 @@
       </div>
       <div class="row-actions">
         <q-btn dense flat round icon="delete" size="sm" color="negative" @click.stop="confirmDelete(thread)">
-          <q-tooltip>Supprimer</q-tooltip>
+          <q-tooltip>{{ t('common.delete') }}</q-tooltip>
         </q-btn>
       </div>
     </div>
@@ -28,7 +28,7 @@
       flat
       no-caps
       icon="add"
-      label="Nouveau thread"
+      :label="t('threadList.newThread')"
       color="primary"
       @click="newDialog = true"
     />
@@ -36,17 +36,17 @@
     <q-dialog v-model="newDialog">
       <q-card class="new-card">
         <q-card-section>
-          <div class="text-subtitle1">Nouveau thread (groupe)</div>
-          <q-input dense outlined label="Identifiant (id)" v-model="newId" class="q-mt-sm" />
-          <q-input dense outlined ref="newNameInputRef" label="Nom du groupe" v-model="newName" class="q-mt-sm">
+          <div class="text-subtitle1">{{ t('threadList.newThreadDialogTitle') }}</div>
+          <q-input dense outlined :label="t('contactList.idLabel')" v-model="newId" class="q-mt-sm" />
+          <q-input dense outlined ref="newNameInputRef" :label="t('threadList.groupNameLabel')" v-model="newName" class="q-mt-sm">
             <template #append>
               <EmojiPickerBtn @pick="(e) => (newName = insertEmojiAtCaret(newNameInputRef, newName, e))" />
             </template>
           </q-input>
         </q-card-section>
         <q-card-actions align="right">
-          <q-btn flat label="Annuler" v-close-popup />
-          <q-btn flat label="Créer" color="primary" :disable="!newId || !newName" @click="createThread" v-close-popup />
+          <q-btn flat :label="t('common.cancel')" v-close-popup />
+          <q-btn flat :label="t('common.create')" color="primary" :disable="!newId || !newName" @click="createThread" v-close-popup />
         </q-card-actions>
       </q-card>
     </q-dialog>
@@ -61,7 +61,9 @@ import { findReferences } from '@/project/findReferences'
 import { serializeThreads } from '@/project/serializeChapter'
 import EmojiPickerBtn from '@/components/shared/EmojiPickerBtn.vue'
 import { insertEmojiAtCaret } from '@/components/shared/emojiInsert'
+import { useEditorI18n } from '@/editor/i18n'
 
+const { t } = useEditorI18n()
 defineProps({ modelValue: { type: Number, default: 0 } })
 const emit = defineEmits(['update:modelValue'])
 const story = useStoryStore()
@@ -80,35 +82,35 @@ function confirmDelete(thread) {
   const refs = findReferences(story.project, { type: 'thread', id: thread.id })
   if (refs.length) {
     Dialog.create({
-      title: 'Suppression impossible',
-      message: `« ${thread.name || thread.id} » est encore référencé :\n\n${refs.join('\n')}`,
+      title: t('contactList.deleteImpossibleTitle'),
+      message: t('contactList.stillReferenced', { name: thread.name || thread.id, refs: refs.join('\n') }),
       ok: true,
       color: 'primary',
     })
     return
   }
   Dialog.create({
-    title: 'Supprimer ce thread ?',
-    message: `« ${thread.name || thread.id} » sera supprimé du disque. Cette action est irréversible.`,
+    title: t('threadList.confirmDeleteTitle'),
+    message: t('threadList.confirmDeleteMessage', { name: thread.name || thread.id }),
     cancel: true,
     persistent: true,
     color: 'negative',
   }).onOk(async () => {
-    const idx = threads.findIndex((t) => t.id === thread.id)
+    const idx = threads.findIndex((th) => th.id === thread.id)
     threads.splice(idx, 1)
     await persist()
-    Notify.create({ type: 'positive', message: 'Thread supprimé.' })
+    Notify.create({ type: 'positive', message: t('threadList.threadDeleted') })
   })
 }
 
 async function createThread() {
   const id = newId.value.trim()
-  if (!id || threads.some((t) => t.id === id)) return
+  if (!id || threads.some((th) => th.id === id)) return
   threads.push({ id, name: newName.value.trim() || id, participants: ['me'], group: true })
   await persist()
   newId.value = ''
   newName.value = ''
-  Notify.create({ type: 'positive', message: 'Thread créé.' })
+  Notify.create({ type: 'positive', message: t('threadList.threadCreated') })
 }
 </script>
 

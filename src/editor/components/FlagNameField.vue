@@ -10,14 +10,14 @@
     class="flag-name-field"
     :model-value="modelValue"
     :options="filteredOptions"
-    label="Nom du flag"
+    :label="t('flagNameField.label')"
     placeholder="ex: trustClara"
     @filter="filterFn"
     @update:model-value="(v) => emit('update:modelValue', v)"
   >
     <template #no-option>
       <q-item>
-        <q-item-section class="text-grey">Tape pour créer un nouveau flag</q-item-section>
+        <q-item-section class="text-grey">{{ t('flagNameField.noOption') }}</q-item-section>
       </q-item>
     </template>
     <!-- Purely visual — the option's underlying value is still the plain
@@ -44,6 +44,9 @@
 import { computed, ref } from 'vue'
 import { useStoryStore } from '@/engine/stores/story'
 import { collectFlags } from '@/project/collectFlags'
+import { useEditorI18n } from '@/editor/i18n'
+
+const { t } = useEditorI18n()
 
 // Combobox over every flag already used anywhere in the project — picks an
 // existing flag from a dropdown instead of retyping its exact name by hand
@@ -78,17 +81,18 @@ function filterFn(val, update) {
 }
 
 // Label + observed type/range for a flag key, e.g. "Confiance de Clara —
-// numérique, modifié entre -2 et 12" — see collectFlags.js: the range only
-// counts EFFECTS that set the flag, never a condition that merely reads it
-// (a `>= 3` check elsewhere doesn't mean the flag has ever been 3).
+// numérique, atteignable entre -2 et 12" — see collectFlags.js:
+// computeFlagRange() walks the whole story graph (choices/chapter edges)
+// to find the real highest/lowest reachable value, not just the raw
+// deltas typed one by one.
 function hintFor(key) {
   const entry = flagCatalog.value.find((f) => f.key === key)
   if (!entry) return ''
   const parts = []
   if (entry.label) parts.push(entry.label)
-  if (entry.isNumeric) parts.push(`numérique, modifié entre ${entry.min} et ${entry.max}`)
-  else if (entry.isBoolean) parts.push('booléen')
-  if (entry.neverModified) parts.push('⚠ lu, jamais modifié par un effet')
+  if (entry.isNumeric) parts.push(t('flagNameField.numericHint', { min: entry.min, max: entry.max }))
+  else if (entry.isBoolean) parts.push(t('flagsPanel.boolean'))
+  if (entry.neverModified) parts.push(t('flagNameField.neverModifiedHint'))
   return parts.join(' — ')
 }
 function catalogHint(key) {

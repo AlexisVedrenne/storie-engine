@@ -1,6 +1,6 @@
 <template>
   <div class="locale-list">
-    <div class="pane-label">Langues</div>
+    <div class="pane-label">{{ t('localeList.paneLabel') }}</div>
 
     <div
       v-for="locale in locales"
@@ -13,7 +13,7 @@
       <q-icon name="translate" size="16px" class="locale-icon" />
       <div class="locale-info">
         <div class="locale-name">{{ locale }}</div>
-        <div class="locale-progress">{{ translatedCount(locale) }}/{{ totalStrings }} traduits</div>
+        <div class="locale-progress">{{ t('localeList.translatedProgress', { done: translatedCount(locale), total: totalStrings }) }}</div>
       </div>
     </div>
 
@@ -23,42 +23,38 @@
       flat
       no-caps
       icon="add"
-      label="Nouvelle langue"
+      :label="t('localeList.newLocale')"
       color="primary"
       :disable="!addableLocales.length"
       @click="newDialog = true"
     >
       <q-tooltip v-if="!addableLocales.length">
-        Toutes les langues d'interface disponibles sont déjà ajoutées à ce projet.
+        {{ t('localeList.allAdded') }}
       </q-tooltip>
     </q-btn>
 
     <q-dialog v-model="newDialog">
       <q-card class="new-card">
         <q-card-section>
-          <div class="text-subtitle1">Nouvelle langue</div>
-          <div class="dialog-hint">
-            Limité aux langues d'interface déjà supportées par le moteur — sinon les menus/réglages resteraient
-            non traduits pour cette langue.
-          </div>
+          <div class="text-subtitle1">{{ t('localeList.newLocale') }}</div>
+          <div class="dialog-hint">{{ t('localeList.constraintHint') }}</div>
           <div v-if="systemLocaleLabel" class="dialog-hint">
-            « {{ systemLocaleLabel }} » masquée — langue système détectée de cette machine, probablement celle
-            utilisée pour écrire les chapitres.
+            {{ t('localeList.systemLocaleHidden', { locale: systemLocaleLabel }) }}
           </div>
           <q-select
             dense
             outlined
             emit-value
             map-options
-            label="Langue"
+            :label="t('localeList.languageLabel')"
             :options="addableLocales"
             v-model="newCode"
             class="q-mt-sm"
           />
         </q-card-section>
         <q-card-actions align="right">
-          <q-btn flat label="Annuler" v-close-popup />
-          <q-btn flat label="Créer" color="primary" :disable="!newCode" @click="createLocale" v-close-popup />
+          <q-btn flat :label="t('common.cancel')" v-close-popup />
+          <q-btn flat :label="t('common.create')" color="primary" :disable="!newCode" @click="createLocale" v-close-popup />
         </q-card-actions>
       </q-card>
     </q-dialog>
@@ -71,7 +67,9 @@ import { Notify } from 'quasar'
 import { useStoryStore } from '@/engine/stores/story'
 import { extractTranslatableStrings } from '@/project/extractTranslatableStrings'
 import { SUPPORTED_LOCALES } from '@/engine/i18n/locales'
+import { useEditorI18n } from '@/editor/i18n'
 
+const { t } = useEditorI18n()
 defineProps({ modelValue: { type: String, default: '' } })
 const emit = defineEmits(['update:modelValue'])
 const story = useStoryStore()
@@ -140,7 +138,7 @@ async function createLocale() {
     if (!story.project.i18n[created]) story.project.i18n[created] = { common: {} }
     emit('update:modelValue', created)
     newCode.value = ''
-    Notify.create({ type: 'positive', message: 'Langue créée.' })
+    Notify.create({ type: 'positive', message: t('localeList.localeCreated') })
   } catch (err) {
     Notify.create({ type: 'negative', message: err.message || String(err) })
   }

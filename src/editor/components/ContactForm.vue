@@ -1,16 +1,16 @@
 <template>
   <div class="contact-form">
     <div class="panel">
-      <div class="section-label">Identité</div>
+      <div class="section-label">{{ t('contactForm.identityTitle') }}</div>
       <div class="row">
         <q-input dense outlined disabled label="Id" :model-value="contact.id" class="id-input" />
-        <q-input dense outlined ref="nameInputRef" label="Nom" v-model="contact.name" class="grow">
+        <q-input dense outlined ref="nameInputRef" :label="t('contactForm.nameLabel')" v-model="contact.name" class="grow">
           <template #append>
             <EmojiPickerBtn @pick="(e) => (contact.name = insertEmojiAtCaret(nameInputRef, contact.name, e))" />
           </template>
         </q-input>
       </div>
-      <div class="field-label">Couleur (hex)</div>
+      <div class="field-label">{{ t('contactForm.colorLabel') }}</div>
       <!-- #999999 matches the fallback ContactList.vue's dot / ThreadForm.vue's
            participant chips already use for a contact with no color set —
            was wrongly `default-value="#4c8bf5"` before (that's the game's
@@ -21,16 +21,16 @@
         </q-popup-proxy>
       </div>
       <div class="meta-row">
-        <span class="filename">{{ contact.color || 'Par défaut (#999999)' }}</span>
+        <span class="filename">{{ contact.color || t('contactForm.defaultColor') }}</span>
         <q-btn v-if="contact.color" dense flat round icon="close" size="sm" @click="contact.color = undefined">
-          <q-tooltip>Revenir à la couleur par défaut</q-tooltip>
+          <q-tooltip>{{ t('contactForm.resetColor') }}</q-tooltip>
         </q-btn>
       </div>
     </div>
 
     <div class="panel">
-      <div class="section-label">Bio</div>
-      <q-input dense outlined ref="bioInputRef" type="textarea" autogrow label="Bio (profil Pixly)" v-model="contact.bio">
+      <div class="section-label">{{ t('contactForm.bioTitle') }}</div>
+      <q-input dense outlined ref="bioInputRef" type="textarea" autogrow :label="t('contactForm.bioLabel')" v-model="contact.bio">
         <template #append>
           <EmojiPickerBtn @pick="(e) => (contact.bio = insertEmojiAtCaret(bioInputRef, contact.bio, e))" />
         </template>
@@ -39,27 +39,27 @@
 
     <div class="panel">
       <div class="section-label">
-        Réseau social (Pixly)
-        <FieldHelp text="Contrôle la présence de ce contact sur Pixly (le réseau social du téléphone) — indépendant des SMS/Appels, qui utilisent toujours name." />
+        {{ t('contactForm.socialTitle') }}
+        <FieldHelp :text="t('contactForm.socialHelp')" />
       </div>
-      <q-toggle dense label="A un compte Pixly" :model-value="contact.hasSocial !== false" @update:model-value="(v) => (contact.hasSocial = v ? undefined : false)" />
-      <q-input dense outlined label="Pseudo (sans @, optionnel)" v-model="contact.pseudo" />
+      <q-toggle dense :label="t('contactForm.hasSocialLabel')" :model-value="contact.hasSocial !== false" @update:model-value="(v) => (contact.hasSocial = v ? undefined : false)" />
+      <q-input dense outlined :label="t('contactForm.pseudoLabel')" v-model="contact.pseudo" />
       <div class="row">
-        <q-input dense outlined type="number" label="Followers (optionnel)" v-model.number="contact.followers" class="grow" />
-        <q-input dense outlined type="number" label="Following (optionnel)" v-model.number="contact.following" class="grow" />
+        <q-input dense outlined type="number" :label="t('contactForm.followersLabel')" v-model.number="contact.followers" class="grow" />
+        <q-input dense outlined type="number" :label="t('contactForm.followingLabel')" v-model.number="contact.following" class="grow" />
       </div>
       <q-toggle
         dense
-        label="Suivi par défaut en début de partie"
+        :label="t('contactForm.followedByDefaultLabel')"
         :model-value="contact.followedByDefault !== false"
         @update:model-value="(v) => (contact.followedByDefault = v ? undefined : false)"
       />
     </div>
 
     <div class="panel">
-      <div class="section-label">Images</div>
-      <AssetField v-model="contact.avatar" label="Avatar (Téléphone / Messages / Appels)" :contact-id="contact.id" />
-      <AssetField v-model="contact.socialAvatar" label="Avatar Pixly (Fil / Stories / DM / Profil)" :contact-id="contact.id" />
+      <div class="section-label">{{ t('contactForm.imagesTitle') }}</div>
+      <AssetField v-model="contact.avatar" :label="t('contactForm.avatarLabel')" :contact-id="contact.id" />
+      <AssetField v-model="contact.socialAvatar" :label="t('contactForm.socialAvatarLabel')" :contact-id="contact.id" />
     </div>
   </div>
 </template>
@@ -70,7 +70,9 @@ import AssetField from '@/editor/components/AssetField.vue'
 import FieldHelp from '@/editor/components/FieldHelp.vue'
 import EmojiPickerBtn from '@/components/shared/EmojiPickerBtn.vue'
 import { insertEmojiAtCaret } from '@/components/shared/emojiInsert'
+import { useEditorI18n } from '@/editor/i18n'
 
+const { t } = useEditorI18n()
 defineProps({ contact: { type: Object, required: true } })
 const nameInputRef = ref(null)
 const bioInputRef = ref(null)

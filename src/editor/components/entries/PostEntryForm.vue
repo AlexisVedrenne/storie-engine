@@ -5,7 +5,7 @@
       outlined
       emit-value
       map-options
-      label="Auteur de la publication"
+      :label="t('entries.post.authorLabel')"
       :options="contactOptions"
       v-model="entry.author"
     >
@@ -30,8 +30,8 @@
       ref="contentInputRef"
       type="textarea"
       autogrow
-      label="Légende"
-      placeholder="ex: dernière lumière du soir ✨"
+      :label="t('entries.post.captionLabel')"
+      :placeholder="t('entries.post.captionPlaceholder')"
       v-model="entry.content"
     >
       <template #append>
@@ -41,16 +41,16 @@
     <q-input
       dense
       outlined
-      label="Id (optionnel — pour cibler cette publication précise depuis un Event)"
-      placeholder="ex: post-plage-erwan"
+      :label="t('entries.post.idLabel')"
+      :placeholder="t('entries.post.idPlaceholder')"
       v-model="entry.id"
     />
-    <AssetField v-model="entry.image" label="Image (optionnel)" :contact-id="entry.author" />
+    <AssetField v-model="entry.image" :label="t('entries.post.imageLabel')" :contact-id="entry.author" />
     <q-input
       dense
       outlined
       type="number"
-      label="Nombre de likes (optionnel — sinon aléatoire)"
+      :label="t('entries.post.likesLabel')"
       v-model.number="entry.likes"
     />
     <CommentsListField
@@ -68,7 +68,9 @@ import AssetField from '@/editor/components/AssetField.vue'
 import CommentsListField from '@/editor/components/CommentsListField.vue'
 import EmojiPickerBtn from '@/components/shared/EmojiPickerBtn.vue'
 import { insertEmojiAtCaret } from '@/components/shared/emojiInsert'
+import { useEditorI18n } from '@/editor/i18n'
 
+const { t } = useEditorI18n()
 defineProps({ entry: { type: Object, required: true } })
 const { contactOptions, contactColor, contactLabel } = useContactOptions()
 const contentInputRef = ref(null)

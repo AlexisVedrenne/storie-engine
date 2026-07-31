@@ -5,7 +5,7 @@
       outlined
       emit-value
       map-options
-      label="Personnage"
+      :label="t('entries.story.characterLabel')"
       :options="contactOptions"
       v-model="entry.contact"
     >
@@ -26,26 +26,26 @@
     </q-select>
     <AssetField
       v-model="entry.media"
-      label="Image (optionnel — sinon emoji sur fond coloré)"
+      :label="t('entries.story.imageLabel')"
       :contact-id="entry.contact"
     />
     <div class="row">
       <q-input
         dense
         outlined
-        label="Emoji"
+        :label="t('entries.story.emojiLabel')"
         placeholder="☕"
         v-model="entry.emoji"
         class="emoji-input"
       />
-      <q-input dense outlined label="Couleur de fond" placeholder="#e91e63" v-model="entry.bg" />
+      <q-input dense outlined :label="t('entries.story.bgLabel')" placeholder="#e91e63" v-model="entry.bg" />
     </div>
     <q-input
       dense
       outlined
       ref="captionInputRef"
-      label="Légende (optionnel)"
-      placeholder="ex: petit dej du dimanche"
+      :label="t('entries.story.captionLabel')"
+      :placeholder="t('entries.story.captionPlaceholder')"
       v-model="entry.caption"
     >
       <template #append>
@@ -61,7 +61,9 @@ import { useContactOptions } from '@/components/shared/useContactOptions'
 import AssetField from '@/editor/components/AssetField.vue'
 import EmojiPickerBtn from '@/components/shared/EmojiPickerBtn.vue'
 import { insertEmojiAtCaret } from '@/components/shared/emojiInsert'
+import { useEditorI18n } from '@/editor/i18n'
 
+const { t } = useEditorI18n()
 defineProps({ entry: { type: Object, required: true } })
 const { contactOptionsNoMe: contactOptions, contactColor, contactLabel } = useContactOptions()
 const captionInputRef = ref(null)

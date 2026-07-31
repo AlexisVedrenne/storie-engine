@@ -5,7 +5,12 @@ import { DEFAULT_LOCALE, SUPPORTED_LOCALES } from '@/engine/i18n/locales'
 import { playSound, startLoop, stopSound } from '@/engine/utils/sound'
 import { ALL_APP_IDS, ENTRY_TYPE_APP } from '@/engine/apps/appIds'
 import { CUSTOM_ENTRY_TYPE_BY_TYPE } from '@/engine/apps/entryTypeRegistry'
-import { on as onEngineEvent, clear as clearEngineEvents, emit as emitEngineEvent, ENGINE_TRIGGERS } from '@/engine/events/eventManager'
+import {
+  on as onEngineEvent,
+  clear as clearEngineEvents,
+  emit as emitEngineEvent,
+  ENGINE_TRIGGERS,
+} from '@/engine/events/eventManager'
 import { findMatchingEvents } from '@/engine/events/matchEvent'
 
 // Phase 1: this store is project-agnostic — it holds no hardcoded chapters/
@@ -142,7 +147,7 @@ function defaultState() {
     pendingInteractions: [],
     notifications: [], // transient home-screen banners
     typingContact: null, // contactId currently shown as "typing..." in SMS — transient, not saved
-    typingDm: null, // { thread, contact } currently shown as "typing..." in Insta DM — transient, not saved
+    typingDm: null, // { thread, contact } currently shown as "typing..." in Pixly DM — transient, not saved
     timeSkipFading: false, // true while the black veil is covering a `timeskip` cut — transient, not saved
 
     // "phone state" widgets — purely decorative on their own, but the story
@@ -731,7 +736,7 @@ export const useStoryStore = defineStore('story', {
       }, typingDelay(entry.text))
     },
 
-    // same beat, for an Insta DM — `typingDm` also carries which contact is
+    // same beat, for an Pixly DM — `typingDm` also carries which contact is
     // typing so a group thread can show a name, not just dots.
     scheduleDm(entry, chapter, onDone) {
       if (entry.from === 'me') {
@@ -1141,7 +1146,9 @@ export const useStoryStore = defineStore('story', {
         // so an authored event can filter "liked something by THIS
         // contact" — a post's own id is otherwise opaque/unknown to an
         // author picking a match value in the editor.
-        const authorId = this.feedPosts.find((p) => p.id === postId)?.author ?? this.reels.find((r) => r.id === postId)?.author
+        const authorId =
+          this.feedPosts.find((p) => p.id === postId)?.author ??
+          this.reels.find((r) => r.id === postId)?.author
         emitEngineEvent('post.liked', { postId, authorId })
       }
       this.save()

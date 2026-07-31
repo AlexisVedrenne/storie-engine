@@ -1,6 +1,6 @@
 <template>
   <div class="asset-tree">
-    <div class="pane-label">Dossiers</div>
+    <div class="pane-label">{{ t('assetTree.paneLabel') }}</div>
 
     <div
       class="folder-row root-row"
@@ -23,7 +23,7 @@
       <span class="folder-name" :title="folder.path">{{ folder.name }}</span>
       <div class="row-actions">
         <q-btn dense flat round icon="create_new_folder" size="sm" @click.stop="openNewFolderDialog(folder.path)">
-          <q-tooltip>Nouveau sous-dossier ici</q-tooltip>
+          <q-tooltip>{{ t('assetTree.newSubfolderTooltip') }}</q-tooltip>
         </q-btn>
       </div>
     </div>
@@ -34,7 +34,7 @@
       flat
       no-caps
       icon="create_new_folder"
-      label="Nouveau dossier"
+      :label="t('assetTree.newFolder')"
       color="primary"
       @click="openNewFolderDialog(modelValue)"
     />
@@ -42,15 +42,15 @@
     <q-dialog v-model="newFolderDialog">
       <q-card class="new-folder-card">
         <q-card-section>
-          <div class="text-subtitle1">Nouveau dossier</div>
+          <div class="text-subtitle1">{{ t('assetTree.newFolder') }}</div>
           <div class="dialog-hint">
-            Dans : <span class="mono">{{ newFolderParent || 'assets/' }}</span>
+            {{ t('assetTree.inLabel') }} <span class="mono">{{ newFolderParent || 'assets/' }}</span>
           </div>
-          <q-input dense outlined autofocus label="Nom du dossier" v-model="newFolderName" class="q-mt-sm" @keyup.enter="createFolder" />
+          <q-input dense outlined autofocus :label="t('assetTree.folderNameLabel')" v-model="newFolderName" class="q-mt-sm" @keyup.enter="createFolder" />
         </q-card-section>
         <q-card-actions align="right">
-          <q-btn flat label="Annuler" v-close-popup />
-          <q-btn flat label="Créer" color="primary" :disable="!newFolderName.trim()" @click="createFolder" v-close-popup />
+          <q-btn flat :label="t('common.cancel')" v-close-popup />
+          <q-btn flat :label="t('common.create')" color="primary" :disable="!newFolderName.trim()" @click="createFolder" v-close-popup />
         </q-card-actions>
       </q-card>
     </q-dialog>
@@ -62,7 +62,9 @@ import { computed, onMounted, ref } from 'vue'
 import { Notify } from 'quasar'
 import { useStoryStore } from '@/engine/stores/story'
 import { useAssetLibrary } from '@/editor/composables/useAssetLibrary'
+import { useEditorI18n } from '@/editor/i18n'
 
+const { t } = useEditorI18n()
 defineProps({ modelValue: { type: String, default: '' } })
 const emit = defineEmits(['update:modelValue'])
 
@@ -106,7 +108,7 @@ async function createFolder() {
       folderPath,
     })
     await refresh()
-    Notify.create({ type: 'positive', message: 'Dossier créé.' })
+    Notify.create({ type: 'positive', message: t('assetTree.folderCreated') })
   } catch (err) {
     Notify.create({ type: 'negative', message: err.message || String(err) })
   }

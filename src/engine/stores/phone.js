@@ -10,8 +10,8 @@ export const usePhoneStore = defineStore('phone', {
     currentApp: null, // null = home screen, else 'messages' | 'social' | 'gallery' | 'calls' | 'settings'
     appOpenedAt: null, // Date.now() when currentApp was opened — drives 'app.closed's `seconds` payload
     activeConversation: null, // contactId when inside an SMS chat thread
-    activeDmThread: null, // threadId when inside an Insta DM thread
-    rebootCount: 0 // bumped by requestReboot() — PhoneShell watches this to replay the boot sequence
+    activeDmThread: null, // threadId when inside an Pixly DM thread
+    rebootCount: 0, // bumped by requestReboot() — PhoneShell watches this to replay the boot sequence
   }),
 
   actions: {
@@ -78,6 +78,6 @@ export const usePhoneStore = defineStore('phone', {
       this.activeConversation = null
       this.activeDmThread = null
       this.rebootCount++
-    }
-  }
+    },
+  },
 })

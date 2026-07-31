@@ -1,12 +1,11 @@
 <template>
   <div class="event-form">
     <p class="intro">
-      Réagit à une action du joueur (pas à la timeline d'un chapitre) — ouvrir une app, liker un
-      post... Réutilise les mêmes conditions/effets que partout ailleurs.
-      <FieldHelp text="Voir docs/roadmap-modular-apps-events.md — un event n'est pas un deuxième système narratif : ses conséquences (onglet 'Ensuite') sont jouées par le même moteur que la timeline d'un chapitre." />
+      {{ t('eventForm.intro') }}
+      <FieldHelp :text="t('eventForm.introHelp')" />
     </p>
 
-    <q-input dense outlined ref="titleInputRef" label="Titre (optionnel — pour s'y retrouver dans la liste)" v-model="event.title">
+    <q-input dense outlined ref="titleInputRef" :label="t('eventForm.titleLabel')" v-model="event.title">
       <template #append>
         <EmojiPickerBtn @pick="(e) => (event.title = insertEmojiAtCaret(titleInputRef, event.title, e))" />
       </template>
@@ -17,7 +16,7 @@
       outlined
       emit-value
       map-options
-      label="Quand"
+      :label="t('eventForm.whenLabel')"
       :options="TRIGGER_OPTIONS"
       v-model="event.trigger"
     />
@@ -37,7 +36,7 @@
           emit-value
           map-options
           class="grow"
-          :label="field.label + ' (optionnel — existante ou à venir)'"
+          :label="matchFieldLabel(event.trigger, field) + t('eventForm.optionalExistingOrFuture')"
           :options="filteredPhotoOptions"
           :model-value="event.match?.[field.key] || null"
           @filter="filterPhotoOptions"
@@ -59,7 +58,7 @@
           </template>
           <template #no-option>
             <q-item>
-              <q-item-section class="text-grey">Tape le chemin d'une photo à venir (ex: images/erwan/plage.jpg)</q-item-section>
+              <q-item-section class="text-grey">{{ t('eventForm.typeFuturePhoto') }}</q-item-section>
             </q-item>
           </template>
         </q-select>
@@ -76,7 +75,7 @@
           emit-value
           map-options
           class="grow"
-          :label="field.label + ' (optionnel — existante ou à venir)'"
+          :label="matchFieldLabel(event.trigger, field) + t('eventForm.optionalExistingOrFuture')"
           :options="filteredPostOptions"
           :model-value="event.match?.[field.key] || null"
           @filter="filterPostOptions"
@@ -84,7 +83,7 @@
         >
           <template #no-option>
             <q-item>
-              <q-item-section class="text-grey">Tape l'id d'une publication à venir (défini dans son propre champ Id)</q-item-section>
+              <q-item-section class="text-grey">{{ t('eventForm.typeFuturePost') }}</q-item-section>
             </q-item>
           </template>
         </q-select>
@@ -96,7 +95,7 @@
           emit-value
           map-options
           class="grow"
-          :label="field.label + ' (optionnel — vide = n’importe lequel)'"
+          :label="matchFieldLabel(event.trigger, field) + t('eventForm.optionalAny')"
           :options="optionsFor(field)"
           :model-value="event.match?.[field.key] || null"
           @update:model-value="(v) => setMatchValue(field.key, v)"
@@ -107,7 +106,7 @@
           outlined
           type="number"
           class="grow"
-          :label="field.label + ' (optionnel — vide = aucun minimum)'"
+          :label="matchFieldLabel(event.trigger, field) + t('eventForm.optionalNoMinimum')"
           :model-value="event.match?.[field.key] ?? ''"
           @update:model-value="(v) => setMatchValue(field.key, v === '' ? '' : Number(v))"
         />
@@ -116,7 +115,7 @@
           dense
           outlined
           class="grow"
-          :label="field.label + ' (optionnel — vide = n’importe lequel)'"
+          :label="matchFieldLabel(event.trigger, field) + t('eventForm.optionalAny')"
           :model-value="event.match?.[field.key] || ''"
           @update:model-value="(v) => setMatchValue(field.key, v)"
         />
@@ -133,17 +132,14 @@
       active-color="primary"
       indicator-color="primary"
     >
-      <q-tab name="then" icon="arrow_forward" label="Ensuite" />
-      <q-tab name="effects" icon="bolt" label="Conséquences" />
-      <q-tab name="requires" icon="rule" label="Condition" />
+      <q-tab name="then" icon="arrow_forward" :label="t('eventForm.tabThen')" />
+      <q-tab name="effects" icon="bolt" :label="t('entries.choice.tabEffects')" />
+      <q-tab name="requires" icon="rule" :label="t('entries.choice.tabRequires')" />
     </q-tabs>
 
     <q-tab-panels v-model="activeTab" animated class="event-panels">
       <q-tab-panel name="then" class="event-panel">
-        <p class="tab-help">
-          Ce qui se joue quand cet event se déclenche — mêmes types d'entrée que dans une timeline
-          de chapitre.
-        </p>
+        <p class="tab-help">{{ t('eventForm.tabThenHelp') }}</p>
         <TimelineEditor :entries="ensureThen()" />
       </q-tab-panel>
 
@@ -152,9 +148,7 @@
       </q-tab-panel>
 
       <q-tab-panel name="requires" class="event-panel">
-        <p class="tab-help">
-          Ne se déclenche que si ces conditions sont vraies au moment de l'action du joueur.
-        </p>
+        <p class="tab-help">{{ t('eventForm.tabRequiresHelp') }}</p>
         <RequiresBuilder :model-value="event.requires" @update:model-value="(v) => (event.requires = v)" />
       </q-tab-panel>
     </q-tab-panels>
@@ -177,19 +171,27 @@ import TimelineEditor from '@/editor/components/TimelineEditor.vue'
 import EmojiPickerBtn from '@/components/shared/EmojiPickerBtn.vue'
 import { insertEmojiAtCaret } from '@/components/shared/emojiInsert'
 import FieldHelp from '@/editor/components/FieldHelp.vue'
+import { useEditorI18n } from '@/editor/i18n'
+import { triggerLabel, matchFieldLabel } from '@/editor/i18n/sharedOverrides'
 
 const props = defineProps({ event: { type: Object, required: true } })
-const { t } = useI18n()
+// Two DIFFERENT i18n systems, deliberately not merged — see EventList.vue's
+// identical split and src/editor/i18n/index.js's header comment.
+const { t: storyT } = useI18n()
+const { t } = useEditorI18n()
 const story = useStoryStore()
 const { contactOptions } = useContactOptions()
 const titleInputRef = ref(null)
 
-const TRIGGER_OPTIONS = TRIGGERS.map((def) => ({ label: def.label, value: def.name }))
+// computed, not a plain const — triggerLabel() re-evaluates when the
+// editor's own language switches, same reason every other *_OPTIONS list
+// converted during the i18n pass is a computed now.
+const TRIGGER_OPTIONS = computed(() => TRIGGERS.map((def) => ({ label: triggerLabel(def), value: def.name })))
 const activeTab = ref('then')
 
 const matchFields = computed(() => triggerDef(props.event.trigger)?.matchFields || [])
 
-const appOptions = computed(() => APP_REGISTRY.map((app) => ({ label: t(app.labelKey), value: app.id })))
+const appOptions = computed(() => APP_REGISTRY.map((app) => ({ label: storyT(app.labelKey), value: app.id })))
 // Recomputed from the whole project on every access rather than cached —
 // cheap (a handful of chapters/photos) and always reflects the latest
 // authored content without a separate invalidation step.

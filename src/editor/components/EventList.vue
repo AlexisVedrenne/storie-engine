@@ -1,8 +1,8 @@
 <template>
   <div class="event-list">
-    <div class="pane-label">Events</div>
+    <div class="pane-label">{{ t('eventList.paneLabel') }}</div>
 
-    <div v-if="!events.length" class="empty-hint">Aucun event pour l'instant.</div>
+    <div v-if="!events.length" class="empty-hint">{{ t('eventList.empty') }}</div>
 
     <div
       v-for="(evt, i) in events"
@@ -17,11 +17,11 @@
         <div class="event-summary" :title="summaryFor(evt)">{{ summaryFor(evt) }}</div>
       </div>
       <q-btn dense flat round icon="delete" size="sm" color="negative" class="row-actions" @click.stop="remove(i)">
-        <q-tooltip>Supprimer</q-tooltip>
+        <q-tooltip>{{ t('common.delete') }}</q-tooltip>
       </q-btn>
     </div>
 
-    <div class="pane-label add-label">Ajouter un event</div>
+    <div class="pane-label add-label">{{ t('eventList.addEvent') }}</div>
     <div v-for="group in groups" :key="group.id" class="add-group">
       <div class="add-group-header">
         <q-icon v-if="group.icon" :name="group.icon" size="15px" :style="{ color: group.color }" />
@@ -30,7 +30,7 @@
         <span>{{ group.label }}</span>
       </div>
       <button v-for="trig in group.triggers" :key="trig.name" class="trigger-add-row" @click="addWithTrigger(trig.name)">
-        <span>{{ trig.label }}</span>
+        <span>{{ triggerLabel(trig) }}</span>
         <q-icon name="add" size="16px" class="add-icon" />
       </button>
     </div>
@@ -44,11 +44,18 @@ import { useStoryStore } from '@/engine/stores/story'
 import { APP_REGISTRY } from '@/engine/apps/registry'
 import { triggerDef, commonTriggers, triggersForApp } from '@/engine/events/triggers'
 import { useContactOptions } from '@/components/shared/useContactOptions'
+import { useEditorI18n } from '@/editor/i18n'
+import { triggerLabel } from '@/editor/i18n/sharedOverrides'
 
 defineProps({ modelValue: { type: Number, default: 0 } })
 const emit = defineEmits(['update:modelValue'])
 const story = useStoryStore()
-const { t } = useI18n()
+// Two DIFFERENT i18n systems in play here, deliberately not merged (see
+// src/editor/i18n/index.js's header comment): `storyT` translates
+// player-facing app names (APP_REGISTRY labels, also shown in-game) via
+// the shared vue-i18n instance; `t` is the editor's OWN chrome language.
+const { t: storyT } = useI18n()
+const { t } = useEditorI18n()
 const { contactLabel } = useContactOptions()
 
 // game.events is optional/absent on any project created before this
@@ -66,11 +73,11 @@ function remove(i) {
 // with none (Appels/Réglages/Email today) just doesn't show up yet rather
 // than offering a dead-end group with nothing in it.
 const groups = computed(() => {
-  const list = [{ id: 'common', label: 'Commun', triggers: commonTriggers() }]
+  const list = [{ id: 'common', label: t('eventList.common'), triggers: commonTriggers() }]
   for (const app of APP_REGISTRY) {
     const triggers = triggersForApp(app.id)
     if (triggers.length) {
-      list.push({ id: app.id, label: t(app.labelKey), icon: app.icon, color: app.color, iconImage: app.iconImage, triggers })
+      list.push({ id: app.id, label: storyT(app.labelKey), icon: app.icon, color: app.color, iconImage: app.iconImage, triggers })
     }
   }
   return list
@@ -92,13 +99,13 @@ function summaryFor(evt) {
   if (evt.title) return evt.title
 
   const def = triggerDef(evt.trigger)
-  const label = def?.label || evt.trigger || '(sans trigger)'
+  const label = (def ? triggerLabel(def) : '') || evt.trigger || t('eventList.noTrigger')
   const parts = []
   for (const field of def?.matchFields || []) {
     const matchValue = evt.match?.[field.key]
     if (matchValue === undefined || matchValue === null || matchValue === '') continue
     let shown = matchValue
-    if (field.optionsFrom === 'apps') shown = t(APP_REGISTRY.find((a) => a.id === matchValue)?.labelKey || matchValue)
+    if (field.optionsFrom === 'apps') shown = storyT(APP_REGISTRY.find((a) => a.id === matchValue)?.labelKey || matchValue)
     else if (field.optionsFrom === 'contacts') shown = contactLabel(matchValue)
     else if (field.optionsFrom === 'photos') shown = String(matchValue).split('/').pop()
     parts.push(shown)

@@ -12,6 +12,7 @@ sous-phase (4a) traite le premier de ces quatre chantiers — c'est celui qui
 bloque le plus l'usage quotidien.
 
 Décisions actées avec l'utilisateur avant implémentation :
+
 - Ordre : contacts/threads/game d'abord.
 - **Suppression d'un contact/thread encore référencé = bloquée**, pas juste
   avertie — le dialog liste les références trouvées et refuse la suppression.
@@ -38,7 +39,7 @@ résultats affichés dans un **dialog popup** (pas de panneau persistant),
 même pattern que le dialog « Suppression impossible » de la 4a.
 
 - `src/project/validateProject.js` (nouveau, pur, sans dépendance store — même convention que `findReferences.js`) :
-  - `collectReferences()` (interne) — même balayage que `findReferences.js` mais collecte *toutes* les références (pas seulement celles pointant vers un id cible), puis chacune est vérifiée contre `contacts`/`threads` (avec le fallback thread = contact 1:1 de `findThread`).
+  - `collectReferences()` (interne) — même balayage que `findReferences.js` mais collecte _toutes_ les références (pas seulement celles pointant vers un id cible), puis chacune est vérifiée contre `contacts`/`threads` (avec le fallback thread = contact 1:1 de `findThread`).
   - `validateProject(project)` → `{errors, warnings}` — références cassées + 3 checks structurels de chapitres : id dans `chapterOrder` sans fichier correspondant (erreur), fichier chapitre absent de `chapterOrder` (avertissement, ordre non garanti), `entryChapterId` invalide (erreur, le jeu ne démarre pas).
   - `collectAssetPaths(project)` → `[{path, labels}]`, dédupliqué — pas de vérification d'existence ici (le renderer n'a pas accès à `fs`).
 - `src-electron/ipc/project.js` — nouveau handler `project:checkAssets({rootPath, assetsRoot, paths})`, retourne le sous-ensemble de chemins introuvables sur disque (`fs.existsSync`, même logique que `project:pickAsset`).
@@ -107,6 +108,7 @@ dans le fixture), sinon racine de `assets/`.
 suffisait pas — organisation par dossier/sous-dossier demandée, plus la
 possibilité de créer des dossiers à l'avance (avant l'import), plus
 préparer l'import pour d'autres types de fichiers (audio à venir).
+
 - `project:listAssetFiles` retourne désormais `{files, folders}` (les
   dossiers, y compris vides, pas seulement les fichiers).
 - `src/editor/components/AssetTree.vue` (nouveau) — colonne de gauche
@@ -146,7 +148,7 @@ extrait automatiquement chaque phrase française réellement utilisée par
 bucket (chapitre, ou `common`), affiche un badge Traduit/Manquant, plus
 création de nouvelle langue depuis l'UI.
 
-- `src/project/extractTranslatableStrings.js` (nouveau, pur) — calque exactement les points d'appel réels de `fill()`/`seedFill()`/`translateStory()` dans `story.js`, pas « ce qui devrait logiquement être traduit » : par exemple les commentaires de post/reel *en direct* (pas seed) ne sont **pas** traduits par le moteur aujourd'hui, donc l'extracteur les exclut aussi, alors que les commentaires seed le sont.
+- `src/project/extractTranslatableStrings.js` (nouveau, pur) — calque exactement les points d'appel réels de `fill()`/`seedFill()`/`translateStory()` dans `story.js`, pas « ce qui devrait logiquement être traduit » : par exemple les commentaires de post/reel _en direct_ (pas seed) ne sont **pas** traduits par le moteur aujourd'hui, donc l'extracteur les exclut aussi, alors que les commentaires seed le sont.
 - `src-electron/ipc/project.js` — `project:saveI18nBucket` (mirroring `saveContacts`) + `project:createLocale` (crée `i18n/<code>/common.js` vide ; le code de langue garde sa casse BCP-47 telle quelle, pas de `slugify()`).
 - `src/editor/components/LocaleList.vue` (nouveau, 6ème onglet « Traductions », colonne gauche) — liste des langues avec un badge de progression (X/Y traduits, calculé une fois via l'extracteur et partagé entre toutes les lignes) + « Nouvelle langue ».
 - `src/editor/components/I18nBucketEditor.vue` (nouveau, colonne milieu) — sélecteur de bucket (Commun + un par chapitre), une ligne par phrase extraite avec traduction éditable + badge, section « Traductions inutilisées » (clés du dictionnaire qui ne correspondent plus à rien, suppression uniquement — même esprit que les assets orphelins).
@@ -185,7 +187,7 @@ l'éditeur i18n (liste fixe à gauche + éditeur de bucket à droite) plutôt
 que sur celle de contacts/threads, car messages/dms sont des dictionnaires
 par conversation alors que posts/reels/photos sont des tableaux plats.
 
-- `src/editor/components/SeedBucketList.vue` — 5 lignes fixes (Messages/DM Insta/Publications/Reels/Galerie), non créables (contrairement à toutes les autres listes de l'éditeur — ces 5 buckets sont dictés par la forme de données du moteur, pas du contenu libre).
+- `src/editor/components/SeedBucketList.vue` — 5 lignes fixes (Messages/DM Pixly/Publications/Reels/Galerie), non créables (contrairement à toutes les autres listes de l'éditeur — ces 5 buckets sont dictés par la forme de données du moteur, pas du contenu libre).
 - `src/editor/components/SeedBucketEditor.vue` — pour Messages/DM : sélecteur de conversation local (contact pour Messages, `useContactOptions()`'s `threadOptions` pour DM — 1ère vraie réutilisation hors `ThreadForm.vue`) puis liste de cartes ; pour Publications/Reels/Galerie : liste de cartes directement. Réutilise `AssetField.vue` (image/média) et **`CommentsListField.vue` tel quel** (déjà exactement la bonne forme depuis la Phase 2, aucune modification nécessaire).
 - `src-electron/ipc/project.js` — `project:saveSeedBucket` (nom de bucket vérifié contre une liste blanche).
 - **Testé en Node standalone** : `serializeSeedBucket` fait un aller-retour parfait (round-trip byte-for-byte) sur les deux formes (dict pour messages, tableau vide pour posts/photos) contre le fixture réel.
@@ -193,6 +195,7 @@ par conversation alors que posts/reels/photos sont des tableaux plats.
 ## Feuille de route restante (Phase 4)
 
 Phase 4 est essentiellement terminée. Reste, hors scope des demandes explicites jusqu'ici :
+
 - Migration opportuniste des 10 formulaires d'entrée vers `useContactOptions()`.
 - Icône d'app personnalisée pour le build.
 - (Optionnel) correctif du remount `PhoneShell` sur le bouton « Aperçu seul ».

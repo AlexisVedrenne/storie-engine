@@ -7,23 +7,23 @@
         emit-value
         map-options
         class="key-select"
-        :label="bucket === 'messages' ? 'Conversation avec' : 'Thread'"
+        :label="bucket === 'messages' ? t('seedBucketEditor.conversationWith') : t('seedBucketEditor.thread')"
         :options="keyOptions"
         v-model="selectedKey"
       />
       <div class="spacer" />
-      <span class="count">{{ entries.length }} entrée(s)</span>
+      <span class="count">{{ t('seedBucketList.entryCount', { n: entries.length }) }}</span>
     </div>
     <div v-else class="panel toolbar">
       <span class="section-label">{{ bucketLabel }}</span>
       <div class="spacer" />
-      <span class="count">{{ entries.length }} entrée(s)</span>
+      <span class="count">{{ t('seedBucketList.entryCount', { n: entries.length }) }}</span>
     </div>
 
-    <div v-if="isDictBucket && !selectedKey" class="empty-state">Choisis une conversation ci-dessus.</div>
+    <div v-if="isDictBucket && !selectedKey" class="empty-state">{{ t('seedBucketEditor.chooseConversation') }}</div>
 
     <template v-else>
-      <div v-if="!entries.length" class="empty-state">Aucune entrée pour l'instant.</div>
+      <div v-if="!entries.length" class="empty-state">{{ t('seedBucketEditor.noEntries') }}</div>
 
       <div class="cards">
         <div v-for="(entry, i) in entries" :key="i" class="card" :class="{ open: expanded[i] }">
@@ -33,13 +33,13 @@
             <div class="spacer" />
             <div class="row-actions">
               <q-btn dense flat round icon="arrow_upward" size="sm" :disable="i === 0" @click.stop="moveUp(i)">
-                <q-tooltip>Monter</q-tooltip>
+                <q-tooltip>{{ t('timelineEntryCard.moveUp') }}</q-tooltip>
               </q-btn>
               <q-btn dense flat round icon="arrow_downward" size="sm" :disable="i === entries.length - 1" @click.stop="moveDown(i)">
-                <q-tooltip>Descendre</q-tooltip>
+                <q-tooltip>{{ t('timelineEntryCard.moveDown') }}</q-tooltip>
               </q-btn>
               <q-btn dense flat round icon="delete" size="sm" color="negative" @click.stop="remove(i)">
-                <q-tooltip>Supprimer</q-tooltip>
+                <q-tooltip>{{ t('common.delete') }}</q-tooltip>
               </q-btn>
             </div>
           </div>
@@ -47,29 +47,29 @@
           <div v-if="expanded[i]" class="card-body">
             <template v-if="isDictBucket">
               <div class="row">
-                <q-select dense outlined emit-value map-options label="De" :options="contactOptions" v-model="entry.from" class="grow" />
-                <q-input dense outlined type="number" step="0.5" label="Il y a N jours" v-model.number="entry.daysAgo" class="days-input" />
+                <q-select dense outlined emit-value map-options :label="t('seedBucketEditor.fromLabel')" :options="contactOptions" v-model="entry.from" class="grow" />
+                <q-input dense outlined type="number" step="0.5" :label="t('seedBucketEditor.daysAgoLabel')" v-model.number="entry.daysAgo" class="days-input" />
               </div>
-              <q-input dense outlined :ref="(el) => (fieldRefs[i] = el)" type="textarea" autogrow label="Texte" v-model="entry.text">
+              <q-input dense outlined :ref="(el) => (fieldRefs[i] = el)" type="textarea" autogrow :label="t('seedBucketEditor.textLabel')" v-model="entry.text">
                 <template #append>
                   <EmojiPickerBtn @pick="(e) => (entry.text = insertEmojiAtCaret(fieldRefs[i], entry.text, e))" />
                 </template>
               </q-input>
-              <AssetField v-model="entry.image" label="Photo jointe (optionnel)" :contact-id="entry.from" />
+              <AssetField v-model="entry.image" :label="t('entries.message.imageLabel')" :contact-id="entry.from" />
             </template>
 
             <template v-else-if="bucket === 'posts'">
               <div class="row">
-                <q-select dense outlined emit-value map-options label="Auteur" :options="contactOptions" v-model="entry.author" class="grow" />
-                <q-input dense outlined type="number" step="0.5" label="Il y a N jours" v-model.number="entry.daysAgo" class="days-input" />
+                <q-select dense outlined emit-value map-options :label="t('seedBucketEditor.authorLabel')" :options="contactOptions" v-model="entry.author" class="grow" />
+                <q-input dense outlined type="number" step="0.5" :label="t('seedBucketEditor.daysAgoLabel')" v-model.number="entry.daysAgo" class="days-input" />
               </div>
-              <q-input dense outlined :ref="(el) => (fieldRefs[i] = el)" type="textarea" autogrow label="Légende" v-model="entry.content">
+              <q-input dense outlined :ref="(el) => (fieldRefs[i] = el)" type="textarea" autogrow :label="t('entries.post.captionLabel')" v-model="entry.content">
                 <template #append>
                   <EmojiPickerBtn @pick="(e) => (entry.content = insertEmojiAtCaret(fieldRefs[i], entry.content, e))" />
                 </template>
               </q-input>
-              <AssetField v-model="entry.image" label="Image (optionnel)" :contact-id="entry.author" />
-              <q-input dense outlined type="number" label="Nombre de likes (optionnel — sinon aléatoire)" v-model.number="entry.likes" />
+              <AssetField v-model="entry.image" :label="t('entries.post.imageLabel')" :contact-id="entry.author" />
+              <q-input dense outlined type="number" :label="t('entries.post.likesLabel')" v-model.number="entry.likes" />
               <CommentsListField
                 v-model="entry.comments"
                 :comments-count="entry.commentsCount"
@@ -79,17 +79,17 @@
 
             <template v-else-if="bucket === 'reels'">
               <div class="row">
-                <q-select dense outlined emit-value map-options label="Auteur" :options="contactOptions" v-model="entry.author" class="grow" />
-                <q-input dense outlined type="number" step="0.5" label="Il y a N jours" v-model.number="entry.daysAgo" class="days-input" />
+                <q-select dense outlined emit-value map-options :label="t('seedBucketEditor.authorLabel')" :options="contactOptions" v-model="entry.author" class="grow" />
+                <q-input dense outlined type="number" step="0.5" :label="t('seedBucketEditor.daysAgoLabel')" v-model.number="entry.daysAgo" class="days-input" />
               </div>
-              <q-input dense outlined :ref="(el) => (fieldRefs[i] = el)" type="textarea" autogrow label="Légende" v-model="entry.caption">
+              <q-input dense outlined :ref="(el) => (fieldRefs[i] = el)" type="textarea" autogrow :label="t('entries.reel.captionLabel')" v-model="entry.caption">
                 <template #append>
                   <EmojiPickerBtn @pick="(e) => (entry.caption = insertEmojiAtCaret(fieldRefs[i], entry.caption, e))" />
                 </template>
               </q-input>
-              <AssetField v-model="entry.media" label="Média (vidéo/image)" :contact-id="entry.author" />
-              <q-input dense outlined label="Musique (optionnel)" v-model="entry.music" />
-              <q-input dense outlined type="number" label="Nombre de likes (optionnel — sinon aléatoire)" v-model.number="entry.likes" />
+              <AssetField v-model="entry.media" :label="t('entries.reel.mediaLabel')" :contact-id="entry.author" />
+              <q-input dense outlined :label="t('entries.reel.musicLabel')" v-model="entry.music" />
+              <q-input dense outlined type="number" :label="t('entries.post.likesLabel')" v-model.number="entry.likes" />
               <CommentsListField
                 v-model="entry.comments"
                 :comments-count="entry.commentsCount"
@@ -98,9 +98,9 @@
             </template>
 
             <template v-else-if="bucket === 'photos'">
-              <q-select dense outlined emit-value map-options label="Envoyée par" :options="contactOptions" v-model="entry.from" />
-              <AssetField v-model="entry.url" label="Image" :contact-id="entry.from" />
-              <q-input dense outlined :ref="(el) => (fieldRefs[i] = el)" label="Légende (optionnel)" v-model="entry.caption">
+              <q-select dense outlined emit-value map-options :label="t('entries.photo.fromLabel')" :options="contactOptions" v-model="entry.from" />
+              <AssetField v-model="entry.url" :label="t('entries.photo.imageLabel')" :contact-id="entry.from" />
+              <q-input dense outlined :ref="(el) => (fieldRefs[i] = el)" :label="t('entries.photo.captionLabel')" v-model="entry.caption">
                 <template #append>
                   <EmojiPickerBtn @pick="(e) => (entry.caption = insertEmojiAtCaret(fieldRefs[i], entry.caption, e))" />
                 </template>
@@ -123,7 +123,9 @@ import AssetField from '@/editor/components/AssetField.vue'
 import CommentsListField from '@/editor/components/CommentsListField.vue'
 import EmojiPickerBtn from '@/components/shared/EmojiPickerBtn.vue'
 import { insertEmojiAtCaret } from '@/components/shared/emojiInsert'
+import { useEditorI18n } from '@/editor/i18n'
 
+const { t } = useEditorI18n()
 const props = defineProps({ bucket: { type: String, required: true } })
 // Plain object (not reactive) — per-card DOM ref bag for EmojiPickerBtn's
 // caret insertion, keyed by card index (v-for can't bind a static template ref).
@@ -132,10 +134,20 @@ const story = useStoryStore()
 const { contactOptions, contactOptionsNoMe, threadOptions } = useContactOptions()
 
 const isDictBucket = computed(() => props.bucket === 'messages' || props.bucket === 'dms')
-const bucketLabels = { posts: 'Publications', reels: 'Reels', photos: 'Galerie' }
-const bucketLabel = computed(() => bucketLabels[props.bucket] || props.bucket)
-const addLabels = { messages: 'Ajouter un message', dms: 'Ajouter un message', posts: 'Ajouter une publication', reels: 'Ajouter un reel', photos: 'Ajouter une photo' }
-const addLabel = computed(() => addLabels[props.bucket])
+const bucketLabel = computed(() => {
+  const labels = { posts: t('seedBucketList.posts'), reels: t('seedBucketList.reels'), photos: t('seedBucketList.photos') }
+  return labels[props.bucket] || props.bucket
+})
+const addLabel = computed(() => {
+  const labels = {
+    messages: t('seedBucketEditor.addMessage'),
+    dms: t('seedBucketEditor.addMessage'),
+    posts: t('seedBucketEditor.addPost'),
+    reels: t('seedBucketEditor.addReel'),
+    photos: t('seedBucketEditor.addPhoto'),
+  }
+  return labels[props.bucket]
+})
 
 // Which conversation is open within a dict bucket — LOCAL to this
 // component, not lifted to EditorPage.vue: nothing else needs to read or

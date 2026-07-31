@@ -5,7 +5,7 @@
       outlined
       emit-value
       map-options
-      label="Envoyée par"
+      :label="t('entries.photo.fromLabel')"
       :options="contactOptions"
       v-model="entry.from"
     >
@@ -24,13 +24,13 @@
         </q-item>
       </template>
     </q-select>
-    <AssetField v-model="entry.url" label="Image" :contact-id="entry.from" />
+    <AssetField v-model="entry.url" :label="t('entries.photo.imageLabel')" :contact-id="entry.from" />
     <q-input
       dense
       outlined
       ref="captionInputRef"
-      label="Légende (optionnel)"
-      placeholder="ex: Le café de ce matin"
+      :label="t('entries.photo.captionLabel')"
+      :placeholder="t('entries.photo.captionPlaceholder')"
       v-model="entry.caption"
     >
       <template #append>
@@ -46,7 +46,9 @@ import { useContactOptions } from '@/components/shared/useContactOptions'
 import AssetField from '@/editor/components/AssetField.vue'
 import EmojiPickerBtn from '@/components/shared/EmojiPickerBtn.vue'
 import { insertEmojiAtCaret } from '@/components/shared/emojiInsert'
+import { useEditorI18n } from '@/editor/i18n'
 
+const { t } = useEditorI18n()
 defineProps({ entry: { type: Object, required: true } })
 const { contactOptions, contactColor, contactLabel } = useContactOptions()
 const captionInputRef = ref(null)

@@ -6,27 +6,22 @@
       flat
       no-caps
       icon="add"
-      label="Ajouter une condition"
+      :label="t('requiresBuilder.addCondition')"
       class="btn-ghost"
       @click="revealed = true"
     />
 
     <template v-else>
-      <p class="intro">
-        Toutes les conditions ci-dessous doivent être vraies pour que ce contenu apparaisse. Rien
-        d'ajouté = toujours affiché.
-      </p>
+      <p class="intro">{{ t('requiresBuilder.intro') }}</p>
 
       <div class="section-title">
-        Stats du joueur (flags)
-        <FieldHelp
-          text="Un flag est une valeur mémorisée par l'histoire (un nombre qui s'accumule, comme la confiance, ou un vrai/faux ponctuel) — posée ailleurs via un Effet, relue ici pour faire varier le contenu."
-        />
+        {{ t('requiresBuilder.flagsTitle') }}
+        <FieldHelp :text="t('requiresBuilder.flagsHelp')" />
       </div>
-      <div v-if="!flagRows.length" class="empty-hint">Aucune condition de stat.</div>
+      <div v-if="!flagRows.length" class="empty-hint">{{ t('requiresBuilder.noFlagCondition') }}</div>
       <div v-for="(row, i) in flagRows" :key="i" class="row-card">
         <q-btn dense flat round icon="close" size="sm" class="row-remove" @click="removeFlagRow(i)">
-          <q-tooltip>Retirer cette condition</q-tooltip>
+          <q-tooltip>{{ t('requiresBuilder.removeCondition') }}</q-tooltip>
         </q-btn>
         <div class="row-fields">
           <FlagNameField v-model="row.key" @update:model-value="sync" />
@@ -34,7 +29,7 @@
             dense
             outlined
             class="mode-select"
-            label="Condition"
+            :label="t('requiresBuilder.conditionLabel')"
             v-model="row.mode"
             :options="FLAG_MODES"
             emit-value
@@ -44,7 +39,7 @@
           <q-toggle
             v-if="row.mode === 'bool'"
             v-model="row.boolValue"
-            label="vrai"
+            :label="t('requiresBuilder.trueLabel')"
             @update:model-value="sync"
           />
           <q-input
@@ -53,7 +48,7 @@
             outlined
             type="number"
             class="num-input"
-            label="valeur"
+            :label="t('requiresBuilder.valueLabel')"
             v-model.number="row.exactValue"
             @update:model-value="sync"
           />
@@ -104,18 +99,16 @@
         flat
         no-caps
         icon="add"
-        label="Ajouter une condition de stat"
+        :label="t('requiresBuilder.addFlagCondition')"
         class="btn-ghost"
         @click="addFlagRow"
       />
 
       <div class="section-title">
-        Abonnements Pixly
-        <FieldHelp
-          text="Vérifie si le joueur suit (ou non) ce personnage sur Pixly au moment où l'histoire atteint cette entrée."
-        />
+        {{ t('requiresBuilder.followingTitle') }}
+        <FieldHelp :text="t('requiresBuilder.followingHelp')" />
       </div>
-      <div v-if="!followingRows.length" class="empty-hint">Aucune condition d'abonnement.</div>
+      <div v-if="!followingRows.length" class="empty-hint">{{ t('requiresBuilder.noFollowingCondition') }}</div>
       <div v-for="(row, i) in followingRows" :key="i" class="row-card">
         <q-btn
           dense
@@ -126,7 +119,7 @@
           class="row-remove"
           @click="removeFollowingRow(i)"
         >
-          <q-tooltip>Retirer cette condition</q-tooltip>
+          <q-tooltip>{{ t('requiresBuilder.removeCondition') }}</q-tooltip>
         </q-btn>
         <div class="row-fields">
           <q-select
@@ -137,7 +130,7 @@
             :options="contactOptions"
             emit-value
             map-options
-            label="Personnage"
+            :label="t('entries.story.characterLabel')"
             @update:model-value="sync"
           >
             <template #selected>
@@ -155,7 +148,7 @@
               </q-item>
             </template>
           </q-select>
-          <q-toggle v-model="row.expected" label="le joueur le suit" @update:model-value="sync" />
+          <q-toggle v-model="row.expected" :label="t('requiresBuilder.playerFollows')" @update:model-value="sync" />
         </div>
       </div>
       <q-btn
@@ -163,7 +156,7 @@
         flat
         no-caps
         icon="add"
-        label="Ajouter une condition d'abonnement"
+        :label="t('requiresBuilder.addFollowingCondition')"
         class="btn-ghost"
         @click="addFollowingRow"
       />
@@ -172,10 +165,13 @@
 </template>
 
 <script setup>
-import { reactive, ref } from 'vue'
+import { computed, reactive, ref } from 'vue'
 import { useContactOptions } from '@/components/shared/useContactOptions'
 import FieldHelp from '@/editor/components/FieldHelp.vue'
 import FlagNameField from '@/editor/components/FlagNameField.vue'
+import { useEditorI18n } from '@/editor/i18n'
+
+const { t } = useEditorI18n()
 
 // `requires: { flags?: { key: value|bool|{min}|{max}|{min,max} }, following?: { contactId: bool } } | null`
 // See NTR docs/story-engine.md section 5. Edits build a fresh `requires`
@@ -183,13 +179,15 @@ import FlagNameField from '@/editor/components/FlagNameField.vue'
 // round-trip watcher needed since nothing re-derives rows after mount.
 const props = defineProps({ modelValue: { type: Object, default: null } })
 const emit = defineEmits(['update:modelValue'])
-const FLAG_MODES = [
-  { label: 'vrai / faux', value: 'bool' },
-  { label: 'est exactement…', value: 'exact' },
-  { label: 'au moins…', value: 'min' },
-  { label: 'au plus…', value: 'max' },
-  { label: 'entre… et…', value: 'range' },
-]
+// computed, not a plain const — labels re-evaluate when the editor's own
+// language switches (t() calls inside).
+const FLAG_MODES = computed(() => [
+  { label: t('requiresBuilder.modeBool'), value: 'bool' },
+  { label: t('requiresBuilder.modeExact'), value: 'exact' },
+  { label: t('requiresBuilder.modeMin'), value: 'min' },
+  { label: t('requiresBuilder.modeMax'), value: 'max' },
+  { label: t('requiresBuilder.modeRange'), value: 'range' },
+])
 
 const { contactOptions, contactColor, contactLabel } = useContactOptions()
 

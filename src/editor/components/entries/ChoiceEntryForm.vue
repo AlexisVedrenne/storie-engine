@@ -1,7 +1,7 @@
 <template>
   <div class="entry-form">
     <div class="field-group">
-      <div class="section-label">Où arrive la réponse du joueur ?</div>
+      <div class="section-label">{{ t('entries.choice.replyTargetLabel') }}</div>
       <div class="row">
         <q-btn-toggle
           dense
@@ -9,7 +9,7 @@
           :model-value="target.mode"
           :options="[
             { label: 'SMS', value: 'contact' },
-            { label: 'DM Insta', value: 'thread' },
+            { label: 'DM Pixly', value: 'thread' },
           ]"
           @update:model-value="setMode"
         />
@@ -20,7 +20,7 @@
           emit-value
           map-options
           class="target-select"
-          label="Contact"
+          :label="t('entries.choice.contactLabel')"
           :options="contactOptions"
           v-model="entry.contact"
         >
@@ -46,7 +46,7 @@
           emit-value
           map-options
           class="target-select"
-          label="Conversation (1:1 ou groupe)"
+          :label="t('entries.choice.threadLabel')"
           :options="threadOptions"
           v-model="entry.thread"
         >
@@ -82,20 +82,20 @@
       dense
       outlined
       ref="promptInputRef"
-      label="Question posée au joueur"
-      placeholder="ex: Que réponds-tu ?"
+      :label="t('entries.choice.promptLabel')"
+      :placeholder="t('entries.choice.promptPlaceholder')"
       v-model="entry.prompt"
     >
       <template #append>
-        <EmojiPickerBtn @pick="(e) => (entry.prompt = insertEmojiAtCaret(promptInputRef, entry.prompt, e))" />
+        <EmojiPickerBtn
+          @pick="(e) => (entry.prompt = insertEmojiAtCaret(promptInputRef, entry.prompt, e))"
+        />
       </template>
     </q-input>
 
     <div class="section-title">
-      Options de réponse
-      <FieldHelp
-        text="Chaque option devient un bouton proposé au joueur. Le texte choisi part comme sa réponse."
-      />
+      {{ t('entries.choice.optionsTitle') }}
+      <FieldHelp :text="t('entries.choice.optionsHelp')" />
     </div>
     <q-expansion-item
       v-for="(option, i) in entry.options"
@@ -104,10 +104,12 @@
       class="option-card"
     >
       <template #header>
-        <q-item-section
-          >Option {{ i + 1
-          }}{{ option.text ? ' — ' + option.text : ' (texte vide)' }}</q-item-section
-        >
+        <q-item-section>{{
+          t('entries.choice.optionHeader', {
+            n: i + 1,
+            text: option.text ? ' — ' + option.text : t('entries.choice.optionEmpty'),
+          })
+        }}</q-item-section>
         <q-item-section side>
           <q-btn
             dense
@@ -122,8 +124,8 @@
             <q-tooltip>
               {{
                 entry.options.length <= 1
-                  ? "Un choix a besoin d'au moins une option"
-                  : 'Supprimer cette option'
+                  ? t('entries.choice.needsOneOption')
+                  : t('entries.choice.removeOption')
               }}
             </q-tooltip>
           </q-btn>
@@ -135,12 +137,14 @@
           dense
           outlined
           :ref="(el) => (optionTextRefs[i] = el)"
-          label="Texte du bouton"
-          placeholder="ex: Ok, j'arrive"
+          :label="t('entries.choice.buttonTextLabel')"
+          :placeholder="t('entries.choice.buttonTextPlaceholder')"
           v-model="option.text"
         >
           <template #append>
-            <EmojiPickerBtn @pick="(e) => (option.text = insertEmojiAtCaret(optionTextRefs[i], option.text, e))" />
+            <EmojiPickerBtn
+              @pick="(e) => (option.text = insertEmojiAtCaret(optionTextRefs[i], option.text, e))"
+            />
           </template>
         </q-input>
 
@@ -155,17 +159,14 @@
           indicator-color="primary"
           @update:model-value="(v) => (activeTabs[i] = v)"
         >
-          <q-tab name="then" icon="arrow_forward" label="Juste après" />
-          <q-tab name="effects" icon="bolt" label="Conséquences" />
-          <q-tab name="requires" icon="rule" label="Condition" />
+          <q-tab name="then" icon="arrow_forward" :label="t('entries.choice.tabThen')" />
+          <q-tab name="effects" icon="bolt" :label="t('entries.choice.tabEffects')" />
+          <q-tab name="requires" icon="rule" :label="t('entries.choice.tabRequires')" />
         </q-tabs>
 
         <q-tab-panels :model-value="tabFor(i)" animated class="option-panels">
           <q-tab-panel name="then" class="option-panel">
-            <p class="tab-help">
-              Ce qui se joue immédiatement après ce choix (ex: la réponse du contact) — tous les
-              types d'entrée sont disponibles ici, comme dans la timeline principale.
-            </p>
+            <p class="tab-help">{{ t('entries.choice.tabThenHelp') }}</p>
             <TimelineEditor
               :entries="ensureThen(option)"
               :breadcrumb="[...breadcrumb, optionSegment(option, i)]"
@@ -173,10 +174,7 @@
           </q-tab-panel>
 
           <q-tab-panel name="effects" class="option-panel">
-            <p class="tab-help">
-              Change des stats/l'état du jeu quand le joueur choisit cette option (indépendant de ce
-              qui s'affiche juste après).
-            </p>
+            <p class="tab-help">{{ t('entries.choice.tabEffectsHelp') }}</p>
             <EffectsBuilder
               :model-value="option.effects"
               @update:model-value="(v) => (option.effects = v)"
@@ -184,10 +182,7 @@
           </q-tab-panel>
 
           <q-tab-panel name="requires" class="option-panel">
-            <p class="tab-help">
-              Cette option n'est proposée que si toutes ces conditions sont vraies. Garde toujours
-              au moins une option sans condition, sinon le choix peut se retrouver vide.
-            </p>
+            <p class="tab-help">{{ t('entries.choice.tabRequiresHelp') }}</p>
             <RequiresBuilder
               :model-value="option.requires"
               @update:model-value="(v) => (option.requires = v)"
@@ -201,7 +196,7 @@
       flat
       no-caps
       icon="add"
-      label="Ajouter une option"
+      :label="t('entries.choice.addOption')"
       class="btn-ghost"
       @click="addOption"
     />
@@ -217,6 +212,9 @@ import TimelineEditor from '@/editor/components/TimelineEditor.vue'
 import FieldHelp from '@/editor/components/FieldHelp.vue'
 import EmojiPickerBtn from '@/components/shared/EmojiPickerBtn.vue'
 import { insertEmojiAtCaret } from '@/components/shared/emojiInsert'
+import { useEditorI18n } from '@/editor/i18n'
+
+const { t } = useEditorI18n()
 
 // `breadcrumb` — see docs/ui-ux-audit.md point 2 / TimelineEditor.vue's own
 // prop of the same name. Forwarded here (not built by TimelineEditor
@@ -247,7 +245,10 @@ const optionTextRefs = {}
 
 function optionSegment(option, i) {
   return {
-    label: `Option ${i + 1}${option.text ? ' — ' + option.text : ''}`,
+    label: t('entries.choice.optionHeader', {
+      n: i + 1,
+      text: option.text ? ' — ' + option.text : '',
+    }),
     collapse: () => (expandedOptions[i] = false),
   }
 }

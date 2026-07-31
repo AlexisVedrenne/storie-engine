@@ -14,23 +14,23 @@
         <q-icon :name="iconFor(entry.type)" size="16px" class="type-icon" />
         <span class="type-badge">{{ entry.type }}</span>
         <span class="summary" :title="summaryFor(entry)">{{ summaryFor(entry) }}</span>
-        <span v-if="entry.requires" class="requires-badge" title="Cette entrée a une condition d'affichage">
-          <q-icon name="rule" size="12px" /> condition
+        <span v-if="entry.requires" class="requires-badge" :title="t('timelineEntryCard.hasCondition')">
+          <q-icon name="rule" size="12px" /> {{ t('timelineEntryCard.conditionBadge') }}
         </span>
       </div>
       <div class="spacer" />
       <div class="row-actions">
         <q-btn dense flat round icon="arrow_upward" size="sm" :disable="!canMoveUp" @click.stop="emit('move-up')">
-          <q-tooltip>Monter</q-tooltip>
+          <q-tooltip>{{ t('timelineEntryCard.moveUp') }}</q-tooltip>
         </q-btn>
         <q-btn dense flat round icon="arrow_downward" size="sm" :disable="!canMoveDown" @click.stop="emit('move-down')">
-          <q-tooltip>Descendre</q-tooltip>
+          <q-tooltip>{{ t('timelineEntryCard.moveDown') }}</q-tooltip>
         </q-btn>
         <q-btn dense flat round icon="content_copy" size="sm" @click.stop="emit('duplicate')">
-          <q-tooltip>Dupliquer</q-tooltip>
+          <q-tooltip>{{ t('chapterGraph.duplicate') }}</q-tooltip>
         </q-btn>
         <q-btn dense flat round icon="delete" size="sm" color="negative" @click.stop="emit('remove')">
-          <q-tooltip>Supprimer</q-tooltip>
+          <q-tooltip>{{ t('common.delete') }}</q-tooltip>
         </q-btn>
       </div>
     </div>
@@ -43,8 +43,8 @@
         v-bind="entry.type === 'choice' ? { breadcrumb: [...breadcrumb, choiceSegment()] } : {}"
       />
       <div class="section-label">
-        Condition d'affichage (optionnel)
-        <FieldHelp text="N'affiche cette entrée que si toutes les conditions sont vraies. Rien d'ajouté = toujours affichée." />
+        {{ t('timelineEntryCard.displayCondition') }}
+        <FieldHelp :text="t('timelineEntryCard.displayConditionHelp')" />
       </div>
       <RequiresBuilder :model-value="entry.requires" @update:model-value="(v) => (entry.requires = v)" />
     </div>
@@ -54,6 +54,9 @@
 <script setup>
 import RequiresBuilder from '@/editor/components/RequiresBuilder.vue'
 import FieldHelp from '@/editor/components/FieldHelp.vue'
+import { useEditorI18n } from '@/editor/i18n'
+
+const { t } = useEditorI18n()
 
 // One row of TimelineEditor.vue's list — extracted so the same markup can
 // be used both at the top level and nested inside a group's accordion body
@@ -80,7 +83,10 @@ const emit = defineEmits(['toggle', 'close', 'move-up', 'move-down', 'duplicate'
 // clicking "Choix : ..." further up the trail must collapse THIS entry
 // regardless of its current state, not flip it back open.
 function choiceSegment() {
-  return { label: `Choix : ${props.entry.prompt || '(prompt vide)'}`, collapse: () => emit('close') }
+  return {
+    label: t('timelineEntryCard.choiceBreadcrumb', { prompt: props.entry.prompt || t('timelineEditor.emptyPrompt') }),
+    collapse: () => emit('close'),
+  }
 }
 </script>
 

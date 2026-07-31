@@ -1,6 +1,6 @@
 <template>
   <div class="contact-list">
-    <div class="pane-label">Contacts</div>
+    <div class="pane-label">{{ t('editorPage.tabContacts') }}</div>
 
     <div
       v-for="(contact, i) in contacts"
@@ -26,10 +26,10 @@
           color="negative"
           @click.stop="confirmDelete(contact)"
         >
-          <q-tooltip>Supprimer</q-tooltip>
+          <q-tooltip>{{ t('common.delete') }}</q-tooltip>
         </q-btn>
         <q-icon v-else name="lock" size="16px" class="locked-icon">
-          <q-tooltip>Le contact « me » est requis par le moteur — non supprimable.</q-tooltip>
+          <q-tooltip>{{ t('contactList.meLocked') }}</q-tooltip>
         </q-icon>
       </div>
     </div>
@@ -40,7 +40,7 @@
       flat
       no-caps
       icon="add"
-      label="Nouveau contact"
+      :label="t('contactList.newContact')"
       color="primary"
       @click="newDialog = true"
     />
@@ -48,18 +48,18 @@
     <q-dialog v-model="newDialog">
       <q-card class="new-card">
         <q-card-section>
-          <div class="text-subtitle1">Nouveau contact</div>
-          <q-input dense outlined label="Identifiant (id)" v-model="newId" class="q-mt-sm" />
-          <q-input dense outlined ref="newNameInputRef" label="Nom" v-model="newName" class="q-mt-sm">
+          <div class="text-subtitle1">{{ t('contactList.newContact') }}</div>
+          <q-input dense outlined :label="t('contactList.idLabel')" v-model="newId" class="q-mt-sm" />
+          <q-input dense outlined ref="newNameInputRef" :label="t('contactList.nameLabel')" v-model="newName" class="q-mt-sm">
             <template #append>
               <EmojiPickerBtn @pick="(e) => (newName = insertEmojiAtCaret(newNameInputRef, newName, e))" />
             </template>
           </q-input>
-          <q-input dense outlined label="Couleur (hex)" placeholder="#4c8bf5" v-model="newColor" class="q-mt-sm" />
+          <q-input dense outlined :label="t('contactList.colorLabel')" placeholder="#4c8bf5" v-model="newColor" class="q-mt-sm" />
         </q-card-section>
         <q-card-actions align="right">
-          <q-btn flat label="Annuler" v-close-popup />
-          <q-btn flat label="Créer" color="primary" :disable="!newId || !newName" @click="createContact" v-close-popup />
+          <q-btn flat :label="t('common.cancel')" v-close-popup />
+          <q-btn flat :label="t('common.create')" color="primary" :disable="!newId || !newName" @click="createContact" v-close-popup />
         </q-card-actions>
       </q-card>
     </q-dialog>
@@ -74,7 +74,9 @@ import { findReferences } from '@/project/findReferences'
 import { serializeContacts } from '@/project/serializeChapter'
 import EmojiPickerBtn from '@/components/shared/EmojiPickerBtn.vue'
 import { insertEmojiAtCaret } from '@/components/shared/emojiInsert'
+import { useEditorI18n } from '@/editor/i18n'
 
+const { t } = useEditorI18n()
 defineProps({ modelValue: { type: Number, default: 0 } })
 const emit = defineEmits(['update:modelValue'])
 const story = useStoryStore()
@@ -94,16 +96,16 @@ function confirmDelete(contact) {
   const refs = findReferences(story.project, { type: 'contact', id: contact.id })
   if (refs.length) {
     Dialog.create({
-      title: 'Suppression impossible',
-      message: `« ${contact.name || contact.id} » est encore référencé :\n\n${refs.join('\n')}`,
+      title: t('contactList.deleteImpossibleTitle'),
+      message: t('contactList.stillReferenced', { name: contact.name || contact.id, refs: refs.join('\n') }),
       ok: true,
       color: 'primary',
     })
     return
   }
   Dialog.create({
-    title: 'Supprimer ce contact ?',
-    message: `« ${contact.name || contact.id} » sera supprimé du disque. Cette action est irréversible.`,
+    title: t('contactList.confirmDeleteTitle'),
+    message: t('contactList.confirmDeleteMessage', { name: contact.name || contact.id }),
     cancel: true,
     persistent: true,
     color: 'negative',
@@ -111,7 +113,7 @@ function confirmDelete(contact) {
     const idx = contacts.findIndex((c) => c.id === contact.id)
     contacts.splice(idx, 1)
     await persist()
-    Notify.create({ type: 'positive', message: 'Contact supprimé.' })
+    Notify.create({ type: 'positive', message: t('contactList.contactDeleted') })
   })
 }
 
@@ -123,7 +125,7 @@ async function createContact() {
   newId.value = ''
   newName.value = ''
   newColor.value = '#4c8bf5'
-  Notify.create({ type: 'positive', message: 'Contact créé.' })
+  Notify.create({ type: 'positive', message: t('contactList.contactCreated') })
 }
 </script>
 

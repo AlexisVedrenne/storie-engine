@@ -1,6 +1,6 @@
 <template>
   <div class="asset-field">
-    <div class="field-label">{{ label }}</div>
+    <div class="field-label">{{ label || t('assetField.defaultLabel') }}</div>
 
     <div v-if="category === 'image'" class="preview-box">
       <img :src="resolveAssetUrl(modelValue)" class="preview-img" />
@@ -11,16 +11,16 @@
     <div class="meta-row">
       <q-icon v-if="!category && modelValue" name="insert_drive_file" size="16px" class="meta-icon" />
       <span class="filename" :title="modelValue">
-        {{ modelValue || (fallbackAudioSrc ? 'Son par défaut du moteur' : 'Aucun fichier sélectionné') }}
+        {{ modelValue || (fallbackAudioSrc ? t('assetField.defaultSound') : t('assetField.noFileSelected')) }}
       </span>
       <q-btn dense flat round icon="upload" size="sm" @click="importFile">
-        <q-tooltip>Importer… — copier un fichier depuis n'importe où sur le disque dans assets/</q-tooltip>
+        <q-tooltip>{{ t('assetField.importTooltip') }}</q-tooltip>
       </q-btn>
       <q-btn dense flat round icon="folder_open" size="sm" @click="browse">
-        <q-tooltip>Parcourir… — choisir un fichier déjà présent dans assets/</q-tooltip>
+        <q-tooltip>{{ t('assetField.browseTooltip') }}</q-tooltip>
       </q-btn>
       <q-btn v-if="modelValue" dense flat round icon="close" size="sm" @click="clear">
-        <q-tooltip>Retirer</q-tooltip>
+        <q-tooltip>{{ t('assetField.removeTooltip') }}</q-tooltip>
       </q-btn>
     </div>
 
@@ -34,10 +34,13 @@ import { useStoryStore } from '@/engine/stores/story'
 import { resolveAssetUrl } from '@/engine/assets'
 import { categorizeAsset } from '@/editor/utils/assetCategory'
 import AudioPreview from '@/editor/components/AudioPreview.vue'
+import { useEditorI18n } from '@/editor/i18n'
+
+const { t } = useEditorI18n()
 
 const props = defineProps({
   modelValue: { type: String, default: '' },
-  label: { type: String, default: 'Image' },
+  label: { type: String, default: '' },
   // Suggests a per-contact subfolder for imports (assets/images/<contactId>/),
   // matching the project's existing asset layout convention — left empty for
   // fields with no natural contact context, which import to assets/ root.
@@ -64,7 +67,7 @@ function clear() {
 async function browse() {
   error.value = ''
   if (!window.storieAPI) {
-    error.value = "window.storieAPI indisponible — lance en mode Electron."
+    error.value = t('assetField.apiUnavailable')
     return
   }
   try {
@@ -78,7 +81,7 @@ async function browse() {
 async function importFile() {
   error.value = ''
   if (!window.storieAPI) {
-    error.value = "window.storieAPI indisponible — lance en mode Electron."
+    error.value = t('assetField.apiUnavailable')
     return
   }
   try {

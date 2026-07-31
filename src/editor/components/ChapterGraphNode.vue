@@ -10,7 +10,7 @@
         {{ data.chapter.title || data.chapter.id }}
       </div>
       <div class="node-id">{{ data.chapter.id }}</div>
-      <span v-if="data.isEnding" class="ending-badge">FIN</span>
+      <span v-if="data.isEnding" class="ending-badge">{{ t('chapterGraph.endingBadge') }}</span>
     </div>
     <div class="node-actions">
       <q-btn
@@ -22,13 +22,13 @@
         color="primary"
         @click.stop="data.onPreview"
       >
-        <q-tooltip>Prévisualiser depuis ce chapitre</q-tooltip>
+        <q-tooltip>{{ t('editorPage.previewFromChapterTooltip') }}</q-tooltip>
       </q-btn>
       <q-btn dense flat round icon="content_copy" size="xs" @click.stop="data.onDuplicate">
-        <q-tooltip>Dupliquer</q-tooltip>
+        <q-tooltip>{{ t('chapterGraph.duplicate') }}</q-tooltip>
       </q-btn>
       <q-btn dense flat round icon="delete" size="xs" color="negative" @click.stop="data.onDelete">
-        <q-tooltip>Supprimer</q-tooltip>
+        <q-tooltip>{{ t('common.delete') }}</q-tooltip>
       </q-btn>
     </div>
     <Handle type="source" :position="Position.Right" />
@@ -37,6 +37,9 @@
 
 <script setup>
 import { Handle, Position } from '@vue-flow/core'
+import { useEditorI18n } from '@/editor/i18n'
+
+const { t } = useEditorI18n()
 
 defineProps({
   data: { type: Object, required: true },

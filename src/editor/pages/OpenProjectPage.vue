@@ -1,18 +1,20 @@
 <template>
   <q-page class="open-project-page flex flex-center">
+    <EditorLangSwitch class="lang-switch-corner" />
+
     <div v-if="reopening" class="panel">
       <q-spinner color="primary" size="32px" />
-      <p class="subtitle">Réouverture du dernier projet…</p>
+      <p class="subtitle">{{ t('openProjectPage.reopening') }}</p>
     </div>
 
     <div v-else class="panel">
       <q-icon name="auto_stories" size="40px" class="brand-icon" />
       <h1 class="title">Storie Engine</h1>
-      <p class="subtitle">Éditeur du moteur narratif</p>
+      <p class="subtitle">{{ t('openProjectPage.subtitle') }}</p>
 
       <q-banner v-if="!hasStorieApi" class="bg-negative text-white banner">
-        window.storieAPI est indisponible — lance l'app en mode Electron
-        (<code>pnpm run dev:electron</code>), pas dans un simple navigateur.
+        {{ t('openProjectPage.apiWarningBefore') }}
+        (<code>pnpm run dev:electron</code>){{ t('openProjectPage.apiWarningAfter') }}
       </q-banner>
 
       <q-banner v-if="error" class="bg-negative text-white banner">
@@ -26,7 +28,7 @@
           color="primary"
           :loading="loading === 'open'"
           :disable="!hasStorieApi || !!loading"
-          label="Ouvrir un projet"
+          :label="t('openProjectPage.openBtn')"
           icon="folder_open"
           @click="openProject"
         />
@@ -36,7 +38,7 @@
           color="primary"
           :loading="loading === 'create'"
           :disable="!hasStorieApi || !!loading"
-          label="Nouveau projet"
+          :label="t('openProjectPage.newBtn')"
           icon="add"
           @click="newProjectDialog = true"
         />
@@ -46,16 +48,16 @@
     <q-dialog v-model="newProjectDialog">
       <q-card class="new-project-card">
         <q-card-section>
-          <div class="text-subtitle1">Nouveau projet</div>
-          <q-input dense outlined ref="newNameInputRef" autofocus label="Nom du projet" v-model="newName" class="q-mt-sm" @keyup.enter="createProject">
+          <div class="text-subtitle1">{{ t('openProjectPage.newBtn') }}</div>
+          <q-input dense outlined ref="newNameInputRef" autofocus :label="t('openProjectPage.nameLabel')" v-model="newName" class="q-mt-sm" @keyup.enter="createProject">
             <template #append>
               <EmojiPickerBtn @pick="(e) => (newName = insertEmojiAtCaret(newNameInputRef, newName, e))" />
             </template>
           </q-input>
         </q-card-section>
         <q-card-actions align="right">
-          <q-btn flat label="Annuler" v-close-popup />
-          <q-btn flat label="Créer" color="primary" :disable="!newName.trim()" @click="createProject" v-close-popup />
+          <q-btn flat :label="t('common.cancel')" v-close-popup />
+          <q-btn flat :label="t('common.create')" color="primary" :disable="!newName.trim()" @click="createProject" v-close-popup />
         </q-card-actions>
       </q-card>
     </q-dialog>
@@ -68,6 +70,10 @@ import { useRouter } from 'vue-router'
 import { useStoryStore } from '@/engine/stores/story'
 import EmojiPickerBtn from '@/components/shared/EmojiPickerBtn.vue'
 import { insertEmojiAtCaret } from '@/components/shared/emojiInsert'
+import EditorLangSwitch from '@/editor/components/EditorLangSwitch.vue'
+import { useEditorI18n } from '@/editor/i18n'
+
+const { t } = useEditorI18n()
 
 // Shared with EditorPage.vue's "Changer de projet" (clears this key) — a
 // deliberate exit shouldn't be silently undone by auto-reopening the same
@@ -119,7 +125,7 @@ async function openProject() {
     await enterProject(folder, data)
   } catch (err) {
     console.error('[storie-engine] failed to load project', err)
-    error.value = `Échec du chargement du projet : ${err.message || err}`
+    error.value = t('openProjectPage.loadError', { error: err.message || err })
   } finally {
     loading.value = ''
   }
@@ -138,7 +144,7 @@ async function createProject() {
     await enterProject(rootPath, data)
   } catch (err) {
     console.error('[storie-engine] failed to create project', err)
-    error.value = `Échec de la création du projet : ${err.message || err}`
+    error.value = t('openProjectPage.createError', { error: err.message || err })
   } finally {
     loading.value = ''
     newName.value = ''
@@ -148,10 +154,17 @@ async function createProject() {
 
 <style scoped>
 .open-project-page {
+  position: relative;
   height: 100vh;
   background: var(--color-bg);
   color: var(--color-text);
   font-family: var(--font-ui);
+}
+
+.lang-switch-corner {
+  position: absolute;
+  top: var(--space-3);
+  right: var(--space-3);
 }
 
 .panel {

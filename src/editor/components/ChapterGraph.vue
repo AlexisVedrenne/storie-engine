@@ -6,7 +6,7 @@
       unelevated
       no-caps
       icon="add"
-      label="Nouveau chapitre"
+      :label="t('chapterGraph.newChapter')"
       color="primary"
       @click="newChapterDialog = true"
     />
@@ -31,18 +31,18 @@
     <q-dialog v-model="newChapterDialog">
       <q-card class="new-chapter-card">
         <q-card-section>
-          <div class="text-subtitle1">Nouveau chapitre</div>
-          <q-input dense outlined ref="newTitleInputRef" label="Titre" v-model="newTitle" class="q-mt-sm" autofocus>
+          <div class="text-subtitle1">{{ t('chapterGraph.newChapter') }}</div>
+          <q-input dense outlined ref="newTitleInputRef" :label="t('chapterGraph.titleLabel')" v-model="newTitle" class="q-mt-sm" autofocus>
             <template #append>
               <EmojiPickerBtn @pick="(e) => (newTitle = insertEmojiAtCaret(newTitleInputRef, newTitle, e))" />
             </template>
           </q-input>
         </q-card-section>
         <q-card-actions align="right">
-          <q-btn flat label="Annuler" v-close-popup />
+          <q-btn flat :label="t('common.cancel')" v-close-popup />
           <q-btn
             flat
-            label="Créer"
+            :label="t('common.create')"
             color="primary"
             :disable="!newTitle.trim()"
             @click="createChapter"
@@ -65,26 +65,26 @@
             dense
             outlined
             ref="edgeLabelInputRef"
-            label="Libellé (optionnel)"
+            :label="t('chapterGraph.edgeLabelField')"
             v-model="edgeDraft.label"
-            hint="Affiché sur la flèche à la place de la condition. Vide = comportement inchangé."
+            :hint="t('chapterGraph.edgeLabelHint')"
           >
             <template #append>
               <EmojiPickerBtn @pick="(e) => (edgeDraft.label = insertEmojiAtCaret(edgeLabelInputRef, edgeDraft.label, e))" />
             </template>
           </q-input>
-          <div class="text-subtitle1 q-mt-md">Condition de cette flèche</div>
+          <div class="text-subtitle1 q-mt-md">{{ t('chapterGraph.edgeConditionTitle') }}</div>
           <RequiresBuilder v-model="edgeDraft.requires" />
         </q-card-section>
         <q-card-actions align="right">
           <q-btn
             flat
-            label="Supprimer cette flèche"
+            :label="t('chapterGraph.deleteEdge')"
             color="negative"
             class="delete-edge-btn"
             @click="deleteEdge"
           />
-          <q-btn flat label="Fermer" color="primary" v-close-popup />
+          <q-btn flat :label="t('common.close')" color="primary" v-close-popup />
         </q-card-actions>
       </q-card>
     </q-dialog>
@@ -106,6 +106,9 @@ import ChapterGraphNode from '@/editor/components/ChapterGraphNode.vue'
 import RequiresBuilder from '@/editor/components/RequiresBuilder.vue'
 import EmojiPickerBtn from '@/components/shared/EmojiPickerBtn.vue'
 import { insertEmojiAtCaret } from '@/components/shared/emojiInsert'
+import { useEditorI18n } from '@/editor/i18n'
+
+const { t } = useEditorI18n()
 
 // `null` = nothing selected (the graph's default, full-bleed state driven
 // by EditorPage.vue) — no strict `type` so Vue doesn't warn on that value.
@@ -228,8 +231,8 @@ function previewFrom(chapter) {
 
 function confirmDelete(chapter) {
   Dialog.create({
-    title: 'Supprimer ce chapitre ?',
-    message: `« ${chapter.title || chapter.id} » sera supprimé du disque. Cette action est irréversible.`,
+    title: t('chapterGraph.confirmDeleteTitle'),
+    message: t('chapterGraph.confirmDeleteMessage', { title: chapter.title || chapter.id }),
     cancel: true,
     persistent: true,
     color: 'negative',
@@ -252,9 +255,11 @@ function confirmDelete(chapter) {
 
     Notify.create({
       type: 'positive',
-      message: affected.length
-        ? `Chapitre supprimé (${affected.length} flèche${affected.length > 1 ? 's' : ''} pendante${affected.length > 1 ? 's' : ''} retirée${affected.length > 1 ? 's' : ''}).`
-        : 'Chapitre supprimé.',
+      message: !affected.length
+        ? t('chapterGraph.deletedNoEdges')
+        : affected.length === 1
+          ? t('chapterGraph.deletedWithEdgesOne')
+          : t('chapterGraph.deletedWithEdgesMany', { n: affected.length }),
     })
   })
 }
@@ -340,7 +345,7 @@ async function persistNewChapter(chapter) {
     })
     chapters.push({ ...chapter, __sourceFile: result.sourceFile })
     story.project.manifest = result.manifest
-    Notify.create({ type: 'positive', message: 'Chapitre créé.' })
+    Notify.create({ type: 'positive', message: t('chapterGraph.chapterCreated') })
     return true
   } catch (err) {
     Notify.create({ type: 'negative', message: err.message || String(err) })

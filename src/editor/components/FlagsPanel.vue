@@ -1,17 +1,8 @@
 <template>
   <div class="flags-panel">
-    <p class="intro">
-      Tous les flags utilisés quelque part dans le projet (chapitres, flèches du graphe, choix, events) —
-      donne un libellé à chacun pour t'y retrouver dans les conditions/effets. Pour un flag numérique, la
-      plage affichée ne compte QUE les effets qui le modifient (pas les conditions qui le lisent) — une
-      condition « ≥ 3 » sur une flèche n'apparaît pas dans cette plage, elle indique juste qu'un effet est
-      censé exister ailleurs.
-    </p>
+    <p class="intro">{{ t('flagsPanel.intro') }}</p>
 
-    <div v-if="!flags.length" class="empty-state">
-      Aucun flag utilisé pour l'instant — un flag apparaît ici dès qu'il est référencé dans une condition ou
-      un effet (RequiresBuilder/EffectsBuilder, n'importe où dans le projet).
-    </div>
+    <div v-if="!flags.length" class="empty-state">{{ t('flagsPanel.empty') }}</div>
 
     <q-btn
       v-if="unusedCount"
@@ -20,7 +11,7 @@
       no-caps
       icon="delete_sweep"
       color="negative"
-      :label="`Supprimer les ${unusedCount} flag${unusedCount > 1 ? 's' : ''} inutilisé${unusedCount > 1 ? 's' : ''}`"
+      :label="unusedCount === 1 ? t('flagsPanel.deleteUnusedOne') : t('flagsPanel.deleteUnusedMany', { n: unusedCount })"
       class="cleanup-btn"
       @click="confirmRemoveAllUnused"
     />
@@ -28,14 +19,14 @@
     <div v-for="flag in flags" :key="flag.key" class="flag-row" :class="{ unused: !flag.isUsed }">
       <div class="flag-row-top">
         <span class="flag-key">{{ flag.key }}</span>
-        <span v-if="flag.isBoolean" class="badge">booléen</span>
-        <span v-if="flag.isNumeric" class="badge badge-numeric">effets: {{ flag.min }} → {{ flag.max }}</span>
+        <span v-if="flag.isBoolean" class="badge">{{ t('flagsPanel.boolean') }}</span>
+        <span v-if="flag.isNumeric" class="badge badge-numeric">{{ t('flagsPanel.reachable', { min: flag.min, max: flag.max }) }}</span>
         <span v-if="flag.neverModified" class="badge badge-warning">
-          <q-icon name="warning" size="11px" /> lu, jamais modifié
-          <q-tooltip>Une condition lit ce flag quelque part, mais aucun effet ne le modifie nulle part dans le projet.</q-tooltip>
+          <q-icon name="warning" size="11px" /> {{ t('flagsPanel.neverModified') }}
+          <q-tooltip>{{ t('flagsPanel.neverModifiedTooltip') }}</q-tooltip>
         </span>
         <span v-if="!flag.isUsed" class="badge badge-unused">
-          <q-icon name="link_off" size="11px" /> non utilisé
+          <q-icon name="link_off" size="11px" /> {{ t('flagsPanel.unused') }}
         </span>
         <div class="spacer" />
         <q-btn
@@ -46,7 +37,7 @@
           size="sm"
           class="where-btn"
           :icon="expanded.has(flag.key) ? 'expand_less' : 'expand_more'"
-          :label="`${flag.count} usage${flag.count > 1 ? 's' : ''}`"
+          :label="flag.count === 1 ? t('flagsPanel.usageOne') : t('flagsPanel.usageMany', { n: flag.count })"
           @click="toggleExpanded(flag.key)"
         />
         <q-btn
@@ -59,13 +50,13 @@
           color="negative"
           @click="removeFlag(flag.key)"
         >
-          <q-tooltip>Supprimer ce libellé — plus référencé nulle part dans le projet</q-tooltip>
+          <q-tooltip>{{ t('flagsPanel.deleteLabelTooltip') }}</q-tooltip>
         </q-btn>
       </div>
       <q-input
         dense
         outlined
-        placeholder="Libellé (optionnel) — ex: Confiance de Clara"
+        :placeholder="t('flagsPanel.labelPlaceholder')"
         :model-value="flag.label"
         @update:model-value="(v) => setLabel(flag.key, v)"
       />
@@ -88,6 +79,9 @@ import { computed, reactive } from 'vue'
 import { Dialog } from 'quasar'
 import { useStoryStore } from '@/engine/stores/story'
 import { collectFlags } from '@/project/collectFlags'
+import { useEditorI18n } from '@/editor/i18n'
+
+const { t } = useEditorI18n()
 
 // `game` — same prop signature as GameForm.vue (story.project.gameConfig),
 // mutated directly for the write side (flag labels). The read side (which
@@ -130,8 +124,11 @@ function removeFlag(key) {
 
 function confirmRemoveAllUnused() {
   Dialog.create({
-    title: 'Supprimer les flags inutilisés ?',
-    message: `${unusedCount.value} libellé${unusedCount.value > 1 ? 's' : ''} plus référencé${unusedCount.value > 1 ? 's' : ''} nulle part dans le projet sera${unusedCount.value > 1 ? 'ont' : ''} supprimé${unusedCount.value > 1 ? 's' : ''}.`,
+    title: t('flagsPanel.confirmDeleteUnusedTitle'),
+    message:
+      unusedCount.value === 1
+        ? t('flagsPanel.confirmDeleteUnusedOne')
+        : t('flagsPanel.confirmDeleteUnusedMany', { n: unusedCount.value }),
     cancel: true,
     persistent: true,
     color: 'negative',

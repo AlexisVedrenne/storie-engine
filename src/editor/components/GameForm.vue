@@ -1,8 +1,8 @@
 <template>
   <div class="game-form">
-    <q-expansion-item default-opened dense-toggle icon="title" label="Titre" class="panel">
+    <q-expansion-item default-opened dense-toggle icon="title" :label="t('gameForm.titleTitle')" class="panel">
       <div class="panel-body">
-        <q-input dense outlined ref="titleInputRef" label="Titre (affiché sur l'écran verrouillé)" v-model="game.title">
+        <q-input dense outlined ref="titleInputRef" :label="t('gameForm.titleFieldLabel')" v-model="game.title">
           <template #append>
             <EmojiPickerBtn @pick="(e) => (game.title = insertEmojiAtCaret(titleInputRef, game.title, e))" />
           </template>
@@ -10,22 +10,22 @@
       </div>
     </q-expansion-item>
 
-    <q-expansion-item dense-toggle icon="apps" label="Icône du build" class="panel">
+    <q-expansion-item dense-toggle icon="apps" :label="t('gameForm.buildIconTitle')" class="panel">
       <template #header>
         <q-item-section avatar><q-icon name="apps" /></q-item-section>
         <q-item-section>
-          Icône du build
-          <FieldHelp text="Icône du fichier .exe exporté. Format .ico recommandé pour l'icône Windows (Explorateur/barre des tâches) — un .png fonctionne aussi mais ne donnera que l'icône de la fenêtre pendant l'exécution, pas celle du fichier .exe lui-même." />
+          {{ t('gameForm.buildIconTitle') }}
+          <FieldHelp :text="t('gameForm.buildIconHelp')" />
         </q-item-section>
       </template>
       <div class="panel-body">
-        <AssetField v-model="game.icon" label="Icône (.ico recommandé, .png accepté)" />
+        <AssetField v-model="game.icon" :label="t('gameForm.buildIconLabel')" />
       </div>
     </q-expansion-item>
 
-    <q-expansion-item dense-toggle icon="wallpaper" label="Fond d'écran du téléphone" class="panel">
+    <q-expansion-item dense-toggle icon="wallpaper" :label="t('gameForm.wallpaperTitle')" class="panel">
       <div class="panel-body">
-        <AssetField v-model="game.wallpaper" label="Fond d'écran (verrouillage + accueil)" />
+        <AssetField v-model="game.wallpaper" :label="t('gameForm.wallpaperLabel')" />
       </div>
     </q-expansion-item>
 
@@ -33,8 +33,8 @@
       <template #header>
         <q-item-section avatar><q-icon name="palette" /></q-item-section>
         <q-item-section>
-          Couleur d'interface
-          <FieldHelp text="Recolore les éléments d'accent du téléphone (bulles de message envoyées, DM, égaliseur...). Laisse vide pour garder la couleur par défaut du moteur." />
+          {{ t('gameForm.accentColorTitle') }}
+          <FieldHelp :text="t('gameForm.accentColorHelp')" />
         </q-item-section>
       </template>
       <div class="panel-body">
@@ -44,9 +44,9 @@
           </q-popup-proxy>
         </div>
         <div class="meta-row">
-          <span class="filename">{{ game.accentColor || 'Par défaut (#4c8bf5)' }}</span>
+          <span class="filename">{{ game.accentColor || t('gameForm.accentColorDefault') }}</span>
           <q-btn v-if="game.accentColor" dense flat round icon="close" size="sm" @click="game.accentColor = undefined">
-            <q-tooltip>Revenir à la couleur par défaut</q-tooltip>
+            <q-tooltip>{{ t('contactForm.resetColor') }}</q-tooltip>
           </q-btn>
         </div>
       </div>
@@ -56,8 +56,8 @@
       <template #header>
         <q-item-section avatar><q-icon name="apps" /></q-item-section>
         <q-item-section>
-          Applications
-          <FieldHelp text="Désactive une app du téléphone pour ce projet — elle disparaît de l'écran d'accueil et de l'animation de démarrage. Rien ne détecte automatiquement du contenu qui pointerait encore vers une app désactivée (ex: un SMS alors que Messages est coupé) — à l'auteur de vérifier." />
+          {{ t('gameForm.appsTitle') }}
+          <FieldHelp :text="t('gameForm.appsHelp')" />
         </q-item-section>
       </template>
       <div class="panel-body">
@@ -65,7 +65,7 @@
           v-for="app in APP_REGISTRY"
           :key="app.id"
           dense
-          :label="t(app.labelKey)"
+          :label="storyT(app.labelKey)"
           :model-value="!isAppDisabled(app.id)"
           @update:model-value="(v) => setAppEnabled(app.id, v)"
         />
@@ -76,8 +76,8 @@
       <template #header>
         <q-item-section avatar><q-icon name="volume_up" /></q-item-section>
         <q-item-section>
-          Sons
-          <FieldHelp text="Remplace un son d'interface par défaut du moteur par un fichier audio du projet. Laisse vide pour garder le son par défaut." />
+          {{ t('gameForm.soundsTitle') }}
+          <FieldHelp :text="t('gameForm.soundsHelp')" />
         </q-item-section>
       </template>
       <div class="panel-body">
@@ -99,7 +99,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import AssetField from '@/editor/components/AssetField.vue'
 import FieldHelp from '@/editor/components/FieldHelp.vue'
@@ -107,9 +107,12 @@ import EmojiPickerBtn from '@/components/shared/EmojiPickerBtn.vue'
 import { insertEmojiAtCaret } from '@/components/shared/emojiInsert'
 import { SOUND_FILES } from '@/engine/utils/sound'
 import { APP_REGISTRY } from '@/engine/apps/registry'
+import { useEditorI18n } from '@/editor/i18n'
 
 const props = defineProps({ game: { type: Object, required: true } })
-const { t } = useI18n()
+// Two different i18n systems — see EventList.vue's identical split.
+const { t: storyT } = useI18n()
+const { t } = useEditorI18n()
 const titleInputRef = ref(null)
 
 // `disabledApps` is an explicit opt-out list (same "absent = default"
@@ -135,24 +138,25 @@ if (!props.game.sounds) props.game.sounds = {}
 
 // Matches sound.js's SOUND_FILES keys exactly — this is the full set of
 // fixed UI-chrome sound effects a project can override, not a list a
-// project can add/remove entries from.
-const SOUND_KEYS = [
-  { key: 'sms-receive', label: 'Message reçu (SMS)' },
-  { key: 'sms-send', label: 'Message envoyé (SMS)' },
-  { key: 'dm-receive', label: 'DM Insta reçu' },
-  { key: 'social-send', label: 'DM Insta envoyé' },
-  { key: 'call-ringtone', label: "Sonnerie d'appel" },
-  { key: 'call-accept', label: 'Appel décroché' },
-  { key: 'call-end', label: 'Appel terminé' },
-  { key: 'social-like', label: 'Like (Pixly)' },
-  { key: 'social-new-follower', label: 'Nouvel abonné (Pixly)' },
-  { key: 'social-story-tap', label: 'Story consultée (Pixly)' },
-  { key: 'social-post-share', label: 'Publication partagée (Pixly)' },
-  { key: 'system-boot', label: 'Démarrage du téléphone' },
-  { key: 'system-unlock', label: 'Déverrouillage' },
-  { key: 'system-notification', label: 'Notification' },
-  { key: 'system-low-battery', label: 'Batterie faible' },
-]
+// project can add/remove entries from. computed (not a plain const) so
+// labels re-evaluate when the editor's own language switches.
+const SOUND_KEYS = computed(() => [
+  { key: 'sms-receive', label: t('gameForm.soundSmsReceive') },
+  { key: 'sms-send', label: t('gameForm.soundSmsSend') },
+  { key: 'dm-receive', label: t('gameForm.soundDmReceive') },
+  { key: 'social-send', label: t('gameForm.soundDmSend') },
+  { key: 'call-ringtone', label: t('gameForm.soundCallRingtone') },
+  { key: 'call-accept', label: t('gameForm.soundCallAccept') },
+  { key: 'call-end', label: t('gameForm.soundCallEnd') },
+  { key: 'social-like', label: t('gameForm.soundLike') },
+  { key: 'social-new-follower', label: t('gameForm.soundNewFollower') },
+  { key: 'social-story-tap', label: t('gameForm.soundStoryTap') },
+  { key: 'social-post-share', label: t('gameForm.soundPostShare') },
+  { key: 'system-boot', label: t('gameForm.soundSystemBoot') },
+  { key: 'system-unlock', label: t('gameForm.soundSystemUnlock') },
+  { key: 'system-notification', label: t('gameForm.soundSystemNotification') },
+  { key: 'system-low-battery', label: t('gameForm.soundLowBattery') },
+])
 </script>
 
 <style scoped>

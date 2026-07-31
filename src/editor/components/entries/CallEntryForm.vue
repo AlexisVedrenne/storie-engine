@@ -5,7 +5,7 @@
       outlined
       emit-value
       map-options
-      label="Qui appelle"
+      :label="t('entries.call.contactLabel')"
       :options="contactOptions"
       v-model="entry.contact"
     >
@@ -26,13 +26,11 @@
     </q-select>
 
     <div class="section-title">
-      Script de l'appel
-      <FieldHelp
-        text="Les répliques s'affichent une par une, dans l'ordre, une fois l'appel décroché — le joueur clique pour faire avancer la conversation."
-      />
+      {{ t('entries.call.scriptTitle') }}
+      <FieldHelp :text="t('entries.call.scriptHelp')" />
     </div>
     <div v-if="!scriptRows.length" class="empty-hint">
-      Aucune réplique — l'appel se terminera sans dialogue.
+      {{ t('entries.call.noLines') }}
     </div>
     <div v-for="(line, i) in scriptRows" :key="i" class="row">
       <span class="line-number">{{ i + 1 }}</span>
@@ -66,7 +64,7 @@
         outlined
         :ref="(el) => (lineTextRefs[i] = el)"
         class="text-input"
-        placeholder="Texte de la réplique"
+        :placeholder="t('entries.call.linePlaceholder')"
         v-model="line.text"
         @update:model-value="sync"
       >
@@ -75,7 +73,7 @@
         </template>
       </q-input>
       <q-btn dense flat round icon="close" size="sm" @click="removeLine(i)">
-        <q-tooltip>Retirer</q-tooltip>
+        <q-tooltip>{{ t('entries.call.removeLine') }}</q-tooltip>
       </q-btn>
     </div>
     <q-btn
@@ -83,7 +81,7 @@
       flat
       no-caps
       icon="add"
-      label="Ajouter une réplique"
+      :label="t('entries.call.addLine')"
       class="btn-ghost"
       @click="addLine"
     />
@@ -96,7 +94,9 @@ import { useContactOptions } from '@/components/shared/useContactOptions'
 import FieldHelp from '@/editor/components/FieldHelp.vue'
 import EmojiPickerBtn from '@/components/shared/EmojiPickerBtn.vue'
 import { insertEmojiAtCaret } from '@/components/shared/emojiInsert'
+import { useEditorI18n } from '@/editor/i18n'
 
+const { t } = useEditorI18n()
 const props = defineProps({ entry: { type: Object, required: true } })
 const {
   contactOptions: contactOptionsAll,

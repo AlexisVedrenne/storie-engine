@@ -3,7 +3,7 @@
     <transition name="screen-swap" mode="out-in">
       <!-- top-level feed/explore, only shown while no sub-screen is open -->
       <div v-if="!screen" key="home" class="home-stack">
-        <div class="insta-header">
+        <div class="pixly-header">
           <span class="brand">Pixly</span>
           <div class="header-actions">
             <button class="dm-icon" :aria-label="t('social.dmAria')" @click="screen = 'dmList'">
@@ -38,13 +38,27 @@
         </transition>
 
         <div class="bottom-nav">
-          <button class="nav-btn" :class="{ active: tab === 'feed' }" :aria-label="t('social.feedAria')" @click="tab = 'feed'">
+          <button
+            class="nav-btn"
+            :class="{ active: tab === 'feed' }"
+            :aria-label="t('social.feedAria')"
+            @click="tab = 'feed'"
+          >
             <q-icon name="home" size="25px" />
           </button>
-          <button class="nav-btn" :class="{ active: tab === 'explore' }" :aria-label="t('social.discoverAria')" @click="tab = 'explore'">
+          <button
+            class="nav-btn"
+            :class="{ active: tab === 'explore' }"
+            :aria-label="t('social.discoverAria')"
+            @click="tab = 'explore'"
+          >
             <q-icon name="search" size="25px" />
           </button>
-          <button class="nav-btn" :aria-label="t('social.createAria')" @click="screen = 'createPost'">
+          <button
+            class="nav-btn"
+            :aria-label="t('social.createAria')"
+            @click="screen = 'createPost'"
+          >
             <q-icon name="add_box" size="25px" />
           </button>
           <button class="nav-btn" :aria-label="t('social.reelsAria')" @click="screen = 'reels'">
@@ -72,7 +86,12 @@
         @open-profile="openProfile"
         @open-comments="openComments"
       />
-      <DmListScreen v-else-if="screen === 'dmList'" key="dmList" @back="screen = null" @open="openDmThread" />
+      <DmListScreen
+        v-else-if="screen === 'dmList'"
+        key="dmList"
+        @back="screen = null"
+        @open="openDmThread"
+      />
       <DmThreadScreen
         v-else-if="screen === 'dmThread'"
         key="dmThread"
@@ -145,10 +164,10 @@ function openProfileFromDm(contactId) {
 // sitting inside a live Social app (no remount to piggyback on then).
 watch(
   () => phone.activeDmThread,
-  threadId => {
+  (threadId) => {
     if (threadId) screen.value = 'dmThread'
   },
-  { immediate: true }
+  { immediate: true },
 )
 
 // tapping a grid tile on a profile — always backs out to that profile,
@@ -234,7 +253,7 @@ function closeDmThread() {
   opacity: 0;
 }
 
-.insta-header {
+.pixly-header {
   display: flex;
   align-items: center;
   justify-content: space-between;

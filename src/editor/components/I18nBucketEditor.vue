@@ -10,11 +10,11 @@
         @update:model-value="(v) => emit('update:bucket', v)"
       />
       <div class="spacer" />
-      <span class="count">{{ translatedCount }}/{{ strings.length }} traduits dans ce dossier</span>
+      <span class="count">{{ t('i18nBucketEditor.translatedInFolder', { done: translatedCount, total: strings.length }) }}</span>
     </div>
 
     <div v-if="!strings.length" class="empty-state">
-      Aucune chaîne traduisible trouvée dans ce dossier pour l'instant.
+      {{ t('i18nBucketEditor.noStrings') }}
     </div>
 
     <template v-else>
@@ -24,14 +24,14 @@
           outlined
           clearable
           v-model="search"
-          placeholder="Rechercher une phrase à traduire…"
+          :placeholder="t('i18nBucketEditor.searchPlaceholder')"
           class="string-search"
         >
           <template #prepend>
             <q-icon name="search" size="18px" />
           </template>
         </q-input>
-        <q-toggle dense v-model="hideTranslated" label="Masquer les traduites" color="primary" />
+        <q-toggle dense v-model="hideTranslated" :label="t('i18nBucketEditor.hideTranslated')" color="primary" />
       </div>
 
       <!-- "commun" mixes contact names/bios, group names, and every seed
@@ -41,7 +41,7 @@
            by entry type wouldn't earn its keep the same way. -->
       <template v-if="bucket === 'common'">
         <div v-if="!commonGroups.length" class="empty-state">
-          Aucune phrase ne correspond à ce filtre.
+          {{ t('i18nBucketEditor.noMatch') }}
         </div>
         <q-list v-else bordered class="common-group-list">
           <q-expansion-item
@@ -66,7 +66,7 @@
                   </template>
                 </q-input>
                 <span class="badge" :class="getValue(frText) ? 'badge-translated' : 'badge-missing'">
-                  {{ getValue(frText) ? 'Traduit' : 'Manquant' }}
+                  {{ getValue(frText) ? t('i18nBucketEditor.translated') : t('i18nBucketEditor.missing') }}
                 </span>
               </div>
             </div>
@@ -76,7 +76,7 @@
 
       <template v-else>
         <div v-if="!filteredStrings.length" class="empty-state">
-          Aucune phrase ne correspond à ce filtre.
+          {{ t('i18nBucketEditor.noMatch') }}
         </div>
 
         <div v-else class="rows">
@@ -104,15 +104,15 @@
 
     <template v-if="orphanKeys.length">
       <div class="section-label orphan-label">
-        Traductions inutilisées ({{ orphanSearch ? `${filteredOrphanKeys.length}/${orphanKeys.length}` : orphanKeys.length }})
-        <FieldHelp text="Ces clés existent dans le dictionnaire mais ne correspondent plus à aucune phrase du contenu actuel — probablement du texte modifié ou supprimé depuis." />
+        {{ t('i18nBucketEditor.unusedTranslations') }} ({{ orphanSearch ? `${filteredOrphanKeys.length}/${orphanKeys.length}` : orphanKeys.length }})
+        <FieldHelp :text="t('i18nBucketEditor.unusedTranslationsHelp')" />
       </div>
       <q-input
         dense
         outlined
         clearable
         v-model="orphanSearch"
-        placeholder="Rechercher parmi les traductions inutilisées…"
+        :placeholder="t('i18nBucketEditor.searchOrphansPlaceholder')"
         class="orphan-search"
       >
         <template #prepend>
@@ -124,7 +124,7 @@
           <div class="source" :title="frText">{{ frText }}</div>
           <div class="translation-readonly" :title="getValue(frText)">{{ getValue(frText) }}</div>
           <q-btn dense flat round icon="delete" size="sm" color="negative" @click="deleteKey(frText)">
-            <q-tooltip>Supprimer cette entrée inutilisée</q-tooltip>
+            <q-tooltip>{{ t('i18nBucketEditor.deleteUnusedTooltip') }}</q-tooltip>
           </q-btn>
         </div>
       </div>
@@ -139,7 +139,9 @@ import { extractTranslatableStrings, extractCommonCategories } from '@/project/e
 import FieldHelp from '@/editor/components/FieldHelp.vue'
 import EmojiPickerBtn from '@/components/shared/EmojiPickerBtn.vue'
 import { insertEmojiAtCaret } from '@/components/shared/emojiInsert'
+import { useEditorI18n } from '@/editor/i18n'
 
+const { t } = useEditorI18n()
 const props = defineProps({
   locale: { type: String, required: true },
   bucket: { type: String, required: true },
@@ -152,7 +154,7 @@ const story = useStoryStore()
 const translationRefs = {}
 
 const bucketOptions = computed(() => [
-  { label: 'Commun', value: 'common' },
+  { label: t('eventList.common'), value: 'common' },
   ...(story.project?.chapters || []).map((c) => ({ label: c.title || c.id, value: c.id })),
 ])
 

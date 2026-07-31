@@ -5,7 +5,7 @@
       outlined
       emit-value
       map-options
-      label="Conversation Instagram (1:1 ou groupe)"
+      :label="t('entries.dm.threadLabel')"
       :options="threadOptions"
       v-model="entry.thread"
     >
@@ -39,7 +39,7 @@
       outlined
       emit-value
       map-options
-      label="De (qui envoie le message)"
+      :label="t('entries.dm.fromLabel')"
       :options="fromOptions"
       v-model="entry.from"
     >
@@ -64,15 +64,15 @@
       ref="textInputRef"
       type="textarea"
       autogrow
-      label="Texte du message"
-      placeholder="ex: Je préfère te le dire en privé 😉"
+      :label="t('entries.dm.textLabel')"
+      :placeholder="t('entries.dm.textPlaceholder')"
       v-model="entry.text"
     >
       <template #append>
         <EmojiPickerBtn @pick="(e) => (entry.text = insertEmojiAtCaret(textInputRef, entry.text, e))" />
       </template>
     </q-input>
-    <AssetField v-model="entry.image" label="Photo jointe (optionnel)" :contact-id="entry.from" />
+    <AssetField v-model="entry.image" :label="t('entries.dm.imageLabel')" :contact-id="entry.from" />
   </div>
 </template>
 
@@ -82,7 +82,9 @@ import { useContactOptions } from '@/components/shared/useContactOptions'
 import AssetField from '@/editor/components/AssetField.vue'
 import EmojiPickerBtn from '@/components/shared/EmojiPickerBtn.vue'
 import { insertEmojiAtCaret } from '@/components/shared/emojiInsert'
+import { useEditorI18n } from '@/editor/i18n'
 
+const { t } = useEditorI18n()
 defineProps({ entry: { type: Object, required: true } })
 const {
   contactOptions: fromOptions,

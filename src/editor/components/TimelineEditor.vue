@@ -8,9 +8,9 @@
     </div>
 
     <div v-if="selected.size >= 2" class="selection-bar">
-      <span>{{ selected.size }} entrée{{ selected.size > 1 ? 's' : '' }} sélectionnée{{ selected.size > 1 ? 's' : '' }}</span>
-      <q-btn dense flat no-caps icon="create_new_folder" label="Grouper en accordéon" size="sm" color="primary" @click="groupSelection" />
-      <q-btn dense flat no-caps label="Annuler" size="sm" @click="selected.clear()" />
+      <span>{{ selected.size === 1 ? t('timelineEditor.selectedOne') : t('timelineEditor.selectedMany', { n: selected.size }) }}</span>
+      <q-btn dense flat no-caps icon="create_new_folder" :label="t('timelineEditor.groupSelection')" size="sm" color="primary" @click="groupSelection" />
+      <q-btn dense flat no-caps :label="t('common.cancel')" size="sm" @click="selected.clear()" />
     </div>
 
     <template v-for="(block, bi) in blocks" :key="block.kind + '-' + block.id">
@@ -57,10 +57,10 @@
             {{ entries[block.start].group.label }}
             <q-icon name="edit" size="12px" />
           </span>
-          <span class="group-count">{{ block.end - block.start + 1 }} entrées</span>
+          <span class="group-count">{{ t('timelineEditor.entriesCount', { n: block.end - block.start + 1 }) }}</span>
           <div class="spacer" />
           <q-btn dense flat round icon="link_off" size="sm" @click.stop="ungroup(block)">
-            <q-tooltip>Dissoudre le groupe</q-tooltip>
+            <q-tooltip>{{ t('timelineEditor.ungroup') }}</q-tooltip>
           </q-btn>
         </div>
 
@@ -146,7 +146,7 @@
       dense
       outlined
       class="add-select"
-      label="Ajouter une entrée…"
+      :label="t('timelineEditor.addEntry')"
       emit-value
       map-options
       :options="TYPE_OPTIONS"
@@ -188,6 +188,10 @@ import ReelEntryForm from '@/editor/components/entries/ReelEntryForm.vue'
 import CallEntryForm from '@/editor/components/entries/CallEntryForm.vue'
 import EffectEntryForm from '@/editor/components/entries/EffectEntryForm.vue'
 import TimeskipEntryForm from '@/editor/components/entries/TimeskipEntryForm.vue'
+import { useEditorI18n } from '@/editor/i18n'
+import { entryTypeLabel, entryTypeHelp } from '@/editor/i18n/sharedOverrides'
+
+const { t } = useEditorI18n()
 
 // `entries` is mutated in place (push/splice/swap) — the caller passes the
 // actual reactive array (chapter.timeline, or an option's `then`), never a
@@ -254,37 +258,25 @@ function iconFor(type) {
 // One-line plain-language reminder of what each entry type does, shown
 // above its form — aimed at someone who's never touched this engine before
 // (see docs/story-engine.md section 4 in the NTR repo for the full spec).
-const ENTRY_HELP = {
-  message: 'Un SMS reçu de ce contact — apparaît dans Messages.',
-  choice: 'Bloque la conversation et propose un choix de réponse au joueur.',
-  post: 'Une publication dans le fil Pixly (comme un post Instagram).',
-  photo: 'Une photo ajoutée à la Galerie du téléphone.',
-  story: 'Une story Pixly éphémère (cercle en haut du fil).',
-  dm: 'Un message privé Instagram — arrive dans une conversation DM, pas dans Messages.',
-  reel: 'Un Reel dans l’onglet vidéos verticales de Pixly.',
-  call: 'Un appel entrant, avec un script de dialogue défilant.',
-  effect: 'Modifie l’état du jeu (stats, météo, batterie...) sans rien montrer au joueur.',
-  timeskip: 'Une ellipse temporelle — verrouille le téléphone et avance l’heure/date.',
-}
+// Plug-in entry types' own label/help (CUSTOM_ENTRY_TYPE_BY_TYPE, e.g. the
+// Email app) are authored directly in that app's entryType.js, which also
+// ships in the built game — entryTypeLabel()/entryTypeHelp() look up an
+// editor-dictionary override keyed by `type` first, falling back to that
+// authored text unchanged (see sharedOverrides.js).
+const BUILTIN_TYPES = ['message', 'choice', 'post', 'photo', 'story', 'dm', 'reel', 'call', 'effect', 'timeskip']
 function helpFor(type) {
-  return ENTRY_HELP[type] || CUSTOM_ENTRY_TYPE_BY_TYPE[type]?.help || ''
+  return BUILTIN_TYPES.includes(type) ? t(`timelineEditor.types.${type}.help`) : entryTypeHelp(CUSTOM_ENTRY_TYPE_BY_TYPE[type])
 }
 
-const ALL_TYPE_OPTIONS = [
-  { label: 'Message (SMS)', value: 'message' },
-  { label: 'Choix (choice)', value: 'choice' },
-  { label: 'Publication (post)', value: 'post' },
-  { label: 'Photo', value: 'photo' },
-  { label: 'Story', value: 'story' },
-  { label: 'DM Insta', value: 'dm' },
-  { label: 'Reel', value: 'reel' },
-  { label: 'Appel (call)', value: 'call' },
-  { label: 'Effet (effect)', value: 'effect' },
-  { label: 'Ellipse temporelle (timeskip)', value: 'timeskip' },
-  // Plug-in entry types (entryTypeRegistry.js) tacked on, not merged in place
-  // — keeps the 10 built-ins' own authored order untouched.
-  ...CUSTOM_ENTRY_TYPES.map((def) => ({ label: def.label, value: def.type })),
-]
+// computed, not a plain const — re-evaluates when the editor's own
+// language switches (t() calls inside), same reason TYPE_OPTIONS below is
+// already a computed for enabledAppIds.
+const ALL_TYPE_OPTIONS = computed(() => [
+  ...BUILTIN_TYPES.map((type) => ({ label: t(`timelineEditor.types.${type}.label`), value: type })),
+  // Plug-in entry types (entryTypeRegistry.js) tacked on, not merged in
+  // place — keeps the 10 built-ins' own authored order untouched.
+  ...CUSTOM_ENTRY_TYPES.map((def) => ({ label: entryTypeLabel(def), value: def.type })),
+])
 
 // Authoring an SMS/post/reel/etc. for an app the project doesn't even ship
 // makes no sense — hide it from the "add entry" picker rather than let an
@@ -293,7 +285,7 @@ const ALL_TYPE_OPTIONS = [
 // or hidden here) — story.js's advance()/runThen() are what actually skip
 // them at runtime, same silent-skip as a failed `requires`.
 const TYPE_OPTIONS = computed(() =>
-  ALL_TYPE_OPTIONS.filter((opt) => {
+  ALL_TYPE_OPTIONS.value.filter((opt) => {
     const app = ENTRY_TYPE_APP[opt.value]
     return !app || story.enabledAppIds.includes(app)
   }),
@@ -372,7 +364,7 @@ function summaryFor(entry) {
     case 'message':
       return `${story.getContact(entry.contact).name}: ${entry.text || ''}`
     case 'choice':
-      return entry.prompt || '(prompt vide)'
+      return entry.prompt || t('timelineEditor.emptyPrompt')
     case 'post':
       return `${story.getContact(entry.author).name} — ${entry.content || ''}`
     case 'photo':
@@ -384,7 +376,7 @@ function summaryFor(entry) {
     case 'reel':
       return entry.caption || entry.media || ''
     case 'call':
-      return `${story.getContact(entry.contact).name} — ${(entry.script || []).length} répliques`
+      return `${story.getContact(entry.contact).name} — ${t('timelineEditor.linesCount', { n: (entry.script || []).length })}`
     case 'effect':
       return Object.keys(entry.effects || {}).join(', ')
     case 'timeskip':
@@ -579,12 +571,12 @@ function groupSelection() {
   if (!contiguous) {
     Notify.create({
       type: 'negative',
-      message: 'Ces entrées doivent être adjacentes pour former un groupe — réordonne-les d’abord.',
+      message: t('timelineEditor.notAdjacent'),
     })
     return
   }
   const id = `grp-${Date.now().toString(36)}${Math.floor(Math.random() * 1000)}`
-  for (const idx of indices) props.entries[idx].group = { id, label: 'Nouveau groupe' }
+  for (const idx of indices) props.entries[idx].group = { id, label: t('timelineEditor.newGroup') }
   selected.clear()
 }
 
@@ -594,7 +586,7 @@ function startRename(block) {
 }
 function commitRename(block) {
   if (renamingGroupId.value !== block.id) return // already committed via keyup.enter before the blur fired
-  const label = groupLabelDraft.value.trim() || 'Groupe'
+  const label = groupLabelDraft.value.trim() || t('timelineEditor.group')
   for (let k = block.start; k <= block.end; k++) props.entries[k].group.label = label
   renamingGroupId.value = null
 }

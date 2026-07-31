@@ -5,7 +5,7 @@
       outlined
       emit-value
       map-options
-      label="De (qui envoie le SMS)"
+      :label="t('entries.message.fromLabel')"
       :options="contactOptions"
       v-model="entry.contact"
     >
@@ -30,8 +30,8 @@
       ref="textInputRef"
       type="textarea"
       autogrow
-      label="Texte du message"
-      placeholder="ex: Coucou ! Ça va ?"
+      :label="t('entries.message.textLabel')"
+      :placeholder="t('entries.message.textPlaceholder')"
       v-model="entry.text"
     >
       <template #append>
@@ -40,7 +40,7 @@
     </q-input>
     <AssetField
       v-model="entry.image"
-      label="Photo jointe (optionnel)"
+      :label="t('entries.message.imageLabel')"
       :contact-id="entry.contact"
     />
   </div>
@@ -52,7 +52,9 @@ import { useContactOptions } from '@/components/shared/useContactOptions'
 import AssetField from '@/editor/components/AssetField.vue'
 import EmojiPickerBtn from '@/components/shared/EmojiPickerBtn.vue'
 import { insertEmojiAtCaret } from '@/components/shared/emojiInsert'
+import { useEditorI18n } from '@/editor/i18n'
 
+const { t } = useEditorI18n()
 defineProps({ entry: { type: Object, required: true } })
 const { contactOptionsNoMe: contactOptions, contactColor, contactLabel } = useContactOptions()
 const textInputRef = ref(null)
