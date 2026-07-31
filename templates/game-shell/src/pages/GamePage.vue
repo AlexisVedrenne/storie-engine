@@ -7,6 +7,7 @@
       <div class="stage-glow theme-gallery" :class="{ active: theme === 'gallery' }" />
       <div class="stage-glow theme-calls" :class="{ active: theme === 'calls' }" />
       <div class="stage-glow theme-settings" :class="{ active: theme === 'settings' }" />
+      <div class="stage-glow theme-journal" :class="{ active: theme === 'journal' }" />
     </div>
     <PhoneShell large />
   </q-page>
@@ -153,6 +154,12 @@ story.init()
   background:
     radial-gradient(circle at 25% 20%, #8e8e93 0%, transparent 45%),
     radial-gradient(circle at 80% 80%, #3a3a3f 0%, transparent 45%);
+}
+
+.theme-journal {
+  background:
+    radial-gradient(circle at 25% 20%, #7c4dff 0%, transparent 45%),
+    radial-gradient(circle at 80% 80%, #4527a0 0%, transparent 45%);
 }
 
 @keyframes stage-drift {

@@ -88,12 +88,25 @@ export default {
       calls: 'Téléphone',
       settings: 'Réglages',
       email: 'Email',
+      journal: 'Journal',
     },
     stepsUnit: 'pas',
     musicTitle: 'Vibes du soir',
     musicArtist: 'Playlist imaginaire',
     musicPauseAria: 'Pause',
     musicPlayAria: 'Lecture',
+  },
+
+  journal: {
+    title: 'Journal',
+    tabProgress: 'Parcours',
+    tabFlags: 'Statistiques',
+    youAreHere: 'Tu es ici',
+    otherPathPossible: 'Un autre chemin était possible',
+    otherPathsPossible: '{n} autres chemins étaient possibles',
+    pathEnded: "L'histoire s'arrête ici, pour l'instant.",
+    emptyProgress: "Ton parcours apparaîtra ici au fil de l'histoire.",
+    emptyFlags: 'Aucune statistique à afficher pour le moment.',
   },
 
   messages: {

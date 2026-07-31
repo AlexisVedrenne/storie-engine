@@ -111,6 +111,11 @@ function defaultState() {
     flags: {},
     currentChapterId: null,
     timelineIndex: 0,
+    // Ordered, deduped chapter ids reached this playthrough (first-visit
+    // order) — drives the Journal app's story-so-far view (see
+    // src/components/apps/journal/App.vue). Nothing else in the engine
+    // reads this; purely a player-facing breadcrumb, no gameplay effect.
+    visitedChapterIds: [],
 
     messages: {}, // contactId -> [{ id, from, text, ts }]
     unreadCounts: {}, // contactId -> number
@@ -587,6 +592,7 @@ export const useStoryStore = defineStore('story', {
       this.currentChapterId = chapterId
       this.timelineIndex = 0
       this.started = true
+      if (!this.visitedChapterIds.includes(chapterId)) this.visitedChapterIds.push(chapterId)
       this.advance()
     },
 

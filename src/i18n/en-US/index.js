@@ -88,12 +88,25 @@ export default {
       calls: 'Phone',
       settings: 'Settings',
       email: 'Email',
+      journal: 'Journal',
     },
     stepsUnit: 'steps',
     musicTitle: 'Evening Vibes',
     musicArtist: 'Imaginary playlist',
     musicPauseAria: 'Pause',
     musicPlayAria: 'Play',
+  },
+
+  journal: {
+    title: 'Journal',
+    tabProgress: 'Path',
+    tabFlags: 'Stats',
+    youAreHere: 'You are here',
+    otherPathPossible: 'Another path was possible',
+    otherPathsPossible: '{n} other paths were possible',
+    pathEnded: 'The story ends here, for now.',
+    emptyProgress: 'Your path will appear here as the story unfolds.',
+    emptyFlags: 'No stats to show yet.',
   },
 
   messages: {
