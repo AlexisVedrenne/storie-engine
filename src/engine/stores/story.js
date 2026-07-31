@@ -3,7 +3,8 @@ import { usePhoneStore } from './phone'
 import { i18n, persistLocale } from '@/engine/i18n/instance'
 import { DEFAULT_LOCALE, SUPPORTED_LOCALES } from '@/engine/i18n/locales'
 import { playSound, startLoop, stopSound } from '@/engine/utils/sound'
-import { ALL_APP_IDS, ENTRY_TYPE_APP } from '@/engine/apps/appIds'
+import { ENTRY_TYPE_APP } from '@/engine/apps/appIds'
+import { orderedAppList } from '@/engine/apps/appOrder'
 import { CUSTOM_ENTRY_TYPE_BY_TYPE } from '@/engine/apps/entryTypeRegistry'
 import {
   on as onEngineEvent,
@@ -237,14 +238,20 @@ export const useStoryStore = defineStore('story', {
     contactsList: (state) => state.project?.contacts ?? [],
     gameConfig: (state) => state.project?.gameConfig ?? { title: '' },
 
-    // Which built-in phone apps this project ships with — `disabledApps` is
-    // an explicit opt-out list (same "absent = default" convention as
-    // contact.hasSocial/followedByDefault), not an opt-in one, so every
-    // project created before this feature existed keeps showing all 5 apps
-    // with zero migration needed.
-    enabledAppIds: (state) => {
+    // Every built-in app, in the project's custom order if it's saved one
+    // (GameForm.vue's draggable Applications panel writes game.appOrder) —
+    // includes disabled apps too, since the panel itself needs to show and
+    // reorder those as well. See appOrder.js's own comment.
+    orderedApps: (state) => orderedAppList(state.project?.gameConfig?.appOrder),
+
+    // Which built-in phone apps this project ships with, in display order —
+    // `disabledApps` is an explicit opt-out list (same "absent = default"
+    // convention as contact.hasSocial/followedByDefault), not an opt-in one,
+    // so every project created before this feature existed keeps showing
+    // all 5 apps with zero migration needed.
+    enabledAppIds(state) {
       const disabled = state.project?.gameConfig?.disabledApps || []
-      return ALL_APP_IDS.filter((id) => !disabled.includes(id))
+      return this.orderedApps.map((app) => app.id).filter((id) => !disabled.includes(id))
     },
 
     // narrative content (chapters, contacts bios) is always written in

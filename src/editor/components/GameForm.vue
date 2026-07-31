@@ -60,15 +60,37 @@
           <FieldHelp :text="t('gameForm.appsHelp')" />
         </q-item-section>
       </template>
-      <div class="panel-body">
-        <q-toggle
-          v-for="app in APP_REGISTRY"
+      <div class="panel-body app-order-list" @dragover="onListDragOver" @drop="onDrop" @dragend="onDragEnd">
+        <div
+          v-for="(app, i) in orderedApps"
           :key="app.id"
-          dense
-          :label="storyT(app.labelKey)"
-          :model-value="!isAppDisabled(app.id)"
-          @update:model-value="(v) => setAppEnabled(app.id, v)"
-        />
+          class="app-card"
+          :class="{ dragging: dragIndex === i, disabled: isAppDisabled(app.id) }"
+          draggable="true"
+          @dragstart="onDragStart(i, $event)"
+          @dragover="onRowDragOver(i, $event)"
+          @drop="onDrop"
+        >
+          <div
+            v-if="dropLine && dropLine.index === i && dropLine.edge === 'before'"
+            class="drop-line"
+          />
+          <q-icon name="drag_indicator" size="20px" class="drag-handle" />
+          <span class="app-chip" :style="{ background: app.iconImage ? 'transparent' : app.color }">
+            <img v-if="app.iconImage" :src="app.iconImage" class="app-chip-img" alt="" />
+            <q-icon v-else :name="app.icon" size="16px" color="white" />
+          </span>
+          <span class="app-card-label">{{ storyT(app.labelKey) }}</span>
+          <q-toggle
+            dense
+            :model-value="!isAppDisabled(app.id)"
+            @update:model-value="(v) => setAppEnabled(app.id, v)"
+          />
+          <div
+            v-if="dropLine && dropLine.index === i && dropLine.edge === 'after'"
+            class="drop-line"
+          />
+        </div>
       </div>
     </q-expansion-item>
 
@@ -106,7 +128,7 @@ import FieldHelp from '@/editor/components/FieldHelp.vue'
 import EmojiPickerBtn from '@/components/shared/EmojiPickerBtn.vue'
 import { insertEmojiAtCaret } from '@/components/shared/emojiInsert'
 import { SOUND_FILES } from '@/engine/utils/sound'
-import { APP_REGISTRY } from '@/engine/apps/registry'
+import { orderedAppList } from '@/engine/apps/appOrder'
 import { useEditorI18n } from '@/editor/i18n'
 
 const props = defineProps({ game: { type: Object, required: true } })
@@ -128,6 +150,68 @@ function setAppEnabled(id, enabled) {
   if (enabled) disabled.delete(id)
   else disabled.add(id)
   props.game.disabledApps = disabled.size ? [...disabled] : undefined
+}
+
+// `appOrder` is an explicit full id list, same "absent = default manifest
+// order" convention as disabledApps — every project created before this
+// feature existed keeps showing apps in their built-in order with zero
+// migration needed. Mirrored by story.js's orderedApps getter, which is
+// what the phone home screen / setup wizard actually read. A disabled app
+// stays in this list (and stays draggable) so its position survives being
+// re-enabled later instead of jumping back to the end.
+const orderedApps = computed(() => orderedAppList(props.game.appOrder))
+
+// Same drag/drop shape as TimelineEditor.vue's own reorder (dragIndex +
+// a dropLine recomputed from cursor-vs-row-midpoint on every dragover) —
+// this list has no nesting/grouping to worry about, so it's the flat
+// single-list subset of that pattern.
+const dragIndex = ref(null)
+const dropLine = ref(null)
+
+function edgeFromEvent(ev) {
+  const rect = ev.currentTarget.getBoundingClientRect()
+  return ev.clientY - rect.top < rect.height / 2 ? 'before' : 'after'
+}
+
+function onDragStart(i, ev) {
+  dragIndex.value = i
+  ev.dataTransfer.effectAllowed = 'move'
+}
+
+function onRowDragOver(i, ev) {
+  ev.preventDefault()
+  if (dragIndex.value === null) return
+  dropLine.value = { index: i, edge: edgeFromEvent(ev) }
+}
+
+// Root-level fallback for the gap between rows (a dragover/drop bound only
+// on each row's own box leaves the small strip between two rows dead —
+// same reasoning as TimelineEditor.vue's onRootDragOver) — just prevents
+// the browser's "not allowed" cursor there; dropLine keeps whatever the
+// last row-level dragover computed.
+function onListDragOver(ev) {
+  if (dragIndex.value !== null) ev.preventDefault()
+}
+
+function onDragEnd() {
+  dragIndex.value = null
+  dropLine.value = null
+}
+
+function onDrop(ev) {
+  ev.preventDefault()
+  const from = dragIndex.value
+  const line = dropLine.value
+  dragIndex.value = null
+  dropLine.value = null
+  if (from === null || !line) return
+
+  const ids = orderedApps.value.map((a) => a.id)
+  let to = line.index + (line.edge === 'after' ? 1 : 0)
+  const [movedId] = ids.splice(from, 1)
+  if (from < to) to--
+  ids.splice(to, 0, movedId)
+  props.game.appOrder = ids
 }
 
 // game.sounds is optional/absent on any project created before this
@@ -203,6 +287,66 @@ const SOUND_KEYS = computed(() => [
   font-family: var(--font-mono);
   font-size: var(--text-xs);
   color: var(--color-text-muted);
+}
+
+.app-order-list {
+  gap: var(--space-2);
+}
+
+.app-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+}
+
+.app-card.disabled {
+  opacity: 0.55;
+}
+
+.app-card.dragging {
+  opacity: 0.4;
+}
+
+.drag-handle {
+  color: var(--color-text-muted);
+  cursor: grab;
+  flex-shrink: 0;
+}
+
+.app-chip {
+  width: 28px;
+  height: 28px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.app-chip-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.app-card-label {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.drop-line {
+  height: 3px;
+  margin: -1px 0;
+  border-radius: 2px;
+  background: var(--color-accent);
+  flex-shrink: 0;
 }
 
 .sound-row + .sound-row {

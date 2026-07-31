@@ -178,7 +178,6 @@
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useStoryStore } from '@/engine/stores/story'
-import { APP_REGISTRY } from '@/engine/apps/registry'
 
 const story = useStoryStore()
 const { t } = useI18n()
@@ -247,10 +246,12 @@ function connectWifi() {
 const accountState = ref('connecting') // 'connecting' | 'syncing' | 'done'
 // Settings is deliberately excluded — it's not "content" being synced from
 // an account, unlike the other 4. Sourced from the shared registry
-// (registry.js), filtered by the project's enabledAppIds, so a disabled app
-// doesn't get a fake sync icon for something the player will never see.
+// (story.orderedApps — the project's custom drag-reordered sequence if it
+// saved one, see appOrder.js), filtered by the project's enabledAppIds, so
+// a disabled app doesn't get a fake sync icon for something the player
+// will never see.
 const syncApps = computed(() =>
-  APP_REGISTRY.filter((app) => app.id !== 'settings' && story.enabledAppIds.includes(app.id)),
+  story.orderedApps.filter((app) => app.id !== 'settings' && story.enabledAppIds.includes(app.id)),
 )
 
 // --- accent color ----------------------------------------------------------

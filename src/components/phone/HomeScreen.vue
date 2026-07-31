@@ -31,7 +31,6 @@ import { useI18n } from 'vue-i18n'
 import { usePhoneStore } from '@/engine/stores/phone'
 import { useStoryStore } from '@/engine/stores/story'
 import { resolveAssetUrl } from '@/engine/assets'
-import { APP_REGISTRY } from '@/engine/apps/registry'
 import HomeWidgets from './HomeWidgets.vue'
 
 const phone = usePhoneStore()
@@ -46,11 +45,12 @@ const wallpaperStyle = computed(() =>
   wallpaperUrl.value ? { backgroundImage: `url(${wallpaperUrl.value})` } : {},
 )
 
-// Which apps show up at all (and in what order) now comes from the shared
-// registry, filtered by the project's own enabledAppIds — see
-// registry.js's own comment and GameForm.vue's "Applications" panel.
+// Which apps show up at all, and in what order, comes from story.orderedApps
+// (the project's custom drag-reordered sequence if it saved one, manifest
+// order otherwise — see appOrder.js), filtered down to enabledAppIds — see
+// GameForm.vue's draggable "Applications" panel.
 const apps = computed(() =>
-  APP_REGISTRY.filter((app) => story.enabledAppIds.includes(app.id)).map((app) => ({
+  story.orderedApps.filter((app) => story.enabledAppIds.includes(app.id)).map((app) => ({
     id: app.id,
     label: t(app.labelKey),
     icon: app.icon,
