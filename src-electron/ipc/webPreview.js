@@ -1,19 +1,23 @@
 // Serves the currently open project as a real webpage on the local network
 // — same temp-shell assembly as build.js's "export game" (see
-// shellAssembly.js), but `quasar dev --host` instead of `quasar build`: a
-// long-running dev server instead of a one-shot export, so a phone on the
-// same Wi-Fi can open it in a real mobile browser (far more honest test of
-// the touch UI than the desktop Electron window). Only one preview ever
-// runs at a time — starting a new one implicitly stops whatever was
+// shellAssembly.js), but `quasar dev --hostname` instead of `quasar build`:
+// a long-running dev server instead of a one-shot export, so a phone on
+// the same Wi-Fi can open it in a real mobile browser (far more honest
+// test of the touch UI than the desktop Electron window). Only one preview
+// ever runs at a time — starting a new one implicitly stops whatever was
 // already running; the renderer's blocking dialog (WebPreviewDialog.vue)
-// is the only UI for this, closing it always stops the server.
+// is the only UI for this, closing it always stops the server. Like
+// build.js, this runs quasar's CLI through this app's OWN Electron binary
+// in Node mode (see build.js's run() comment) against the vendored+
+// junctioned node_modules — no pnpm/Node.js/internet needed on the user's
+// machine.
 import { ipcMain } from "electron";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import http from "node:http";
 import { spawn } from "node:child_process";
-import { assembleShell } from "./shellAssembly.js";
+import { assembleShell, resolveQuasarCli } from "./shellAssembly.js";
 
 const PORT = 9200; // distinct from the editor's own dev port (9000) so `pnpm dev` on storie-engine itself never collides with a preview it starts
 
@@ -99,26 +103,11 @@ export function registerWebPreviewHandlers() {
     await assembleShell(tmpDir, rootPath);
     if (session.aborted) throw new Error("Preview annulée.");
 
-    const pnpmCmd = process.platform === "win32" ? "pnpm.cmd" : "pnpm";
-    await new Promise((resolve, reject) => {
-      const install = spawn(pnpmCmd, ["install"], { cwd: tmpDir, shell: true, stdio: "pipe" });
-      session.child = install;
-      let stderr = "";
-      install.stderr.on("data", (d) => (stderr += d.toString()));
-      install.on("error", reject);
-      install.on("close", (code) => {
-        session.child = null;
-        if (code === 0) resolve();
-        else reject(new Error(`"pnpm install" a échoué\n${stderr.slice(-4000)}`));
-      });
-    });
-    if (session.aborted) throw new Error("Preview annulée.");
-
-    const devChild = spawn(pnpmCmd, ["exec", "quasar", "dev", "--hostname", "0.0.0.0", "--port", String(PORT)], {
-      cwd: tmpDir,
-      shell: true,
-      stdio: "pipe",
-    });
+    const devChild = spawn(
+      process.execPath,
+      [resolveQuasarCli(tmpDir), "dev", "--hostname", "0.0.0.0", "--port", String(PORT)],
+      { cwd: tmpDir, env: { ...process.env, ELECTRON_RUN_AS_NODE: "1" }, stdio: "pipe" },
+    );
     session.child = devChild;
     devChild.on("exit", () => {
       if (current === session) current = null;

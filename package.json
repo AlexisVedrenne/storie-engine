@@ -13,7 +13,8 @@
     "dev:electron": "quasar dev -m electron",
     "build": "quasar build",
     "build:electron": "quasar build -m electron",
-    "postinstall": "quasar prepare --silent"
+    "postinstall": "quasar prepare --silent",
+    "vendor:game-shell": "pnpm --dir templates/game-shell install"
   },
   "dependencies": {
     "@dagrejs/dagre": "^3.0.0",

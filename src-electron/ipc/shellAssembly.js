@@ -21,6 +21,25 @@ import { pathToFileURL } from "node:url";
 export const APP_ROOT = app.isPackaged ? process.resourcesPath : process.cwd();
 export const TEMPLATE_DIR = path.join(APP_ROOT, "templates", "game-shell");
 
+// A real `pnpm install` of templates/game-shell/package.json, run once
+// ahead of time (see docs — "vendored game-shell deps") and shipped as
+// part of storie-engine itself (covered by the same extraResource copy as
+// TEMPLATE_DIR, since it lives inside it) — never installed at runtime on
+// the END USER's machine. That's the whole point: build.js/webPreview.js
+// used to `pnpm install` fresh into every temp dir, which silently
+// required the user's own machine to have pnpm + Node.js + internet
+// access, none of which a packaged storie-engine.exe can assume. At ~600MB
+// this is FAR too big to copy into every temp session (see assembleShell's
+// own junction step below) — it's linked in, not duplicated.
+export const VENDORED_NODE_MODULES = path.join(TEMPLATE_DIR, "node_modules");
+
+// @quasar/app-vite's CLI entry point inside a given assembled shell —
+// resolved from the JUNCTIONED node_modules (see assembleShell), so this
+// only makes sense to call after assembleShell() has run for that tmpDir.
+export function resolveQuasarCli(tmpDir) {
+  return path.join(tmpDir, "node_modules", "@quasar", "app-vite", "bin", "quasar.js");
+}
+
 function copyIfExists(src, dest) {
   if (fs.existsSync(src)) fs.cpSync(src, dest, { recursive: true });
 }
@@ -36,7 +55,25 @@ async function loadGameConfig(rootPath) {
 }
 
 export async function assembleShell(tmpDir, rootPath) {
-  fs.cpSync(TEMPLATE_DIR, tmpDir, { recursive: true, filter: (src) => !src.includes(`${path.sep}engine-overrides${path.sep}`) && !src.endsWith("engine-overrides") });
+  if (!fs.existsSync(VENDORED_NODE_MODULES)) {
+    throw new Error(
+      "Dépendances du moteur de jeu introuvables (templates/game-shell/node_modules). " +
+        "Lance `pnpm run vendor:game-shell` à la racine de storie-engine avant de packager, " +
+        "ou avant d'utiliser Build/Preview web en développement.",
+    );
+  }
+
+  fs.cpSync(TEMPLATE_DIR, tmpDir, {
+    recursive: true,
+    filter: (src) => {
+      if (src.includes(`${path.sep}engine-overrides${path.sep}`) || src.endsWith("engine-overrides")) return false;
+      // Never duplicated — junctioned in below instead, see
+      // VENDORED_NODE_MODULES's own comment (hundreds of MB, would make
+      // every single build/preview slow to just copy it every time).
+      if (src.includes(`${path.sep}node_modules`)) return false;
+      return true;
+    },
+  });
 
   // The engine + phone UI are never duplicated by hand — copied fresh from
   // the editor's own current source every build.
@@ -123,4 +160,10 @@ export async function assembleShell(tmpDir, rootPath) {
   pkg.productName = manifest.name || pkg.productName;
   if (manifest.version) pkg.version = manifest.version;
   fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + "\n", "utf-8");
+
+  // Junction (not a copy, see VENDORED_NODE_MODULES's own comment) — a
+  // Windows directory junction needs no elevated privileges, unlike a
+  // symlink. Confirmed working end to end against a real `quasar dev`
+  // through this exact junction before this was wired in for real.
+  fs.symlinkSync(VENDORED_NODE_MODULES, path.join(tmpDir, "node_modules"), "junction");
 }

@@ -1,23 +1,38 @@
 // Build pipeline — turns the currently open project into a standalone,
 // packaged Electron game (see docs/phase3-plan.md). Assembles a runnable
 // shell via shellAssembly.js (shared with webPreview.js), then runs
-// `quasar build -m electron` inside it.
+// `quasar build -m electron` inside it — via this app's OWN Electron binary
+// running in Node mode (see run()'s own comment), never a `pnpm`/`node`
+// the end user's machine would have to provide.
 import { ipcMain, dialog } from "electron";
 import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
 import { spawn } from "node:child_process";
-import { assembleShell } from "./shellAssembly.js";
+import { assembleShell, resolveQuasarCli } from "./shellAssembly.js";
 
-function run(cmd, args, cwd) {
+// `process.execPath` in the main process IS this app's own binary (the
+// packaged storie-engine.exe, or the dev Electron binary when run from
+// source) — every Electron build embeds a real Node.js runtime, and
+// ELECTRON_RUN_AS_NODE=1 makes a child process of it behave as a plain
+// `node <script>` instead of launching another Electron app. This is what
+// runs quasar's CLI directly (against the vendored+junctioned node_modules
+// shellAssembly.js already set up) with zero dependency on the end user's
+// machine having Node.js, pnpm, or internet access — confirmed end to end
+// against a real assembled shell before this was wired in for real.
+function run(scriptPath, args, cwd) {
   return new Promise((resolve, reject) => {
-    const child = spawn(cmd, args, { cwd, shell: true, stdio: "pipe" });
+    const child = spawn(process.execPath, [scriptPath, ...args], {
+      cwd,
+      env: { ...process.env, ELECTRON_RUN_AS_NODE: "1" },
+      stdio: "pipe",
+    });
     let stderr = "";
     child.stderr.on("data", (d) => (stderr += d.toString()));
     child.on("error", reject);
     child.on("close", (code) => {
       if (code === 0) resolve();
-      else reject(new Error(`"${cmd} ${args.join(" ")}" a échoué (code ${code})\n${stderr.slice(-4000)}`));
+      else reject(new Error(`"quasar ${args.join(" ")}" a échoué (code ${code})\n${stderr.slice(-4000)}`));
     });
   });
 }
@@ -92,10 +107,7 @@ async function buildGame(rootPath, destPath, bumpType) {
   const tmpDir = path.join(os.tmpdir(), `storie-engine-build-${Date.now()}`);
   try {
     await assembleShell(tmpDir, rootPath);
-
-    const pnpmCmd = process.platform === "win32" ? "pnpm.cmd" : "pnpm";
-    await run(pnpmCmd, ["install"], tmpDir);
-    await run(pnpmCmd, ["exec", "quasar", "build", "-m", "electron"], tmpDir);
+    await run(resolveQuasarCli(tmpDir), ["build", "-m", "electron"], tmpDir);
 
     const packagedDir = path.join(tmpDir, "dist", "electron", "Packaged");
     if (!fs.existsSync(packagedDir)) {
