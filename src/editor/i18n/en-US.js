@@ -33,6 +33,7 @@ export default {
       'Validate project — looks for broken references (missing contact/thread/image) and chapter issues',
     saveBtn: 'Save',
     buildTooltip: 'Build — export this project as a playable game (packaged Electron app)',
+    webPreviewTooltip: 'Web preview — test on your phone over Wi-Fi',
     switchProjectTooltip: 'Switch project',
     backToGraphTooltip: 'Back to graph',
     chapterTitleLabel: 'Title',
@@ -492,6 +493,15 @@ export default {
     confirmDeleteBody:
       'Every translation saved for this language will be permanently deleted. This action is irreversible.',
     localeDeleted: 'Language deleted.',
+  },
+
+  webPreviewDialog: {
+    loading: 'Loading the preview...',
+    readyTitle: 'Preview ready',
+    readyHint: 'Open this link on your phone (same Wi-Fi network):',
+    firewallHint: 'If Windows asks to allow network access, click Allow (private networks).',
+    errorTitle: 'Preview failed',
+    stop: 'Stop preview',
   },
 
   i18nBucketEditor: {

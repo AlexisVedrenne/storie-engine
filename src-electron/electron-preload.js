@@ -57,5 +57,7 @@ contextBridge.exposeInMainWorld("storieAPI", {
   createAssetFolder: (payload) => ipcRenderer.invoke("project:createAssetFolder", payload),
   deleteAsset: (payload) => ipcRenderer.invoke("project:deleteAsset", payload),
   checkAssets: (payload) => ipcRenderer.invoke("project:checkAssets", payload),
-  buildGame: (payload) => ipcRenderer.invoke("project:build", payload)
+  buildGame: (payload) => ipcRenderer.invoke("project:build", payload),
+  startWebPreview: (payload) => ipcRenderer.invoke("project:startWebPreview", payload),
+  stopWebPreview: () => ipcRenderer.invoke("project:stopWebPreview")
 })

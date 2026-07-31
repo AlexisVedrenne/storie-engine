@@ -108,6 +108,9 @@
         >
           <q-tooltip>{{ t('editorPage.buildTooltip') }}</q-tooltip>
         </q-btn>
+        <q-btn dense flat round icon="smartphone" color="primary" @click="webPreviewDialogRef?.open()">
+          <q-tooltip>{{ t('editorPage.webPreviewTooltip') }}</q-tooltip>
+        </q-btn>
         <q-btn
           dense
           flat
@@ -385,6 +388,8 @@
         </q-card>
       </q-dialog>
     </template>
+
+    <WebPreviewDialog ref="webPreviewDialogRef" :root-path="story.project.rootPath" />
   </q-page>
 </template>
 
@@ -424,6 +429,7 @@ import SeedBucketEditor from '@/editor/components/SeedBucketEditor.vue'
 import EmojiPickerBtn from '@/components/shared/EmojiPickerBtn.vue'
 import { insertEmojiAtCaret } from '@/components/shared/emojiInsert'
 import EditorLangSwitch from '@/editor/components/EditorLangSwitch.vue'
+import WebPreviewDialog from '@/editor/components/WebPreviewDialog.vue'
 import { useEditorI18n } from '@/editor/i18n'
 
 const { t } = useEditorI18n()
@@ -443,6 +449,7 @@ const phone = usePhoneStore()
 const chapterTitleInputRef = ref(null)
 
 const flagsDialogOpen = ref(false)
+const webPreviewDialogRef = ref(null)
 // Explicit persist — this dialog opens on top of the 'chapters' tab, whose
 // dirty/save watch is armed on `selectedChapter`, not on `gameConfig` (see
 // activeResource below), so editing a flag's label here needs its own

@@ -8,6 +8,7 @@ import {
 } from '#q-app/electron/main'
 import { registerAllHandlers } from './ipc/index.js'
 import { getCurrentAssetsRoot } from './ipc/project.js'
+import { stopWebPreviewOnQuit } from './ipc/webPreview.js'
 
 // needed in case process is undefined under Linux
 const platform = process.platform || os.platform()
@@ -101,4 +102,11 @@ app.on('window-all-closed', () => {
   if (platform !== 'darwin') {
     app.quit()
   }
+})
+
+// Closing the editor while a web preview is running must not leave an
+// orphaned dev server (and its bound port) behind — WebPreviewDialog.vue's
+// own Stop button covers the normal case, this covers quitting without it.
+app.on('before-quit', () => {
+  stopWebPreviewOnQuit()
 })

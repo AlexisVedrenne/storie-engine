@@ -1,25 +1,13 @@
 // Build pipeline — turns the currently open project into a standalone,
-// packaged Electron game (see docs/phase3-plan.md). Assembles a fresh temp
-// copy of templates/game-shell/ + storie-engine's own src/engine and
-// src/components (never a hand-maintained second copy of the phone engine,
-// see the plan doc's "principe" section), copies the open project's
-// content into it, then runs `quasar build -m electron` inside it.
-import { app, ipcMain, dialog } from "electron";
+// packaged Electron game (see docs/phase3-plan.md). Assembles a runnable
+// shell via shellAssembly.js (shared with webPreview.js), then runs
+// `quasar build -m electron` inside it.
+import { ipcMain, dialog } from "electron";
 import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
 import { spawn } from "node:child_process";
-import { pathToFileURL } from "node:url";
-
-// storie-engine's own source root — `templates/game-shell` and the engine
-// source this pipeline copies both live here. Running from source
-// (`pnpm run dev:electron`, or a --skip-pkg build), that's the repo root
-// (process.cwd()). Once packaged, none of that raw source exists inside the
-// app's asar — it's shipped alongside it instead, via quasar.config.js's
-// `electron.packager.extraResource: ['src', 'templates']`, which lands
-// unpacked at process.resourcesPath/{src,templates} (see app.isPackaged).
-const APP_ROOT = app.isPackaged ? process.resourcesPath : process.cwd();
-const TEMPLATE_DIR = path.join(APP_ROOT, "templates", "game-shell");
+import { assembleShell } from "./shellAssembly.js";
 
 function run(cmd, args, cwd) {
   return new Promise((resolve, reject) => {
@@ -32,108 +20,6 @@ function run(cmd, args, cwd) {
       else reject(new Error(`"${cmd} ${args.join(" ")}" a échoué (code ${code})\n${stderr.slice(-4000)}`));
     });
   });
-}
-
-function copyIfExists(src, dest) {
-  if (fs.existsSync(src)) fs.cpSync(src, dest, { recursive: true });
-}
-
-// Cache-busted dynamic import, same pattern as project.js's loadDefaultOr —
-// build.js doesn't otherwise ever load game.js's actual content (only
-// project.json's manifest, for the productName/output-folder slug).
-async function loadGameConfig(rootPath) {
-  const gamePath = path.join(rootPath, "game.js");
-  if (!fs.existsSync(gamePath)) return {};
-  const mod = await import(pathToFileURL(gamePath).href + "?t=" + Date.now());
-  return mod.default || {};
-}
-
-async function assembleShell(tmpDir, rootPath) {
-  fs.cpSync(TEMPLATE_DIR, tmpDir, { recursive: true, filter: (src) => !src.includes(`${path.sep}engine-overrides${path.sep}`) && !src.endsWith("engine-overrides") });
-
-  // The engine + phone UI are never duplicated by hand — copied fresh from
-  // the editor's own current source every build.
-  copyIfExists(path.join(APP_ROOT, "src", "engine"), path.join(tmpDir, "src", "engine"));
-  copyIfExists(path.join(APP_ROOT, "src", "components", "phone"), path.join(tmpDir, "src", "components", "phone"));
-  copyIfExists(path.join(APP_ROOT, "src", "components", "apps"), path.join(tmpDir, "src", "components", "apps"));
-  // Small utilities genuinely shared between the editor's own authoring
-  // forms AND a plug-in app's EntryForm.vue (e.g. src/components/apps/
-  // email/EmailEntryForm.vue) — entryTypeRegistry.js eagerly globs every
-  // app's entryType.js (see src/engine/apps/entryTypeRegistry.js), which
-  // statically imports that form component, so it's part of the RUNTIME
-  // bundle graph too, not just the editor's. Living under src/editor/
-  // (never copied here) broke every build the moment the email app was
-  // added — moved here specifically so `quasar build -m electron` inside
-  // this temp shell can actually resolve it.
-  copyIfExists(path.join(APP_ROOT, "src", "components", "shared"), path.join(tmpDir, "src", "components", "shared"));
-  copyIfExists(path.join(APP_ROOT, "src", "boot"), path.join(tmpDir, "src", "boot"));
-  copyIfExists(path.join(APP_ROOT, "src", "i18n"), path.join(tmpDir, "src", "i18n"));
-  copyIfExists(path.join(APP_ROOT, "src", "css"), path.join(tmpDir, "src", "css"));
-  // ChatThread.vue/DmThreadScreen.vue import '@/utils/chatTime' — confirmed
-  // by an actual end-to-end test build (see docs/phase3-plan.md); grep
-  // `src/components/**` for `from '@/...'` again if new engine code ever
-  // adds another such top-level import, since nothing here catches that
-  // automatically.
-  copyIfExists(path.join(APP_ROOT, "src", "utils"), path.join(tmpDir, "src", "utils"));
-
-  // The one file that legitimately differs between editor and shipped game
-  // (see templates/game-shell/engine-overrides/assets.js's own comment).
-  fs.copyFileSync(
-    path.join(TEMPLATE_DIR, "engine-overrides", "assets.js"),
-    path.join(tmpDir, "src", "engine", "assets.js"),
-  );
-
-  // Engine infra served from public/ (sounds, favicon) — same static-asset
-  // mechanism the project's own images will use below.
-  copyIfExists(path.join(APP_ROOT, "public", "icons"), path.join(tmpDir, "public", "icons"));
-  copyIfExists(path.join(APP_ROOT, "public", "sounds"), path.join(tmpDir, "public", "sounds"));
-  const favicon = path.join(APP_ROOT, "public", "favicon.ico");
-  if (fs.existsSync(favicon)) fs.copyFileSync(favicon, path.join(tmpDir, "public", "favicon.ico"));
-
-  // The project itself.
-  const projectDataDir = path.join(tmpDir, "src", "project-data");
-  fs.mkdirSync(projectDataDir, { recursive: true });
-  for (const file of ["contacts.js", "threads.js", "game.js", "project.json"]) {
-    const src = path.join(rootPath, file);
-    if (fs.existsSync(src)) fs.copyFileSync(src, path.join(projectDataDir, file));
-  }
-  copyIfExists(path.join(rootPath, "chapters"), path.join(projectDataDir, "chapters"));
-  copyIfExists(path.join(rootPath, "seed"), path.join(projectDataDir, "seed"));
-  copyIfExists(path.join(rootPath, "i18n"), path.join(projectDataDir, "i18n"));
-  copyIfExists(path.join(rootPath, "assets"), path.join(tmpDir, "public", "story-assets"));
-
-  // Custom build icon (game.icon, see GameForm.vue) — @quasar/app-vite's
-  // own default already points electron.packager.icon at
-  // src-electron/electron-assets/icons/icon (extensionless, platform
-  // suffix auto-appended), it just finds nothing there today since
-  // templates/game-shell/ ships no such directory. A real .ico is required
-  // on Windows for the packaged .exe's own icon (Explorer/taskbar) —
-  // no PNG->ICO conversion here (no such dependency in this project), so a
-  // .png-only source only gets the running window's title-bar icon
-  // (BrowserWindow's `icon` option accepts plain PNG fine, see
-  // electron-main.js), not the packaged .exe file icon. Documented
-  // limitation, not a bug — see docs/phase3-plan.md.
-  const gameConfig = await loadGameConfig(rootPath);
-  if (gameConfig.icon) {
-    const iconSrc = path.join(rootPath, "assets", gameConfig.icon);
-    if (fs.existsSync(iconSrc)) {
-      const iconsDir = path.join(tmpDir, "src-electron", "electron-assets", "icons");
-      fs.mkdirSync(iconsDir, { recursive: true });
-      fs.copyFileSync(iconSrc, path.join(iconsDir, `icon${path.extname(iconSrc)}`));
-    }
-  }
-
-  // Name the generated app after the project rather than the generic
-  // template default, and stamp its version (bumped by buildGame() below,
-  // BEFORE this runs) onto the packaged .exe's own file version metadata —
-  // electron-packager reads package.json's plain "version" field for that.
-  const manifestPath = path.join(rootPath, "project.json");
-  const manifest = fs.existsSync(manifestPath) ? JSON.parse(fs.readFileSync(manifestPath, "utf-8")) : {};
-  const pkgPath = path.join(tmpDir, "package.json");
-  const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf-8"));
-  pkg.productName = manifest.name || pkg.productName;
-  if (manifest.version) pkg.version = manifest.version;
-  fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + "\n", "utf-8");
 }
 
 // 'none' | 'patch' | 'minor' | 'major' — the choice offered at build time

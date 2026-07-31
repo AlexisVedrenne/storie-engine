@@ -32,6 +32,7 @@ export default {
       'Valider le projet — cherche les références cassées (contact/thread/image introuvable) et les problèmes de chapitres',
     saveBtn: 'Enregistrer',
     buildTooltip: 'Build — exporter ce projet en jeu jouable (app Electron packagée)',
+    webPreviewTooltip: 'Preview web — tester sur ton téléphone via le Wi-Fi',
     switchProjectTooltip: 'Changer de projet',
     backToGraphTooltip: 'Retour au graphe',
     chapterTitleLabel: 'Titre',
@@ -502,6 +503,15 @@ export default {
     confirmDeleteBody:
       'Toutes les traductions enregistrées pour cette langue seront définitivement supprimées. Cette action est irréversible.',
     localeDeleted: 'Langue supprimée.',
+  },
+
+  webPreviewDialog: {
+    loading: 'Chargement de la preview...',
+    readyTitle: 'Preview prête',
+    readyHint: 'Rends-toi sur ce lien depuis ton téléphone (même réseau Wi-Fi) :',
+    firewallHint: "Si Windows demande d'autoriser l'accès réseau, clique sur Autoriser (réseaux privés).",
+    errorTitle: 'Échec de la preview',
+    stop: 'Arrêter la preview',
   },
 
   i18nBucketEditor: {
