@@ -107,6 +107,7 @@ export default {
     pathEnded: "L'histoire s'arrête ici, pour l'instant.",
     emptyProgress: "Ton parcours apparaîtra ici au fil de l'histoire.",
     emptyFlags: 'Aucune statistique à afficher pour le moment.',
+    flagUnlocked: 'Débloqué',
   },
 
   messages: {

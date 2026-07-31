@@ -95,6 +95,18 @@ function addCommonStrings(project, set) {
   for (const photo of seed.photos || []) {
     if (photo.caption) set.add(photo.caption);
   }
+
+  // Chapter titles and flag labels aren't tied to any one chapter's own
+  // bucket (a title names the chapter itself, a flag label is project-wide)
+  // — both go through translateStory's 'common' bucket at runtime (see the
+  // journal app, src/components/apps/journal/App.vue), same as contact
+  // names/bios above.
+  for (const chapter of project.chapters || []) {
+    if (chapter.title) set.add(chapter.title);
+  }
+  for (const flag of Object.values(project.gameConfig?.flags || {})) {
+    if (flag?.label) set.add(flag.label);
+  }
 }
 
 // Same French strings as extractTranslatableStrings(project).common, just
@@ -150,6 +162,15 @@ export function extractCommonCategories(project) {
   push(
     "Photos (contenu initial)",
     (seed.photos || []).map((p) => p.caption),
+  );
+
+  push(
+    "Titres de chapitres",
+    (project.chapters || []).map((c) => c.title),
+  );
+  push(
+    "Libellés de flags",
+    Object.values(project.gameConfig?.flags || {}).map((f) => f?.label),
   );
 
   return groups;

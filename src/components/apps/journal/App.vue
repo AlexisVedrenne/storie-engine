@@ -26,7 +26,7 @@
             <div class="node-body">
               <div class="node-title" :class="{ current: node.isCurrent }">{{ node.title }}</div>
               <div v-if="node.isCurrent" class="node-tag">{{ t('journal.youAreHere') }}</div>
-              <div v-if="node.unexploredCount" class="branch-fork">
+              <div v-if="node.totalBranches > 1" class="branch-fork">
                 <span class="fork-connector" />
                 <span class="fork-node">?</span>
                 <span class="fork-label">{{ forkLabel(node.unexploredCount) }}</span>
@@ -44,9 +44,10 @@
         </div>
         <div v-else class="section">
           <div v-for="f in labeledFlags" :key="f.key" class="row">
-            <q-icon name="flag" size="18px" color="#7c4dff" />
+            <q-icon :name="f.isBoolean ? 'check_circle' : 'flag'" size="18px" color="#7c4dff" />
             <span class="row-label">{{ f.label }}</span>
-            <span class="row-sub flag-value">{{ f.value }}</span>
+            <span v-if="f.isBoolean" class="row-sub flag-value">{{ t('journal.flagUnlocked') }}</span>
+            <span v-else class="row-sub flag-value">{{ f.value }}</span>
           </div>
         </div>
       </div>
@@ -73,8 +74,11 @@ const chaptersById = computed(() => {
   return map
 })
 
+// bucket 'common', not chapter.id — a title names the chapter itself
+// rather than being narrative content authored inside it, same reasoning
+// as flag labels below (see extractTranslatableStrings.js's own comment).
 function chapterTitle(chapter) {
-  return story.translateStory(chapter.title || chapter.id, chapter.id)
+  return story.translateStory(chapter.title || chapter.id, 'common')
 }
 
 // One node per visited chapter, oldest first — the edge actually taken
@@ -99,6 +103,10 @@ const progressNodes = computed(() => {
       title: chapterTitle(chapter),
       isCurrent,
       unexploredCount,
+      // total paths out of this chapter (taken + not) — the fork is only
+      // worth showing once there was an actual FORK, i.e. at least 2 paths
+      // total; a chapter with only ever one way out shows nothing.
+      totalBranches: edges.length,
       hasEnded: isCurrent && !edges.length,
     })
   }
@@ -109,11 +117,29 @@ function forkLabel(n) {
   return n === 1 ? t('journal.otherPathPossible') : t('journal.otherPathsPossible', { n })
 }
 
+// Labeled flags that have actually been touched this playthrough
+// (`key in story.flags` — applyEffects only ever adds a key once some
+// effect sets it, so an absent key means "never happened yet", not "0")
+// — a flag authored but never reached yet has no business showing up as a
+// stat. Boolean flags (game.flags[key].boolean, see FlagsPanel.vue) go
+// one step further: only shown once true, since "you haven't done that
+// yet" isn't a stat worth surfacing, unlike a numeric counter genuinely
+// sitting at 0.
 const labeledFlags = computed(() => {
   const defs = story.project?.gameConfig?.flags || {}
   return Object.entries(defs)
-    .filter(([, def]) => def?.label)
-    .map(([key, def]) => ({ key, label: def.label, value: story.flags[key] ?? 0 }))
+    .filter(([key, def]) => {
+      if (!def?.label) return false
+      if (!(key in story.flags)) return false
+      if (def.boolean && !story.flags[key]) return false
+      return true
+    })
+    .map(([key, def]) => ({
+      key,
+      label: story.translateStory(def.label, 'common'),
+      isBoolean: Boolean(def.boolean),
+      value: story.flags[key],
+    }))
 })
 </script>
 

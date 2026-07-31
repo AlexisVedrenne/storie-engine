@@ -75,7 +75,7 @@
 </template>
 
 <script setup>
-import { computed, reactive } from 'vue'
+import { computed, reactive, watch } from 'vue'
 import { Dialog } from 'quasar'
 import { useStoryStore } from '@/engine/stores/story'
 import { collectFlags } from '@/project/collectFlags'
@@ -99,6 +99,27 @@ if (!props.game.flags) props.game.flags = {}
 const flags = computed(() => collectFlags(story.project))
 const unusedCount = computed(() => flags.value.filter((f) => !f.isUsed).length)
 
+// Keeps game.flags[key].boolean in sync with collectFlags' own isBoolean
+// classification, computed fresh here on every project edit — this is the
+// ONLY place that classification is available (collectFlags.js is
+// editor-only, never shipped, see the story import comment above), so the
+// journal app (src/components/apps/journal/App.vue) needs it persisted
+// into game.flags itself to tell "an unset boolean flag" from "a numeric
+// stat currently at 0" at runtime without importing this file. Runs on
+// every collectFlags recompute (not just when a label is typed), so a
+// project saved before this field existed self-heals the moment it's
+// reopened in the editor — no migration step needed.
+watch(
+  flags,
+  (list) => {
+    for (const flag of list) {
+      const entry = props.game.flags[flag.key]
+      if (entry && entry.boolean !== flag.isBoolean) entry.boolean = flag.isBoolean
+    }
+  },
+  { immediate: true },
+)
+
 // Which flags' "where is this called" list is open — collapsed by default
 // for every flag (see template), keyed by flag key so it survives the
 // catalog's own re-derivation on every project edit.
@@ -110,8 +131,12 @@ function toggleExpanded(key) {
 
 function setLabel(key, label) {
   const trimmed = (label || '').trim()
-  if (trimmed) props.game.flags[key] = { label: trimmed }
-  else delete props.game.flags[key]
+  if (trimmed) {
+    const flag = flags.value.find((f) => f.key === key)
+    props.game.flags[key] = { label: trimmed, boolean: flag?.isBoolean ?? false }
+  } else {
+    delete props.game.flags[key]
+  }
 }
 
 // Only ever reachable for `isUsed: false` rows (see template) — the flag

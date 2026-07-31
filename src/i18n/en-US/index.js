@@ -107,6 +107,7 @@ export default {
     pathEnded: 'The story ends here, for now.',
     emptyProgress: 'Your path will appear here as the story unfolds.',
     emptyFlags: 'No stats to show yet.',
+    flagUnlocked: 'Unlocked',
   },
 
   messages: {
