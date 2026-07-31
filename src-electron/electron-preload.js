@@ -49,6 +49,7 @@ contextBridge.exposeInMainWorld("storieAPI", {
   saveI18nBucket: (payload) => ipcRenderer.invoke("project:saveI18nBucket", payload),
   saveSeedBucket: (payload) => ipcRenderer.invoke("project:saveSeedBucket", payload),
   createLocale: (payload) => ipcRenderer.invoke("project:createLocale", payload),
+  deleteLocale: (payload) => ipcRenderer.invoke("project:deleteLocale", payload),
   getSystemLocale: () => ipcRenderer.invoke("app:getSystemLocale"),
   pickAsset: (payload) => ipcRenderer.invoke("project:pickAsset", payload),
   importAsset: (payload) => ipcRenderer.invoke("project:importAsset", payload),

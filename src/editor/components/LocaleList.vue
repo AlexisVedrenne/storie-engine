@@ -15,6 +15,18 @@
         <div class="locale-name">{{ locale }}</div>
         <div class="locale-progress">{{ t('localeList.translatedProgress', { done: translatedCount(locale), total: totalStrings }) }}</div>
       </div>
+      <q-btn
+        dense
+        flat
+        round
+        icon="delete"
+        size="sm"
+        color="negative"
+        class="delete-btn"
+        @click.stop="confirmDelete(locale)"
+      >
+        <q-tooltip>{{ t('localeList.deleteTooltip') }}</q-tooltip>
+      </q-btn>
     </div>
 
     <q-btn
@@ -63,14 +75,14 @@
 
 <script setup>
 import { computed, onMounted, ref } from 'vue'
-import { Notify } from 'quasar'
+import { Dialog, Notify } from 'quasar'
 import { useStoryStore } from '@/engine/stores/story'
 import { extractTranslatableStrings } from '@/project/extractTranslatableStrings'
 import { SUPPORTED_LOCALES } from '@/engine/i18n/locales'
 import { useEditorI18n } from '@/editor/i18n'
 
 const { t } = useEditorI18n()
-defineProps({ modelValue: { type: String, default: '' } })
+const props = defineProps({ modelValue: { type: String, default: '' } })
 const emit = defineEmits(['update:modelValue'])
 const story = useStoryStore()
 
@@ -143,6 +155,30 @@ async function createLocale() {
     Notify.create({ type: 'negative', message: err.message || String(err) })
   }
 }
+
+// Irreversible — deletes every translated string for that locale, both on
+// disk (project:deleteLocale, i18n/<locale>/) and in the live project data.
+// Guarded by a confirm dialog (same Dialog.create({color:'negative'})
+// pattern as FlagsPanel.vue's own bulk-delete), unlike createLocale above
+// which has nothing destructive to guard.
+function confirmDelete(locale) {
+  Dialog.create({
+    title: t('localeList.confirmDeleteTitle', { locale }),
+    message: t('localeList.confirmDeleteBody'),
+    cancel: true,
+    persistent: true,
+    color: 'negative',
+  }).onOk(async () => {
+    try {
+      await window.storieAPI.deleteLocale({ rootPath: story.project.rootPath, locale })
+      delete story.project.i18n[locale]
+      if (props.modelValue === locale) emit('update:modelValue', '')
+      Notify.create({ type: 'positive', message: t('localeList.localeDeleted') })
+    } catch (err) {
+      Notify.create({ type: 'negative', message: err.message || String(err) })
+    }
+  })
+}
 </script>
 
 <style scoped>
@@ -193,6 +229,16 @@ async function createLocale() {
 
 .locale-row.active .active-bar {
   background: var(--color-accent);
+}
+
+.delete-btn {
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+
+.locale-row:hover .delete-btn {
+  opacity: 1;
 }
 
 .locale-icon {

@@ -497,6 +497,11 @@ export default {
       '« {locale} » masquée — langue système détectée de cette machine, probablement celle utilisée pour écrire les chapitres.',
     languageLabel: 'Langue',
     localeCreated: 'Langue créée.',
+    deleteTooltip: 'Supprimer cette langue',
+    confirmDeleteTitle: 'Supprimer « {locale} » ?',
+    confirmDeleteBody:
+      'Toutes les traductions enregistrées pour cette langue seront définitivement supprimées. Cette action est irréversible.',
+    localeDeleted: 'Langue supprimée.',
   },
 
   i18nBucketEditor: {

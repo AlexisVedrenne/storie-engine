@@ -214,18 +214,27 @@ export const useStoryStore = defineStore('story', {
     myColor: (state) => state.playerColor || findContact(state.project, 'me').color,
     activeLocale: (state) => state.locale || DEFAULT_LOCALE,
 
-    // Language picker options for the Setup wizard + Settings — the engine's
-    // built-in UI-chrome languages (SUPPORTED_LOCALES, which have real
-    // interface translations) plus any locale the currently open project
-    // has story content for (story.project.i18n keys), even one not (yet)
-    // in SUPPORTED_LOCALES — its narrative text still translates correctly
-    // via resolveStoryText's per-string fallback, only the interface itself
-    // (menus/buttons) stays in the fallback language for that case.
+    // Language picker options for the Setup wizard + Settings — restricted
+    // to DEFAULT_LOCALE (the source language chapters are actually written
+    // in, never itself a project.i18n entry) plus whatever locale the
+    // author explicitly added to THIS project (LocaleList.vue's "+ Nouvelle
+    // langue" -> project.i18n keys). A locale merely existing in the
+    // engine's own SUPPORTED_LOCALES catalog (real interface translation
+    // available) is NOT enough on its own — offering it here before the
+    // project's actual narrative content has any translation for it would
+    // let a player pick a language where the UI chrome is translated but
+    // every message/choice/chapter title silently falls back to French,
+    // a half-translated experience worse than not offering the choice at
+    // all. A project.i18n code outside SUPPORTED_LOCALES (no interface
+    // translation yet) is still offered — its narrative text still
+    // translates correctly via resolveStoryText's per-string fallback,
+    // only the interface itself (menus/buttons) stays in the fallback
+    // language for that case.
     availableLocales: (state) => {
-      const extra = Object.keys(state.project?.i18n || {}).filter(
-        (code) => !SUPPORTED_LOCALES.some((l) => l.code === code),
-      )
-      return [...SUPPORTED_LOCALES, ...extra.map((code) => ({ code, label: code }))]
+      const added = new Set(Object.keys(state.project?.i18n || {}))
+      const known = SUPPORTED_LOCALES.filter((l) => l.code === DEFAULT_LOCALE || added.has(l.code))
+      const extra = [...added].filter((code) => !SUPPORTED_LOCALES.some((l) => l.code === code))
+      return [...known, ...extra.map((code) => ({ code, label: code }))]
     },
 
     // reads the currently loaded project's contact/thread lists — the

@@ -133,7 +133,7 @@
 </template>
 
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { computed, onUnmounted, reactive, ref, watch } from 'vue'
 import { useStoryStore } from '@/engine/stores/story'
 import { extractTranslatableStrings, extractCommonCategories } from '@/project/extractTranslatableStrings'
 import FieldHelp from '@/editor/components/FieldHelp.vue'
@@ -176,9 +176,25 @@ const dict = computed(() => story.project.i18n?.[props.locale]?.[props.bucket] |
 function getValue(frText) {
   return dict.value[frText] || ''
 }
+// A row just typed into stays visible even under "hide translated" — without
+// this, the very first keystroke on an empty field flips getValue() truthy
+// and the row (and the input being typed into) vanishes out from under the
+// cursor. Pinned for 2s after the LAST keystroke (reset on every edit, same
+// debounce shape as a search-as-you-type box), then matchesFilters applies
+// the hide rule normally — the row settles out of view once the translator
+// has actually moved on, not mid-edit.
+const recentlyEdited = reactive(new Set())
+const editTimers = {}
+onUnmounted(() => {
+  for (const timer of Object.values(editTimers)) clearTimeout(timer)
+})
+
 function setValue(frText, val) {
   ensureBucket()
   story.project.i18n[props.locale][props.bucket][frText] = val || undefined
+  recentlyEdited.add(frText)
+  clearTimeout(editTimers[frText])
+  editTimers[frText] = setTimeout(() => recentlyEdited.delete(frText), 2000)
 }
 function deleteKey(frText) {
   ensureBucket()
@@ -194,7 +210,7 @@ const translatedCount = computed(() => strings.value.filter((s) => getValue(s)).
 const search = ref('')
 const hideTranslated = ref(false)
 function matchesFilters(s) {
-  if (hideTranslated.value && getValue(s)) return false
+  if (hideTranslated.value && getValue(s) && !recentlyEdited.has(s)) return false
   const q = search.value.trim().toLowerCase()
   if (!q) return true
   return s.toLowerCase().includes(q) || (getValue(s) || '').toLowerCase().includes(q)

@@ -267,6 +267,20 @@ export function registerProjectHandlers(mainWindow) {
     return trimmed;
   });
 
+  // Irreversible — wipes every bucket file translated for that locale.
+  // The renderer (LocaleList.vue) is what actually guards this behind a
+  // confirmation dialog; same split as every other destructive handler
+  // here (deleteChapter, resetSave client-side) not re-confirming itself.
+  ipcMain.handle("project:deleteLocale", async (_evt, { rootPath, locale }) => {
+    const trimmed = String(locale).trim();
+    if (!trimmed || !/^[A-Za-z0-9_-]+$/.test(trimmed)) {
+      throw new Error("Code de langue invalide.");
+    }
+    const localeDir = path.join(rootPath, "i18n", trimmed);
+    if (fs.existsSync(localeDir)) fs.rmSync(localeDir, { recursive: true, force: true });
+    return true;
+  });
+
   // Picks a PARENT folder to create the new project's own folder inside —
   // separate title/intent from project:selectFolder (which opens an
   // existing project root directly).
