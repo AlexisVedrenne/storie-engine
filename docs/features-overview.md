@@ -4,8 +4,11 @@
 travers un faux smartphone (SMS, réseau social façon Instagram, appels,
 galerie, réglages), exportables en `.exe` Windows autonome.
 
-Snapshot établi par exploration du code le 2026-07-29 — à mettre à jour si
-une fonctionnalité majeure change de forme.
+Snapshot établi par exploration du code le 2026-07-29, mis à jour le
+2026-07-31 (catalogue de flags, libellés/duplication sur le graphe de
+chapitres, drag/groupement des entrées de timeline, traduction anglais de
+l'éditeur) — à mettre à jour si une fonctionnalité majeure change de
+forme.
 
 ---
 
@@ -19,9 +22,14 @@ une fonctionnalité majeure change de forme.
 - **Clic droit sur le canvas** → crée un nouveau chapitre pile sous la
   souris, sans dialogue ni navigation dedans.
 - Chaque flèche peut porter une **condition** (mêmes règles que partout
-  ailleurs, voir §2) — un chapitre teste ses flèches sortantes dans l'ordre
-  et prend la première dont la condition passe. Zéro flèche sortante = fin
-  (badge "FIN", bordure en pointillés).
+  ailleurs, voir §2) et un **libellé optionnel** (affiché à la place de la
+  condition sur le graphe ; vide = comportement inchangé) — un chapitre
+  teste ses flèches sortantes dans l'ordre et prend la première dont la
+  condition passe. Zéro flèche sortante = fin (badge "FIN", bordure en
+  pointillés).
+- **Dupliquer un chapitre** (bouton sur chaque nœud) : copie profonde
+  (timeline + flèches sortantes avec conditions/libellés), position
+  décalée, ouvre direct dessus.
 - Position des nœuds sans position explicite : layout automatique (dagre)
   isolé, pour ne jamais gêner un placement manuel déjà fait ailleurs.
 - Point d'entrée (`entryChapterId`) fixé à la création du projet — pas
@@ -49,6 +57,12 @@ icône+description :
 Toute entrée (et toute option de choix) peut porter un `requires` optionnel —
 si la condition échoue, l'entrée est silencieusement sautée.
 
+Entrées réordonnables par glisser-déposer (ligne d'insertion visible en
+temps réel) en plus des boutons monter/descendre. Regroupables en accordion
+(sélection multiple d'entrées adjacentes → "Grouper") pour la lisibilité
+d'une longue timeline — pure métadonnée d'auteur (`entry.group`), le moteur
+l'ignore, la timeline reste strictement plate à l'exécution.
+
 ---
 
 ## 2. Conditions & Effets
@@ -61,6 +75,16 @@ si la condition échoue, l'entrée est silencieusement sautée.
   moment (signal vivant, pas une valeur stockée).
 - Pas de condition de date/heure, pas de hasard, pas de "déjà vu" — que ça.
   Toutes les conditions d'un même `requires` sont en ET.
+
+**Catalogue de flags** (dialogue accessible depuis l'édition d'un
+chapitre, bouton drapeau) : liste tous les flags du projet avec libellé
+optionnel, type (booléen/numérique), nombre d'usages et emplacements
+(dépliables). Pour un flag numérique, affiche le min/max réellement
+atteignable en jouant l'histoire (vraie traversée du graphe de chapitres +
+branches de choix, pas juste les deltas tapés un par un) — signale aussi
+les flags lus par une condition mais jamais modifiés par un effet nulle
+part (bug d'auteur probable). Libellés orphelins (flag renommé/supprimé)
+supprimables individuellement ou en masse.
 
 ### Effets (`EffectsBuilder`)
 - **Flags** : additionner/soustraire un nombre (cumulatif), ou fixer
@@ -138,6 +162,11 @@ script ligne par ligne, tap pour avancer.
 ---
 
 ## 4. i18n / localisation
+
+Deux systèmes i18n distincts et indépendants — changer l'un ne change
+jamais l'autre.
+
+### Langue du jeu (contenu narratif + chrome du téléphone)
 - Langues d'interface intégrées : français (défaut) + anglais. Le contenu
   narratif peut avoir des dictionnaires pour n'importe quel code de langue
   en plus.
@@ -149,6 +178,19 @@ script ligne par ligne, tap pour avancer.
   qui ne correspondent plus à rien), bouton emoji sur chaque champ.
 - Changement de langue en jeu : à tout moment depuis Réglages, sans reset.
   Fallback gracieux vers le français si non traduit.
+
+### Langue de l'éditeur lui-même (français + anglais)
+- Système séparé (`src/editor/i18n/`) pour les labels/tooltips/dialogues de
+  l'éditeur — switcher FR/EN dans le topbar, persisté, sans effet sur la
+  langue du jeu testé dans l'aperçu.
+- Jamais copié dans le jeu exporté (dossier `src/editor/`, exclu du build) —
+  toutes les ~8700 lignes de composants éditeur traduites, dictionnaires
+  fr-FR/en-US vérifiés à parité exacte.
+- Les labels de triggers (`triggers.js`) et de types d'entrée plug-in (une
+  app tierce comme Email) sont aussi traduisibles via une couche de
+  surcharge (`sharedOverrides.js`) qui ne touche pas ces fichiers
+  eux-mêmes (ils sont partagés avec le jeu exporté) — dictionnaire en
+  priorité, texte d'origine en repli sinon.
 
 ## 5. Assets & sons
 - Tout dans `assets/`, référencé par chemin relatif. Import (copie externe)

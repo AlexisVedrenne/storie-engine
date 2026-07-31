@@ -194,6 +194,70 @@ id, donc toujours listées peu importe si un id a été renseigné.
 Onglet **Events** déplacé juste après **Chapitres** dans la barre
 d'onglets de l'éditeur.
 
+**Catalogue de flags (2026-07-31)** : nouvel onglet accessible via un
+dialogue depuis l'édition d'un chapitre (bouton drapeau à côté du titre,
+pas un onglet séparé — les flags sont project-wide mais l'auteur veut y
+accéder sans quitter le chapitre en cours).
+- `src/project/collectFlags.js` (pur, testé en Node) scanne tout le projet
+  (chapitres, flèches du graphe, choix imbriqués, events + leur `then`) et
+  liste chaque flag : booléen/numérique, nombre d'usages, emplacements
+  (chapitre/event, masqués par défaut, dépliables), libellé optionnel
+  (`game.flags[key].label`).
+- **Plage numérique = vraie traversée du graphe**, pas les deltas bruts :
+  `computeFlagRange()` marche chapitres + branches de choix pour calculer
+  le min/max réellement atteignable en jouant l'histoire. Un premier jet
+  affichait juste le plus petit/plus grand delta tapé isolément — lisait
+  comme "valeur observée" alors que ça n'en était pas une (retour
+  utilisateur, cf. `miraAffection` : delta -1→3 affiché, alors que la vraie
+  plage atteignable est 1→15). Volontairement optimiste : suppose chaque
+  branche touchant le flag atteignable, sans résoudre les conditions
+  croisées d'autres flags qui pourraient la bloquer.
+- Détecte aussi les flags "lus mais jamais modifiés" (condition quelque
+  part, zéro effet nulle part) — bug d'auteur quasi certain.
+- Libellés orphelins (flag renommé/supprimé mais `game.flags` pas
+  nettoyé) affichés à part, suppression individuelle ou groupée.
+
+**Bug de build cassé découvert en vérifiant l'export (2026-07-31)** : deux
+imports `@/editor/*`/`@/project/*` s'étaient glissés dans des fichiers
+copiés tels quels dans chaque jeu exporté (`src-electron/ipc/build.js`),
+qui eux ne copient jamais `src/editor/`/`src/project/` — voir mémoire
+`storie-engine-build-boundary`.
+- `story.js` (nouveau getter flags) importait `collectFlags.js` — déplacé
+  en calcul local dans `FlagNameField.vue`/`FlagsPanel.vue`, même
+  précédent que `collectPhotoOptions`/`collectPostOptions` dans
+  `EventForm.vue`.
+- `src/components/apps/email/EmailEntryForm.vue` (app plug-in, copiée
+  avec `src/components/apps/`) importait `EmojiPickerBtn`/
+  `useContactOptions`/`emojiInsert` depuis `src/editor/` — cassé depuis
+  l'ajout de l'app Email dans une session antérieure, jamais détecté avant
+  un vrai test de build. Les 4 fichiers concernés déplacés vers
+  `src/components/shared/` (autonomes, zéro dépendance éditeur réelle),
+  `build.js` copie maintenant ce dossier, tous les imports mis à jour.
+- Vérifié par un vrai build de bout en bout (assemblage `build.js` +
+  `pnpm install` + `quasar build` sur un mini-projet test avec une entrée
+  `type: 'email'`) : échec avant le fix, succès après.
+
+**Traduction anglais de l'éditeur (2026-07-31)** : nouveau système i18n
+séparé pour l'UI de l'éditeur lui-même (`src/editor/i18n/`), indépendant
+de `story.locale`/`src/engine/i18n/instance.js` (celui-là = langue du jeu
+en cours de test, ne doit pas changer avec la langue d'édition). Jamais
+copié dans le jeu exporté. Switcher FR/EN dans le topbar + écran
+d'accueil. Les ~37 fichiers de `src/editor/` traduits, dictionnaires
+fr-FR/en-US vérifiés à parité exacte (429 clés des deux côtés).
+- `sharedOverrides.js` étend la traduction aux labels de triggers
+  (`triggers.js`) et de types d'entrée plug-in (ex: app Email) — fichiers
+  qui, eux, SHIPPENT dans le jeu, donc ne peuvent pas importer
+  `src/editor/i18n` directement (même contrainte que le bug de build
+  ci-dessus). Dictionnaire éditeur en priorité, texte brut d'origine en
+  repli si absent.
+- Bug trouvé en cours de route : les noms de triggers contiennent des
+  points littéraux (`photo.viewed`, `app.closed`) — le lookup par chemin
+  `'triggers.' + name + '.label'` coupait sur CHAQUE point, donc
+  interprétait `photo.viewed` comme deux niveaux imbriqués au lieu d'une
+  seule clé. Repli silencieux sur le texte brut à chaque fois, aucun
+  trigger jamais traduit. Fix : `editorTOptionalPath()`, lookup par
+  tableau de clés exactes, plus d'ambiguïté possible.
+
 Reste à faire : apps externes/plugins post-build (phase 4, cf. discussion
 "marketplace" — mis de côté pour l'instant, modèle actuel = extension du
 dépôt source + rebuild).
