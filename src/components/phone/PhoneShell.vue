@@ -1,5 +1,9 @@
 <template>
-  <div class="phone-frame" :class="{ ringing, large: props.large }" :style="accentStyle">
+  <div
+    class="phone-frame"
+    :class="{ ringing, large: props.large, 'fill-mobile': props.fillMobileViewport }"
+    :style="accentStyle"
+  >
     <div class="phone-notch" />
 
     <div ref="screenEl" class="phone-screen">
@@ -67,7 +71,21 @@ import { APP_REGISTRY } from '@/engine/apps/registry'
 // surrounding pane, so a caller with more room to give (no docked
 // chapters/form panes eating the width) needs a bigger cap to actually
 // render bigger, not just less padding around the same size.
-const props = defineProps({ large: { type: Boolean, default: false } })
+// `fillMobileViewport` — only set by GamePage.vue (the actual player-facing
+// shell: an exported game, or the web preview opened on a real phone, see
+// docs on webPreview.js). Never set by EditorPage.vue's own embed, so
+// shrinking the editor's preview pane never triggers this — it's keyed off
+// "is this genuinely a small/mobile viewport", not "is this pane narrow
+// right now", and the editor is desktop-only regardless of pane width. On
+// an actual phone, drawing a fake phone-mockup (bezel/notch/shadow) inside
+// the real device's own browser looks absurd — this makes the game fill
+// the real screen edge to edge instead, so it reads as the phone itself
+// rather than a screenshot of one. See the 'fill-mobile' media query below
+// — the class alone does nothing on a wide (desktop) viewport.
+const props = defineProps({
+  large: { type: Boolean, default: false },
+  fillMobileViewport: { type: Boolean, default: false },
+})
 
 const phone = usePhoneStore()
 const story = useStoryStore()
@@ -209,6 +227,34 @@ const canvasStyle = computed(() => ({
 .phone-frame.large {
   width: min(94vw, 600px, calc(94vh * 9 / 18));
   height: min(94vh, 1200px, calc(94vw * 18 / 9));
+}
+
+/* On a real phone-sized viewport, a `fillMobileViewport` caller (see the
+   prop's own comment above) drops the phone-mockup chrome entirely — full
+   bleed, no bezel/notch/shadow/rounding — so the page reads as the device
+   itself. `100dvh` (not `100vh`) so a mobile browser's address bar
+   collapsing on scroll doesn't leave a gap or cause a jump. Scoped to
+   `.fill-mobile` specifically so this never fires for the editor's own
+   embed (see the prop comment) even if its preview pane happens to be
+   narrow. */
+@media (max-width: 600px) {
+  .phone-frame.fill-mobile {
+    width: 100vw;
+    height: 100dvh;
+    max-width: none;
+    max-height: none;
+    border-radius: 0;
+    padding: 0;
+    box-shadow: none;
+  }
+
+  .phone-frame.fill-mobile .phone-notch {
+    display: none;
+  }
+
+  .phone-frame.fill-mobile .phone-screen {
+    border-radius: 0;
+  }
 }
 
 @keyframes phone-shake {

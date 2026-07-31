@@ -9,7 +9,7 @@
       <div class="stage-glow theme-settings" :class="{ active: theme === 'settings' }" />
       <div class="stage-glow theme-journal" :class="{ active: theme === 'journal' }" />
     </div>
-    <PhoneShell large />
+    <PhoneShell large fill-mobile-viewport />
   </q-page>
 </template>
 
