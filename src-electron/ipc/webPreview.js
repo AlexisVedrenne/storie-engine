@@ -19,47 +19,48 @@ import http from "node:http";
 import { spawn } from "node:child_process";
 import { assembleShell, resolveQuasarCli } from "./shellAssembly.js";
 
-const PORT = 9200; // distinct from the editor's own dev port (9000) so `pnpm dev` on storie-engine itself never collides with a preview it starts
+const PREFERRED_PORT = 9200; // distinct from the editor's own dev port (9000) so `pnpm dev` on storie-engine itself never collides with a preview it starts — just a preference: `--port` doesn't stop Vite silently picking another one if this is already taken (see URL parsing below, which is why that's no longer a problem)
 
 // One `session` object per start->stop cycle, tracked here so stop can find
-// and kill it — `child` gets reassigned as the session moves from "pnpm
-// install" to "quasar dev" (whichever process is currently running), and
-// `aborted` lets a stop requested mid-install (before there's a `child` to
-// kill yet, or between two awaited steps) still cancel the steps still to
-// come instead of quietly finishing and leaving an orphaned dev server
-// nothing in the UI still points at.
+// and kill it — `aborted` lets a stop requested mid-assembly (before
+// there's a `child` to kill yet) still cancel the steps still to come
+// instead of quietly finishing and leaving an orphaned dev server nothing
+// in the UI still points at.
 let current = null;
 
-// First non-internal IPv4 — what a phone on the same Wi-Fi actually needs
-// to type in, not 0.0.0.0 (that's a bind address, meaningless to a client).
-function findLanAddress() {
-  for (const ifaceList of Object.values(os.networkInterfaces())) {
-    for (const iface of ifaceList || []) {
-      if (iface.family === "IPv4" && !iface.internal) return iface.address;
-    }
-  }
-  return null;
+// Reads the dev server's OWN printed URL rather than assuming
+// PREFERRED_PORT was actually used, or guessing the LAN address ourselves
+// via os.networkInterfaces() — confirmed by real testing that Vite (which
+// quasar dev wraps) silently falls back to a DIFFERENT port when the
+// requested one is already taken (e.g. a leftover preview session from
+// before this app's own process-lifecycle bugs got fixed), which used to
+// make this poll a port nothing was actually listening on, forever, until
+// timeout. Quasar always prints every reachable URL (localhost + every
+// LAN interface) once truly ready — parsing that is both more honest
+// (it's what actually happened) and simpler than re-deriving it.
+const URL_RE = /https?:\/\/((?:\d{1,3}\.){3}\d{1,3}):(\d+)\//g;
+
+function isPrivateLan(ip) {
+  return /^(192\.168\.|10\.|172\.(1[6-9]|2\d|3[01])\.)/.test(ip);
 }
 
-// Polls the dev server instead of scraping its stdout for a "ready" line —
-// quasar/vite's exact wording isn't a stable contract to depend on, a real
-// TCP response is.
-function waitForServer(port, timeoutMs) {
-  const deadline = Date.now() + timeoutMs;
-  return new Promise((resolve, reject) => {
-    function attempt() {
-      const req = http.get({ host: "127.0.0.1", port, timeout: 1500 }, (res) => {
-        res.resume();
-        resolve();
-      });
-      req.on("error", () => {
-        if (Date.now() > deadline) reject(new Error("Le serveur de preview n'a pas démarré à temps."));
-        else setTimeout(attempt, 400);
-      });
-      req.on("timeout", () => req.destroy());
+// Prefers a real private-LAN address (what a phone on the same Wi-Fi can
+// actually reach) over a 169.254.x.x link-local one (an unconfigured/
+// isolated adapter — Node's os.networkInterfaces() doesn't flag those as
+// "internal" even though they're useless to a phone), and over both is
+// still better than nothing if that's all that got printed.
+function extractBestUrl(text) {
+  let lan = null;
+  let any = null;
+  for (const [full, ip] of text.matchAll(URL_RE)) {
+    if (ip === "127.0.0.1") continue;
+    if (isPrivateLan(ip)) {
+      lan = full;
+      break;
     }
-    attempt();
-  });
+    if (!any) any = full;
+  }
+  return lan || any || null;
 }
 
 async function stopSession(session) {
@@ -87,14 +88,32 @@ async function stopCurrent() {
   await stopSession(session);
 }
 
+// One last confirm GET against the URL Vite itself printed — belt and
+// suspenders. In every real test so far the printed line already meant
+// "actually serving", but this catches the edge case of a crash landing in
+// the handful of ms between printing it and us returning it to the dialog.
+function confirmReachable(url, timeoutMs) {
+  const { hostname, port } = new URL(url);
+  const deadline = Date.now() + timeoutMs;
+  return new Promise((resolve, reject) => {
+    function attempt() {
+      const req = http.get({ host: hostname, port, timeout: 1500 }, (res) => {
+        res.resume();
+        resolve();
+      });
+      req.on("error", () => {
+        if (Date.now() > deadline) reject(new Error("Le serveur de preview s'est arrêté juste après son démarrage."));
+        else setTimeout(attempt, 300);
+      });
+      req.on("timeout", () => req.destroy());
+    }
+    attempt();
+  });
+}
+
 export function registerWebPreviewHandlers() {
   ipcMain.handle("project:startWebPreview", async (_evt, { rootPath }) => {
     await stopCurrent();
-
-    const address = findLanAddress();
-    if (!address) {
-      throw new Error("Aucune interface réseau locale trouvée — vérifie ta connexion Wi-Fi.");
-    }
 
     const tmpDir = path.join(os.tmpdir(), `storie-engine-preview-${Date.now()}`);
     const session = { child: null, tmpDir, aborted: false };
@@ -105,16 +124,66 @@ export function registerWebPreviewHandlers() {
 
     const devChild = spawn(
       process.execPath,
-      [resolveQuasarCli(tmpDir), "dev", "--hostname", "0.0.0.0", "--port", String(PORT)],
+      [resolveQuasarCli(tmpDir), "dev", "--hostname", "0.0.0.0", "--port", String(PREFERRED_PORT)],
       { cwd: tmpDir, env: { ...process.env, ELECTRON_RUN_AS_NODE: "1" }, stdio: "pipe" },
     );
     session.child = devChild;
+
+    // Rolling tail of everything the dev server has printed — both what
+    // extractBestUrl() reads readiness from, and what gets attached to
+    // whichever error surfaces below (timeout OR early exit) so a failure
+    // is actually diagnosable instead of a bare "didn't start in time".
+    let output = "";
+    devChild.stdout.on("data", (d) => (output += d.toString()));
+    devChild.stderr.on("data", (d) => (output += d.toString()));
+    const outputTail = () => output.slice(-3000);
+
     devChild.on("exit", () => {
       if (current === session) current = null;
     });
 
+    // A first-ever run against a freshly-junctioned node_modules can be
+    // genuinely slow (Vite's dependency pre-bundling step, not something
+    // repeat runs pay again — that cache lives inside the vendored
+    // node_modules itself, shared across sessions) — kept generous.
+    const DEADLINE_MS = 120000;
+    const deadline = Date.now() + DEADLINE_MS;
+
+    function waitForUrl() {
+      return new Promise((resolve, reject) => {
+        function check() {
+          const url = extractBestUrl(output);
+          if (url) {
+            resolve(url);
+            return;
+          }
+          if (Date.now() > deadline) {
+            reject(
+              new Error(`Le serveur de preview n'a pas démarré à temps.\n\nSortie du serveur :\n${outputTail()}`),
+            );
+            return;
+          }
+          setTimeout(check, 300);
+        }
+        check();
+      });
+    }
+
+    let url;
     try {
-      await waitForServer(PORT, 60000);
+      // Raced against the child's own exit — ANY exit while still waiting
+      // to become ready is a failure worth reporting immediately, rather
+      // than silently waiting out the rest of the deadline for a process
+      // that's already gone.
+      url = await Promise.race([
+        waitForUrl(),
+        new Promise((_resolve, reject) => {
+          devChild.once("exit", (code) => {
+            reject(new Error(`Le serveur de preview s'est arrêté (code ${code}).\n\nSortie :\n${outputTail()}`));
+          });
+        }),
+      ]);
+      await confirmReachable(url, 10000);
     } catch (err) {
       await stopSession(session);
       if (current === session) current = null;
@@ -122,7 +191,7 @@ export function registerWebPreviewHandlers() {
     }
     if (session.aborted) throw new Error("Preview annulée.");
 
-    return { url: `http://${address}:${PORT}` };
+    return { url };
   });
 
   ipcMain.handle("project:stopWebPreview", async () => {

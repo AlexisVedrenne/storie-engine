@@ -88,8 +88,18 @@ story.init()
 
 <style scoped>
 .game-stage {
-  position: relative;
-  height: 100vh;
+  /* `fixed` + `inset:0` pins this to the real viewport regardless of the
+     default browser body margin, Quasar's own q-layout/q-page-container
+     chain, or 100vh's classic mobile quirk (sized against the LARGEST
+     possible viewport, taller than what's actually visible once a
+     collapsing address bar is accounted for) — any of which could leave
+     a few px of this taller than the visible area, which the surrounding
+     page would then happily grow to accommodate (page-level scroll on a
+     page that's supposed to be a single static screen). `height`/`width`
+     kept as a fallback for the (very old) browsers that ignore `inset`. */
+  position: fixed;
+  inset: 0;
+  height: 100dvh;
   width: 100%;
   background: #101018;
   overflow: hidden;

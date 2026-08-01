@@ -20,7 +20,7 @@
       <q-card-section v-else class="state-block">
         <q-icon name="error" size="34px" color="negative" />
         <div class="state-title">{{ t('webPreviewDialog.errorTitle') }}</div>
-        <div class="state-hint">{{ errorMessage }}</div>
+        <pre class="error-output">{{ errorMessage }}</pre>
       </q-card-section>
 
       <q-card-actions align="right">
@@ -114,6 +114,23 @@ defineExpose({ open })
   font-size: var(--text-lg);
   font-weight: 700;
   user-select: all;
+}
+
+.error-output {
+  margin: var(--space-2) 0 0;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-hover);
+  color: var(--color-text-muted);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  text-align: left;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 240px;
+  overflow-y: auto;
+  width: 100%;
+  max-width: 360px;
 }
 
 .firewall-hint {

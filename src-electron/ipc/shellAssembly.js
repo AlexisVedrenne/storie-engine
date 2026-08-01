@@ -21,20 +21,32 @@ import { pathToFileURL } from "node:url";
 export const APP_ROOT = app.isPackaged ? process.resourcesPath : process.cwd();
 export const TEMPLATE_DIR = path.join(APP_ROOT, "templates", "game-shell");
 
-// A real `pnpm install` of templates/game-shell/package.json, run once
-// ahead of time (see docs — "vendored game-shell deps") and shipped as
-// part of storie-engine itself (covered by the same extraResource copy as
-// TEMPLATE_DIR, since it lives inside it) — never installed at runtime on
-// the END USER's machine. That's the whole point: build.js/webPreview.js
-// used to `pnpm install` fresh into every temp dir, which silently
-// required the user's own machine to have pnpm + Node.js + internet
-// access, none of which a packaged storie-engine.exe can assume. At ~600MB
-// this is FAR too big to copy into every temp session (see assembleShell's
-// own junction step below) — it's linked in, not duplicated.
+// A real `pnpm install` of templates/game-shell/package.json (hoisted —
+// see templates/game-shell/.npmrc — a flat node_modules with no internal
+// symlinks, so it survives being moved/copied by whatever the user's
+// install method is), run once ahead of time (`pnpm run vendor:game-
+// shell`) and shipped as part of storie-engine itself (covered by the
+// same extraResource copy as TEMPLATE_DIR, since it lives inside it) —
+// never installed at runtime on the END USER's machine. That's the whole
+// point: build.js/webPreview.js used to `pnpm install` fresh into every
+// temp dir, which silently required the user's own machine to have pnpm +
+// Node.js + internet access, none of which a packaged storie-engine.exe
+// can assume.
+//
+// Copied (not junctioned) into every tmpDir despite the ~600MB size — a
+// junction was tried first and DID work in-place, but broke Node's ESM
+// loader (used to load quasar.config.js) once the vendored install and
+// the OS temp dir ended up on different drive letters (a real install
+// moved to D:\, temp dir on C:\ — confirmed by an actual repro: Node
+// resolved a relative import inside the junctioned package by
+// concatenating the temp path with the junction's real target instead of
+// following it, producing a garbage nonexistent path). A real copy has no
+// such failure mode — the extra few seconds per session is the safer
+// trade.
 export const VENDORED_NODE_MODULES = path.join(TEMPLATE_DIR, "node_modules");
 
 // @quasar/app-vite's CLI entry point inside a given assembled shell —
-// resolved from the JUNCTIONED node_modules (see assembleShell), so this
+// resolved from the COPIED node_modules (see assembleShell), so this
 // only makes sense to call after assembleShell() has run for that tmpDir.
 export function resolveQuasarCli(tmpDir) {
   return path.join(tmpDir, "node_modules", "@quasar", "app-vite", "bin", "quasar.js");
@@ -67,9 +79,8 @@ export async function assembleShell(tmpDir, rootPath) {
     recursive: true,
     filter: (src) => {
       if (src.includes(`${path.sep}engine-overrides${path.sep}`) || src.endsWith("engine-overrides")) return false;
-      // Never duplicated — junctioned in below instead, see
-      // VENDORED_NODE_MODULES's own comment (hundreds of MB, would make
-      // every single build/preview slow to just copy it every time).
+      // Copied separately below (see VENDORED_NODE_MODULES's own comment)
+      // — excluded here so it isn't walked/filtered file-by-file twice.
       if (src.includes(`${path.sep}node_modules`)) return false;
       return true;
     },
@@ -161,9 +172,7 @@ export async function assembleShell(tmpDir, rootPath) {
   if (manifest.version) pkg.version = manifest.version;
   fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + "\n", "utf-8");
 
-  // Junction (not a copy, see VENDORED_NODE_MODULES's own comment) — a
-  // Windows directory junction needs no elevated privileges, unlike a
-  // symlink. Confirmed working end to end against a real `quasar dev`
-  // through this exact junction before this was wired in for real.
-  fs.symlinkSync(VENDORED_NODE_MODULES, path.join(tmpDir, "node_modules"), "junction");
+  // Real copy — see VENDORED_NODE_MODULES's own comment for why this isn't
+  // a junction/symlink.
+  fs.cpSync(VENDORED_NODE_MODULES, path.join(tmpDir, "node_modules"), { recursive: true });
 }

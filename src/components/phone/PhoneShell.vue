@@ -153,20 +153,29 @@ const accentStyle = computed(() => {
 // Every screen (status bar, home, apps, boot, setup wizard) is written in
 // fixed px sizes designed against a "normal" phone-sized canvas — that's
 // what lets a chapter author write a message bubble without thinking about
-// viewport math. Rather than chase every fixed px through every component
-// to make it shrink gracefully, the canvas itself is rendered at that
-// fixed design size and then scaled as a whole to exactly fill whatever
-// size `.phone-screen` actually ends up being (which can be much smaller
-// than the design size on a short/narrow browser window). Scaling x/y
-// independently — rather than a single uniform factor — guarantees a
-// perfect fill with no gap or crop even though `.phone-frame`'s padding
-// (a fixed px, not a %) makes its aspect ratio drift slightly from the
-// design ratio at small sizes.
+// viewport math, and what makes a UI element look the same PHYSICAL size
+// regardless of the final container size: the canvas is rendered at a
+// fixed design WIDTH, then scaled as a whole by container-width/390.
+//
+// The design HEIGHT, on the other hand, is NOT fixed — it's derived from
+// the scale (container-height / scale) so the canvas always ends up
+// exactly container-sized on both axes, no crop and no stretch. This
+// matters because `fillMobileViewport` (see that prop's own comment) hands
+// this a real device's own aspect ratio, which routinely differs from the
+// design's 9:18 — a FIXED design height here forced a choice between
+// stretching non-uniformly (the original bug) or cropping top/bottom via
+// Math.max "cover" (a later attempt, still visibly truncated status
+// bar/home indicator on real devices). Safe to do because nothing downstream
+// depends on the canvas being exactly 780px tall: `.ready-phase` is a plain
+// flex column (StatusBar's own height + `.screen-content`'s `flex: 1`)
+// that already absorbs whatever room it's given — a taller/shorter design
+// canvas just gives the main content more or less room, same as a real
+// phone with more or less screen.
 const DESIGN_WIDTH = 390
-const DESIGN_HEIGHT = 780
 
 const screenEl = ref(null)
-const canvasScale = ref({ x: 1, y: 1 })
+const canvasScale = ref(1)
+const canvasHeight = ref(780)
 let resizeObserver
 
 function measureScreen() {
@@ -174,7 +183,9 @@ function measureScreen() {
   if (!el) return
   const { clientWidth, clientHeight } = el
   if (!clientWidth || !clientHeight) return
-  canvasScale.value = { x: clientWidth / DESIGN_WIDTH, y: clientHeight / DESIGN_HEIGHT }
+  const scale = clientWidth / DESIGN_WIDTH
+  canvasScale.value = scale
+  canvasHeight.value = clientHeight / scale
 }
 
 onMounted(() => {
@@ -189,8 +200,8 @@ onBeforeUnmount(() => {
 
 const canvasStyle = computed(() => ({
   width: `${DESIGN_WIDTH}px`,
-  height: `${DESIGN_HEIGHT}px`,
-  transform: `scale(${canvasScale.value.x}, ${canvasScale.value.y})`
+  height: `${canvasHeight.value}px`,
+  transform: `translate(-50%, -50%) scale(${canvasScale.value})`
 }))
 </script>
 
@@ -302,9 +313,9 @@ const canvasStyle = computed(() => ({
    measureScreen()/canvasStyle above. */
 .screen-canvas {
   position: absolute;
-  top: 0;
-  left: 0;
-  transform-origin: top left;
+  top: 50%;
+  left: 50%;
+  transform-origin: center;
   display: flex;
   flex-direction: column;
 }
