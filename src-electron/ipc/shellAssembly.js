@@ -86,6 +86,19 @@ export function resolveQuasarCli(tmpDir) {
 // end to end against a real assembled shell before this was wired in.
 export const VENDORED_NODE_BINARY = path.join(TEMPLATE_DIR, "node-runtime", "node.exe");
 
+// Same node-runtime download as VENDORED_NODE_BINARY (the full Node.js
+// distribution zip, not just the bare node.exe file) also ships npm
+// alongside it — needed on PATH for the spawned build: @quasar/app-vite's
+// own electron-builder step shells out to whichever of pnpm/yarn/npm/bun
+// it finds on PATH to `install --prod` the assembled shell's runtime deps
+// (a no-op — its package.json has none — but it hard-fails with "Please
+// install PNPM (recommended), Yarn, NPM or Bun" before even getting there
+// if NONE of the four resolve, confirmed against a real build run with a
+// bare-Windows PATH). build.js prepends this to the spawned process's PATH
+// so plain `npm` resolves without requiring ANY of those on the end
+// user's own machine.
+export const VENDORED_NPM_DIR = path.join(TEMPLATE_DIR, "node-runtime");
+
 // Pre-downloaded copy of the exact Electron zip the exported game's own
 // electron-packager step needs (`pnpm run vendor:game-shell` populates
 // this — see scripts/vendor-electron-cache.mjs) — read by build.js via the

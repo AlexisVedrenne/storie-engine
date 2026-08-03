@@ -9,7 +9,13 @@ import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
 import { spawn } from "node:child_process";
-import { assembleShell, resolveQuasarCli, VENDORED_NODE_BINARY, VENDORED_ELECTRON_CACHE } from "./shellAssembly.js";
+import {
+  assembleShell,
+  resolveQuasarCli,
+  VENDORED_NODE_BINARY,
+  VENDORED_NPM_DIR,
+  VENDORED_ELECTRON_CACHE,
+} from "./shellAssembly.js";
 
 // Runs the assembled shell's `quasar` CLI via VENDORED_NODE_BINARY (see
 // that constant's own comment for why — this used to spawn this app's OWN
@@ -126,6 +132,10 @@ async function buildGame(rootPath, destPath, bumpType) {
     await assembleShell(tmpDir, rootPath);
     const buildOutput = await run(resolveQuasarCli(tmpDir), ["build", "-m", "electron"], tmpDir, {
       STORIE_ELECTRON_CACHE: VENDORED_ELECTRON_CACHE,
+      // See VENDORED_NPM_DIR's own comment — makes plain `npm` resolve for
+      // the electron-builder step's own package-manager detection without
+      // requiring pnpm/yarn/npm/bun on the end user's machine.
+      PATH: `${VENDORED_NPM_DIR}${path.delimiter}${process.env.PATH}`,
     });
 
     const packagedDir = path.join(tmpDir, "dist", "electron", "Packaged");
