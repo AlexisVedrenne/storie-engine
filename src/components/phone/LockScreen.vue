@@ -32,11 +32,16 @@ const phone = usePhoneStore()
 const story = useStoryStore()
 const { t } = useI18n()
 
-// game.wallpaper (see GameForm.vue) — when set, replaces the default
-// gradient+mesh look below (::before/::after get overridden to a plain
-// readability scrim instead, see .has-wallpaper in <style>). Unset =
-// pixel-identical to before this feature existed.
-const wallpaperUrl = computed(() => (story.gameConfig?.wallpaper ? resolveAssetUrl(story.gameConfig.wallpaper) : ''))
+// game.lockWallpaper (see GameForm.vue) — falls back to game.wallpaper
+// (the home-screen image) when unset, so every project saved before this
+// field existed keeps its current look with zero migration. When set,
+// replaces the default gradient+mesh look below (::before/::after get
+// overridden to a plain readability scrim instead, see .has-wallpaper in
+// <style>).
+const wallpaperUrl = computed(() => {
+  const path = story.gameConfig?.lockWallpaper || story.gameConfig?.wallpaper
+  return path ? resolveAssetUrl(path) : ''
+})
 const wallpaperStyle = computed(() =>
   wallpaperUrl.value ? { backgroundImage: `url(${wallpaperUrl.value})` } : {},
 )

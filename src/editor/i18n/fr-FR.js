@@ -395,11 +395,23 @@ export default {
       "Icône du fichier .exe exporté. Format .ico recommandé pour l'icône Windows (Explorateur/barre des tâches) — un .png fonctionne aussi mais ne donnera que l'icône de la fenêtre pendant l'exécution, pas celle du fichier .exe lui-même.",
     buildIconLabel: 'Icône (.ico recommandé, .png accepté)',
     wallpaperTitle: "Fond d'écran du téléphone",
-    wallpaperLabel: 'Fond d’écran (verrouillage + accueil)',
+    wallpaperLabel: "Fond d'écran (accueil)",
+    lockWallpaperLabel: "Fond d'écran (verrouillage — vide = reprend celui de l'accueil)",
     accentColorTitle: "Couleur d'interface",
     accentColorHelp:
       "Recolore les éléments d'accent du téléphone (bulles de message envoyées, DM, égaliseur...). Laisse vide pour garder la couleur par défaut du moteur.",
     accentColorDefault: 'Par défaut (#4c8bf5)',
+    caseColorLabel: 'Couleur de la coque',
+    caseColorHelp:
+      "Couleur du contour du téléphone (visible sur grand écran — masquée sur un vrai mobile, où le jeu remplit l'écran sans coque).",
+    caseColorDefault: 'Par défaut (#0b0b12)',
+    brandingTitle: 'Marque du téléphone',
+    brandingHelp:
+      "Nom du système fictif du téléphone (écran de démarrage, Réglages > Informations) et nom de l'app de réseau social — purement cosmétique.",
+    osNameLabel: "Nom du système (OS)",
+    osNameDefault: 'LustOS',
+    socialAppNameLabel: "Nom de l'app réseau social",
+    socialAppNameDefault: 'Pixly',
     appsTitle: 'Applications',
     appsHelp:
       "Désactive une app du téléphone pour ce projet — elle disparaît de l'écran d'accueil et de l'animation de démarrage. Rien ne détecte automatiquement du contenu qui pointerait encore vers une app désactivée (ex: un SMS alors que Messages est coupé) — à l'auteur de vérifier.",

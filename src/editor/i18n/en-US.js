@@ -384,11 +384,23 @@ export default {
       "Icon for the exported .exe file. .ico is recommended for the Windows icon (Explorer/taskbar) — a .png also works but only gives the running window's title-bar icon, not the packaged .exe file's own icon.",
     buildIconLabel: 'Icon (.ico recommended, .png accepted)',
     wallpaperTitle: 'Phone wallpaper',
-    wallpaperLabel: 'Wallpaper (lock screen + home)',
+    wallpaperLabel: 'Wallpaper (home screen)',
+    lockWallpaperLabel: 'Wallpaper (lock screen — empty = same as home)',
     accentColorTitle: 'Accent color',
     accentColorHelp:
       "Recolors the phone's accent elements (sent message/DM bubbles, equalizer...). Leave empty to keep the engine's default color.",
     accentColorDefault: 'Default (#4c8bf5)',
+    caseColorLabel: 'Case color',
+    caseColorHelp:
+      "Color of the phone's outer frame (visible on a large screen — hidden on a real mobile device, where the game fills the screen with no case).",
+    caseColorDefault: 'Default (#0b0b12)',
+    brandingTitle: 'Phone branding',
+    brandingHelp:
+      "Name of the phone's fictional OS (boot screen, Settings > About) and of the social-network app — purely cosmetic.",
+    osNameLabel: 'OS name',
+    osNameDefault: 'LustOS',
+    socialAppNameLabel: 'Social app name',
+    socialAppNameDefault: 'Pixly',
     appsTitle: 'Apps',
     appsHelp:
       'Disables a phone app for this project — it disappears from the home screen and boot animation. Nothing automatically detects content that still points at a disabled app (e.g. an SMS while Messages is off) — up to the author to check.',

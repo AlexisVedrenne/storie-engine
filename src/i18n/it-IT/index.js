@@ -49,7 +49,7 @@ export default {
 
   settings: {
     title: 'Impostazioni',
-    accountSub: 'Account LustOS, iCloud, dispositivo',
+    accountSub: 'Account {osName}, iCloud, dispositivo',
     wifi: 'Wi-Fi',
     wifiOff: 'Disattivato',
     mobileData: 'Dati mobili',
@@ -75,7 +75,7 @@ export default {
     resetConfirmCta: 'Ripristina il telefono',
     aboutDeviceName: 'Nome del dispositivo',
     aboutModel: 'Modello',
-    aboutOsVersion: 'Versione di LustOS',
+    aboutOsVersion: 'Versione di {osName}',
     aboutSerial: 'Numero di serie',
     aboutCapacity: 'Capacità',
   },

@@ -26,6 +26,7 @@
     <q-expansion-item dense-toggle icon="wallpaper" :label="t('gameForm.wallpaperTitle')" class="panel">
       <div class="panel-body">
         <AssetField v-model="game.wallpaper" :label="t('gameForm.wallpaperLabel')" />
+        <AssetField v-model="game.lockWallpaper" :label="t('gameForm.lockWallpaperLabel')" />
       </div>
     </q-expansion-item>
 
@@ -49,6 +50,36 @@
             <q-tooltip>{{ t('contactForm.resetColor') }}</q-tooltip>
           </q-btn>
         </div>
+
+        <div class="case-color-row">
+          <span class="filename">{{ t('gameForm.caseColorLabel') }}</span>
+          <FieldHelp :text="t('gameForm.caseColorHelp')" />
+        </div>
+        <div class="swatch-box" :style="{ background: game.caseColor || '#0b0b12' }">
+          <q-popup-proxy cover transition-show="scale" transition-hide="scale">
+            <q-color v-model="game.caseColor" default-value="#0b0b12" no-header no-footer />
+          </q-popup-proxy>
+        </div>
+        <div class="meta-row">
+          <span class="filename">{{ game.caseColor || t('gameForm.caseColorDefault') }}</span>
+          <q-btn v-if="game.caseColor" dense flat round icon="close" size="sm" @click="game.caseColor = undefined">
+            <q-tooltip>{{ t('contactForm.resetColor') }}</q-tooltip>
+          </q-btn>
+        </div>
+      </div>
+    </q-expansion-item>
+
+    <q-expansion-item dense-toggle icon="phone_iphone" class="panel">
+      <template #header>
+        <q-item-section avatar><q-icon name="phone_iphone" /></q-item-section>
+        <q-item-section>
+          {{ t('gameForm.brandingTitle') }}
+          <FieldHelp :text="t('gameForm.brandingHelp')" />
+        </q-item-section>
+      </template>
+      <div class="panel-body">
+        <q-input dense outlined :label="t('gameForm.osNameLabel')" v-model="game.osName" :placeholder="t('gameForm.osNameDefault')" />
+        <q-input dense outlined :label="t('gameForm.socialAppNameLabel')" v-model="game.socialAppName" :placeholder="t('gameForm.socialAppNameDefault')" />
       </div>
     </q-expansion-item>
 
@@ -80,7 +111,7 @@
             <img v-if="app.iconImage" :src="app.iconImage" class="app-chip-img" alt="" />
             <q-icon v-else :name="app.icon" size="16px" color="white" />
           </span>
-          <span class="app-card-label">{{ storyT(app.labelKey) }}</span>
+          <span class="app-card-label">{{ appLabel(app) }}</span>
           <q-toggle
             dense
             :model-value="!isAppDisabled(app.id)"
@@ -160,6 +191,13 @@ function setAppEnabled(id, enabled) {
 // stays in this list (and stays draggable) so its position survives being
 // re-enabled later instead of jumping back to the end.
 const orderedApps = computed(() => orderedAppList(props.game.appOrder))
+
+// Mirrors HomeScreen.vue's own social-app-name override so this list shows
+// the name a player will actually see, not always the manifest default.
+function appLabel(app) {
+  if (app.id === 'social' && props.game.socialAppName) return props.game.socialAppName
+  return storyT(app.labelKey)
+}
 
 // Same drag/drop shape as TimelineEditor.vue's own reorder (dragIndex +
 // a dropLine recomputed from cursor-vs-row-midpoint on every dragover) —
@@ -352,5 +390,16 @@ const SOUND_KEYS = computed(() => [
 .sound-row + .sound-row {
   padding-top: var(--space-2);
   border-top: 1px solid var(--color-border);
+}
+
+.case-color-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin-top: var(--space-2);
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--color-border);
+  font-size: var(--text-sm);
+  font-weight: 600;
 }
 </style>

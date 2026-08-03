@@ -9,7 +9,7 @@
             <AppAvatar :name="story.myName" :color="story.myColor" :size="48" />
             <div class="account-info">
               <div class="account-name">{{ story.myName }}</div>
-              <div class="account-sub">{{ t('settings.accountSub') }}</div>
+              <div class="account-sub">{{ t('settings.accountSub', { osName }) }}</div>
             </div>
             <q-icon name="chevron_right" size="20px" color="rgba(255,255,255,0.35)" />
           </button>
@@ -162,7 +162,7 @@
         <div class="subpage about-list">
           <div class="about-row"><span>{{ t('settings.aboutDeviceName') }}</span><span>{{ story.myName }}</span></div>
           <div class="about-row"><span>{{ t('settings.aboutModel') }}</span><span>LustPhone 14</span></div>
-          <div class="about-row"><span>{{ t('settings.aboutOsVersion') }}</span><span>1.0.3</span></div>
+          <div class="about-row"><span>{{ t('settings.aboutOsVersion', { osName }) }}</span><span>1.0.3</span></div>
           <div class="about-row"><span>{{ t('settings.aboutSerial') }}</span><span>{{ serial }}</span></div>
           <div class="about-row"><span>{{ t('settings.aboutCapacity') }}</span><span>128 Go</span></div>
         </div>
@@ -210,6 +210,11 @@ const notifsOn = ref(true)
 const brightness = ref(70)
 
 const estimatedHours = computed(() => `${Math.max(1, Math.round(story.battery / 12))} h`)
+
+// game.osName (see GameForm.vue) — fictional phone OS brand name, shown
+// here and on BootScreen.vue. Falls back to the engine's default so every
+// project saved before this field existed keeps its current look.
+const osName = computed(() => story.gameConfig?.osName || 'LustOS')
 
 // stable-but-fake serial, same trick as the fake follower counts elsewhere
 const serial = computed(() => {

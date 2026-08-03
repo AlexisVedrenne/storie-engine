@@ -3,7 +3,7 @@
     <div class="boot-logo">
       <q-icon name="smartphone" size="42px" color="white" />
     </div>
-    <div class="boot-title">LustOs</div>
+    <div class="boot-title">{{ story.gameConfig?.osName || 'LustOS' }}</div>
     <div class="boot-progress">
       <div class="boot-progress-fill" />
     </div>
@@ -13,7 +13,9 @@
 <script setup>
 import { onMounted } from 'vue'
 import { playSound } from '@/engine/utils/sound'
+import { useStoryStore } from '@/engine/stores/story'
 
+const story = useStoryStore()
 const emit = defineEmits(['done'])
 
 // timed to roughly match the fill animation below — purely cosmetic,

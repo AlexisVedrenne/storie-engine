@@ -4,7 +4,7 @@
       <!-- top-level feed/explore, only shown while no sub-screen is open -->
       <div v-if="!screen" key="home" class="home-stack">
         <div class="pixly-header">
-          <span class="brand">Pixly</span>
+          <span class="brand">{{ story.gameConfig?.socialAppName || 'Pixly' }}</span>
           <div class="header-actions">
             <button class="dm-icon" :aria-label="t('social.dmAria')" @click="screen = 'dmList'">
               <q-icon name="send" size="20px" color="white" />

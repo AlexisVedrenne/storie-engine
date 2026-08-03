@@ -145,9 +145,16 @@ const ringing = computed(
 // Left unset (not even the fallback) when no override exists, so CSS's own
 // var(..., #4c8bf5) default is the single source of truth for "what the
 // color is when nobody customized it."
+// game.caseColor (see GameForm.vue) — recolors the outer frame/notch, only
+// ever visible in the desktop mockup (a real-device `fillMobileViewport`
+// render drops the frame entirely, see .fill-mobile below).
 const accentStyle = computed(() => {
   const color = story.gameConfig?.accentColor
-  return color ? { '--phone-accent': color } : {}
+  const caseColor = story.gameConfig?.caseColor
+  return {
+    ...(color ? { '--phone-accent': color } : {}),
+    ...(caseColor ? { '--phone-case': caseColor } : {}),
+  }
 })
 
 // Every screen (status bar, home, apps, boot, setup wizard) is written in
@@ -218,7 +225,7 @@ const canvasStyle = computed(() => ({
   position: relative;
   width: min(94vw, 480px, calc(94vh * 9 / 18));
   height: min(94vh, 960px, calc(94vw * 18 / 9));
-  background: #0b0b12;
+  background: var(--phone-case, #0b0b12);
   border-radius: 46px;
   padding: 12px;
   box-shadow:
@@ -295,7 +302,7 @@ const canvasStyle = computed(() => ({
   width: 40%;
   max-width: 150px;
   height: 24px;
-  background: #0b0b12;
+  background: var(--phone-case, #0b0b12);
   border-radius: 0 0 16px 16px;
   z-index: 20;
 }

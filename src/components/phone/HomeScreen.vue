@@ -49,10 +49,12 @@ const wallpaperStyle = computed(() =>
 // (the project's custom drag-reordered sequence if it saved one, manifest
 // order otherwise — see appOrder.js), filtered down to enabledAppIds — see
 // GameForm.vue's draggable "Applications" panel.
+// game.socialAppName (see GameForm.vue) — overrides the social app's
+// displayed name; falls back to its translated manifest label otherwise.
 const apps = computed(() =>
   story.orderedApps.filter((app) => story.enabledAppIds.includes(app.id)).map((app) => ({
     id: app.id,
-    label: t(app.labelKey),
+    label: app.id === 'social' && story.gameConfig?.socialAppName ? story.gameConfig.socialAppName : t(app.labelKey),
     icon: app.icon,
     color: app.color,
     badge: app.badge(story)
