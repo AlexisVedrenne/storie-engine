@@ -45,12 +45,61 @@ export const TEMPLATE_DIR = path.join(APP_ROOT, "templates", "game-shell");
 // trade.
 export const VENDORED_NODE_MODULES = path.join(TEMPLATE_DIR, "node_modules");
 
+// @quasar/app-vite's electron mode needs `electron` + `@electron/packager`
+// installed INSIDE src-electron/ specifically (it auto-provisions them
+// there via a nested pnpm project the first time `quasar build -m
+// electron` runs — see templates/game-shell/src-electron/package.json).
+// Vendored ahead of time for the exact same reason as
+// VENDORED_NODE_MODULES above: left unprovisioned, every build/preview
+// would trigger that auto-install fresh inside the disposable tmpDir,
+// silently requiring pnpm + internet on the END USER's machine at build
+// time — and a failed/interrupted auto-install here doesn't make `quasar
+// build` exit non-zero, it just skips packaging, which is what used to
+// produce "le dossier packagé est introuvable" with no other clue why.
+export const SRC_ELECTRON_NODE_MODULES = path.join(TEMPLATE_DIR, "src-electron", "node_modules");
+
 // @quasar/app-vite's CLI entry point inside a given assembled shell —
 // resolved from the COPIED node_modules (see assembleShell), so this
 // only makes sense to call after assembleShell() has run for that tmpDir.
 export function resolveQuasarCli(tmpDir) {
   return path.join(tmpDir, "node_modules", "@quasar", "app-vite", "bin", "quasar.js");
 }
+
+// A genuine, standalone Node.js binary (`pnpm run vendor:game-shell`
+// downloads it once, straight from nodejs.org — see that script), vendored
+// for the same "zero dependency on the end user's machine" reason as
+// everything else here. build.js/webPreview.js used to run the assembled
+// shell's `quasar` CLI via THIS APP'S OWN electron binary in
+// ELECTRON_RUN_AS_NODE=1 mode instead (via `process.execPath`) — cheaper to
+// vendor, since every Electron build already embeds a real Node.js runtime.
+// That seemed equivalent to plain Node.js from the CLI's own perspective,
+// but isn't: `process.versions.electron` and `process.resourcesPath` stay
+// defined even under ELECTRON_RUN_AS_NODE (confirmed with a real packaged
+// build), and something inside @electron/packager's dependency chain
+// branches on one of those — the packaging step for an EXPORTED game
+// (never the outer editor's own packaging, which genuinely is invoked from
+// a real Electron context and is expected to look "packaged") silently
+// stopped right after extracting the target Electron zip, no error, exit
+// code 0, which is exactly what produced "le dossier packagé est
+// introuvable" with zero further clue. A real node.exe has neither global
+// set, and the exact same pipeline completes normally under it — confirmed
+// end to end against a real assembled shell before this was wired in.
+export const VENDORED_NODE_BINARY = path.join(TEMPLATE_DIR, "node-runtime", "node.exe");
+
+// Pre-downloaded copy of the exact Electron zip the exported game's own
+// electron-packager step needs (`pnpm run vendor:game-shell` populates
+// this — see scripts/vendor-electron-cache.mjs) — read by build.js via the
+// STORIE_ELECTRON_CACHE env var it sets before spawning, which
+// templates/game-shell/quasar.config.js's `electron.packager.download.
+// cacheRoot` then points @electron/packager at. Without it,
+// @electron/packager falls back to its own default cache
+// (%LOCALAPPDATA%/electron/Cache) — empty on a machine that's never run
+// any Electron dev tool before, meaning a genuine end user's very first
+// "Build" would silently need a real ~130MB network download despite this
+// whole pipeline's entire point being that it never needs one. Not
+// involved in webPreview.js at all — `quasar dev` never invokes
+// electron-packager.
+export const VENDORED_ELECTRON_CACHE = path.join(TEMPLATE_DIR, "electron-cache");
 
 function copyIfExists(src, dest) {
   if (fs.existsSync(src)) fs.cpSync(src, dest, { recursive: true });
@@ -74,6 +123,24 @@ export async function assembleShell(tmpDir, rootPath) {
         "ou avant d'utiliser Build/Preview web en développement.",
     );
   }
+  if (!fs.existsSync(SRC_ELECTRON_NODE_MODULES)) {
+    throw new Error(
+      "Dépendances electron/packager introuvables (templates/game-shell/src-electron/node_modules). " +
+        "Lance `pnpm run vendor:game-shell` à la racine de storie-engine avant de packager, " +
+        "ou avant d'utiliser Build/Preview web en développement.",
+    );
+  }
+  if (!fs.existsSync(VENDORED_NODE_BINARY)) {
+    throw new Error(
+      "Runtime Node.js introuvable (templates/game-shell/node-runtime/node.exe). " +
+        "Lance `pnpm run vendor:game-shell` à la racine de storie-engine avant de packager, " +
+        "ou avant d'utiliser Build/Preview web en développement.",
+    );
+  }
+  // VENDORED_ELECTRON_CACHE is NOT checked here — webPreview.js (the other
+  // caller of this function) never invokes electron-packager, so it has no
+  // use for it and shouldn't be blocked by its absence. build.js checks it
+  // itself, right before the one step that actually needs it.
 
   fs.cpSync(TEMPLATE_DIR, tmpDir, {
     recursive: true,
@@ -175,4 +242,10 @@ export async function assembleShell(tmpDir, rootPath) {
   // Real copy — see VENDORED_NODE_MODULES's own comment for why this isn't
   // a junction/symlink.
   fs.cpSync(VENDORED_NODE_MODULES, path.join(tmpDir, "node_modules"), { recursive: true });
+
+  // See SRC_ELECTRON_NODE_MODULES's own comment — without this, `quasar
+  // build -m electron`'s packager step auto-installs `electron` +
+  // `@electron/packager` into this exact path on its own, requiring pnpm +
+  // internet on whoever's machine runs this.
+  fs.cpSync(SRC_ELECTRON_NODE_MODULES, path.join(tmpDir, "src-electron", "node_modules"), { recursive: true });
 }

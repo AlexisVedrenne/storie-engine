@@ -10,6 +10,16 @@ node_modules
 /dist
 /quasar.config.*.temporary.compiled*
 
+# Vendored Node.js runtime for build.js/webPreview.js (see
+# shellAssembly.js's VENDORED_NODE_BINARY) — downloaded via
+# `pnpm run vendor:game-shell`, never committed (same treatment as
+# node_modules — a binary, not source).
+/templates/game-shell/node-runtime
+
+# Vendored Electron zip cache for build.js's packager step (see
+# shellAssembly.js's VENDORED_ELECTRON_CACHE) — same treatment.
+/templates/game-shell/electron-cache
+
 # Cordova related directories and files
 /src-cordova/node_modules
 /src-cordova/platforms

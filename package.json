@@ -14,7 +14,7 @@
     "build": "quasar build",
     "build:electron": "quasar build -m electron",
     "postinstall": "quasar prepare --silent",
-    "vendor:game-shell": "pnpm --dir templates/game-shell install --config.node-linker=hoisted"
+    "vendor:game-shell": "pnpm --dir templates/game-shell install --config.node-linker=hoisted && pnpm --dir templates/game-shell/src-electron install --config.node-linker=hoisted && node scripts/vendor-node-runtime.mjs && node scripts/vendor-electron-cache.mjs"
   },
   "dependencies": {
     "@dagrejs/dagre": "^3.0.0",

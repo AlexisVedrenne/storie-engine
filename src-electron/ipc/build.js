@@ -1,38 +1,45 @@
 // Build pipeline — turns the currently open project into a standalone,
 // packaged Electron game (see docs/phase3-plan.md). Assembles a runnable
 // shell via shellAssembly.js (shared with webPreview.js), then runs
-// `quasar build -m electron` inside it — via this app's OWN Electron binary
-// running in Node mode (see run()'s own comment), never a `pnpm`/`node`
-// the end user's machine would have to provide.
+// `quasar build -m electron` inside it — via a vendored, standalone
+// Node.js binary (see run()'s own comment), never a `pnpm`/`node` the end
+// user's machine would have to provide.
 import { ipcMain, dialog } from "electron";
 import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
 import { spawn } from "node:child_process";
-import { assembleShell, resolveQuasarCli } from "./shellAssembly.js";
+import { assembleShell, resolveQuasarCli, VENDORED_NODE_BINARY, VENDORED_ELECTRON_CACHE } from "./shellAssembly.js";
 
-// `process.execPath` in the main process IS this app's own binary (the
-// packaged storie-engine.exe, or the dev Electron binary when run from
-// source) — every Electron build embeds a real Node.js runtime, and
-// ELECTRON_RUN_AS_NODE=1 makes a child process of it behave as a plain
-// `node <script>` instead of launching another Electron app. This is what
-// runs quasar's CLI directly (against the vendored+junctioned node_modules
-// shellAssembly.js already set up) with zero dependency on the end user's
-// machine having Node.js, pnpm, or internet access — confirmed end to end
-// against a real assembled shell before this was wired in for real.
-function run(scriptPath, args, cwd) {
+// Runs the assembled shell's `quasar` CLI via VENDORED_NODE_BINARY (see
+// that constant's own comment for why — this used to spawn this app's OWN
+// electron binary in ELECTRON_RUN_AS_NODE=1 mode instead, which looked
+// equivalent but silently broke the packager sub-step specifically).
+// Returns the captured stdout+stderr tail even on success — `quasar build
+// -m electron`'s own packager sub-step (electron-packager) can silently
+// skip packaging (see buildGame()'s own Packaged-folder check) without
+// making the overall quasar CLI exit non-zero, so a success exit code
+// alone doesn't prove packaging actually ran. stdout is where that step's
+// own progress/warnings print (confirmed against a real run: "App • WAIT
+// • electron/packager • Bundling Application...", icon warnings, etc.) —
+// previously discarded entirely, which is why a silent packager skip gave
+// zero clue as to why.
+function run(scriptPath, args, cwd, extraEnv) {
   return new Promise((resolve, reject) => {
-    const child = spawn(process.execPath, [scriptPath, ...args], {
+    const child = spawn(VENDORED_NODE_BINARY, [scriptPath, ...args], {
       cwd,
-      env: { ...process.env, ELECTRON_RUN_AS_NODE: "1" },
+      env: extraEnv ? { ...process.env, ...extraEnv } : process.env,
       stdio: "pipe",
     });
+    let stdout = "";
     let stderr = "";
+    child.stdout.on("data", (d) => (stdout += d.toString()));
     child.stderr.on("data", (d) => (stderr += d.toString()));
     child.on("error", reject);
     child.on("close", (code) => {
-      if (code === 0) resolve();
-      else reject(new Error(`"quasar ${args.join(" ")}" a échoué (code ${code})\n${stderr.slice(-4000)}`));
+      const output = `${stdout}${stderr}`.slice(-4000);
+      if (code === 0) resolve(output);
+      else reject(new Error(`"quasar ${args.join(" ")}" a échoué (code ${code})\n${output}`));
     });
   });
 }
@@ -104,14 +111,28 @@ async function buildGame(rootPath, destPath, bumpType) {
   manifest.version = bumpVersion(manifest.version, bumpType);
   fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + "\n", "utf-8");
 
+  // Checked here, not in shellAssembly.js's shared assembleShell() —
+  // webPreview.js (the other caller) never invokes electron-packager, so
+  // it has no use for this and shouldn't be blocked by its absence.
+  if (!fs.existsSync(VENDORED_ELECTRON_CACHE)) {
+    throw new Error(
+      "Cache Electron introuvable (templates/game-shell/electron-cache). " +
+        "Lance `pnpm run vendor:game-shell` à la racine de storie-engine avant de packager.",
+    );
+  }
+
   const tmpDir = path.join(os.tmpdir(), `storie-engine-build-${Date.now()}`);
   try {
     await assembleShell(tmpDir, rootPath);
-    await run(resolveQuasarCli(tmpDir), ["build", "-m", "electron"], tmpDir);
+    const buildOutput = await run(resolveQuasarCli(tmpDir), ["build", "-m", "electron"], tmpDir, {
+      STORIE_ELECTRON_CACHE: VENDORED_ELECTRON_CACHE,
+    });
 
     const packagedDir = path.join(tmpDir, "dist", "electron", "Packaged");
     if (!fs.existsSync(packagedDir)) {
-      throw new Error("Le build a réussi mais le dossier packagé est introuvable (dist/electron/Packaged).");
+      throw new Error(
+        "Le build a réussi mais le dossier packagé est introuvable (dist/electron/Packaged).\n" + buildOutput,
+      );
     }
 
     const outDir = path.join(destPath, slugify(manifest.name));

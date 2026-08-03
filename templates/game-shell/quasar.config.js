@@ -39,7 +39,20 @@ export default defineConfig((ctx) => {
       preloadScripts: ['electron-preload'],
       inspectPort: 5858,
       bundler: 'packager',
-      packager: {},
+      packager: {
+        // STORIE_ELECTRON_CACHE (set by build.js when it spawns this build,
+        // see shellAssembly.js's VENDORED_ELECTRON_CACHE) points at a
+        // pre-downloaded copy of the exact Electron zip this step needs —
+        // without it, @electron/packager falls back to its own default
+        // cache (%LOCALAPPDATA%/electron/Cache), empty on a machine that's
+        // never run an Electron dev tool before, meaning a genuine end
+        // user's first "Build" would need a ~130MB network download it was
+        // never supposed to need. Undefined (falls back to that default)
+        // when this template is built directly from source without going
+        // through build.js/webPreview.js — e.g. a maintainer poking at
+        // templates/game-shell on its own.
+        download: process.env.STORIE_ELECTRON_CACHE ? { cacheRoot: process.env.STORIE_ELECTRON_CACHE } : undefined
+      },
       builder: {
         appId: 'storie-game'
       }

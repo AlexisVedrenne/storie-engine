@@ -7,17 +7,16 @@
 // ever runs at a time — starting a new one implicitly stops whatever was
 // already running; the renderer's blocking dialog (WebPreviewDialog.vue)
 // is the only UI for this, closing it always stops the server. Like
-// build.js, this runs quasar's CLI through this app's OWN Electron binary
-// in Node mode (see build.js's run() comment) against the vendored+
-// junctioned node_modules — no pnpm/Node.js/internet needed on the user's
-// machine.
+// build.js, this runs quasar's CLI through VENDORED_NODE_BINARY (see that
+// constant's own comment) against the vendored+junctioned node_modules —
+// no pnpm/Node.js/internet needed on the user's machine.
 import { ipcMain } from "electron";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import http from "node:http";
 import { spawn } from "node:child_process";
-import { assembleShell, resolveQuasarCli } from "./shellAssembly.js";
+import { assembleShell, resolveQuasarCli, VENDORED_NODE_BINARY } from "./shellAssembly.js";
 
 const PREFERRED_PORT = 9200; // distinct from the editor's own dev port (9000) so `pnpm dev` on storie-engine itself never collides with a preview it starts — just a preference: `--port` doesn't stop Vite silently picking another one if this is already taken (see URL parsing below, which is why that's no longer a problem)
 
@@ -123,9 +122,9 @@ export function registerWebPreviewHandlers() {
     if (session.aborted) throw new Error("Preview annulée.");
 
     const devChild = spawn(
-      process.execPath,
+      VENDORED_NODE_BINARY,
       [resolveQuasarCli(tmpDir), "dev", "--hostname", "0.0.0.0", "--port", String(PREFERRED_PORT)],
-      { cwd: tmpDir, env: { ...process.env, ELECTRON_RUN_AS_NODE: "1" }, stdio: "pipe" },
+      { cwd: tmpDir, env: process.env, stdio: "pipe" },
     );
     session.child = devChild;
 
