@@ -187,6 +187,7 @@ import DmEntryForm from '@/editor/components/entries/DmEntryForm.vue'
 import ReelEntryForm from '@/editor/components/entries/ReelEntryForm.vue'
 import CallEntryForm from '@/editor/components/entries/CallEntryForm.vue'
 import EffectEntryForm from '@/editor/components/entries/EffectEntryForm.vue'
+import VfxEntryForm from '@/editor/components/entries/VfxEntryForm.vue'
 import TimeskipEntryForm from '@/editor/components/entries/TimeskipEntryForm.vue'
 import { useEditorI18n } from '@/editor/i18n'
 import { entryTypeLabel, entryTypeHelp } from '@/editor/i18n/sharedOverrides'
@@ -228,6 +229,7 @@ const FORM_BY_TYPE = {
   reel: ReelEntryForm,
   call: CallEntryForm,
   effect: EffectEntryForm,
+  vfx: VfxEntryForm,
   timeskip: TimeskipEntryForm,
 }
 // Additive merge, never replacing the hardcoded 10 — a plug-in entry type
@@ -249,6 +251,7 @@ const ICON_BY_TYPE = {
   reel: 'movie',
   call: 'call',
   effect: 'bolt',
+  vfx: 'broken_image',
   timeskip: 'update',
 }
 function iconFor(type) {
@@ -263,7 +266,7 @@ function iconFor(type) {
 // ships in the built game — entryTypeLabel()/entryTypeHelp() look up an
 // editor-dictionary override keyed by `type` first, falling back to that
 // authored text unchanged (see sharedOverrides.js).
-const BUILTIN_TYPES = ['message', 'choice', 'post', 'photo', 'story', 'dm', 'reel', 'call', 'effect', 'timeskip']
+const BUILTIN_TYPES = ['message', 'choice', 'post', 'photo', 'story', 'dm', 'reel', 'call', 'effect', 'vfx', 'timeskip']
 function helpFor(type) {
   return BUILTIN_TYPES.includes(type) ? t(`timelineEditor.types.${type}.help`) : entryTypeHelp(CUSTOM_ENTRY_TYPE_BY_TYPE[type])
 }
@@ -315,6 +318,8 @@ function defaultEntry(type) {
       return { type, contact: firstContactId(), script: [] }
     case 'effect':
       return { type, effects: {} }
+    case 'vfx':
+      return { type, mode: 'start', effect: 'glitch', duration: 1200 }
     case 'timeskip':
       return { type }
     default: {
@@ -379,6 +384,9 @@ function summaryFor(entry) {
       return `${story.getContact(entry.contact).name} — ${t('timelineEditor.linesCount', { n: (entry.script || []).length })}`
     case 'effect':
       return Object.keys(entry.effects || {}).join(', ')
+    case 'vfx':
+      if (entry.mode === 'stop') return t('timelineEditor.vfxStopSummary')
+      return t(`entries.vfx.kinds.${entry.effect || 'glitch'}`) + (entry.duration ? ` · ${entry.duration}ms` : ` · ${t('timelineEditor.vfxUntilStopped')}`)
     case 'timeskip':
       return entry.label || `${entry.clock || ''} ${entry.date || ''}`.trim()
     default:

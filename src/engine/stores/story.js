@@ -155,6 +155,7 @@ function defaultState() {
     typingContact: null, // contactId currently shown as "typing..." in SMS — transient, not saved
     typingDm: null, // { thread, contact } currently shown as "typing..." in Pixly DM — transient, not saved
     timeSkipFading: false, // true while the black veil is covering a `timeskip` cut — transient, not saved
+    screenEffect: null, // { kind, id } while a `vfx` entry's overlay is showing on the phone screen — transient, not saved; see triggerScreenEffect
 
     // "phone state" widgets — purely decorative on their own, but the story
     // can drive them via `effects` (see applyEffects) for extra immersion:
@@ -200,6 +201,7 @@ const NON_PERSISTED_KEYS = new Set([
   'typingContact',
   'typingDm',
   'timeSkipFading',
+  'screenEffect',
 ])
 
 export const useStoryStore = defineStore('story', {
@@ -801,6 +803,36 @@ export const useStoryStore = defineStore('story', {
       }, 1400)
     },
 
+    // a `vfx` entry — purely cosmetic, non-blocking overlay on top of the
+    // phone screen (PhoneShell.vue reads `screenEffect` to pick which CSS
+    // animation to show: glitch/static/crack/shake). `id` (not just `kind`)
+    // is what PhoneShell keys its transition on, so two back-to-back `vfx`
+    // entries of the SAME kind still restart the animation instead of the
+    // second one being a no-op vue-diff against identical props.
+    // `duration` is optional: given, it auto-clears back to null after that
+    // many ms (guarded by matching `id` so an earlier effect's timeout can't
+    // stomp a newer one that started while it was still running); omitted,
+    // the effect stays on screen indefinitely — the author is expected to
+    // place a later `vfx` entry with `mode: 'stop'` (see stopScreenEffect
+    // below) wherever the story should turn it back off.
+    triggerScreenEffect(kind, duration) {
+      const id = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`
+      this.screenEffect = { kind: kind || 'glitch', id }
+      if (duration) {
+        setTimeout(() => {
+          if (this.screenEffect?.id === id) this.screenEffect = null
+        }, duration)
+      }
+    },
+
+    // counterpart to triggerScreenEffect above, for a `vfx` entry authored
+    // with `mode: 'stop'` — turns off whatever effect is currently showing,
+    // regardless of which kind it is (an author stopping "the glitch" and
+    // one stopping "whatever's currently running" are the same action here).
+    stopScreenEffect() {
+      this.screenEffect = null
+    },
+
     // plays a `then` list one entry at a time (instead of a synchronous
     // for-loop) so that any message/dm inside it gets the same typing beat
     // and pacing as the main timeline. `resume` is what to call once the
@@ -995,6 +1027,11 @@ export const useStoryStore = defineStore('story', {
 
         case 'effect':
           this.applyEffects(entry.effects)
+          break
+
+        case 'vfx':
+          if (entry.mode === 'stop') this.stopScreenEffect()
+          else this.triggerScreenEffect(entry.effect, entry.duration)
           break
 
         case 'timeskip': {

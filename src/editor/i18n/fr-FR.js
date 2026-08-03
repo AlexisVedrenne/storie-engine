@@ -96,6 +96,8 @@ export default {
     group: 'Groupe',
     emptyPrompt: '(prompt vide)',
     linesCount: '{n} répliques',
+    vfxStopSummary: 'Arrête l’effet en cours',
+    vfxUntilStopped: 'jusqu’à arrêt manuel',
     types: {
       message: {
         label: 'Message (SMS)',
@@ -123,6 +125,10 @@ export default {
       effect: {
         label: 'Effet (effect)',
         help: 'Modifie l’état du jeu (stats, météo, batterie...) sans rien montrer au joueur.',
+      },
+      vfx: {
+        label: 'Effet visuel (vfx)',
+        help: 'Effet visuel plein écran sur le téléphone (glitch, parasites, corruption, secousse, écran fissuré, coupure de courant) — purement cosmétique, ne bloque pas la timeline. Peut se désactiver tout seul après une durée, ou rester actif jusqu’à un autre vfx en mode « Arrêter » plus loin dans la timeline.',
       },
       timeskip: {
         label: 'Ellipse temporelle (timeskip)',
@@ -222,6 +228,23 @@ export default {
       linePlaceholder: 'Texte de la réplique',
       removeLine: 'Retirer',
       addLine: 'Ajouter une réplique',
+    },
+    vfx: {
+      intro: 'Déclenche un effet visuel plein écran sur le téléphone. Purement cosmétique — la timeline continue tout de suite, sans attendre la fin de l’effet.',
+      modeStart: 'Démarrer',
+      modeStop: 'Arrêter',
+      stopHelp: 'Désactive l’effet visuel actuellement affiché, quel qu’il soit — à placer plus loin dans la timeline pour couper un effet laissé actif sans durée.',
+      effectLabel: 'Effet',
+      kinds: {
+        glitch: 'Glitch (distorsion couleur)',
+        static: 'Parasites (bruit TV)',
+        corrupted: 'Corruption (blocs pixels)',
+        shake: 'Secousse',
+        crack: 'Écran fissuré',
+        blackout: 'Coupure de courant (flicker puis noir)',
+      },
+      durationLabel: 'Durée (optionnel)',
+      durationHelp: 'Laisse vide pour que l’effet reste actif jusqu’à un entry « Arrêter » plus loin dans la timeline.',
     },
     timeskip: {
       intro: "Verrouille le téléphone et fait avancer l'heure/la date d'un coup.",

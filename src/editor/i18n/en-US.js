@@ -94,6 +94,8 @@ export default {
     group: 'Group',
     emptyPrompt: '(empty prompt)',
     linesCount: '{n} lines',
+    vfxStopSummary: 'Stops the current effect',
+    vfxUntilStopped: 'until manually stopped',
     types: {
       message: {
         label: 'Message (SMS)',
@@ -115,6 +117,10 @@ export default {
       effect: {
         label: 'Effect',
         help: 'Changes game state (stats, weather, battery...) without showing anything to the player.',
+      },
+      vfx: {
+        label: 'Visual effect (vfx)',
+        help: 'A full-screen visual effect on the phone (glitch, static, corrupted, shake, cracked screen, blackout) — purely cosmetic, never blocks the timeline. Can clear itself after a duration, or stay on until a later vfx in "Stop" mode.',
       },
       timeskip: {
         label: 'Time skip',
@@ -214,6 +220,23 @@ export default {
       linePlaceholder: 'Line text',
       removeLine: 'Remove',
       addLine: 'Add a line',
+    },
+    vfx: {
+      intro: 'Triggers a full-screen visual effect on the phone. Purely cosmetic — the timeline keeps going right away, without waiting for the effect to end.',
+      modeStart: 'Start',
+      modeStop: 'Stop',
+      stopHelp: 'Turns off whichever visual effect is currently showing — place this later in the timeline to clear an effect that was left running with no duration.',
+      effectLabel: 'Effect',
+      kinds: {
+        glitch: 'Glitch (color split)',
+        static: 'Static (TV noise)',
+        corrupted: 'Corrupted (pixel blocks)',
+        shake: 'Shake',
+        crack: 'Cracked screen',
+        blackout: 'Blackout (flicker then dark)',
+      },
+      durationLabel: 'Duration (optional)',
+      durationHelp: 'Leave empty to keep the effect on until a later "Stop" entry.',
     },
     timeskip: {
       intro: 'Locks the phone and jumps the clock/date forward all at once.',

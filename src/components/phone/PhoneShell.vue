@@ -6,7 +6,11 @@
   >
     <div class="phone-notch" />
 
-    <div ref="screenEl" class="phone-screen">
+    <div
+      ref="screenEl"
+      class="phone-screen"
+      :class="{ 'screen-shaking': story.screenEffect?.kind === 'shake' }"
+    >
       <div class="screen-canvas" :style="canvasStyle">
         <transition name="phase-fade" mode="out-in">
           <BootScreen v-if="bootPhase === 'boot' || bootPhase === 'reboot'" key="boot" @done="onBootDone" />
@@ -39,6 +43,13 @@
       </div>
 
       <div class="timeskip-veil" :class="{ active: story.timeSkipFading }" />
+
+      <div
+        v-if="story.screenEffect"
+        :key="story.screenEffect.id"
+        class="screen-effect-veil"
+        :class="`effect-${story.screenEffect.kind}`"
+      />
     </div>
 
     <button
@@ -342,6 +353,165 @@ const canvasStyle = computed(() => ({
 
 .timeskip-veil.active {
   opacity: 1;
+}
+
+/* `vfx` timeline entry (see story.js triggerScreenEffect) — a purely
+   cosmetic, non-blocking overlay above the app content, below the timeskip
+   veil (z-index 50) so a timeskip cutting in mid-effect always wins. Each
+   `.effect-*` variant below owns its own keyframes and lifetime; the veil
+   element itself carries no shared animation so kinds never bleed into
+   each other. */
+.screen-effect-veil {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  pointer-events: none;
+}
+
+/* color-channel-split glitch: two mis-registered color layers plus random
+   horizontal slice jumps, both looping fast for the whole entry duration
+   (story.js clears `screenEffect` itself once the entry's `duration` is up —
+   this animation just keeps repeating until then). */
+.screen-effect-veil.effect-glitch {
+  mix-blend-mode: screen;
+  background:
+    repeating-linear-gradient(
+      transparent 0 2px,
+      rgba(255, 0, 90, 0.35) 2px 3px,
+      transparent 3px 5px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      rgba(0, 220, 255, 0.25) 0 1px,
+      transparent 1px 4px
+    );
+  animation:
+    glitch-jump 0.25s steps(2, end) infinite,
+    glitch-flicker 0.12s steps(1, end) infinite;
+}
+
+@keyframes glitch-jump {
+  0%, 100% { transform: translate(0, 0); clip-path: inset(0 0 0 0); }
+  20% { transform: translate(-6px, 0); clip-path: inset(10% 0 60% 0); }
+  40% { transform: translate(5px, 0); clip-path: inset(55% 0 20% 0); }
+  60% { transform: translate(-4px, 0); clip-path: inset(30% 0 45% 0); }
+  80% { transform: translate(6px, 0); clip-path: inset(75% 0 5% 0); }
+}
+
+@keyframes glitch-flicker {
+  0%, 100% { opacity: 0.9; }
+  50% { opacity: 0.5; }
+}
+
+/* data-corruption blocks — chunky colored bands (green/magenta) that jump
+   position every frame, distinct from `.effect-glitch`'s red/cyan scanline
+   split: blend mode `difference` (vs glitch's `screen`) plus bigger, blockier
+   gradient bands read as corrupted memory/video blocks rather than a
+   signal-desync line split. */
+.screen-effect-veil.effect-corrupted {
+  mix-blend-mode: difference;
+  background:
+    repeating-linear-gradient(0deg, rgba(0, 255, 140, 0.9) 0 6px, transparent 6px 26px),
+    repeating-linear-gradient(90deg, rgba(255, 0, 200, 0.7) 0 10px, transparent 10px 46px);
+  animation: corrupt-blocks 0.15s steps(1, end) infinite;
+}
+
+@keyframes corrupt-blocks {
+  0% { background-position: 0 0, 0 0; clip-path: inset(0 0 0 0); }
+  20% { background-position: 37px 11px, -18px 4px; clip-path: inset(12% 0 63% 0); }
+  40% { background-position: -22px 5px, 29px -9px; clip-path: inset(58% 0 8% 0); }
+  60% { background-position: 14px -13px, -33px 17px; clip-path: inset(3% 0 71% 0); }
+  80% { background-position: -9px 21px, 12px -6px; clip-path: inset(66% 0 15% 0); }
+  100% { background-position: 0 0, 0 0; clip-path: inset(0 0 0 0); }
+}
+
+/* power-cut blackout — a few quick flickers then holds solid black. Runs
+   its keyframes ONCE (not `infinite` like the others): an infinite flicker
+   loop would read as strobing rather than "the screen just died", and
+   looping strobe effects are also a real photosensitivity concern. The
+   final keyframe (opacity 1) matches the class's own non-animated state, so
+   the veil stays solid black after the one-shot animation ends without
+   needing `animation-fill-mode: forwards`. */
+.screen-effect-veil.effect-blackout {
+  background: #000;
+  animation: blackout-flicker 0.9s steps(1, end) 1;
+}
+
+@keyframes blackout-flicker {
+  0% { opacity: 1; }
+  8% { opacity: 0; }
+  16% { opacity: 1; }
+  22% { opacity: 0; }
+  30% { opacity: 1; }
+  38% { opacity: 0.15; }
+  46% { opacity: 1; }
+  100% { opacity: 1; }
+}
+
+/* dead-channel TV static — animated noise via a tight repeating checker
+   pattern shifted every frame, `steps()` (not `ease`) so it reads as random
+   noise rather than a smooth scroll. */
+.screen-effect-veil.effect-static {
+  background-image:
+    repeating-conic-gradient(#fff 0% 25%, #000 0% 50%);
+  background-size: 3px 3px;
+  opacity: 0.35;
+  mix-blend-mode: overlay;
+  animation: static-noise 0.2s steps(4, end) infinite;
+}
+
+@keyframes static-noise {
+  0% { background-position: 0 0; }
+  25% { background-position: 3px 1px; }
+  50% { background-position: -2px 3px; }
+  75% { background-position: 1px -2px; }
+  100% { background-position: 0 0; }
+}
+
+/* cracked/shattered glass — a static (non-animated) web of hairline
+   fractures radiating from an off-center impact point, drawn entirely with
+   gradients (no image asset): a bright impact core, a dark falloff vignette,
+   and repeating conic-gradient "spokes" for the crack lines. Fades in/out
+   via the shared v-if mount/unmount rather than its own animation, since a
+   real cracked screen doesn't move. */
+.screen-effect-veil.effect-crack {
+  background:
+    radial-gradient(circle at 62% 38%, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.5) 1.5%, transparent 3%),
+    repeating-conic-gradient(
+      from 0deg at 62% 38%,
+      rgba(255, 255, 255, 0.5) 0deg 0.6deg,
+      transparent 0.6deg 13deg
+    ),
+    radial-gradient(circle at 62% 38%, transparent 55%, rgba(0, 0, 0, 0.35) 100%);
+  animation: crack-flash 0.5s ease-out 1;
+}
+
+@keyframes crack-flash {
+  0% { opacity: 0; }
+  15% { opacity: 1; }
+  100% { opacity: 1; }
+}
+
+/* hard, fast screen-only shake (vs. `.phone-frame.ringing`'s gentler
+   whole-frame wobble) — for an impact/malfunction beat rather than a
+   ringing phone. Applied to `.phone-screen` itself (see `screen-shaking`
+   class below), not this veil — the veil renders nothing for `effect-shake`
+   (transparent, unanimated) since the actual shake needs to move the real
+   screen content, and animating `transform` here (an absolutely-positioned
+   child with no visible fill) would be invisible. `.phone-screen` is the
+   right layer to shake rather than `.screen-canvas`: the canvas already
+   carries its own inline `transform` (translate + scale, see canvasStyle)
+   that a CSS keyframe `transform` would clobber instead of compose with. */
+.screen-shaking {
+  animation: screen-shake-hard 0.35s linear infinite;
+}
+
+@keyframes screen-shake-hard {
+  0%, 100% { transform: translate(0, 0); }
+  20% { transform: translate(-5px, 3px); }
+  40% { transform: translate(4px, -4px); }
+  60% { transform: translate(-3px, -2px); }
+  80% { transform: translate(5px, 2px); }
 }
 
 .ready-phase {
