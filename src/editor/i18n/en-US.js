@@ -20,6 +20,7 @@ export default {
     tabChapters: 'Chapters',
     tabEvents: 'Events — reactions to player actions (outside the timeline)',
     tabInteractions: 'Interactions — phone gestures you build, callable from the timeline',
+    tabApps: 'Apps — phone applications built from visual blocks',
     tabContacts: 'Contacts',
     tabThreads: 'Groups',
     tabGame: 'Game',
@@ -43,6 +44,7 @@ export default {
     gameEmptyState: 'The game title is a single field — no list.',
     eventsEmptyState: 'Select or create an event on the left.',
     interactionsEmptyState: 'Select or create an interaction on the left.',
+    appsEmptyState: 'Select or create an app on the left.',
     contactsEmptyState: 'Select a contact on the left.',
     threadsEmptyState: 'Select a thread on the left.',
     i18nEmptyState: 'Select a language on the left.',
@@ -340,6 +342,70 @@ export default {
       bottom: 'Bottom',
       bottomRight: 'Bottom right',
     },
+  },
+
+  customAppList: {
+    empty: 'No app created yet.',
+    newApp: 'New app',
+    import: 'Import (.zip)',
+    export: 'Export',
+    idLabel: 'Id',
+    labelLabel: 'Name',
+    confirmDeleteTitle: 'Delete this app?',
+    confirmDeleteMessage: '"{name}" will be deleted from disk. This action is irreversible.',
+    appDeleted: 'App deleted.',
+    exported: 'App exported (.zip).',
+    imported: 'App imported.',
+  },
+
+  customAppEditor: {
+    identityTitle: 'Identity',
+    labelLabel: 'Name',
+    iconLabel: 'Icon (phone home screen)',
+    iconHelp: 'Material icon name — shown on the home screen, distinct from icons placed inside blocks.',
+    screensTitle: 'Screens',
+    screenLabelLabel: 'Screen name',
+    addScreen: 'Add a screen',
+  },
+
+  blockBuilder: {
+    empty: 'No blocks yet — drag one in from the palette above.',
+  },
+
+  blockKinds: {
+    header: { label: 'Header' },
+    text: { label: 'Text' },
+    image: { label: 'Image' },
+    avatar: { label: 'Avatar' },
+    row: { label: 'Row' },
+    card: { label: 'Card' },
+    badge: { label: 'Badge' },
+    divider: { label: 'Divider' },
+    button: { label: 'Button' },
+    tabs: { label: 'Tabs' },
+  },
+
+  blockProps: {
+    titleLabel: 'Title',
+    iconLabel: 'Icon',
+    styleTitle: 'Title',
+    styleBody: 'Paragraph',
+    contentLabel: 'Content',
+    imageLabel: 'Image',
+    labelLabel: 'Text',
+    iconFallbackLabel: 'Icon (if no image)',
+    iconFallbackHelp: 'Material icon name, only used if no image is picked above.',
+    sublabelLabel: 'Sub-text (optional)',
+    chevronLabel: 'Chevron (hints it can be tapped)',
+    cardHelp: 'A card visually groups other blocks inside it.',
+    buttonHelp: 'Visual button — not wired to an action yet (coming in a later version).',
+    tabLabelLabel: 'Tab text',
+    tabScreenLabel: 'Target screen',
+    addTab: 'Add a tab',
+  },
+
+  colorField: {
+    defaultLabel: 'Color',
   },
 
   requiresBuilder: {

@@ -49,6 +49,14 @@ const theme = computed(() => phone.currentApp || 'home')
 const chapterModules = import.meta.glob('../project-data/chapters/**/*.js', { eager: true })
 const chapters = Object.values(chapterModules).map((m) => m.default)
 
+// Author-built custom apps (see src-electron/ipc/customApps.js / the
+// editor's "Apps" tab) — pure JSON, not JS modules, so this glob just reads
+// each file's parsed content directly (import.meta.glob handles .json the
+// same way as .js: `{ eager: true }` gives each entry's default export,
+// which for a .json file IS the parsed object itself).
+const customAppModules = import.meta.glob('../project-data/apps/*.json', { eager: true })
+const customApps = Object.values(customAppModules).map((m) => m.default)
+
 const i18nModules = import.meta.glob('../project-data/i18n/*/*.js', { eager: true })
 const i18n = {}
 for (const [path, mod] of Object.entries(i18nModules)) {
@@ -75,7 +83,8 @@ story.loadProject({
     photos: seedPhotos
   },
   i18n,
-  assetsRoot: 'assets'
+  assetsRoot: 'assets',
+  customApps
 })
 
 // Resumes a local save if one exists (see story.js's save()/load(),

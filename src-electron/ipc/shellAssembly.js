@@ -215,6 +215,7 @@ export async function assembleShell(tmpDir, rootPath) {
   copyIfExists(path.join(rootPath, "chapters"), path.join(projectDataDir, "chapters"));
   copyIfExists(path.join(rootPath, "seed"), path.join(projectDataDir, "seed"));
   copyIfExists(path.join(rootPath, "i18n"), path.join(projectDataDir, "i18n"));
+  copyIfExists(path.join(rootPath, "apps"), path.join(projectDataDir, "apps"));
   copyIfExists(path.join(rootPath, "assets"), path.join(tmpDir, "public", "story-assets"));
 
   // Custom build icon (game.icon, see GameForm.vue) — @quasar/app-vite's

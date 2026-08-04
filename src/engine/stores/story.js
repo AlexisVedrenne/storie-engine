@@ -5,7 +5,9 @@ import { DEFAULT_LOCALE, SUPPORTED_LOCALES } from '@/engine/i18n/locales'
 import { playSound, startLoop, stopSound } from '@/engine/utils/sound'
 import { ENTRY_TYPE_APP } from '@/engine/apps/appIds'
 import { orderedAppList } from '@/engine/apps/appOrder'
+import { APP_REGISTRY } from '@/engine/apps/registry'
 import { CUSTOM_ENTRY_TYPE_BY_TYPE } from '@/engine/apps/entryTypeRegistry'
+import CustomAppRenderer from '@/components/phone/customApps/CustomAppRenderer.vue'
 import {
   on as onEngineEvent,
   clear as clearEngineEvents,
@@ -263,7 +265,30 @@ export const useStoryStore = defineStore('story', {
     // (GameForm.vue's draggable Applications panel writes game.appOrder) —
     // includes disabled apps too, since the panel itself needs to show and
     // reorder those as well. See appOrder.js's own comment.
-    orderedApps: (state) => orderedAppList(state.project?.gameConfig?.appOrder),
+    // Built-in apps (APP_REGISTRY, code-defined) plus this project's own
+    // author-built custom apps (story.project.customApps, JSON-defined —
+    // see src-electron/ipc/customApps.js / docs on the "Apps" editor tab),
+    // normalized to the same shape so every existing consumer (this
+    // store's own orderedApps/enabledAppIds, PhoneShell.vue, HomeScreen.vue,
+    // SetupWizard.vue, GameForm.vue) treats them identically. `component` is
+    // the SAME shared CustomAppRenderer instance for every custom app, one
+    // generic interpreter driven by that app's own block data at render
+    // time — same precedent as InteractionPlayer.vue for interactions.
+    mergedAppRegistry: (state) => [
+      ...APP_REGISTRY,
+      ...(state.project?.customApps || []).map((app) => ({
+        id: app.id,
+        label: app.label,
+        icon: app.icon,
+        color: app.color,
+        badge: () => 0,
+        component: CustomAppRenderer,
+      })),
+    ],
+
+    orderedApps() {
+      return orderedAppList(this.mergedAppRegistry, this.project?.gameConfig?.appOrder)
+    },
 
     // Which built-in phone apps this project ships with, in display order —
     // `disabledApps` is an explicit opt-out list (same "absent = default"

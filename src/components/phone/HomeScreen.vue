@@ -54,7 +54,12 @@ const wallpaperStyle = computed(() =>
 const apps = computed(() =>
   story.orderedApps.filter((app) => story.enabledAppIds.includes(app.id)).map((app) => ({
     id: app.id,
-    label: app.id === 'social' && story.gameConfig?.socialAppName ? story.gameConfig.socialAppName : t(app.labelKey),
+    label:
+      app.id === 'social' && story.gameConfig?.socialAppName
+        ? story.gameConfig.socialAppName
+        : app.labelKey
+          ? t(app.labelKey)
+          : app.label,
     icon: app.icon,
     color: app.color,
     badge: app.badge(story)

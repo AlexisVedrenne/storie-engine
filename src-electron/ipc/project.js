@@ -21,6 +21,7 @@ import {
   serializeGame,
   serializeI18nBucket,
 } from "../../src/project/serializeChapter.js";
+import { scanCustomApps } from "./customApps.js";
 
 // Read by electron-main.js's `storie-asset://` protocol handler so it knows
 // which project's assets/ folder to resolve relative paths against.
@@ -107,6 +108,9 @@ async function loadProjectFromDisk(rootPath) {
 
   const i18nDict = await loadI18n(rootPath);
 
+  const appsDir = path.join(rootPath, "apps");
+  const customApps = scanCustomApps(appsDir);
+
   currentAssetsRoot = path.join(rootPath, "assets");
 
   const projectData = {
@@ -119,6 +123,7 @@ async function loadProjectFromDisk(rootPath) {
     seed,
     i18n: i18nDict,
     assetsRoot: "assets",
+    customApps,
   };
 
   // Defensive: guarantees the blob is actually IPC-clonable (plain data, no
@@ -154,7 +159,8 @@ async function formatJs(source) {
   });
 }
 
-function slugify(id) {
+// Exported for reuse by customApps.js (same id -> filename convention).
+export function slugify(id) {
   return String(id)
     .trim()
     .toLowerCase()
@@ -304,6 +310,7 @@ export function registerProjectHandlers(mainWindow) {
     }
     fs.mkdirSync(path.join(rootPath, "chapters"), { recursive: true });
     fs.mkdirSync(path.join(rootPath, "assets"), { recursive: true });
+    fs.mkdirSync(path.join(rootPath, "apps"), { recursive: true });
 
     writeManifest(rootPath, { name, entryChapterId: "chapter1", version: "1.0.0" });
 

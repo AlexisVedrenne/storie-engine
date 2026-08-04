@@ -36,6 +36,9 @@
           <q-tab name="interactions" icon="touch_app">
             <q-tooltip>{{ t('editorPage.tabInteractions') }}</q-tooltip>
           </q-tab>
+          <q-tab name="apps" icon="widgets">
+            <q-tooltip>{{ t('editorPage.tabApps') }}</q-tooltip>
+          </q-tab>
           <q-tab name="contacts" icon="contacts">
             <q-tooltip>{{ t('editorPage.tabContacts') }}</q-tooltip>
           </q-tab>
@@ -260,6 +263,9 @@
               <q-tab-panel name="interactions">
                 <InteractionDefList v-model="selectedInteractionIndex" />
               </q-tab-panel>
+              <q-tab-panel name="apps">
+                <CustomAppList v-model="selectedCustomAppIndex" />
+              </q-tab-panel>
               <q-tab-panel name="contacts">
                 <ContactList v-model="selectedContactIndex"
               /></q-tab-panel>
@@ -297,6 +303,11 @@
                   <q-tab-panel name="interactions">
                     <InteractionDefForm v-if="selectedInteractionDef" :def="selectedInteractionDef" />
                     <div v-else class="empty-state">{{ t('editorPage.interactionsEmptyState') }}</div>
+                  </q-tab-panel>
+
+                  <q-tab-panel name="apps">
+                    <CustomAppEditor v-if="selectedCustomApp" :def="selectedCustomApp" />
+                    <div v-else class="empty-state">{{ t('editorPage.appsEmptyState') }}</div>
                   </q-tab-panel>
 
                   <q-tab-panel name="contacts">
@@ -433,6 +444,8 @@ import EventList from '@/editor/components/EventList.vue'
 import EventForm from '@/editor/components/EventForm.vue'
 import InteractionDefList from '@/editor/components/InteractionDefList.vue'
 import InteractionDefForm from '@/editor/components/InteractionDefForm.vue'
+import CustomAppList from '@/editor/components/CustomAppList.vue'
+import CustomAppEditor from '@/editor/components/CustomAppEditor.vue'
 import AssetsPanel from '@/editor/components/AssetsPanel.vue'
 import AssetTree from '@/editor/components/AssetTree.vue'
 import LocaleList from '@/editor/components/LocaleList.vue'
@@ -516,6 +529,10 @@ const selectedInteractionIndex = ref(0)
 const selectedInteractionDef = computed(
   () => story.project?.gameConfig?.interactions?.[selectedInteractionIndex.value] || null,
 )
+const selectedCustomAppIndex = ref(0)
+const selectedCustomApp = computed(
+  () => story.project?.customApps?.[selectedCustomAppIndex.value] || null,
+)
 // Selected folder path within assets/ ('' = root) — same lift-state-up
 // pattern as the selection refs above, shared between AssetTree (left pane)
 // and AssetsPanel (middle pane, filters its grid to this folder).
@@ -537,10 +554,16 @@ const activeResource = computed(() => {
       return story.project?.threads || null
     case 'game':
     case 'events':
-      // Events live inside game.js too (gameConfig.events, see
-      // EventsEditor.vue) — same file on disk, same dirty/save flow as the
-      // Jeu tab, not a separate resource.
+    case 'interactions':
+      // Events AND interactions both live inside game.js too
+      // (gameConfig.events/gameConfig.interactions) — same file on disk,
+      // same dirty/save flow as the Jeu tab, not a separate resource.
       return story.project?.gameConfig || null
+    case 'apps':
+      // Unlike events/interactions, each custom app is its OWN file (see
+      // src-electron/ipc/customApps.js) — watched per-app, saved via
+      // saveCustomApp, not the whole-project saveGame() below.
+      return selectedCustomApp.value
     case 'assets':
       // Assets tab has no dirty/save flow — imports/deletes are immediate
       // IPC side effects (see AssetsPanel.vue), not a buffered edit.
@@ -601,7 +624,7 @@ function watchActiveResource() {
 // different objects) — but which conversation is open WITHIN
 // messages/dms is local state inside SeedBucketEditor.vue, never lifted
 // here, so there's no equivalent of selectedContactIndex to exclude.
-watch([viewMode, selectedIndex, selectedLocale, selectedBucket, selectedSeedBucket], () => {
+watch([viewMode, selectedIndex, selectedCustomAppIndex, selectedLocale, selectedBucket, selectedSeedBucket], () => {
   dirty.value = false
   clearTimeout(debounceTimer)
   watchActiveResource()
@@ -628,10 +651,28 @@ async function save() {
         rootPath: story.project.rootPath,
         source: serializeThreads(story.project.threads),
       })
-    } else if (viewMode.value === 'game' || viewMode.value === 'events') {
+    } else if (viewMode.value === 'game' || viewMode.value === 'events' || viewMode.value === 'interactions') {
       await window.storieAPI.saveGame({
         rootPath: story.project.rootPath,
         source: serializeGame(story.project.gameConfig),
+      })
+    } else if (viewMode.value === 'apps') {
+      const app = selectedCustomApp.value
+      if (!app) return
+      const { __sourceFile, ...data } = app
+      await window.storieAPI.saveCustomApp({
+        rootPath: story.project.rootPath,
+        sourceFile: __sourceFile,
+        // Unlike chapters/events/etc (sent as a serialized JS source
+        // string, see serializeChapter.js), custom apps are sent as plain
+        // JSON — but `app` is a live Pinia-reactive object (it's an item of
+        // story.project.customApps), and `{ ...app }` only shallow-copies:
+        // nested screens/blocks/card-children are still reactive Proxies a
+        // few levels down, which Electron's IPC structured-clone rejects
+        // ("An object could not be cloned"). Round-tripping through
+        // JSON strips every Proxy, same defensive trick project.js's own
+        // loadProjectFromDisk uses on the way back.
+        data: JSON.parse(JSON.stringify(data)),
       })
     } else if (viewMode.value === 'i18n') {
       if (!selectedLocale.value) return
@@ -702,6 +743,39 @@ function previewFrom(chapterId) {
 
   story.startChapter(chapterId)
 }
+
+// Jumps the (already-visible, docked) phone preview straight to the custom
+// app currently being built in the Apps tab — same "no playerName yet"
+// bootstrap as previewFrom() above, but skips the lock screen too (unlike a
+// chapter preview, there's no narrative reason to see the lock screen
+// first, the author wants to look at the app itself). Reused live: since
+// CustomAppRenderer.vue reads story.project.customApps reactively, every
+// block edit shows up on the preview immediately, no extra wiring needed
+// beyond having the right app open.
+function previewCustomApp(appId) {
+  if (!story.playerName) {
+    const osLocale = story.availableLocales.some((l) => l.code === navigator.language)
+      ? navigator.language
+      : DEFAULT_LOCALE
+    story.setLocale(osLocale)
+    story.setPlayerName('DemoName')
+    story.setPlayerColor('#9c27b0')
+    phone.requestReboot()
+  }
+  phone.unlock()
+  phone.openApp(appId)
+}
+
+// Auto-follows the Apps tab's own selection — switching into "apps" or
+// picking a different app in the list re-triggers this (selectedCustomApp
+// only changes reference on those two occasions, not on every block edit,
+// since edits mutate the same object in place).
+watch(
+  () => (viewMode.value === 'apps' ? selectedCustomApp.value : null),
+  (app) => {
+    if (app) previewCustomApp(app.id)
+  },
+)
 
 function onKeydown(e) {
   if ((e.ctrlKey || e.metaKey) && e.key === 's') {

@@ -57,6 +57,11 @@ contextBridge.exposeInMainWorld("storieAPI", {
   createAssetFolder: (payload) => ipcRenderer.invoke("project:createAssetFolder", payload),
   deleteAsset: (payload) => ipcRenderer.invoke("project:deleteAsset", payload),
   checkAssets: (payload) => ipcRenderer.invoke("project:checkAssets", payload),
+  saveCustomApp: (payload) => ipcRenderer.invoke("project:saveCustomApp", payload),
+  createCustomApp: (payload) => ipcRenderer.invoke("project:createCustomApp", payload),
+  deleteCustomApp: (payload) => ipcRenderer.invoke("project:deleteCustomApp", payload),
+  exportCustomApp: (payload) => ipcRenderer.invoke("project:exportCustomApp", payload),
+  importCustomApp: (payload) => ipcRenderer.invoke("project:importCustomApp", payload),
   buildGame: (payload) => ipcRenderer.invoke("project:build", payload),
   startWebPreview: (payload) => ipcRenderer.invoke("project:startWebPreview", payload),
   stopWebPreview: () => ipcRenderer.invoke("project:stopWebPreview")

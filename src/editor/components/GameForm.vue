@@ -154,6 +154,7 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useStoryStore } from '@/engine/stores/story'
 import AssetField from '@/editor/components/AssetField.vue'
 import FieldHelp from '@/editor/components/FieldHelp.vue'
 import EmojiPickerBtn from '@/components/shared/EmojiPickerBtn.vue'
@@ -167,6 +168,7 @@ const props = defineProps({ game: { type: Object, required: true } })
 const { t: storyT } = useI18n()
 const { t } = useEditorI18n()
 const titleInputRef = ref(null)
+const story = useStoryStore()
 
 // `disabledApps` is an explicit opt-out list (same "absent = default"
 // convention as contact.hasSocial/followedByDefault, see ContactForm.vue) —
@@ -190,13 +192,15 @@ function setAppEnabled(id, enabled) {
 // what the phone home screen / setup wizard actually read. A disabled app
 // stays in this list (and stays draggable) so its position survives being
 // re-enabled later instead of jumping back to the end.
-const orderedApps = computed(() => orderedAppList(props.game.appOrder))
+const orderedApps = computed(() => orderedAppList(story.mergedAppRegistry, props.game.appOrder))
 
 // Mirrors HomeScreen.vue's own social-app-name override so this list shows
-// the name a player will actually see, not always the manifest default.
+// the name a player will actually see, not always the manifest default. A
+// custom app (story.project.customApps, see the "Apps" editor tab) has no
+// i18n `labelKey` — it's a plain author-typed `label` string instead.
 function appLabel(app) {
   if (app.id === 'social' && props.game.socialAppName) return props.game.socialAppName
-  return storyT(app.labelKey)
+  return app.labelKey ? storyT(app.labelKey) : app.label
 }
 
 // Same drag/drop shape as TimelineEditor.vue's own reorder (dragIndex +

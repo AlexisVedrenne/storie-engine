@@ -19,6 +19,7 @@ export default {
     tabChapters: 'Chapitres',
     tabEvents: 'Events — réactions aux actions du joueur (hors timeline)',
     tabInteractions: 'Interactions — gestes téléphone construits par toi, appelables depuis la timeline',
+    tabApps: 'Apps — applications téléphone construites par blocs visuels',
     tabContacts: 'Contacts',
     tabThreads: 'Groupes',
     tabGame: 'Jeu',
@@ -42,6 +43,7 @@ export default {
     gameEmptyState: 'Le titre du jeu est un champ unique — pas de liste.',
     eventsEmptyState: 'Sélectionne ou crée un event à gauche.',
     interactionsEmptyState: 'Sélectionne ou crée une interaction à gauche.',
+    appsEmptyState: 'Sélectionne ou crée une application à gauche.',
     contactsEmptyState: 'Sélectionne un contact à gauche.',
     threadsEmptyState: 'Sélectionne un thread à gauche.',
     i18nEmptyState: 'Sélectionne une langue à gauche.',
@@ -349,6 +351,70 @@ export default {
       bottom: 'Bas',
       bottomRight: 'Bas droite',
     },
+  },
+
+  customAppList: {
+    empty: 'Aucune application créée.',
+    newApp: 'Nouvelle application',
+    import: 'Importer (.zip)',
+    export: 'Exporter',
+    idLabel: 'Identifiant (id)',
+    labelLabel: 'Nom',
+    confirmDeleteTitle: 'Supprimer cette application ?',
+    confirmDeleteMessage: '« {name} » sera supprimée du disque. Cette action est irréversible.',
+    appDeleted: 'Application supprimée.',
+    exported: 'Application exportée (.zip).',
+    imported: 'Application importée.',
+  },
+
+  customAppEditor: {
+    identityTitle: 'Identité',
+    labelLabel: 'Nom',
+    iconLabel: 'Icône (accueil du téléphone)',
+    iconHelp: 'Nom d’icône Material — affichée sur l’écran d’accueil, distincte des icônes posées dans les blocs.',
+    screensTitle: 'Écrans',
+    screenLabelLabel: 'Nom de l’écran',
+    addScreen: 'Ajouter un écran',
+  },
+
+  blockBuilder: {
+    empty: 'Aucun bloc — glisse-en un depuis la palette au-dessus.',
+  },
+
+  blockKinds: {
+    header: { label: 'En-tête' },
+    text: { label: 'Texte' },
+    image: { label: 'Image' },
+    avatar: { label: 'Avatar' },
+    row: { label: 'Ligne' },
+    card: { label: 'Carte' },
+    badge: { label: 'Badge' },
+    divider: { label: 'Séparateur' },
+    button: { label: 'Bouton' },
+    tabs: { label: 'Onglets' },
+  },
+
+  blockProps: {
+    titleLabel: 'Titre',
+    iconLabel: 'Icône',
+    styleTitle: 'Titre',
+    styleBody: 'Paragraphe',
+    contentLabel: 'Contenu',
+    imageLabel: 'Image',
+    labelLabel: 'Texte',
+    iconFallbackLabel: 'Icône (si pas d’image)',
+    iconFallbackHelp: 'Nom d’icône Material, utilisée seulement si aucune image n’est choisie au-dessus.',
+    sublabelLabel: 'Sous-texte (optionnel)',
+    chevronLabel: 'Chevron (indique qu’on peut cliquer)',
+    cardHelp: 'Une carte regroupe visuellement d’autres blocs à l’intérieur.',
+    buttonHelp: 'Bouton visuel — pas encore branché à une action (à venir dans une prochaine version).',
+    tabLabelLabel: 'Texte de l’onglet',
+    tabScreenLabel: 'Écran ciblé',
+    addTab: 'Ajouter un onglet',
+  },
+
+  colorField: {
+    defaultLabel: 'Couleur',
   },
 
   requiresBuilder: {

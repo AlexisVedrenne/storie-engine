@@ -1,0 +1,55 @@
+<template>
+  <div class="tabs-block">
+    <button
+      v-for="(tab, i) in block.tabs || []"
+      :key="i"
+      type="button"
+      class="tab-btn"
+      :class="{ active: tab.screenId === activeScreenId }"
+      @click="navigate(tab.screenId)"
+    >
+      {{ tab.label || '' }}
+    </button>
+  </div>
+</template>
+
+<script setup>
+// Pure navigation between the custom app's own screens — no game state
+// touched, deliberately kept in the "visual" v1 scope (see plan §1).
+import { inject, ref } from 'vue'
+
+defineProps({ block: { type: Object, required: true } })
+
+const navigate = inject('customAppNavigate', () => {})
+const activeScreenId = inject('customAppActiveScreenId', ref(null))
+</script>
+
+<style scoped>
+.tabs-block {
+  display: flex;
+  gap: 4px;
+  padding: 3px;
+  border-radius: 11px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.tab-btn {
+  flex: 1;
+  background: none;
+  border: none;
+  border-radius: 9px;
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 0;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.tab-btn.active {
+  background: rgba(76, 139, 245, 0.35);
+  color: #fff;
+}
+</style>

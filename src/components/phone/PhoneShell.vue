@@ -81,7 +81,6 @@ import HomeScreen from './HomeScreen.vue'
 import NotificationBanner from './NotificationBanner.vue'
 
 import IncomingCallScreen from '@/components/apps/calls/IncomingCallScreen.vue'
-import { APP_REGISTRY } from '@/engine/apps/registry'
 import InteractionPlayer from './interactions/InteractionPlayer.vue'
 
 // `large` lets a caller (EditorPage.vue's "Aperçu seul" mode) raise the
@@ -114,7 +113,7 @@ const story = useStoryStore()
 // save) shouldn't render a blank screen; HomeScreen.vue's icon grid is what
 // actually gates reachability going forward.
 const currentAppComponent = computed(
-  () => APP_REGISTRY.find((app) => app.id === phone.currentApp)?.component,
+  () => story.mergedAppRegistry.find((app) => app.id === phone.currentApp)?.component,
 )
 
 // the boot animation + setup wizard are a one-time first-run sequence, not
