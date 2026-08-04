@@ -10,8 +10,5 @@ export default {
   labelKey: 'home.apps.email',
   icon: 'mail',
   color: '#3f8cff',
-  badge: (story) => {
-    const unread = story.customData?.emailUnread || {}
-    return Object.values(unread).reduce((a, b) => a + b, 0)
-  },
+  badge: (story) => (story.customData?.emails || []).filter((e) => !e.read).length,
 }

@@ -1,51 +1,89 @@
 <template>
   <div class="app-screen">
     <transition name="screen-swap" mode="out-in">
-      <div v-if="!openContactId" key="list" class="list-stack">
-        <AppTitleBar :title="t('email.title')" icon="mail" color="#3f8cff" @back="phone.goHome()" />
-
-        <div class="search-bar">
-          <q-icon name="search" size="17px" color="#7db2ff" />
-          <input v-model="query" type="text" :placeholder="t('email.searchPlaceholder')" />
+      <div v-if="!openEmailId" key="list" class="list-stack">
+        <!-- Gmail's own header IS the search bar — no big app-name title
+             like every other app here (AppTitleBar). Back arrow, a rounded
+             search pill taking most of the width, the player's own avatar
+             on the right (Gmail always shows the signed-in account there). -->
+        <div class="gmail-header">
+          <button class="icon-btn" :aria-label="t('common.back')" @click="phone.goHome()">
+            <q-icon name="chevron_left" size="24px" />
+          </button>
+          <div class="gmail-search">
+            <q-icon name="search" size="17px" color="rgba(255,255,255,0.45)" />
+            <input v-model="query" type="text" :placeholder="t('email.searchPlaceholder')" />
+          </div>
+          <AppAvatar :name="story.playerName || '?'" :color="story.myColor" :size="30" />
         </div>
 
-        <div class="conv-list">
-          <div v-if="!conversations.length" class="empty">
+        <div class="inbox-list">
+          <div v-if="!emails.length" class="empty">
             <q-icon name="mail" size="46px" />
             <span>{{ t('email.empty') }}</span>
           </div>
-          <div v-else-if="!filteredConversations.length" class="empty">
+          <div v-else-if="!filteredEmails.length" class="empty">
             <q-icon name="search_off" size="46px" />
             <span>{{ t('email.noResults', { query }) }}</span>
           </div>
           <button
-            v-for="(c, i) in filteredConversations"
-            :key="c.id"
-            class="conv-row"
+            v-for="(mail, i) in filteredEmails"
+            :key="mail.id"
+            class="mail-row"
+            :class="{ unread: !mail.read }"
             :style="{ animationDelay: `${i * 40}ms` }"
-            @click="open(c.id)"
+            @click="open(mail.id)"
           >
-            <AppAvatar :name="c.name" :color="c.color" :image="c.avatar" :size="46" />
-            <div class="conv-info">
-              <div class="conv-name">{{ c.name }}</div>
-              <div class="conv-preview">{{ c.preview }}</div>
-            </div>
-            <div class="conv-meta">
-              <span class="conv-time">{{ c.time }}</span>
-              <span v-if="c.unread" class="unread-dot">{{ c.unread }}</span>
+            <AppAvatar
+              :name="mail.fromName || mail.fromEmail || '?'"
+              :color="colorFor(mail)"
+              :size="42"
+              class="mail-avatar"
+            />
+            <div class="mail-info">
+              <div class="mail-row-top">
+                <span class="mail-from">{{ mail.fromName || mail.fromEmail }}</span>
+                <span class="mail-time">{{ formatTime(mail.ts) }}</span>
+              </div>
+              <div class="mail-preview">
+                <span class="mail-subject-inline">{{ mail.subject }}</span>
+                <span v-if="mail.text"> — {{ mail.text }}</span>
+              </div>
             </div>
           </button>
         </div>
+
+        <!-- Purely decorative, same "authentic silhouette, no real backend"
+             precedent as the fake SIM keypad/Wi-Fi list in SetupWizard.vue
+             — the point is Gmail's iconic red compose FAB, not a real
+             compose flow (there's no one for the player to write TO in
+             this engine). -->
+        <button class="compose-fab" :aria-label="t('email.title')" @click.stop>
+          <q-icon name="edit" size="22px" color="white" />
+        </button>
       </div>
 
-      <div v-else key="thread" class="thread-stack">
-        <AppTitleBar :title="threadContactName" icon="mail" color="#3f8cff" @back="openContactId = null" />
-        <div class="thread-scroll">
-          <div v-for="mail in threadEmails" :key="mail.id" class="mail-card">
-            <div class="mail-subject">{{ mail.subject }}</div>
-            <div class="mail-text">{{ mail.text }}</div>
-            <div class="mail-time">{{ formatTime(mail.ts) }}</div>
+      <div v-else key="detail" class="detail-stack">
+        <div class="gmail-header gmail-header-detail">
+          <button class="icon-btn" :aria-label="t('common.back')" @click="openEmailId = null">
+            <q-icon name="chevron_left" size="24px" />
+          </button>
+        </div>
+        <div v-if="openEmail" class="detail-scroll">
+          <h1 class="detail-subject">{{ openEmail.subject }}</h1>
+          <div class="detail-header">
+            <AppAvatar
+              :name="openEmail.fromName || openEmail.fromEmail || '?'"
+              :color="colorFor(openEmail)"
+              :size="40"
+            />
+            <div class="detail-sender">
+              <div class="detail-name">{{ openEmail.fromName || openEmail.fromEmail }}</div>
+              <div v-if="openEmail.fromEmail" class="detail-email">{{ openEmail.fromEmail }}</div>
+            </div>
+            <span class="detail-time">{{ formatTime(openEmail.ts) }}</span>
           </div>
+          <div class="detail-body">{{ openEmail.text }}</div>
         </div>
       </div>
     </transition>
@@ -57,7 +95,6 @@ import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { usePhoneStore } from '@/engine/stores/phone'
 import { useStoryStore } from '@/engine/stores/story'
-import AppTitleBar from '@/components/phone/AppTitleBar.vue'
 import AppAvatar from '@/components/phone/AppAvatar.vue'
 
 const phone = usePhoneStore()
@@ -66,8 +103,8 @@ const { t } = useI18n()
 const query = ref('')
 
 // Local, not phone store — a plug-in app doesn't need core changes just to
-// track "which thread am I looking at" for itself.
-const openContactId = ref(null)
+// track "which email am I reading" for itself.
+const openEmailId = ref(null)
 
 function formatTime(iso) {
   const d = new Date(iso)
@@ -75,39 +112,52 @@ function formatTime(iso) {
   return d.toLocaleTimeString(story.activeLocale, { hour: '2-digit', minute: '2-digit' })
 }
 
-const emailsByContact = computed(() => story.customData?.emails || {})
+// A flat, newest-first inbox — unlike SMS/Pixly DM, an email isn't grouped
+// by sender (see entryType.js's own comment): every entry is its own row,
+// same as a real Gmail inbox.
+const emails = computed(() => story.customData?.emails || [])
 
-const conversations = computed(() =>
-  Object.keys(emailsByContact.value)
-    .filter((id) => emailsByContact.value[id]?.length)
-    .map((id) => {
-      const contact = story.getContact(id)
-      const thread = emailsByContact.value[id]
-      const last = thread[thread.length - 1]
-      return {
-        id,
-        name: story.contactName(id),
-        color: contact.color,
-        avatar: contact.avatar,
-        preview: last ? last.subject : '',
-        time: last ? formatTime(last.ts) : '',
-        unread: story.customData?.emailUnread?.[id] || 0,
-      }
-    }),
-)
-
-const filteredConversations = computed(() => {
+const filteredEmails = computed(() => {
   const q = query.value.trim().toLowerCase()
-  if (!q) return conversations.value
-  return conversations.value.filter((c) => c.name.toLowerCase().includes(q))
+  if (!q) return emails.value
+  return emails.value.filter((mail) =>
+    [mail.fromName, mail.fromEmail, mail.subject, mail.text].some((field) =>
+      field?.toLowerCase().includes(q),
+    ),
+  )
 })
 
-const threadEmails = computed(() => emailsByContact.value[openContactId.value] || [])
-const threadContactName = computed(() => (openContactId.value ? story.contactName(openContactId.value) : ''))
+const openEmail = computed(() => emails.value.find((mail) => mail.id === openEmailId.value) || null)
 
 function open(id) {
-  openContactId.value = id
-  if (story.customData.emailUnread) story.customData.emailUnread[id] = 0
+  openEmailId.value = id
+  const mail = emails.value.find((m) => m.id === id)
+  if (mail) mail.read = true
+}
+
+// Deterministic avatar color per sender (name, falling back to the raw
+// address) — same "consistent identity color" idea as a real Gmail inbox,
+// but there's no project.contacts record to read a `color` from here (the
+// whole point of this redesign — an email's sender is free text, not a
+// contact), so it's hashed from the string itself instead. A small fixed
+// palette (not a full RGB hash) keeps every avatar legible on the dark
+// phone UI, same reasoning contact colors are always hand-picked hex
+// values elsewhere rather than randomly generated.
+const AVATAR_PALETTE = [
+  '#3f8cff',
+  '#ff6f91',
+  '#32e3b1',
+  '#ffb648',
+  '#a78bfa',
+  '#4caf50',
+  '#ff7043',
+  '#26c6da',
+]
+function colorFor(mail) {
+  const key = mail.fromName || mail.fromEmail || ''
+  let hash = 0
+  for (let i = 0; i < key.length; i++) hash = (hash * 31 + key.charCodeAt(i)) >>> 0
+  return AVATAR_PALETTE[hash % AVATAR_PALETTE.length]
 }
 </script>
 
@@ -119,10 +169,14 @@ function open(id) {
 }
 
 .list-stack,
-.thread-stack {
+.detail-stack {
   height: 100%;
   display: flex;
   flex-direction: column;
+}
+
+.list-stack {
+  position: relative;
 }
 
 .screen-swap-enter-active,
@@ -142,20 +196,50 @@ function open(id) {
   transform: translateX(-10px);
 }
 
-.search-bar {
+/* --- Gmail's header IS the search bar, no separate big app-title (see
+   the template comment above) --- */
+.gmail-header {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin: 4px 16px 10px;
-  padding: 9px 12px;
-  border-radius: 11px;
-  background: rgba(63, 140, 255, 0.12);
-  border: 1px solid rgba(63, 140, 255, 0.25);
+  padding: 10px 14px 8px;
   flex-shrink: 0;
 }
 
-.search-bar input {
+.gmail-header-detail {
+  padding-bottom: 4px;
+}
+
+.icon-btn {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  color: #fff;
+  opacity: 0.85;
+  cursor: pointer;
+  display: flex;
+  padding: 4px;
+  transition: transform 0.12s ease;
+}
+
+.icon-btn:active {
+  transform: scale(0.88);
+}
+
+.gmail-search {
   flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.09);
+}
+
+.gmail-search input {
+  flex: 1;
+  min-width: 0;
   background: none;
   border: none;
   outline: none;
@@ -163,11 +247,11 @@ function open(id) {
   font-size: 14px;
 }
 
-.search-bar input::placeholder {
+.gmail-search input::placeholder {
   color: rgba(255, 255, 255, 0.4);
 }
 
-.conv-list {
+.inbox-list {
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
@@ -186,22 +270,35 @@ function open(id) {
   text-align: center;
 }
 
-.conv-row {
+/* --- inbox rows, Gmail-like: a colored left accent bar + bold sender for
+   an unread row (dimmed avatar once read), "subject — snippet" on one
+   truncated line, time top-right --- */
+.mail-row {
+  position: relative;
   width: 100%;
   display: flex;
   align-items: center;
   gap: 12px;
   background: none;
   border: none;
+  border-left: 3px solid transparent;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  padding: 12px 14px;
+  padding: 12px 16px 12px 11px;
   cursor: pointer;
   text-align: left;
   transition: transform 0.12s ease;
   animation: row-in 0.28s cubic-bezier(0.34, 1.2, 0.64, 1) both;
 }
 
-.conv-row:active {
+.mail-row.unread {
+  border-left-color: var(--phone-accent, #3f8cff);
+}
+
+.mail-row:not(.unread) .mail-avatar {
+  opacity: 0.55;
+}
+
+.mail-row:active {
   transform: scale(0.98);
   background: rgba(255, 255, 255, 0.04);
 }
@@ -217,84 +314,125 @@ function open(id) {
   }
 }
 
-.conv-info {
+.mail-info {
   flex: 1;
   min-width: 0;
   color: #fff;
 }
 
-.conv-name {
-  font-weight: 600;
-  font-size: 14px;
+.mail-row-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
 }
 
-.conv-preview {
-  font-size: 12px;
-  opacity: 0.6;
-  white-space: nowrap;
+.mail-from {
+  font-size: 14px;
+  opacity: 0.75;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.conv-meta {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 6px;
-  flex-shrink: 0;
-}
-
-.conv-time {
-  font-size: 11px;
-  color: rgba(255, 255, 255, 0.4);
-}
-
-.unread-dot {
-  background: var(--phone-accent, #3f8cff);
-  color: #fff;
-  font-size: 11px;
+.mail-row.unread .mail-from {
   font-weight: 700;
-  min-width: 18px;
-  height: 18px;
-  border-radius: 9px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 5px;
-}
-
-.thread-scroll {
-  flex: 1;
-  overflow-y: auto;
-  padding: 12px 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.mail-card {
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 12px;
-  padding: 12px 14px;
-}
-
-.mail-subject {
-  font-weight: 600;
-  font-size: 14px;
-  color: #fff;
-  margin-bottom: 4px;
-}
-
-.mail-text {
-  font-size: 13px;
-  color: rgba(255, 255, 255, 0.8);
-  line-height: 1.4;
+  opacity: 1;
 }
 
 .mail-time {
-  margin-top: 6px;
+  flex-shrink: 0;
   font-size: 11px;
   color: rgba(255, 255, 255, 0.4);
+}
+
+.mail-preview {
+  font-size: 12.5px;
+  opacity: 0.55;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 2px;
+}
+
+.mail-row.unread .mail-subject-inline {
+  color: #fff;
+  font-weight: 600;
+  opacity: 1;
+}
+
+/* Purely decorative Gmail-style compose FAB — see the template comment. */
+.compose-fab {
+  position: absolute;
+  right: 16px;
+  bottom: 18px;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: none;
+  background: var(--phone-accent, #3f8cff);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+  transition: transform 0.12s ease;
+}
+
+.compose-fab:active {
+  transform: scale(0.9);
+}
+
+/* --- email detail --- */
+.detail-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.detail-subject {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 800;
+  color: #fff;
+  line-height: 1.3;
+}
+
+.detail-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.detail-sender {
+  flex: 1;
+  min-width: 0;
+}
+
+.detail-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.detail-email {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.detail-time {
+  flex-shrink: 0;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.detail-body {
+  font-size: 14px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.9);
+  white-space: pre-wrap;
 }
 </style>

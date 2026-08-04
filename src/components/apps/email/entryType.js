@@ -10,44 +10,44 @@ export default {
   app: 'email',
   icon: 'mail',
   label: 'Email',
-  help: 'Un email reçu — apparaît dans l’app Email.',
+  help: 'Un email reçu — apparaît dans l’app Email. Contrairement aux SMS/DM, l’expéditeur est un email/nom écrits librement, pas un contact du projet.',
   form: EmailEntryForm,
 
-  defaultEntry({ firstContactId }) {
-    return { type: 'email', from: firstContactId(), subject: '', text: '' }
+  defaultEntry() {
+    return { type: 'email', fromEmail: '', fromName: '', subject: '', text: '' }
   },
 
   // `story` is the full Pinia story store instance (same access a built-in
-  // type's processEntry case has) — story.fill()/pushNotification()/
-  // contactName() are all the existing engine API, nothing new added just
-  // for this.
+  // type's processEntry case has) — story.fill()/pushNotification() are the
+  // existing engine API, nothing new added just for this. Storage is a
+  // flat, newest-first array (unlike SMS/DM, an email isn't grouped by
+  // sender/contact — see App.vue's own inbox list, a real Gmail-style flat
+  // inbox rather than one thread per sender) — `read` lives on each email
+  // itself instead of a separate per-contact unread map.
   process(entry, { story }) {
-    story.customData.emails ??= {}
-    const thread = (story.customData.emails[entry.from] ??= [])
+    story.customData.emails ??= []
     const subject = story.fill(entry.subject) || '(sans objet)'
-    thread.push({
-      id: entry.id || `email-${Date.now()}-${thread.length}`,
+    const fromName = story.fill(entry.fromName) || entry.fromEmail || ''
+    story.customData.emails.unshift({
+      id: entry.id || `email-${Date.now()}-${story.customData.emails.length}`,
+      fromEmail: entry.fromEmail || '',
+      fromName,
       subject,
       text: story.fill(entry.text) || '',
       ts: entry.ts || new Date().toISOString(),
+      read: false,
     })
 
-    story.customData.emailUnread ??= {}
-    story.customData.emailUnread[entry.from] = (story.customData.emailUnread[entry.from] || 0) + 1
-
-    story.pushNotification({
-      app: 'email',
-      contact: entry.from,
-      title: story.contactName(entry.from),
-      text: subject,
-    })
+    story.pushNotification({ app: 'email', title: fromName, text: subject })
   },
 
   extractText(entry) {
-    return [entry.subject, entry.text]
+    return [entry.fromName, entry.subject, entry.text]
   },
 
-  collectReferences(entry) {
-    return entry.from ? [{ kind: 'contact', id: entry.from }] : []
+  // No project reference anymore — fromEmail/fromName are free text, same
+  // spirit as a message's own `text`, not a link to project.contacts.
+  collectReferences() {
+    return []
   },
 }
