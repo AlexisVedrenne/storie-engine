@@ -110,6 +110,13 @@
       <q-btn dense flat no-caps icon="add" :label="t('blockProps.addTab')" class="btn-ghost" @click="addTab" />
     </template>
 
+    <q-expansion-item dense :label="t('timelineEntryCard.displayCondition')" class="spacing-section">
+      <div class="spacing-body condition-body">
+        <p class="tab-help">{{ t('timelineEntryCard.displayConditionHelp') }}</p>
+        <RequiresBuilder :model-value="block.requires" @update:model-value="(v) => (block.requires = v)" />
+      </div>
+    </q-expansion-item>
+
     <q-expansion-item dense :label="t('blockProps.spacingTitle')" class="spacing-section">
       <div class="spacing-body">
         <q-input
@@ -141,6 +148,7 @@
 import { computed } from 'vue'
 import AssetField from '@/editor/components/AssetField.vue'
 import ColorField from '@/editor/components/ColorField.vue'
+import RequiresBuilder from '@/editor/components/RequiresBuilder.vue'
 // Circular with BlockBuilder.vue (a `card` block recurses into its own
 // nested builder) — safe: Vue components only reference each other at
 // render time, never during module top-level evaluation.
@@ -209,6 +217,10 @@ const screenOptions = computed(() => props.screens.map((s) => ({ label: s.label 
   display: flex;
   gap: var(--space-2);
   padding: var(--space-3);
+}
+
+.condition-body {
+  flex-direction: column;
 }
 
 .tab-help {

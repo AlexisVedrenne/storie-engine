@@ -46,7 +46,12 @@
           <template #header>
             <q-icon name="drag_indicator" size="16px" class="drag-handle" />
             <q-icon :name="paletteIcon(block.type)" size="16px" class="row-icon" />
-            <q-item-section>{{ t(`blockKinds.${block.type}.label`) }}{{ summaryFor(block) }}</q-item-section>
+            <q-item-section>
+              {{ t(`blockKinds.${block.type}.label`) }}{{ summaryFor(block) }}
+              <span v-if="block.requires" class="requires-badge" :title="t('timelineEntryCard.hasCondition')">
+                <q-icon name="rule" size="12px" /> {{ t('timelineEntryCard.conditionBadge') }}
+              </span>
+            </q-item-section>
             <q-item-section side>
               <div class="row-actions">
                 <q-btn dense flat round icon="content_copy" size="sm" @click.stop="duplicate(i)">
@@ -305,6 +310,18 @@ watch(
 .row-icon {
   color: var(--color-text-muted);
   margin-right: var(--space-2);
+}
+
+.requires-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 10px;
+  padding: 1px 6px;
+  margin-left: var(--space-2);
+  border-radius: var(--radius-sm);
+  background: var(--color-warning-tint);
+  color: var(--color-warning);
 }
 
 .row-actions {

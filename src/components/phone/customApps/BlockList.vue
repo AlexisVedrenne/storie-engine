@@ -1,7 +1,7 @@
 <template>
   <div class="block-list" :style="{ flexDirection: direction, gap: `${gap}px` }">
     <div
-      v-for="(block, i) in blocks"
+      v-for="(block, i) in visibleBlocks"
       :key="i"
       class="block-wrap"
       :style="{ marginTop: block.spacingBefore ? `${block.spacingBefore}px` : undefined, marginBottom: block.spacingAfter ? `${block.spacingAfter}px` : undefined }"
@@ -32,7 +32,9 @@
 // watches it to auto-expand/scroll to the matching row in the editor. The
 // wrapper also carries the block's own optional spacingBefore/spacingAfter
 // override (see BlockPropertiesForm.vue's generic "advanced" section).
+import { computed } from 'vue'
 import { usePhoneStore } from '@/engine/stores/phone'
+import { useStoryStore } from '@/engine/stores/story'
 import HeaderBlock from './HeaderBlock.vue'
 import TextBlock from './TextBlock.vue'
 import ImageBlock from './ImageBlock.vue'
@@ -45,13 +47,20 @@ import DividerBlock from './DividerBlock.vue'
 import ButtonBlock from './ButtonBlock.vue'
 import TabsBlock from './TabsBlock.vue'
 
-defineProps({
+const phone = usePhoneStore()
+const story = useStoryStore()
+
+// Same optional `requires` (flags/following) every timeline entry already
+// supports (see TimelineEntryCard.vue's identical "Condition d'affichage"
+// UX in BlockPropertiesForm.vue) — checked via the same story.checkConditions()
+// used everywhere else, a block failing its condition is silently skipped,
+// not rendered blank/disabled.
+const props = defineProps({
   blocks: { type: Array, default: () => [] },
   direction: { type: String, default: 'column' },
   gap: { type: [String, Number], default: 10 },
 })
-
-const phone = usePhoneStore()
+const visibleBlocks = computed(() => props.blocks.filter((b) => story.checkConditions(b.requires)))
 
 const BLOCK_COMPONENTS = {
   header: HeaderBlock,

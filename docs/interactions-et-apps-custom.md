@@ -158,6 +158,22 @@ patron que les steps d'interaction.
   bloc** : champs optionnels supplémentaires sur les blocs existants, rien
   de structurel.
 
+### Condition d'affichage par bloc (dynamisme, étape 1)
+
+Premier pas vers du "dynamique" — chaque bloc peut porter un `requires`
+optionnel (flags/following), **exactement la même forme et le même
+`story.checkConditions()`** que `entry.requires` sur une entrée de timeline.
+Authoring : section "Condition d'affichage" dans `BlockPropertiesForm.vue`
+(réutilise `RequiresBuilder.vue` tel quel), badge "condition" dans
+`BlockBuilder.vue` (mêmes clés i18n que `TimelineEntryCard.vue`, pas
+dupliquées). Runtime : `BlockList.vue`'s `visibleBlocks` computed filtre
+avant de rendre — un bloc dont la condition échoue est silencieusement
+absent, pas juste caché en CSS.
+
+Étape suivante envisagée (pas commencée) : interpolation de variables dans
+le texte des blocs (`{playerName}`, `{flag:xyz}`...) — voir discussion en
+cours, scope pas encore fixé.
+
 ### Piège IPC à connaître
 
 `story.project.customApps[i]` est un objet réactif Pinia (Proxy) — jamais
