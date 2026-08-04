@@ -418,6 +418,56 @@ script libre.
   `requires.collections` dessus — `quasar build` réel, présence
   confirmée dans le bundle.
 
+### Icon picker + options de style supplémentaires
+
+Deux petits conforts d'édition ajoutés dans la foulée des flags collection,
+sans rapport structurel entre eux (deux demandes groupées dans la même
+session) :
+
+- **`IconPickerBtn.vue`** (`src/components/shared/`, réutilisable partout,
+  pas spécifique aux apps) — même contrat que `EmojiPickerBtn.vue`
+  (recherche + grille par catégories dans un `q-menu`), mais émet un nom
+  d'icône Material (`ic.n`, ex. `account_balance`) au lieu d'un glyphe
+  emoji, et le consommateur assigne directement le champ (`block.icon = v`)
+  plutôt que d'insérer au curseur — un champ icône ne contient jamais
+  qu'UNE valeur, pas de concept de composition de texte. Catalogue curaté
+  dans `src/components/shared/iconList.js` (~180 icônes, mêmes noms de
+  ligature déjà utilisés à la main avant ce picker — rien de nouveau côté
+  valeurs acceptées, juste plus facile à trouver). Branché sur TOUS les
+  champs `q-icon`-Material authored en texte libre trouvés dans le repo, pas
+  seulement les blocs d'app : `header.icon`/`avatar.icon` (fallback)/
+  `row.icon` (`BlockPropertiesForm.vue`), l'icône de l'app elle-même
+  affichée sur l'écran d'accueil (`def.icon`, `CustomAppEditor.vue`), et
+  `step.icon` d'une interaction (`InteractionStepsEditor.vue`). Vérifié
+  qu'aucun autre champ `.icon` du repo n'était dans le même cas — `weather.
+  icon` (EffectsBuilder.vue) est un EMOJI affiché en texte brut (pas un
+  `q-icon`), `game.icon` (build) est un `AssetField` (fichier, pas un nom),
+  `bucket.icon`/`group.icon` viennent d'un catalogue fixe non-authorable —
+  aucun des trois n'avait besoin de ce picker.
+- **Options de style étendues**, même précédent que `text.color`/`text.size`
+  (`TextBlock.vue`) — un champ optionnel, non renseigné = comportement
+  identique à avant cette feature, zéro migration :
+  - `card`/`layout` gagnent `bgColor` (optionnel). Pour `card`, override
+    juste le fond translucide déjà codé en dur. Pour `layout` — qui n'avait
+    AUCUN habillage visuel propre avant (pur arrangeur flex) — poser
+    `bgColor` fait aussi apparaître le padding/arrondi habituels d'une
+    carte (`LayoutBlock.vue`'s `wrapperStyle` computed), sinon un fond
+    plein cadre sans marge aurait l'air d'un bug plutôt que d'un choix
+    d'auteur. `ColorField.vue` a gagné une prop `clearable` (bouton croix
+    pour revenir à `''`/pas de fond) — nécessaire ici puisque "pas de
+    couleur" a un rendu visuel distinct du champ jamais touché, contrairement
+    à `header`/`avatar`/`button`/`badge` où `color` retombe toujours sur la
+    même couleur de marque par défaut.
+  - `button`/`badge` gagnent `textColor` (défaut blanc, comme avant) et
+    `radius` (px — défaut 12 pour `button`, 999/pilule pour `badge`, mêmes
+    valeurs que le CSS codé en dur remplacé).
+  - `row` gagne `iconColor` et `textColor` (tout était blanc fixe avant).
+- **Vérifié par un vrai build du jeu compilé** : app de test avec `card`
+  (bgColor), `layout` (bgColor + un bouton avec color/textColor/radius),
+  `badge` (textColor/radius), et le `row` du template `list` existant
+  (iconColor/textColor) — build réussi, tous les champs + le contenu du
+  test présents dans le bundle grepé.
+
 ### Piège IPC à connaître
 
 `story.project.customApps[i]` est un objet réactif Pinia (Proxy) — jamais

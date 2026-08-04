@@ -2,7 +2,11 @@
   <button
     type="button"
     class="button-block"
-    :style="{ background: block.color || '#4c8bf5' }"
+    :style="{
+      background: block.color || '#4c8bf5',
+      color: block.textColor || undefined,
+      borderRadius: `${block.radius ?? 12}px`,
+    }"
     @click="onClick"
   >
     {{ label }}
@@ -41,7 +45,7 @@ function onClick() {
 .button-block {
   border: none;
   border-radius: 12px;
-  padding: 11px 0;
+  padding: 11px 16px;
   color: #fff;
   font-size: 14px;
   font-weight: 700;

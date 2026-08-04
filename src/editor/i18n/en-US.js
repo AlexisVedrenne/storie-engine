@@ -436,9 +436,12 @@ export default {
     iconFallbackHelp: 'Material icon name, only used if no image is picked above.',
     sublabelLabel: 'Sub-text (optional)',
     chevronLabel: 'Chevron (hints it can be tapped)',
+    iconColorLabel: 'Icon color',
+    bgColorLabel: 'Background color (optional)',
+    radiusLabel: 'Corner radius',
     cardHelp: 'A card visually groups other blocks inside it.',
     layoutHelp:
-      'Arranges other blocks in a row or column, no background of its own — unlike a card.',
+      'Arranges other blocks in a row or column, no background by default — unlike a card, unless you pick a background color below.',
     directionRow: 'Row (horizontal)',
     directionColumn: 'Column (vertical)',
     gapLabel: 'Gap between blocks',

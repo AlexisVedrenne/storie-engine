@@ -1,5 +1,13 @@
 <template>
-  <span class="badge-block" :style="{ background: block.color || '#4c8bf5' }">{{ label }}</span>
+  <span
+    class="badge-block"
+    :style="{
+      background: block.color || '#4c8bf5',
+      color: block.textColor || undefined,
+      borderRadius: `${block.radius ?? 999}px`,
+    }"
+    >{{ label }}</span
+  >
 </template>
 
 <script setup>

@@ -2,20 +2,33 @@
   <div class="steps-editor">
     <div v-if="!steps.length" class="empty-hint">{{ t('stepsEditor.empty') }}</div>
 
-    <q-expansion-item
-      v-for="(step, i) in steps"
-      :key="i"
-      v-model="expanded[i]"
-      class="step-card"
-    >
+    <q-expansion-item v-for="(step, i) in steps" :key="i" v-model="expanded[i]" class="step-card">
       <template #header>
-        <q-item-section>{{ t('stepsEditor.stepHeader', { n: i + 1, kind: kindLabel(step.kind) }) }}</q-item-section>
+        <q-item-section>{{
+          t('stepsEditor.stepHeader', { n: i + 1, kind: kindLabel(step.kind) })
+        }}</q-item-section>
         <q-item-section side>
           <div class="row-actions">
-            <q-btn dense flat round icon="arrow_upward" size="sm" :disable="i === 0" @click.stop="move(i, -1)">
+            <q-btn
+              dense
+              flat
+              round
+              icon="arrow_upward"
+              size="sm"
+              :disable="i === 0"
+              @click.stop="move(i, -1)"
+            >
               <q-tooltip>{{ t('timelineEntryCard.moveUp') }}</q-tooltip>
             </q-btn>
-            <q-btn dense flat round icon="arrow_downward" size="sm" :disable="i === steps.length - 1" @click.stop="move(i, 1)">
+            <q-btn
+              dense
+              flat
+              round
+              icon="arrow_downward"
+              size="sm"
+              :disable="i === steps.length - 1"
+              @click.stop="move(i, 1)"
+            >
               <q-tooltip>{{ t('timelineEntryCard.moveDown') }}</q-tooltip>
             </q-btn>
             <q-btn dense flat round icon="close" size="sm" color="negative" @click.stop="remove(i)">
@@ -49,7 +62,11 @@
             :hint="t('stepsEditor.iconHelp')"
             v-model="step.icon"
             class="grow"
-          />
+          >
+            <template #append>
+              <IconPickerBtn @pick="(v) => (step.icon = v)" />
+            </template>
+          </q-input>
           <q-input
             v-if="step.kind !== 'wait'"
             dense
@@ -59,7 +76,9 @@
             :hint="t('stepsEditor.timeLimitHelp')"
             suffix="ms"
             :model-value="step.timeLimitMs ?? null"
-            @update:model-value="(v) => (step.timeLimitMs = v === null || v === '' ? null : Number(v))"
+            @update:model-value="
+              (v) => (step.timeLimitMs = v === null || v === '' ? null : Number(v))
+            "
             class="grow"
           />
         </div>
@@ -112,7 +131,15 @@
       </div>
     </q-expansion-item>
 
-    <q-btn dense flat no-caps icon="add" :label="t('stepsEditor.addStep')" class="btn-ghost" @click="addStep" />
+    <q-btn
+      dense
+      flat
+      no-caps
+      icon="add"
+      :label="t('stepsEditor.addStep')"
+      class="btn-ghost"
+      @click="addStep"
+    />
   </div>
 </template>
 
@@ -121,6 +148,7 @@ import { computed, reactive } from 'vue'
 import { STEP_KIND_IDS, fieldsForKind, defaultStep } from '@/engine/interactions/stepKinds'
 import ZonePicker from '@/editor/components/ZonePicker.vue'
 import AssetField from '@/editor/components/AssetField.vue'
+import IconPickerBtn from '@/components/shared/IconPickerBtn.vue'
 import { useEditorI18n } from '@/editor/i18n'
 
 const { t } = useEditorI18n()
@@ -132,7 +160,9 @@ const props = defineProps({ steps: { type: Array, required: true } })
 
 const expanded = reactive({})
 
-const kindOptions = computed(() => STEP_KIND_IDS.map((kind) => ({ label: kindLabel(kind), value: kind })))
+const kindOptions = computed(() =>
+  STEP_KIND_IDS.map((kind) => ({ label: kindLabel(kind), value: kind })),
+)
 function kindLabel(kind) {
   return t(`stepKinds.${kind}.label`)
 }

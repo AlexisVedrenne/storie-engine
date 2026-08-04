@@ -1,6 +1,12 @@
 <template>
-  <div class="row-block">
-    <q-icon v-if="block.icon" :name="block.icon" size="20px" class="row-icon" />
+  <div class="row-block" :style="{ color: block.textColor || undefined }">
+    <q-icon
+      v-if="block.icon"
+      :name="block.icon"
+      size="20px"
+      class="row-icon"
+      :style="{ color: block.iconColor || undefined }"
+    />
     <div class="row-text">
       <div class="row-label">{{ label }}</div>
       <div v-if="sublabel" class="row-sublabel">{{ sublabel }}</div>

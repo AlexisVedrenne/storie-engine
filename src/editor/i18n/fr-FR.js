@@ -447,9 +447,12 @@ export default {
       'Nom d’icône Material, utilisée seulement si aucune image n’est choisie au-dessus.',
     sublabelLabel: 'Sous-texte (optionnel)',
     chevronLabel: 'Chevron (indique qu’on peut cliquer)',
+    iconColorLabel: 'Couleur de l’icône',
+    bgColorLabel: 'Couleur de fond (optionnel)',
+    radiusLabel: 'Arrondi',
     cardHelp: 'Une carte regroupe visuellement d’autres blocs à l’intérieur.',
     layoutHelp:
-      'Arrange d’autres blocs en rangée ou en colonne, sans fond visuel — contrairement à la carte.',
+      'Arrange d’autres blocs en rangée ou en colonne, sans fond visuel par défaut — contrairement à la carte, sauf si tu choisis une couleur de fond ci-dessous.',
     directionRow: 'Rangée (horizontal)',
     directionColumn: 'Colonne (vertical)',
     gapLabel: 'Écart entre les blocs',

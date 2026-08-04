@@ -15,7 +15,11 @@
           />
         </template>
       </q-input>
-      <q-input dense outlined :label="t('blockProps.iconLabel')" v-model="block.icon" />
+      <q-input dense outlined :label="t('blockProps.iconLabel')" v-model="block.icon">
+        <template #append>
+          <IconPickerBtn @pick="(v) => (block.icon = v)" />
+        </template>
+      </q-input>
       <ColorField v-model="block.color" />
     </template>
 
@@ -104,12 +108,25 @@
         :label="t('blockProps.iconFallbackLabel')"
         :hint="t('blockProps.iconFallbackHelp')"
         v-model="block.icon"
-      />
+      >
+        <template #append>
+          <IconPickerBtn @pick="(v) => (block.icon = v)" />
+        </template>
+      </q-input>
       <ColorField v-model="block.color" />
     </template>
 
     <template v-else-if="block.type === 'row'">
-      <q-input dense outlined :label="t('blockProps.iconLabel')" v-model="block.icon" />
+      <q-input dense outlined :label="t('blockProps.iconLabel')" v-model="block.icon">
+        <template #append>
+          <IconPickerBtn @pick="(v) => (block.icon = v)" />
+        </template>
+      </q-input>
+      <ColorField
+        v-model="block.iconColor"
+        :label="t('blockProps.iconColorLabel')"
+        default-value="#ffffff"
+      />
       <q-input
         dense
         outlined
@@ -140,11 +157,22 @@
           />
         </template>
       </q-input>
+      <ColorField
+        v-model="block.textColor"
+        :label="t('blockProps.textColorLabel')"
+        default-value="#ffffff"
+      />
       <q-toggle dense :label="t('blockProps.chevronLabel')" v-model="block.chevron" />
     </template>
 
     <template v-else-if="block.type === 'card'">
       <p class="tab-help">{{ t('blockProps.cardHelp') }}</p>
+      <ColorField
+        v-model="block.bgColor"
+        :label="t('blockProps.bgColorLabel')"
+        default-value="#2a2e37"
+        clearable
+      />
       <BlockBuilder :blocks="ensureChildren()" :screens="screens" :item-scope="itemScope" />
     </template>
 
@@ -168,6 +196,12 @@
         :model-value="block.gap ?? 8"
         @update:model-value="(v) => (block.gap = v === null || v === '' ? 8 : Number(v))"
       />
+      <ColorField
+        v-model="block.bgColor"
+        :label="t('blockProps.bgColorLabel')"
+        default-value="#2a2e37"
+        clearable
+      />
       <BlockBuilder :blocks="ensureChildren()" :screens="screens" :item-scope="itemScope" />
     </template>
 
@@ -186,7 +220,24 @@
           />
         </template>
       </q-input>
-      <ColorField v-model="block.color" />
+      <div class="row">
+        <ColorField v-model="block.color" class="grow" />
+        <ColorField
+          v-model="block.textColor"
+          :label="t('blockProps.textColorLabel')"
+          default-value="#ffffff"
+          class="grow"
+        />
+      </div>
+      <q-input
+        dense
+        outlined
+        type="number"
+        :label="t('blockProps.radiusLabel')"
+        suffix="px"
+        :model-value="block.radius ?? 999"
+        @update:model-value="(v) => (block.radius = v === null || v === '' ? 999 : Number(v))"
+      />
     </template>
 
     <template v-else-if="block.type === 'button'">
@@ -204,7 +255,24 @@
           />
         </template>
       </q-input>
-      <ColorField v-model="block.color" />
+      <div class="row">
+        <ColorField v-model="block.color" class="grow" />
+        <ColorField
+          v-model="block.textColor"
+          :label="t('blockProps.textColorLabel')"
+          default-value="#ffffff"
+          class="grow"
+        />
+      </div>
+      <q-input
+        dense
+        outlined
+        type="number"
+        :label="t('blockProps.radiusLabel')"
+        suffix="px"
+        :model-value="block.radius ?? 12"
+        @update:model-value="(v) => (block.radius = v === null || v === '' ? 12 : Number(v))"
+      />
       <q-btn-toggle
         dense
         no-caps
@@ -374,6 +442,7 @@ import ColorField from '@/editor/components/ColorField.vue'
 import RequiresBuilder from '@/editor/components/RequiresBuilder.vue'
 import EffectsBuilder from '@/editor/components/EffectsBuilder.vue'
 import VariablePickerBtn from '@/editor/components/VariablePickerBtn.vue'
+import IconPickerBtn from '@/components/shared/IconPickerBtn.vue'
 import FlagNameField from '@/editor/components/FlagNameField.vue'
 import { insertEmojiAtCaret } from '@/components/shared/emojiInsert'
 // Circular with BlockBuilder.vue (a `card` block recurses into its own
