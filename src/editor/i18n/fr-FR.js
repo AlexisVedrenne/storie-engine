@@ -439,6 +439,20 @@ export default {
     defaultLabel: 'Couleur',
   },
 
+  variablePicker: {
+    tooltip: 'Insérer une variable',
+    widgetsTitle: 'Données du téléphone',
+    tokens: {
+      playerName: 'Nom du joueur',
+      battery: 'Batterie (%)',
+      steps: 'Pas (podomètre)',
+      stepsGoal: 'Objectif de pas',
+      weather: 'Température',
+    },
+    flagsTitle: 'Flags du projet',
+    noFlags: 'Aucun flag dans ce projet pour l’instant.',
+  },
+
   requiresBuilder: {
     addCondition: 'Ajouter une condition',
     intro:

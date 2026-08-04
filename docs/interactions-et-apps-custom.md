@@ -170,9 +170,31 @@ dupliquées). Runtime : `BlockList.vue`'s `visibleBlocks` computed filtre
 avant de rendre — un bloc dont la condition échoue est silencieusement
 absent, pas juste caché en CSS.
 
-Étape suivante envisagée (pas commencée) : interpolation de variables dans
-le texte des blocs (`{playerName}`, `{flag:xyz}`...) — voir discussion en
-cours, scope pas encore fixé.
+### Interpolation de variables (dynamisme, étape 2)
+
+`src/engine/customApps/resolveDynamicText.js` — deux formes de token :
+`{flag:clé}` (lit `story.flags[clé]`, toujours un nombre — les flags
+restent LE mécanisme de variable du projet, pas de concept parallèle) et un
+petit catalogue fixe de données déjà affichées ailleurs sur le téléphone
+(`{playerName}`, `{battery}`, `{steps}`, `{stepsGoal}`, `{weather}`).
+Délibérément PAS `story.fill()` (celui-là résout aussi la traduction i18n
+par chapitre, sans rapport avec un bloc d'app qui n'appartient à aucun
+chapitre).
+
+Chaque composant runtime avec un champ texte (`HeaderBlock`, `TextBlock`,
+`RowBlock`, `BadgeBlock`, `ButtonBlock`, `AvatarBlock`, `TabsBlock`) résout
+son propre champ via un `computed` — pas de résolution centralisée dans
+`BlockList.vue` (cloner le bloc y aurait cassé l'identité d'objet utilisée
+par la sélection depuis le preview, voir plus haut).
+
+Authoring : `VariablePickerBtn.vue` (même contrat que `EmojiPickerBtn.vue`
+— émet `pick` avec le token, inséré au curseur via `insertEmojiAtCaret`
+déjà générique) à côté de chaque champ concerné. Liste les tokens fixes +
+les flags du projet (réutilise `collectFlags.js`, même catalogue que le
+dialogue Flags).
+
+Compteurs sociaux/messages (listés comme option 3 pendant la discussion) :
+écartés, pas assez de besoin concret confirmé pour l'instant.
 
 ### Piège IPC à connaître
 

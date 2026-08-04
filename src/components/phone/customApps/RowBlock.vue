@@ -2,15 +2,22 @@
   <div class="row-block">
     <q-icon v-if="block.icon" :name="block.icon" size="20px" class="row-icon" />
     <div class="row-text">
-      <div class="row-label">{{ block.label || '' }}</div>
-      <div v-if="block.sublabel" class="row-sublabel">{{ block.sublabel }}</div>
+      <div class="row-label">{{ label }}</div>
+      <div v-if="sublabel" class="row-sublabel">{{ sublabel }}</div>
     </div>
     <q-icon v-if="block.chevron" name="chevron_right" size="18px" class="row-chevron" />
   </div>
 </template>
 
 <script setup>
-defineProps({ block: { type: Object, required: true } })
+import { computed } from 'vue'
+import { useStoryStore } from '@/engine/stores/story'
+import { resolveDynamicText } from '@/engine/customApps/resolveDynamicText'
+
+const props = defineProps({ block: { type: Object, required: true } })
+const story = useStoryStore()
+const label = computed(() => resolveDynamicText(props.block.label, story) || '')
+const sublabel = computed(() => resolveDynamicText(props.block.sublabel, story))
 </script>
 
 <style scoped>

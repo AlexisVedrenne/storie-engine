@@ -1,15 +1,20 @@
 <template>
   <div class="header-block">
-    <AppTitleBar :title="block.title || ''" :icon="block.icon || 'apps'" :color="block.color || '#4c8bf5'" @back="phone.goHome()" />
+    <AppTitleBar :title="title" :icon="block.icon || 'apps'" :color="block.color || '#4c8bf5'" @back="phone.goHome()" />
   </div>
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import { usePhoneStore } from '@/engine/stores/phone'
+import { useStoryStore } from '@/engine/stores/story'
+import { resolveDynamicText } from '@/engine/customApps/resolveDynamicText'
 import AppTitleBar from '@/components/phone/AppTitleBar.vue'
 
-defineProps({ block: { type: Object, required: true } })
+const props = defineProps({ block: { type: Object, required: true } })
 const phone = usePhoneStore()
+const story = useStoryStore()
+const title = computed(() => resolveDynamicText(props.block.title, story) || '')
 </script>
 
 <style scoped>

@@ -1,14 +1,14 @@
 <template>
   <div class="tabs-block">
     <button
-      v-for="(tab, i) in block.tabs || []"
+      v-for="(tab, i) in resolvedTabs"
       :key="i"
       type="button"
       class="tab-btn"
       :class="{ active: tab.screenId === activeScreenId }"
       @click="navigate(tab.screenId)"
     >
-      {{ tab.label || '' }}
+      {{ tab.label }}
     </button>
   </div>
 </template>
@@ -16,12 +16,19 @@
 <script setup>
 // Pure navigation between the custom app's own screens — no game state
 // touched, deliberately kept in the "visual" v1 scope (see plan §1).
-import { inject, ref } from 'vue'
+import { computed, inject, ref } from 'vue'
+import { useStoryStore } from '@/engine/stores/story'
+import { resolveDynamicText } from '@/engine/customApps/resolveDynamicText'
 
-defineProps({ block: { type: Object, required: true } })
+const props = defineProps({ block: { type: Object, required: true } })
+const story = useStoryStore()
 
 const navigate = inject('customAppNavigate', () => {})
 const activeScreenId = inject('customAppActiveScreenId', ref(null))
+
+const resolvedTabs = computed(
+  () => (props.block.tabs || []).map((tab) => ({ ...tab, label: resolveDynamicText(tab.label, story) || '' })),
+)
 </script>
 
 <style scoped>

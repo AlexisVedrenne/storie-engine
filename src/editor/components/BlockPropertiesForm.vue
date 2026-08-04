@@ -1,7 +1,11 @@
 <template>
   <div class="block-props">
     <template v-if="block.type === 'header'">
-      <q-input dense outlined :label="t('blockProps.titleLabel')" v-model="block.title" />
+      <q-input dense outlined ref="titleInputRef" :label="t('blockProps.titleLabel')" v-model="block.title">
+        <template #append>
+          <VariablePickerBtn @pick="(v) => (block.title = insertEmojiAtCaret(titleInputRef, block.title, v))" />
+        </template>
+      </q-input>
       <q-input dense outlined :label="t('blockProps.iconLabel')" v-model="block.icon" />
       <ColorField v-model="block.color" />
     </template>
@@ -16,7 +20,11 @@
           { label: t('blockProps.styleBody'), value: 'body' },
         ]"
       />
-      <q-input dense outlined type="textarea" autogrow :label="t('blockProps.contentLabel')" v-model="block.content" />
+      <q-input dense outlined type="textarea" autogrow ref="contentInputRef" :label="t('blockProps.contentLabel')" v-model="block.content">
+        <template #append>
+          <VariablePickerBtn @pick="(v) => (block.content = insertEmojiAtCaret(contentInputRef, block.content, v))" />
+        </template>
+      </q-input>
       <div class="row">
         <ColorField v-model="block.color" :label="t('blockProps.textColorLabel')" default-value="#ffffff" class="grow" />
         <q-input
@@ -40,7 +48,11 @@
     </template>
 
     <template v-else-if="block.type === 'avatar'">
-      <q-input dense outlined :label="t('blockProps.labelLabel')" v-model="block.label" />
+      <q-input dense outlined ref="avatarLabelInputRef" :label="t('blockProps.labelLabel')" v-model="block.label">
+        <template #append>
+          <VariablePickerBtn @pick="(v) => (block.label = insertEmojiAtCaret(avatarLabelInputRef, block.label, v))" />
+        </template>
+      </q-input>
       <AssetField v-model="block.src" :label="t('blockProps.imageLabel')" />
       <q-input dense outlined :label="t('blockProps.iconFallbackLabel')" :hint="t('blockProps.iconFallbackHelp')" v-model="block.icon" />
       <ColorField v-model="block.color" />
@@ -48,8 +60,16 @@
 
     <template v-else-if="block.type === 'row'">
       <q-input dense outlined :label="t('blockProps.iconLabel')" v-model="block.icon" />
-      <q-input dense outlined :label="t('blockProps.labelLabel')" v-model="block.label" />
-      <q-input dense outlined :label="t('blockProps.sublabelLabel')" v-model="block.sublabel" />
+      <q-input dense outlined ref="rowLabelInputRef" :label="t('blockProps.labelLabel')" v-model="block.label">
+        <template #append>
+          <VariablePickerBtn @pick="(v) => (block.label = insertEmojiAtCaret(rowLabelInputRef, block.label, v))" />
+        </template>
+      </q-input>
+      <q-input dense outlined ref="rowSublabelInputRef" :label="t('blockProps.sublabelLabel')" v-model="block.sublabel">
+        <template #append>
+          <VariablePickerBtn @pick="(v) => (block.sublabel = insertEmojiAtCaret(rowSublabelInputRef, block.sublabel, v))" />
+        </template>
+      </q-input>
       <q-toggle dense :label="t('blockProps.chevronLabel')" v-model="block.chevron" />
     </template>
 
@@ -82,19 +102,31 @@
     </template>
 
     <template v-else-if="block.type === 'badge'">
-      <q-input dense outlined :label="t('blockProps.labelLabel')" v-model="block.label" />
+      <q-input dense outlined ref="badgeLabelInputRef" :label="t('blockProps.labelLabel')" v-model="block.label">
+        <template #append>
+          <VariablePickerBtn @pick="(v) => (block.label = insertEmojiAtCaret(badgeLabelInputRef, block.label, v))" />
+        </template>
+      </q-input>
       <ColorField v-model="block.color" />
     </template>
 
     <template v-else-if="block.type === 'button'">
-      <q-input dense outlined :label="t('blockProps.labelLabel')" v-model="block.label" />
+      <q-input dense outlined ref="buttonLabelInputRef" :label="t('blockProps.labelLabel')" v-model="block.label">
+        <template #append>
+          <VariablePickerBtn @pick="(v) => (block.label = insertEmojiAtCaret(buttonLabelInputRef, block.label, v))" />
+        </template>
+      </q-input>
       <ColorField v-model="block.color" />
       <p class="tab-help">{{ t('blockProps.buttonHelp') }}</p>
     </template>
 
     <template v-else-if="block.type === 'tabs'">
       <div v-for="(tab, i) in ensureTabs()" :key="i" class="tab-row">
-        <q-input dense outlined :label="t('blockProps.tabLabelLabel')" v-model="tab.label" class="grow" />
+        <q-input dense outlined :ref="(el) => (tabLabelRefs[i] = el)" :label="t('blockProps.tabLabelLabel')" v-model="tab.label" class="grow">
+          <template #append>
+            <VariablePickerBtn @pick="(v) => (tab.label = insertEmojiAtCaret(tabLabelRefs[i], tab.label, v))" />
+          </template>
+        </q-input>
         <q-select
           dense
           outlined
@@ -145,10 +177,12 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import AssetField from '@/editor/components/AssetField.vue'
 import ColorField from '@/editor/components/ColorField.vue'
 import RequiresBuilder from '@/editor/components/RequiresBuilder.vue'
+import VariablePickerBtn from '@/editor/components/VariablePickerBtn.vue'
+import { insertEmojiAtCaret } from '@/components/shared/emojiInsert'
 // Circular with BlockBuilder.vue (a `card` block recurses into its own
 // nested builder) — safe: Vue components only reference each other at
 // render time, never during module top-level evaluation.
@@ -164,6 +198,20 @@ const props = defineProps({
   // when this form recurses into a `card` block's own BlockBuilder.
   screens: { type: Array, default: () => [] },
 })
+
+// One ref per text field that can take a {variable} — a bare template ref
+// per role (not per block type), safe to reuse across the mutually
+// exclusive v-if/v-else-if branches above since only one is ever mounted
+// for a given block. `tabLabelRefs` is keyed by index instead, same
+// per-row-ref-bag pattern ChoiceEntryForm.vue uses for its own options.
+const titleInputRef = ref(null)
+const contentInputRef = ref(null)
+const avatarLabelInputRef = ref(null)
+const rowLabelInputRef = ref(null)
+const rowSublabelInputRef = ref(null)
+const badgeLabelInputRef = ref(null)
+const buttonLabelInputRef = ref(null)
+const tabLabelRefs = {}
 
 function ensureChildren() {
   if (!props.block.blocks) props.block.blocks = []
