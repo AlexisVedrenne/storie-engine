@@ -11,7 +11,11 @@
       no-caps
       icon="delete_sweep"
       color="negative"
-      :label="unusedCount === 1 ? t('flagsPanel.deleteUnusedOne') : t('flagsPanel.deleteUnusedMany', { n: unusedCount })"
+      :label="
+        unusedCount === 1
+          ? t('flagsPanel.deleteUnusedOne')
+          : t('flagsPanel.deleteUnusedMany', { n: unusedCount })
+      "
       class="cleanup-btn"
       @click="confirmRemoveAllUnused"
     />
@@ -20,7 +24,12 @@
       <div class="flag-row-top">
         <span class="flag-key">{{ flag.key }}</span>
         <span v-if="flag.isBoolean" class="badge">{{ t('flagsPanel.boolean') }}</span>
-        <span v-if="flag.isNumeric" class="badge badge-numeric">{{ t('flagsPanel.reachable', { min: flag.min, max: flag.max }) }}</span>
+        <span v-if="flag.isNumeric" class="badge badge-numeric">{{
+          t('flagsPanel.reachable', { min: flag.min, max: flag.max })
+        }}</span>
+        <span v-if="flag.isCollection" class="badge badge-numeric">{{
+          t('flagsPanel.collection')
+        }}</span>
         <span v-if="flag.neverModified" class="badge badge-warning">
           <q-icon name="warning" size="11px" /> {{ t('flagsPanel.neverModified') }}
           <q-tooltip>{{ t('flagsPanel.neverModifiedTooltip') }}</q-tooltip>
@@ -37,7 +46,11 @@
           size="sm"
           class="where-btn"
           :icon="expanded.has(flag.key) ? 'expand_less' : 'expand_more'"
-          :label="flag.count === 1 ? t('flagsPanel.usageOne') : t('flagsPanel.usageMany', { n: flag.count })"
+          :label="
+            flag.count === 1
+              ? t('flagsPanel.usageOne')
+              : t('flagsPanel.usageMany', { n: flag.count })
+          "
           @click="toggleExpanded(flag.key)"
         />
         <q-btn

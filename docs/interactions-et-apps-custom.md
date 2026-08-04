@@ -352,6 +352,72 @@ un sélecteur d'écran (réutilise `screenOptions`, déjà là pour `tabs`) dans
 un bouton n'est pas rattaché à une position dans la timeline, complexité
 jugée inutile tant qu'aucun besoin concret ne le justifie.
 
+### Flags "collection" — variable clé→valeur, pas juste un nombre
+
+Besoin de départ : afficher un historique (ex. relevé de compte) alimenté
+depuis la timeline. Direction retenue après discussion avec l'utilisateur
+(plusieurs allers-retours, voir mémoire de session) : **PAS** un nouveau
+bucket d'état parallèle (`appLists` envisagé puis écarté) — un 3ᵉ "type" de
+flag, la collection, parce que **les flags restent LE mécanisme de
+variable du projet**, répété plusieurs fois cette session. Générique dans
+le bon sens : un seul mécanisme (ajouter/retirer un élément par clé, texte
+ou nombre) réutilisable pour un historique, un inventaire, une liste de
+quêtes... — borné à 2 opérations et 2 types de valeur, pas un moteur de
+script libre.
+
+- **Stockage** : `story.flagCollections[flagKey] = { itemKey: string|number }`
+  — SÉPARÉ de `story.flags` (qui reste 100% numérique, lu comme tel
+  PARTOUT dans le moteur : `{flag:x}`, conditions min/max, delta
+  `EffectsBuilder`, calcul de plage `collectFlags.js` — mélanger les
+  formes aurait cassé tout ça). Une collection est authored/référencée
+  comme un flag (même `FlagNameField.vue`, catalogue project-wide) mais
+  vit dans un bucket à part. Vrai objet, pas un tableau : ajouter = `set`,
+  retirer = `delete`, jamais de collision faute d'ordre.
+- **Écriture — `effects.collections`** (liste d'opérations, pas un objet
+  par flag : un seul effet peut toucher la même collection plusieurs
+  fois) : `{flagKey, mode: 'add'|'remove', itemKey?, value?}`. `itemKey`
+  vide sur `'add'` génère une clé automatique (même style d'id que
+  `groupSelection` dans `TimelineEditor.vue`) — le cas courant pour un
+  historique qui s'empile, l'auteur n'a jamais à réfléchir aux clés.
+  Gratuit partout où `effects` marche déjà (entrée timeline `effect`,
+  option de `choice`, interaction onWin/onLose, event, **bouton**) — zéro
+  nouveau branchement, juste une nouvelle section dans
+  `EffectsBuilder.vue`/`story.js`'s `applyEffects()`.
+- **Lecture (condition) — `requires.collections`** : `{ flagKey: { size?:
+  number|{min,max}, has?: itemKey } }` — `size` et `has` indépendantes,
+  cochables ensemble sur une même ligne (pas un mode exclusif comme les
+  flags numériques, un auteur peut vouloir "au moins 3 ET contient
+  'épée'"). Nouvelle section dans `RequiresBuilder.vue`/`story.js`'s
+  `checkConditions()`.
+- **Affichage — bloc `list` étendu** : gagne `source: 'contacts' |
+  'flagCollection'` (+ `flagKey` si collection) au lieu d'un nouveau bloc
+  — le mécanisme de répétition de template existait déjà et le code le
+  disait lui-même ("jusqu'à ce qu'une 2ᵉ source soit nécessaire", voir
+  git blame). `ListBlock.vue` bascule sur `story.collectionItems(flagKey)`
+  au lieu de `project.contacts`. Nouveaux tokens `{item:key}`/
+  `{item:value}` (`resolveDynamicText.js`) — `ITEM_TOKENS` scindé en
+  `CONTACT_ITEM_TOKENS`/`COLLECTION_ITEM_TOKENS`, et `itemScope` (prop
+  filée `BlockBuilder.vue` → `BlockPropertiesForm.vue` →
+  `VariablePickerBtn.vue`) devient `false | 'contacts' | 'flagCollection'`
+  au lieu d'un simple bool, pour que le bouton variable propose le bon
+  jeu de tokens et que le toggle "utiliser l'avatar du contact" (bloc
+  avatar) reste caché pour une collection (pas de notion d'avatar sur un
+  item clé/valeur).
+- **Catalogue Flags** : `collectFlags.js` infère `isCollection` en
+  scannant l'usage de `effects.collections`/`requires.collections`
+  (même patron que `isBoolean`/`isNumeric`, purement observé, aucun champ
+  "type" déclaré/persisté — rien au runtime n'a besoin de le savoir,
+  contrairement à `isBoolean` que le Journal a besoin de lire côté jeu
+  shippé). Badge "collection" dans `FlagsPanel.vue`, à côté des badges
+  existants.
+- **Vérifié par un vrai build du jeu compilé** : app de test avec un
+  bouton "Recevoir virement" (effet ajoutant à la fois un flag numérique
+  `solde` et un élément à la collection `historique`, texte complet
+  "Blabla vous a fait un virement de 50"), un bloc `list` en source
+  collection affichant `{item:value}`, et une condition d'affichage
+  `requires.collections` dessus — `quasar build` réel, présence
+  confirmée dans le bundle.
+
 ### Piège IPC à connaître
 
 `story.project.customApps[i]` est un objet réactif Pinia (Proxy) — jamais
@@ -368,8 +434,13 @@ d'envoyer (voir `EditorPage.vue`'s `save()`, cas `'apps'`) — même trick que
 - Pas de branchement/conditions à l'intérieur d'une séquence de steps
   d'interaction (linéaire uniquement) — évoqué, volontairement pas
   construit tant qu'aucun besoin concret ne le justifie.
-- Bloc `list` : une seule source possible (contacts du projet) — pas de
-  générateur/source personnalisée, pas de tri/pagination.
+- Bloc `list` : deux sources possibles (contacts, collection de flag) —
+  pas de générateur/source personnalisée, pas de tri/pagination (ordre =
+  insertion pour une collection).
+- Flags collection : pas de décrément/upsert de valeur numérique par clé
+  (retirer = suppression complète de la clé, pas "en retirer 5") — l'ajout
+  écrase silencieusement si la clé est réutilisée, à l'auteur de laisser
+  la clé vide (auto-générée) pour un historique qui doit s'empiler.
 - Bloc `conversations` : pas de suppression notif/badge quand le thread est
   déjà affiché (voir sa section) ; pas de saisie libre côté joueur (comme
   le natif, uniquement des réponses par `choice`).

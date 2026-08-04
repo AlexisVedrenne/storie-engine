@@ -18,7 +18,9 @@
         {{ t('requiresBuilder.flagsTitle') }}
         <FieldHelp :text="t('requiresBuilder.flagsHelp')" />
       </div>
-      <div v-if="!flagRows.length" class="empty-hint">{{ t('requiresBuilder.noFlagCondition') }}</div>
+      <div v-if="!flagRows.length" class="empty-hint">
+        {{ t('requiresBuilder.noFlagCondition') }}
+      </div>
       <div v-for="(row, i) in flagRows" :key="i" class="row-card">
         <q-btn dense flat round icon="close" size="sm" class="row-remove" @click="removeFlagRow(i)">
           <q-tooltip>{{ t('requiresBuilder.removeCondition') }}</q-tooltip>
@@ -105,10 +107,106 @@
       />
 
       <div class="section-title">
+        {{ t('requiresBuilder.collectionsTitle') }}
+        <FieldHelp :text="t('requiresBuilder.collectionsHelp')" />
+      </div>
+      <div v-if="!collectionRows.length" class="empty-hint">
+        {{ t('requiresBuilder.noCollectionCondition') }}
+      </div>
+      <div v-for="(row, i) in collectionRows" :key="i" class="row-card">
+        <q-btn
+          dense
+          flat
+          round
+          icon="close"
+          size="sm"
+          class="row-remove"
+          @click="removeCollectionRow(i)"
+        >
+          <q-tooltip>{{ t('requiresBuilder.removeCondition') }}</q-tooltip>
+        </q-btn>
+        <div class="row-fields">
+          <FlagNameField v-model="row.flagKey" @update:model-value="sync" />
+          <q-toggle
+            v-model="row.sizeEnabled"
+            :label="t('requiresBuilder.sizeConditionLabel')"
+            @update:model-value="sync"
+          />
+          <template v-if="row.sizeEnabled">
+            <q-select
+              dense
+              outlined
+              class="mode-select"
+              v-model="row.sizeMode"
+              :options="SIZE_MODES"
+              emit-value
+              map-options
+              @update:model-value="sync"
+            />
+            <q-input
+              v-if="row.sizeMode === 'exact'"
+              dense
+              outlined
+              type="number"
+              class="num-input"
+              :label="t('requiresBuilder.valueLabel')"
+              v-model.number="row.sizeExact"
+              @update:model-value="sync"
+            />
+            <q-input
+              v-if="row.sizeMode === 'min' || row.sizeMode === 'range'"
+              dense
+              outlined
+              type="number"
+              class="num-input"
+              label="min"
+              v-model.number="row.sizeMin"
+              @update:model-value="sync"
+            />
+            <q-input
+              v-if="row.sizeMode === 'max' || row.sizeMode === 'range'"
+              dense
+              outlined
+              type="number"
+              class="num-input"
+              label="max"
+              v-model.number="row.sizeMax"
+              @update:model-value="sync"
+            />
+          </template>
+          <q-toggle
+            v-model="row.hasEnabled"
+            :label="t('requiresBuilder.hasConditionLabel')"
+            @update:model-value="sync"
+          />
+          <q-input
+            v-if="row.hasEnabled"
+            dense
+            outlined
+            class="key-input"
+            :label="t('requiresBuilder.itemKeyLabel')"
+            v-model="row.hasKey"
+            @update:model-value="sync"
+          />
+        </div>
+      </div>
+      <q-btn
+        dense
+        flat
+        no-caps
+        icon="add"
+        :label="t('requiresBuilder.addCollectionCondition')"
+        class="btn-ghost"
+        @click="addCollectionRow"
+      />
+
+      <div class="section-title">
         {{ t('requiresBuilder.followingTitle') }}
         <FieldHelp :text="t('requiresBuilder.followingHelp')" />
       </div>
-      <div v-if="!followingRows.length" class="empty-hint">{{ t('requiresBuilder.noFollowingCondition') }}</div>
+      <div v-if="!followingRows.length" class="empty-hint">
+        {{ t('requiresBuilder.noFollowingCondition') }}
+      </div>
       <div v-for="(row, i) in followingRows" :key="i" class="row-card">
         <q-btn
           dense
@@ -148,7 +246,11 @@
               </q-item>
             </template>
           </q-select>
-          <q-toggle v-model="row.expected" :label="t('requiresBuilder.playerFollows')" @update:model-value="sync" />
+          <q-toggle
+            v-model="row.expected"
+            :label="t('requiresBuilder.playerFollows')"
+            @update:model-value="sync"
+          />
         </div>
       </div>
       <q-btn
@@ -173,7 +275,7 @@ import { useEditorI18n } from '@/editor/i18n'
 
 const { t } = useEditorI18n()
 
-// `requires: { flags?: { key: value|bool|{min}|{max}|{min,max} }, following?: { contactId: bool } } | null`
+// `requires: { flags?: { key: value|bool|{min}|{max}|{min,max} }, collections?: { flagKey: { size?, has? } }, following?: { contactId: bool } } | null`
 // See NTR docs/story-engine.md section 5. Edits build a fresh `requires`
 // object on every change and assign it back via v-model — no reactive
 // round-trip watcher needed since nothing re-derives rows after mount.
@@ -183,6 +285,12 @@ const emit = defineEmits(['update:modelValue'])
 // language switches (t() calls inside).
 const FLAG_MODES = computed(() => [
   { label: t('requiresBuilder.modeBool'), value: 'bool' },
+  { label: t('requiresBuilder.modeExact'), value: 'exact' },
+  { label: t('requiresBuilder.modeMin'), value: 'min' },
+  { label: t('requiresBuilder.modeMax'), value: 'max' },
+  { label: t('requiresBuilder.modeRange'), value: 'range' },
+])
+const SIZE_MODES = computed(() => [
   { label: t('requiresBuilder.modeExact'), value: 'exact' },
   { label: t('requiresBuilder.modeMin'), value: 'min' },
   { label: t('requiresBuilder.modeMax'), value: 'max' },
@@ -238,6 +346,47 @@ const flagRows = reactive(
     flagRowFrom(key, expected),
   ),
 )
+
+// { collections: { flagKey: { size?: number|{min,max}, has?: itemKey } } } —
+// `size`/`has` are independent checks on the SAME collection flag, both
+// optional, both shown on one row (not a mode toggle like the flag rows
+// above, since an author might reasonably want both at once — "at least 3
+// items AND contains 'sword'").
+function collectionRowFrom(flagKey, cond) {
+  const row = reactive({
+    flagKey,
+    sizeEnabled: cond.size !== undefined,
+    sizeMode: 'exact',
+    sizeExact: 0,
+    sizeMin: 0,
+    sizeMax: 0,
+    hasEnabled: cond.has !== undefined,
+    hasKey: cond.has || '',
+  })
+  if (typeof cond.size === 'number') {
+    row.sizeMode = 'exact'
+    row.sizeExact = cond.size
+  } else if (cond.size && typeof cond.size === 'object') {
+    if ('min' in cond.size && 'max' in cond.size) {
+      row.sizeMode = 'range'
+      row.sizeMin = cond.size.min
+      row.sizeMax = cond.size.max
+    } else if ('min' in cond.size) {
+      row.sizeMode = 'min'
+      row.sizeMin = cond.size.min
+    } else if ('max' in cond.size) {
+      row.sizeMode = 'max'
+      row.sizeMax = cond.size.max
+    }
+  }
+  return row
+}
+const collectionRows = reactive(
+  Object.entries(props.modelValue?.collections || {}).map(([flagKey, cond]) =>
+    collectionRowFrom(flagKey, cond),
+  ),
+)
+
 const followingRows = reactive(
   Object.entries(props.modelValue?.following || {}).map(([contactId, expected]) =>
     reactive({ contactId, expected }),
@@ -251,13 +400,31 @@ const followingRows = reactive(
 // repeated at each one. Stays revealed once true (including after the user
 // removes their last row mid-edit) so it never collapses out from under
 // them while they're actively working in it.
-const revealed = ref(flagRows.length > 0 || followingRows.length > 0)
+const revealed = ref(flagRows.length > 0 || collectionRows.length > 0 || followingRows.length > 0)
 
 function addFlagRow() {
   flagRows.push(reactive({ key: '', mode: 'bool', boolValue: true, exactValue: 0, min: 0, max: 0 }))
 }
 function removeFlagRow(i) {
   flagRows.splice(i, 1)
+  sync()
+}
+function addCollectionRow() {
+  collectionRows.push(
+    reactive({
+      flagKey: '',
+      sizeEnabled: false,
+      sizeMode: 'exact',
+      sizeExact: 0,
+      sizeMin: 0,
+      sizeMax: 0,
+      hasEnabled: false,
+      hasKey: '',
+    }),
+  )
+}
+function removeCollectionRow(i) {
+  collectionRows.splice(i, 1)
   sync()
 }
 function addFollowingRow() {
@@ -278,19 +445,34 @@ function sync() {
     else if (row.mode === 'max') flags[row.key] = { max: row.max }
     else if (row.mode === 'range') flags[row.key] = { min: row.min, max: row.max }
   }
+  const collections = {}
+  for (const row of collectionRows) {
+    if (!row.flagKey) continue
+    const cond = {}
+    if (row.sizeEnabled) {
+      if (row.sizeMode === 'exact') cond.size = row.sizeExact
+      else if (row.sizeMode === 'min') cond.size = { min: row.sizeMin }
+      else if (row.sizeMode === 'max') cond.size = { max: row.sizeMax }
+      else if (row.sizeMode === 'range') cond.size = { min: row.sizeMin, max: row.sizeMax }
+    }
+    if (row.hasEnabled && row.hasKey) cond.has = row.hasKey
+    if (Object.keys(cond).length) collections[row.flagKey] = cond
+  }
   const following = {}
   for (const row of followingRows) {
     if (!row.contactId) continue
     following[row.contactId] = row.expected
   }
   const hasFlags = Object.keys(flags).length > 0
+  const hasCollections = Object.keys(collections).length > 0
   const hasFollowing = Object.keys(following).length > 0
-  if (!hasFlags && !hasFollowing) {
+  if (!hasFlags && !hasCollections && !hasFollowing) {
     emit('update:modelValue', null)
     return
   }
   emit('update:modelValue', {
     ...(hasFlags ? { flags } : {}),
+    ...(hasCollections ? { collections } : {}),
     ...(hasFollowing ? { following } : {}),
   })
 }

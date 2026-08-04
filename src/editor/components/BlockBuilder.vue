@@ -106,11 +106,13 @@ const phone = usePhoneStore()
 const props = defineProps({
   blocks: { type: Array, required: true },
   screens: { type: Array, default: () => [] },
-  // True when this builder edits a `list` block's per-item template (or is
-  // nested inside one) — forwarded down to BlockPropertiesForm so its
-  // VariablePickerBtn instances also offer the `{item:...}` tokens. See
-  // resolveDynamicText.js.
-  itemScope: { type: Boolean, default: false },
+  // `false`, `'contacts'`, or `'flagCollection'` — set when this builder
+  // edits a `list` block's per-item template (or is nested inside one),
+  // and which of the two item shapes applies (see blockKinds.js's `list`
+  // source) — forwarded down to BlockPropertiesForm so its
+  // VariablePickerBtn instances offer the matching `{item:...}` token set.
+  // See resolveDynamicText.js.
+  itemScope: { type: [Boolean, String], default: false },
 })
 
 const expanded = reactive({})

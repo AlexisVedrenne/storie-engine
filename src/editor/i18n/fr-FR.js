@@ -468,8 +468,12 @@ export default {
     spacingAfterLabel: 'Espace après (optionnel)',
     useItemAvatarLabel: 'Utiliser l’avatar du contact',
     onlyFollowedLabel: 'Seulement les contacts suivis',
+    listSourceContacts: 'Contacts',
+    listSourceCollection: 'Collection (flag)',
     listHelp:
       'Le contenu ci-dessous est répété une fois par contact — utilise le bouton variable pour insérer {item:name} dans un champ texte, ou la case ci-dessus sur un bloc avatar.',
+    listCollectionHelp:
+      'Le contenu ci-dessous est répété une fois par élément de la collection choisie (remplie via les effets d’une entrée timeline, d’un bouton...) — utilise le bouton variable pour insérer {item:key}/{item:value}.',
     conversationsHelp:
       'Un vrai module de conversation (comme Messages/Pixly) — liste de discussions, ouverture d’un fil, réponses par choix. Les messages sont envoyés depuis la timeline. Les groupes viennent de l’onglet Threads du projet (même contacts/groupes que les DM natifs) — rien à configurer ici pour ça.',
     showAvatarLabel: 'Afficher l’avatar du contact',
@@ -496,6 +500,8 @@ export default {
       itemFollowers: 'Nombre d’abonnés',
       itemFollowing: 'Nombre d’abonnements',
       itemColor: 'Couleur (code hex)',
+      itemKey: 'Clé de l’élément',
+      itemValue: 'Valeur de l’élément',
     },
     flagsTitle: 'Flags du projet',
     noFlags: 'Aucun flag dans ce projet pour l’instant.',
@@ -515,6 +521,14 @@ export default {
     trueLabel: 'vrai',
     valueLabel: 'valeur',
     addFlagCondition: 'Ajouter une condition de stat',
+    collectionsTitle: 'Collections',
+    collectionsHelp:
+      'Vérifie une collection (flag qui stocke une liste clé→valeur) — sa taille, et/ou si elle contient une clé précise. Les deux sont indépendantes, cochables ensemble.',
+    noCollectionCondition: 'Aucune condition de collection.',
+    sizeConditionLabel: 'Taille',
+    hasConditionLabel: 'Contient la clé',
+    itemKeyLabel: 'Clé',
+    addCollectionCondition: 'Ajouter une condition de collection',
     followingTitle: 'Abonnements Pixly',
     followingHelp:
       'Vérifie si le joueur suit (ou non) ce personnage sur Pixly au moment où l’histoire atteint cette entrée.',
@@ -536,6 +550,19 @@ export default {
     noFlagChange: 'Aucune stat modifiée.',
     actionLabel: 'Action',
     addFlagChange: 'Ajouter une stat à modifier',
+    collectionsTitle: 'Collections',
+    collectionsHelp:
+      'Une collection est un flag qui stocke une liste clé→valeur (texte ou nombre) au lieu d’un simple nombre — pratique pour un historique, un inventaire... Affichable via un bloc Liste (source "Collection").',
+    noCollectionChange: 'Aucune collection modifiée.',
+    modeAdd: 'ajouter un élément',
+    modeRemove: 'retirer un élément',
+    itemKeyLabel: 'Clé (optionnel)',
+    itemKeyAutoHint:
+      'Vide = clé générée automatiquement (pratique pour un historique qui s’empile)',
+    valueLabel: 'Valeur',
+    valueTypeText: 'Texte',
+    valueTypeNumber: 'Nombre',
+    addCollectionChange: 'Ajouter un changement de collection',
     widgetsTitle: 'Widgets du téléphone',
     weatherLabel: 'Météo',
     weatherCaption: "Change le widget météo de l'écran d'accueil",
@@ -710,6 +737,7 @@ export default {
     deleteUnusedOne: 'Supprimer le flag inutilisé',
     deleteUnusedMany: 'Supprimer les {n} flags inutilisés',
     boolean: 'booléen',
+    collection: 'collection',
     reachable: 'atteignable : {min} → {max}',
     neverModified: 'lu, jamais modifié',
     neverModifiedTooltip:

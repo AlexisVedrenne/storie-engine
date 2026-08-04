@@ -25,22 +25,29 @@ export const FIXED_TOKENS = [
 ]
 
 // Only meaningful inside a `list` block's per-item template (see
-// ListBlock.vue/ListItemScope.vue) — every text-shaped field the current
-// iteration's contact already exposes elsewhere in the phone (profile
-// name/handle, social counters). Listed separately from FIXED_TOKENS so
-// VariablePickerBtn only offers these when authoring inside that context
-// (see its `itemScope` prop). No `{item:avatar}` text token — the avatar
-// BLOCK picks up the current contact's photo via its own "use contact's
-// avatar" toggle instead (see AvatarBlock.vue/BlockPropertiesForm.vue),
-// since AssetField (the avatar image widget) has no free-text entry to
-// type a token into.
-export const ITEM_TOKENS = [
+// ListBlock.vue/ListItemScope.vue) — the shape of `item` depends on the
+// block's own `source` (see blockKinds.js), so there are two separate
+// token sets; VariablePickerBtn shows whichever one matches (see its
+// `itemScope` prop, now `'contacts'|'flagCollection'` instead of a plain
+// bool). No `{item:avatar}` text token for contacts — the avatar BLOCK
+// picks up the current contact's photo via its own "use contact's avatar"
+// toggle instead (see AvatarBlock.vue/BlockPropertiesForm.vue), since
+// AssetField (the avatar image widget) has no free-text entry to type a
+// token into.
+export const CONTACT_ITEM_TOKENS = [
   { id: 'itemName', token: '{item:name}' },
   { id: 'itemHandle', token: '{item:handle}' },
   { id: 'itemPseudo', token: '{item:pseudo}' },
   { id: 'itemFollowers', token: '{item:followers}' },
   { id: 'itemFollowing', token: '{item:following}' },
   { id: 'itemColor', token: '{item:color}' },
+]
+
+// `source: 'flagCollection'` items are plain `{key, value}` pairs (see
+// story.js's collectionItems getter) — no contact fields at all.
+export const COLLECTION_ITEM_TOKENS = [
+  { id: 'itemKey', token: '{item:key}' },
+  { id: 'itemValue', token: '{item:value}' },
 ]
 
 function resolveFixedToken(id, story) {
@@ -79,6 +86,11 @@ function resolveItemToken(field, item, story) {
       return item ? String(story.socialStats(item.id).following) : ''
     case 'color':
       return item?.color ?? ''
+    // `source: 'flagCollection'` items — see COLLECTION_ITEM_TOKENS above.
+    case 'key':
+      return item?.key ?? ''
+    case 'value':
+      return item?.value ?? ''
     default:
       return ''
   }
@@ -92,8 +104,9 @@ function resolveItemToken(field, item, story) {
 export function resolveDynamicText(text, story, item) {
   if (!text) return text
   let out = text.replace(/\{flag:([a-zA-Z0-9_]+)\}/g, (_, key) => String(story.flags?.[key] ?? 0))
-  out = out.replace(/\{item:(name|handle|pseudo|followers|following|color)\}/g, (_, field) =>
-    String(resolveItemToken(field, item, story)),
+  out = out.replace(
+    /\{item:(name|handle|pseudo|followers|following|color|key|value)\}/g,
+    (_, field) => String(resolveItemToken(field, item, story)),
   )
   for (const { id, token } of FIXED_TOKENS) {
     if (out.includes(token)) out = out.split(token).join(resolveFixedToken(id, story))

@@ -88,13 +88,13 @@
         </template>
       </q-input>
       <q-toggle
-        v-if="itemScope"
+        v-if="itemScope === 'contacts'"
         dense
         :label="t('blockProps.useItemAvatarLabel')"
         v-model="block.useItemAvatar"
       />
       <AssetField
-        v-if="!block.useItemAvatar || !itemScope"
+        v-if="!block.useItemAvatar || itemScope !== 'contacts'"
         v-model="block.src"
         :label="t('blockProps.imageLabel')"
       />
@@ -287,9 +287,25 @@
     </template>
 
     <template v-else-if="block.type === 'list'">
-      <q-toggle dense :label="t('blockProps.onlyFollowedLabel')" v-model="block.onlyFollowed" />
-      <p class="tab-help">{{ t('blockProps.listHelp') }}</p>
-      <BlockBuilder :blocks="ensureTemplate()" :screens="screens" :item-scope="true" />
+      <q-btn-toggle
+        dense
+        no-caps
+        :model-value="ensureSource()"
+        :options="[
+          { label: t('blockProps.listSourceContacts'), value: 'contacts' },
+          { label: t('blockProps.listSourceCollection'), value: 'flagCollection' },
+        ]"
+        @update:model-value="(v) => (block.source = v)"
+      />
+      <template v-if="ensureSource() === 'contacts'">
+        <q-toggle dense :label="t('blockProps.onlyFollowedLabel')" v-model="block.onlyFollowed" />
+        <p class="tab-help">{{ t('blockProps.listHelp') }}</p>
+      </template>
+      <template v-else>
+        <FlagNameField v-model="block.flagKey" />
+        <p class="tab-help">{{ t('blockProps.listCollectionHelp') }}</p>
+      </template>
+      <BlockBuilder :blocks="ensureTemplate()" :screens="screens" :item-scope="ensureSource()" />
     </template>
 
     <template v-else-if="block.type === 'conversations'">
@@ -358,6 +374,7 @@ import ColorField from '@/editor/components/ColorField.vue'
 import RequiresBuilder from '@/editor/components/RequiresBuilder.vue'
 import EffectsBuilder from '@/editor/components/EffectsBuilder.vue'
 import VariablePickerBtn from '@/editor/components/VariablePickerBtn.vue'
+import FlagNameField from '@/editor/components/FlagNameField.vue'
 import { insertEmojiAtCaret } from '@/components/shared/emojiInsert'
 // Circular with BlockBuilder.vue (a `card` block recurses into its own
 // nested builder) — safe: Vue components only reference each other at
@@ -401,6 +418,14 @@ function ensureChildren() {
 function ensureTemplate() {
   if (!props.block.template) props.block.template = []
   return props.block.template
+}
+
+// Lazy-inits `source` for a `list` block saved before this field existed —
+// same "usage discovers it" fallback other ensure* helpers here use, keeps
+// old projects working with zero migration.
+function ensureSource() {
+  if (!props.block.source) props.block.source = 'contacts'
+  return props.block.source
 }
 
 function ensureAction() {

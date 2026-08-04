@@ -43,20 +43,65 @@ function noteFlags(container, kind, samples, location) {
     }
     if (location) {
       const locKey = `${location.type}:${location.id}`
-      if (!entry.locations.has(locKey)) entry.locations.set(locKey, { type: location.type, label: location.label, count: 0 })
+      if (!entry.locations.has(locKey))
+        entry.locations.set(locKey, { type: location.type, label: location.label, count: 0 })
       entry.locations.get(locKey).count++
     }
+  }
+}
+
+// A collection flag's key is only ever referenced via `requires.collections`
+// (object keyed by flagKey) or `effects.collections` (array of ops carrying
+// their own `flagKey` field) — never via `container.flags`, so it needs its
+// own note*/walk wiring alongside noteFlags() rather than folding into it.
+// Same `samples` map/shape, just marks `isCollection: true` instead of
+// tallying booleans/numbers.
+function noteCollectionUsage(key, samples, location) {
+  if (!samples.has(key)) {
+    samples.set(key, {
+      count: 0,
+      hasCondition: false,
+      conditionBoolean: false,
+      effectBoolean: false,
+      effectNumbers: [],
+      isCollection: false,
+      locations: new Map(),
+    })
+  }
+  const entry = samples.get(key)
+  entry.count++
+  entry.isCollection = true
+  if (location) {
+    const locKey = `${location.type}:${location.id}`
+    if (!entry.locations.has(locKey))
+      entry.locations.set(locKey, { type: location.type, label: location.label, count: 0 })
+    entry.locations.get(locKey).count++
+  }
+}
+function noteRequiresCollections(requires, samples, location) {
+  for (const key of Object.keys(requires?.collections || {}))
+    noteCollectionUsage(key, samples, location)
+}
+function noteEffectsCollections(effects, samples, location) {
+  for (const op of effects?.collections || []) {
+    if (op.flagKey) noteCollectionUsage(op.flagKey, samples, location)
   }
 }
 
 function walkTimeline(timeline, samples, location) {
   for (const entry of timeline || []) {
     noteFlags(entry.requires, 'requires', samples, location)
-    if (entry.type === 'effect') noteFlags(entry.effects, 'effects', samples, location)
+    noteRequiresCollections(entry.requires, samples, location)
+    if (entry.type === 'effect') {
+      noteFlags(entry.effects, 'effects', samples, location)
+      noteEffectsCollections(entry.effects, samples, location)
+    }
     if (entry.type === 'choice') {
       for (const option of entry.options || []) {
         noteFlags(option.requires, 'requires', samples, location)
+        noteRequiresCollections(option.requires, samples, location)
         noteFlags(option.effects, 'effects', samples, location)
+        noteEffectsCollections(option.effects, samples, location)
         walkTimeline(option.then, samples, location)
       }
     }
@@ -163,16 +208,26 @@ export function collectFlags(project) {
   for (const chapter of project?.chapters || []) {
     const loc = { type: 'chapter', id: chapter.id, label: chapter.title || chapter.id }
     noteFlags(chapter.requires, 'requires', samples, loc) // legacy field, no longer authored, still scanned for old projects
+    noteRequiresCollections(chapter.requires, samples, loc)
     // Edges belong to the chapter they originate FROM — grouped under that
     // same chapter location rather than a separate "edge" kind, since
     // that's where the author would go to find/edit it.
-    for (const link of chapter.next || []) noteFlags(link.requires, 'requires', samples, loc)
+    for (const link of chapter.next || []) {
+      noteFlags(link.requires, 'requires', samples, loc)
+      noteRequiresCollections(link.requires, samples, loc)
+    }
     walkTimeline(chapter.timeline, samples, loc)
   }
   for (const [i, event] of (project?.gameConfig?.events || []).entries()) {
-    const loc = { type: 'event', id: i, label: event.title || triggerDef(event.trigger)?.label || event.trigger || 'Event' }
+    const loc = {
+      type: 'event',
+      id: i,
+      label: event.title || triggerDef(event.trigger)?.label || event.trigger || 'Event',
+    }
     noteFlags(event.requires, 'requires', samples, loc)
+    noteRequiresCollections(event.requires, samples, loc)
     noteFlags(event.effects, 'effects', samples, loc)
+    noteEffectsCollections(event.effects, samples, loc)
     walkTimeline(event.then, samples, loc)
   }
 
@@ -197,13 +252,16 @@ export function collectFlags(project) {
         isUsed: !!s,
         isBoolean: !!s && (s.conditionBoolean || s.effectBoolean),
         isNumeric,
+        isCollection: !!s?.isCollection,
         min: range?.min ?? null,
         max: range?.max ?? null,
         // Checked by a condition somewhere but no effect anywhere ever sets
         // it — the exact shape of "I wrote `>= 3` on an edge and forgot to
         // ever actually add to the flag".
         neverModified: !!s && s.hasCondition && !hasEffect,
-        locations: s ? [...s.locations.values()].sort((a, b) => a.label.localeCompare(b.label)) : [],
+        locations: s
+          ? [...s.locations.values()].sort((a, b) => a.label.localeCompare(b.label))
+          : [],
       }
     })
     .sort((a, b) => a.key.localeCompare(b.key))

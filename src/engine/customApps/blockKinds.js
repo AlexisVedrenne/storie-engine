@@ -58,13 +58,19 @@ export function defaultBlock(type) {
     case 'tabs':
       return { type, tabs: [{ label: '', screenId: '' }] }
     case 'list':
-      // v1 has exactly one source (project contacts) — no `source` picker
-      // yet, matching "small bounded vocabulary" until a second source is
-      // actually needed. `template` is a block subtree (same shape as
-      // card/layout's own `blocks[]`) authored ONCE and repeated per
-      // contact; its text fields can use the `{item:...}` tokens (see
-      // resolveDynamicText.js) to read the current contact.
-      return { type, onlyFollowed: false, template: [] }
+      // `source: 'contacts'` (original v1, the only one for a while — see
+      // git history for why a picker wasn't added until a second source
+      // was actually needed) iterates project.contacts, `onlyFollowed`
+      // filters to story.isFollowing(). `source: 'flagCollection'`
+      // iterates a collection flag's key->value map (story.flagCollections,
+      // `flagKey` picks which one) — a growing history/log/inventory an
+      // author builds via `effects.collections` (see EffectsBuilder.vue),
+      // not fixed project data. `template` is a block subtree (same shape
+      // as card/layout's own `blocks[]`) authored ONCE and repeated per
+      // item; its text fields can use the `{item:...}` tokens (see
+      // resolveDynamicText.js — CONTACT_ITEM_TOKENS or
+      // COLLECTION_ITEM_TOKENS depending on `source`).
+      return { type, source: 'contacts', onlyFollowed: false, flagKey: '', template: [] }
     case 'conversations':
       // The "conversation module" — real interactive chat, not just visual
       // (see docs — this is the first custom-app block that reads/writes

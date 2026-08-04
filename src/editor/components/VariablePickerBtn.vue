@@ -19,7 +19,7 @@
           <q-separator class="variable-picker__sep" />
           <div class="variable-picker__section-label">{{ t('variablePicker.itemTitle') }}</div>
           <button
-            v-for="tok in ITEM_TOKENS"
+            v-for="tok in itemTokens"
             :key="tok.id"
             type="button"
             class="variable-picker__row"
@@ -57,7 +57,11 @@
 import { computed, ref } from 'vue'
 import { useStoryStore } from '@/engine/stores/story'
 import { collectFlags } from '@/project/collectFlags'
-import { FIXED_TOKENS, ITEM_TOKENS } from '@/engine/customApps/resolveDynamicText'
+import {
+  FIXED_TOKENS,
+  CONTACT_ITEM_TOKENS,
+  COLLECTION_ITEM_TOKENS,
+} from '@/engine/customApps/resolveDynamicText'
 import { useEditorI18n } from '@/editor/i18n'
 
 const { t } = useEditorI18n()
@@ -65,10 +69,15 @@ const story = useStoryStore()
 const emit = defineEmits(['pick'])
 const menuRef = ref(null)
 
-// Only true when this field is inside a `list` block's per-item template
-// (forwarded from BlockBuilder.vue/BlockPropertiesForm.vue) — the
-// `{item:...}` tokens are meaningless anywhere else, so hidden by default.
-defineProps({ itemScope: { type: Boolean, default: false } })
+// `false`, `'contacts'`, or `'flagCollection'` — set when this field is
+// inside a `list` block's per-item template (forwarded from
+// BlockBuilder.vue/BlockPropertiesForm.vue), and which item shape applies.
+// The `{item:...}` tokens are meaningless anywhere else, so hidden by
+// default (false).
+const props = defineProps({ itemScope: { type: [Boolean, String], default: false } })
+const itemTokens = computed(() =>
+  props.itemScope === 'flagCollection' ? COLLECTION_ITEM_TOKENS : CONTACT_ITEM_TOKENS,
+)
 
 // Same project-wide flag catalog already shown in the Flags dialog
 // (FlagsPanel.vue) — flags are authored elsewhere (chapter/event

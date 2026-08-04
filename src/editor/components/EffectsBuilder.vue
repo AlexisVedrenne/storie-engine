@@ -46,6 +46,90 @@
       @click="addFlagRow"
     />
 
+    <div class="section-title top-gap">
+      {{ t('effectsBuilder.collectionsTitle') }}
+      <FieldHelp :text="t('effectsBuilder.collectionsHelp')" />
+    </div>
+    <div v-if="!collectionRows.length" class="empty-hint">
+      {{ t('effectsBuilder.noCollectionChange') }}
+    </div>
+    <div v-for="(row, i) in collectionRows" :key="i" class="row-card">
+      <q-btn
+        dense
+        flat
+        round
+        icon="close"
+        size="sm"
+        class="row-remove"
+        @click="removeCollectionRow(i)"
+      >
+        <q-tooltip>{{ t('common.delete') }}</q-tooltip>
+      </q-btn>
+      <div class="row-fields">
+        <FlagNameField v-model="row.flagKey" @update:model-value="sync" />
+        <q-select
+          dense
+          outlined
+          class="mode-select"
+          :label="t('effectsBuilder.actionLabel')"
+          v-model="row.mode"
+          :options="COLLECTION_MODES"
+          emit-value
+          map-options
+          @update:model-value="sync"
+        />
+        <q-input
+          dense
+          outlined
+          class="key-input"
+          :label="t('effectsBuilder.itemKeyLabel')"
+          :hint="row.mode === 'add' ? t('effectsBuilder.itemKeyAutoHint') : ''"
+          v-model="row.itemKey"
+          @update:model-value="sync"
+        />
+        <template v-if="row.mode === 'add'">
+          <q-select
+            dense
+            outlined
+            class="mode-select"
+            v-model="row.valueType"
+            :options="VALUE_TYPES"
+            emit-value
+            map-options
+            @update:model-value="sync"
+          />
+          <q-input
+            v-if="row.valueType === 'number'"
+            dense
+            outlined
+            type="number"
+            class="num-input"
+            :label="t('effectsBuilder.valueLabel')"
+            v-model.number="row.value"
+            @update:model-value="sync"
+          />
+          <q-input
+            v-else
+            dense
+            outlined
+            class="key-input"
+            :label="t('effectsBuilder.valueLabel')"
+            v-model="row.value"
+            @update:model-value="sync"
+          />
+        </template>
+      </div>
+    </div>
+    <q-btn
+      dense
+      flat
+      no-caps
+      icon="add"
+      :label="t('effectsBuilder.addCollectionChange')"
+      class="btn-ghost"
+      @click="addCollectionRow"
+    />
+
     <div class="section-title top-gap">{{ t('effectsBuilder.widgetsTitle') }}</div>
 
     <q-expansion-item
@@ -56,7 +140,13 @@
       @update:model-value="sync"
     >
       <div class="grid">
-        <q-input dense outlined :label="t('effectsBuilder.cityLabel')" v-model="weather.city" @update:model-value="sync" />
+        <q-input
+          dense
+          outlined
+          :label="t('effectsBuilder.cityLabel')"
+          v-model="weather.city"
+          @update:model-value="sync"
+        />
         <q-input
           dense
           outlined
@@ -261,7 +351,15 @@
         />
       </div>
     </div>
-    <q-btn dense flat no-caps icon="add" :label="t('common.add')" class="btn-ghost" @click="addSocialRow" />
+    <q-btn
+      dense
+      flat
+      no-caps
+      icon="add"
+      :label="t('common.add')"
+      class="btn-ghost"
+      @click="addSocialRow"
+    />
 
     <div class="section-title top-gap">
       {{ t('effectsBuilder.newFollowersTitle') }}
@@ -322,6 +420,14 @@ const CLOCK_MODES = computed(() => [
   { label: t('effectsBuilder.clockSet'), value: 'set' },
   { label: t('effectsBuilder.clockClear'), value: 'clear' },
 ])
+const COLLECTION_MODES = computed(() => [
+  { label: t('effectsBuilder.modeAdd'), value: 'add' },
+  { label: t('effectsBuilder.modeRemove'), value: 'remove' },
+])
+const VALUE_TYPES = computed(() => [
+  { label: t('effectsBuilder.valueTypeText'), value: 'text' },
+  { label: t('effectsBuilder.valueTypeNumber'), value: 'number' },
+])
 
 const { contactOptions, contactColor, contactLabel } = useContactOptions()
 const initial = props.modelValue || {}
@@ -333,6 +439,21 @@ const flagRows = reactive(
         ? { key, mode: v ? 'true' : 'false', delta: 0 }
         : { key, mode: 'delta', delta: v },
     ),
+  ),
+)
+
+// `effects.collections` is a LIST of ops (see story.js's applyEffects), not
+// an object keyed by flag — a single effect can touch the same collection
+// more than once (two separate ledger entries in one `effect` block).
+const collectionRows = reactive(
+  (initial.collections || []).map((op) =>
+    reactive({
+      flagKey: op.flagKey || '',
+      mode: op.mode || 'add',
+      itemKey: op.itemKey || '',
+      valueType: typeof op.value === 'number' ? 'number' : 'text',
+      value: op.value ?? '',
+    }),
   ),
 )
 
@@ -378,6 +499,15 @@ function removeFlagRow(i) {
   flagRows.splice(i, 1)
   sync()
 }
+function addCollectionRow() {
+  collectionRows.push(
+    reactive({ flagKey: '', mode: 'add', itemKey: '', valueType: 'text', value: '' }),
+  )
+}
+function removeCollectionRow(i) {
+  collectionRows.splice(i, 1)
+  sync()
+}
 function addSocialRow() {
   socialRows.push(
     reactive({ contactId: contactOptions.value[0]?.value || '', followers: 0, following: 0 }),
@@ -399,6 +529,23 @@ function sync() {
     else flags[row.key] = row.delta
   }
   if (Object.keys(flags).length) effects.flags = flags
+
+  const collections = []
+  for (const row of collectionRows) {
+    if (!row.flagKey) continue
+    if (row.mode === 'remove') {
+      if (!row.itemKey) continue // nothing to target without a key
+      collections.push({ flagKey: row.flagKey, mode: 'remove', itemKey: row.itemKey })
+    } else {
+      collections.push({
+        flagKey: row.flagKey,
+        mode: 'add',
+        itemKey: row.itemKey || undefined,
+        value: row.valueType === 'number' ? Number(row.value) || 0 : row.value,
+      })
+    }
+  }
+  if (collections.length) effects.collections = collections
 
   if (sections.weather) {
     const w = {}

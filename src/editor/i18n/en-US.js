@@ -457,8 +457,12 @@ export default {
     spacingAfterLabel: 'Space after (optional)',
     useItemAvatarLabel: "Use the contact's avatar",
     onlyFollowedLabel: 'Only followed contacts',
+    listSourceContacts: 'Contacts',
+    listSourceCollection: 'Collection (flag)',
     listHelp:
       'The content below repeats once per contact — use the variable button to insert {item:name} in a text field, or the checkbox above on an avatar block.',
+    listCollectionHelp:
+      'The content below repeats once per item in the chosen collection (filled via a timeline entry/button effect...) — use the variable button to insert {item:key}/{item:value}.',
     conversationsHelp:
       "A real conversation module (like Messages/Pixly) — thread list, opening a thread, choice-driven replies. Messages are sent from the timeline. Groups come from the project's Threads tab (same contacts/groups as native DM) — nothing to configure here for that.",
     showAvatarLabel: "Show the contact's avatar",
@@ -485,6 +489,8 @@ export default {
       itemFollowers: 'Follower count',
       itemFollowing: 'Following count',
       itemColor: 'Color (hex code)',
+      itemKey: 'Item key',
+      itemValue: 'Item value',
     },
     flagsTitle: 'Project flags',
     noFlags: 'No flags in this project yet.',
@@ -504,6 +510,14 @@ export default {
     trueLabel: 'true',
     valueLabel: 'value',
     addFlagCondition: 'Add a stat condition',
+    collectionsTitle: 'Collections',
+    collectionsHelp:
+      'Checks a collection (a flag storing a key→value list) — its size, and/or whether it contains a specific key. Both are independent, checkable together.',
+    noCollectionCondition: 'No collection condition.',
+    sizeConditionLabel: 'Size',
+    hasConditionLabel: 'Contains key',
+    itemKeyLabel: 'Key',
+    addCollectionCondition: 'Add a collection condition',
     followingTitle: 'Pixly follows',
     followingHelp:
       'Checks whether the player follows (or not) this character on Pixly by the time the story reaches this entry.',
@@ -525,6 +539,18 @@ export default {
     noFlagChange: 'No stat changed.',
     actionLabel: 'Action',
     addFlagChange: 'Add a stat to change',
+    collectionsTitle: 'Collections',
+    collectionsHelp:
+      'A collection is a flag storing a key→value list (text or number) instead of a plain number — handy for a history log, an inventory... Displayable via a List block (source "Collection").',
+    noCollectionChange: 'No collection changed.',
+    modeAdd: 'add an item',
+    modeRemove: 'remove an item',
+    itemKeyLabel: 'Key (optional)',
+    itemKeyAutoHint: 'Empty = auto-generated key (handy for a history log that keeps stacking up)',
+    valueLabel: 'Value',
+    valueTypeText: 'Text',
+    valueTypeNumber: 'Number',
+    addCollectionChange: 'Add a collection change',
     widgetsTitle: 'Phone widgets',
     weatherLabel: 'Weather',
     weatherCaption: "Changes the home screen's weather widget",
@@ -696,6 +722,7 @@ export default {
     deleteUnusedOne: 'Delete the unused flag',
     deleteUnusedMany: 'Delete {n} unused flags',
     boolean: 'boolean',
+    collection: 'collection',
     reachable: 'reachable: {min} → {max}',
     neverModified: 'read, never set',
     neverModifiedTooltip:

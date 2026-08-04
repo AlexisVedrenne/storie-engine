@@ -112,6 +112,17 @@ function defaultState() {
     soundEnabled: true, // Réglages > Sons et vibrations toggle
     soundVolume: 70, // 0-100, same row's volume slider
     flags: {},
+    // A "collection" flag — same authoring concept as a regular flag
+    // (created/labeled in the Flags panel, referenced by key), but holding
+    // a key->value map instead of a single number, since story.flags[key]
+    // is assumed to be numeric EVERYWHERE it's read (requires/effects/
+    // {flag:x} tokens/range computation) — mixing shapes into that one
+    // bucket would silently break all of those. `story.flagCollections[key]
+    // ] = { itemKey: string|number }` — add sets a key (auto-generated if
+    // the author leaves it blank, so a growing history/log never collides
+    // on itself), remove deletes one. See applyEffects()'s `effects.
+    // collections` and checkConditions()'s `requires.collections` below.
+    flagCollections: {},
     currentChapterId: null,
     timelineIndex: 0,
     // Ordered, deduped chapter ids reached this playthrough (first-visit
@@ -236,6 +247,11 @@ export const useStoryStore = defineStore('story', {
 
   getters: {
     contactMessages: (state) => (contactId) => state.messages[contactId] || [],
+    // Flattened for a `list` block's `source: 'flagCollection'` (see
+    // ListBlock.vue) — plain insertion order (JS objects with string keys
+    // always iterate in insertion order), oldest item first.
+    collectionItems: (state) => (flagKey) =>
+      Object.entries(state.flagCollections[flagKey] || {}).map(([key, value]) => ({ key, value })),
     totalUnread: (state) => Object.values(state.unreadCounts).reduce((a, b) => a + b, 0),
     currentChapter: (state) =>
       (state.project?.chapters ?? []).find((c) => c.id === state.currentChapterId) || null,
@@ -717,6 +733,30 @@ export const useStoryStore = defineStore('story', {
           ([contactId, expected]) => this.isFollowing(contactId) === expected,
         )
         if (!followingOk) return false
+      }
+
+      // { collections: { flagKey: { size?: number|{min,max}, has?: itemKey } } }
+      // — checks against a collection FLAG's key->value map (see
+      // flagCollections in state, applyEffects()'s `effects.collections`
+      // for how items get in/out). `size` and `has` are independent checks,
+      // both optional, both must pass if present — same "every condition
+      // present must hold" contract as `flags`/`following` above.
+      if (requires.collections) {
+        const collectionsOk = Object.entries(requires.collections).every(([flagKey, cond]) => {
+          const map = this.flagCollections[flagKey] || {}
+          if (cond.size !== undefined) {
+            const size = Object.keys(map).length
+            if (typeof cond.size === 'number') {
+              if (size !== cond.size) return false
+            } else {
+              if ('min' in cond.size && size < cond.size.min) return false
+              if ('max' in cond.size && size > cond.size.max) return false
+            }
+          }
+          if (cond.has !== undefined && !(cond.has in map)) return false
+          return true
+        })
+        if (!collectionsOk) return false
       }
 
       return true
@@ -1580,6 +1620,31 @@ export const useStoryStore = defineStore('story', {
             this.flags[key] = delta ? 1 : 0
           } else {
             this.flags[key] = (this.flags[key] || 0) + delta
+          }
+        }
+      }
+
+      // effects.collections = [{ flagKey, mode: 'add'|'remove', itemKey,
+      // value }] — a list of ops (not an object keyed by flagKey) since one
+      // effect can touch the same collection more than once (e.g. two
+      // separate ledger entries in one `effect` block). `itemKey` left
+      // blank on 'add' auto-generates one (same id-gen shape TimelineEditor
+      // already uses for group ids) — the common case for a growing
+      // history/log, where the author never needs to think about keys at
+      // all. 'remove' with no matching itemKey is a silent no-op, same
+      // "nothing to do" spirit as every other effect here.
+      if (effects.collections) {
+        for (const op of effects.collections) {
+          if (!op.flagKey) continue
+          if (!this.flagCollections[op.flagKey]) this.flagCollections[op.flagKey] = {}
+          const map = this.flagCollections[op.flagKey]
+          if (op.mode === 'remove') {
+            if (op.itemKey) delete map[op.itemKey]
+          } else {
+            const key =
+              op.itemKey ||
+              `item-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`
+            map[key] = op.value
           }
         }
       }
