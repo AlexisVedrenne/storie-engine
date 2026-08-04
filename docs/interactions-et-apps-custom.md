@@ -28,8 +28,8 @@ input hors-cible est ignoré, seul le dépassement du délai fait échouer
 l'interaction entière.
 
 Zones — `src/engine/interactions/zones.js` : grille 3×3 + `'anywhere'`,
-partagée entre le picker éditeur (`ZonePicker.vue`) et le runtime (position
-+ hit-testing).
+partagée entre le picker éditeur (`ZonePicker.vue`) et le runtime (position +
+hit-testing).
 
 ### Runtime — `src/components/phone/interactions/InteractionPlayer.vue`
 
@@ -57,8 +57,8 @@ option de `choice`).
 ### Étendre
 
 Ajouter un nouveau kind de step = une entrée dans `STEP_KINDS`
-(`stepKinds.js`) + son cas dans `InteractionPlayer.vue`'s pointer handlers
-+ ses champs dans `InteractionStepsEditor.vue`. Pas de registry à toucher
+(`stepKinds.js`) + son cas dans `InteractionPlayer.vue`'s pointer handlers +
+ses champs dans `InteractionStepsEditor.vue`. Pas de registry à toucher
 ailleurs.
 
 ## 2. Apps custom — créateur d'applications no-code
@@ -253,6 +253,91 @@ de suivi que le Fil social), pas de source générique ni de pagination/tri.
   (`useItemAvatar`, `onlyFollowed`, `customAppListItem`, le contenu de
   l'app de test) en grepant le JS buildé.
 
+### Bloc "Conversation" — premier module vraiment interactif
+
+Jusqu'ici tous les blocs sont du rendu pur (donnée authored → affichage),
+zéro écriture d'état de jeu. Le bloc `conversations` est le premier à
+casser cette règle : c'est un vrai module de chat (liste de discussions +
+fil ouvert + réponses par choix), pas juste un widget visuel. Direction
+retenue après discussion avec l'utilisateur : pas de système de "modules"
+générique/pluggable — **un catalogue fixe de modules codés en dur, comme
+les blocs eux-mêmes**, ce bloc `conversations` en étant le premier
+exemplaire concret. Réutilise entièrement la mécanique DM Pixly native
+(`story.js`, `igThreads`/`pushDm`/`activeChoice.thread`/`typingDm`) plutôt
+que de réinventer un système de conversation — les DM supportent déjà les
+groupes (1:1 + groupes), ce que le système SMS natif ne fait pas.
+
+- **Données** : `story.appThreads[appId][threadId]`/`appUnread[appId][threadId]`
+  — miroir exact de `igThreads`/`igUnread`, juste re-clé par app pour
+  qu'une conversation d'app custom ne partage jamais son fil avec les SMS/DM
+  natifs ni avec une AUTRE app custom. **Seule la MESSAGERIE (historique)
+  est re-clée par app — les DÉFINITIONS de thread restent le
+  `project.threads` natif**, réutilisé tel quel via `story.getThread()`
+  (même fallback 1:1 implicite que le DM natif). Premier jet avait réinventé
+  une mini-gestion de groupes par bloc (`block.threads` + un
+  `collectAppThreads.js` pour les retrouver) — retour utilisateur : ré-écrit
+  une roue qui existait déjà (l'onglet Threads du projet). Supprimé ;
+  `ConversationsBlock.vue`/`AppDmEntryForm.vue`/`ChoiceEntryForm.vue`
+  utilisent directement `story.getThread()`/`useContactOptions().threadOptions`
+  — les mêmes qu'utilise déjà `DmEntryForm.vue` pour le DM natif.
+- **Entrée timeline `appDm`** : même forme que `dm` (app + thread + from +
+  texte + image), même délai de frappe (`scheduleAppDm`/`typingAppDm`).
+  `choice` gagne un champ optionnel `app` (mode dans `ChoiceEntryForm.vue`,
+  à côté de SMS/DM Pixly) pour scoper une réponse à choix à un thread d'app
+  plutôt qu'au natif — `makeChoice()` teste `app` en premier avant
+  `thread`/`contact`.
+- **Nommage réel, pas "App custom" générique** (retour utilisateur après
+  coup) : le menu "ajouter une entrée" de `TimelineEditor.vue` propose UNE
+  option par app custom du projet, avec le vrai nom de l'app (valeur
+  composite `appDm::<appId>`, décodée par `defaultEntry()`/`iconFor()`/
+  `helpFor()` — pas de champ "quelle app ?" séparé à remplir après coup).
+  Même logique pour `ChoiceEntryForm.vue` : le bouton-toggle SMS/DM
+  Pixly/… propose un bouton par app custom (nom réel, valeur `app:<appId>`)
+  au lieu d'un bouton générique "App custom" + un sélecteur d'app séparé.
+  Si un 2ᵉ type d'entrée scopé par app existe un jour, le regrouper sous
+  la même app plutôt que d'aplatir app×type.
+- **Runtime** — `ConversationsBlock.vue` : liste de threads ↔ thread ouvert,
+  bascule **locale au bloc** (`ref` simple, pas `phone.activeConversation`/
+  `activeDmThread`) — demande explicite de l'utilisateur ("reste dans
+  l'écran de l'app"), pas une prise de contrôle plein écran comme le natif.
+  Markup/bulles/indicateur de frappe/choice-box copiés de
+  `DmThreadScreen.vue`/`DmListScreen.vue` (mêmes règles groupe vs 1:1).
+  Deux réglages d'affichage authored sur le bloc : `showAvatar` (bool) et
+  `nameField` (`'name'`|`'pseudo'`).
+- **Simplification v1 assumée avec l'utilisateur** : `pushAppMessage()`
+  n'a PAS l'équivalent de `isViewingDmThread()` — pas de suppression
+  notif/badge quand le joueur regarde déjà le thread, puisque la navigation
+  est locale au bloc et le moteur n'a aucun signal phone-level à tester.
+  Notif/badge incrémentés à chaque message, même thread déjà ouvert.
+- **i18n** : nom de groupe authored passe par `story.translateStory(name,
+  'common')` (même bucket qu'un `project.threads` natif) —
+  `extractTranslatableStrings.js`/`validateProject.js` marchent l'arbre de
+  chaque app (`collectAppThreads`) pour l'extraction de traduction et la
+  validation de références (`kind: 'app'`/`kind: 'appThread'`, nouveaux à
+  côté de `'contact'`/`'thread'`). Deux nouvelles clés runtime
+  (`customApps.conversations.empty`/`.privateNotice`) ajoutées aux 5
+  locales de `src/i18n/` (arbre séparé de `src/editor/i18n/`, pour le texte
+  affiché AU JOUEUR, pas à l'auteur).
+- **Vérifié par un vrai build du jeu compilé**, comme le bloc `list` :
+  app de test avec un bloc `conversations` (thread de groupe + entrées
+  `appDm`/`choice` scopées), `quasar build` réel — succès, présence
+  confirmée dans le bundle (`appThreads`, `pushAppMessage`, `typingAppDm`,
+  le nom du groupe de test, la classe CSS du bloc, la clé i18n runtime).
+
+**Premier vrai bug trouvé par un clic utilisateur réel** (pas juste
+lint/build) sur le bloc `list` juste avant celui-ci : glisser-déposer depuis
+la palette d'un bloc conteneur imbriqué ne fonctionnait pas — un
+`dragstart` natif bulle, et la ligne draggable du conteneur parent
+réinterceptait l'événement avant `performDrop`. Corrigé dans
+`BlockBuilder.vue` (`stopPropagation()` manquant sur
+`onPaletteDragStart`/`onBlockDragStart`/`performDrop`/`onRootDragOver`,
+déjà présent sur le `dragover` par ligne). Diagnostiqué en direct avec
+l'utilisateur via un `console.log` temporaire dans `performDrop`, pas
+deviné à l'aveugle.
+
+**Reporté** : action de jeu générique sur un bloc `button` — toujours pas
+scopé, prochain module candidat évoqué par l'utilisateur.
+
 ### Piège IPC à connaître
 
 `story.project.customApps[i]` est un objet réactif Pinia (Proxy) — jamais
@@ -271,6 +356,11 @@ d'envoyer (voir `EditorPage.vue`'s `save()`, cas `'apps'`) — même trick que
   construit tant qu'aucun besoin concret ne le justifie.
 - Bloc `list` : une seule source possible (contacts du projet) — pas de
   générateur/source personnalisée, pas de tri/pagination.
-- Zéro test GUI réel sur les deux systèmes à date de cette doc (le bloc
-  `list` a eu un vrai build du jeu compilé en plus du lint+build éditeur —
-  voir sa section — mais toujours aucun clic réel dans l'éditeur).
+- Bloc `conversations` : pas de suppression notif/badge quand le thread est
+  déjà affiché (voir sa section) ; pas de saisie libre côté joueur (comme
+  le natif, uniquement des réponses par `choice`).
+- Zéro test GUI réel sur les deux systèmes à date de cette doc, À PART le
+  glisser-déposer du bloc `list` (voir le bug trouvé et corrigé dans la
+  section `conversations`) — premier et seul clic réel en éditeur à ce
+  jour. Le bloc `list` et le bloc `conversations` ont chacun eu un vrai
+  build du jeu compilé en plus du lint+build éditeur.

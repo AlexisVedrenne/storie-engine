@@ -140,6 +140,19 @@ function defaultState() {
     igThreads: {}, // threadId -> [{ id, from, text?, image?, ts }]  (Instagram-style DMs)
     igUnread: {}, // threadId -> number
 
+    // Per-custom-app-scoped twin of igThreads/igUnread above — the
+    // `conversations` custom-app block (src/components/phone/customApps/
+    // ConversationsBlock.vue) reads/writes these instead, so a custom app's
+    // own in-fiction chat never shares threads with native Messages/DM or
+    // with another custom app's chat. Same 1:1-or-group shape as the native
+    // DM system (a 1:1 thread id is just the contact id, no definition
+    // needed; a GROUP thread's id/name/participants are authored on the
+    // `conversations` block itself — block.threads — since there's no
+    // per-app equivalent of threads.js). See the 'appDm' entry type /
+    // pushAppMessage() below.
+    appThreads: {}, // appId -> threadId -> [{ id, from, text?, image?, ts }]
+    appUnread: {}, // appId -> threadId -> number
+
     activeChoice: null, // { id, contact, prompt, options } blocking the timeline
     timelineResume: null, // fn to call once the current blocking choice/call is fully resolved —
     // set right before activeChoice/pendingCall; not persisted, same as those (see makeChoice/declineCall/endCall)
@@ -165,6 +178,7 @@ function defaultState() {
     notifications: [], // transient home-screen banners
     typingContact: null, // contactId currently shown as "typing..." in SMS — transient, not saved
     typingDm: null, // { thread, contact } currently shown as "typing..." in Pixly DM — transient, not saved
+    typingAppDm: null, // { app, thread, contact } currently shown as "typing..." in a custom app's conversation block — transient, not saved
     timeSkipFading: false, // true while the black veil is covering a `timeskip` cut — transient, not saved
     screenEffect: null, // { kind, id } while a `vfx` entry's overlay is showing on the phone screen — transient, not saved; see triggerScreenEffect
 
@@ -212,6 +226,7 @@ const NON_PERSISTED_KEYS = new Set([
   'notifications',
   'typingContact',
   'typingDm',
+  'typingAppDm',
   'timeSkipFading',
   'screenEffect',
 ])
@@ -398,6 +413,29 @@ export const useStoryStore = defineStore('story', {
         .sort((a, b) => (a.ts < b.ts ? 1 : -1)),
 
     totalDmUnread: (state) => Object.values(state.igUnread).reduce((a, b) => a + b, 0),
+
+    // Per-app twin of dmThreadsList — deliberately returns only id/preview/
+    // unread/ts, NOT name/group/participants: those come from block.threads
+    // (authored on the `conversations` block itself, see blockKinds.js),
+    // which this store has no access to. ConversationsBlock.vue enriches
+    // each row with its own block's thread defs (or the implicit 1:1
+    // fallback) after reading this.
+    appThreadsList: (state) => (appId) =>
+      Object.keys(state.appThreads[appId] || {})
+        .filter((id) => state.appThreads[appId][id].length)
+        .map((id) => {
+          const msgs = state.appThreads[appId][id]
+          const last = msgs[msgs.length - 1]
+          return {
+            id,
+            preview: last ? last.text || '📷 Photo' : '',
+            unread: state.appUnread[appId]?.[id] || 0,
+            ts: last ? last.ts : '',
+          }
+        })
+        .sort((a, b) => (a.ts < b.ts ? 1 : -1)),
+
+    appThreadMessages: (state) => (appId, threadId) => state.appThreads[appId]?.[threadId] || [],
 
     // follower/following count for a contact's Social profile: the base
     // value from the project's contacts (or a stable fake one if that
@@ -702,8 +740,14 @@ export const useStoryStore = defineStore('story', {
         // the chapter's data untouched — the author might re-enable the app
         // later, or is fixing content elsewhere first — but must not play
         // out at runtime for an app that no longer exists on the phone.
-        // Same silent-skip treatment as a failed `requires`.
-        const entryApp = ENTRY_TYPE_APP[entry.type]
+        // Same silent-skip treatment as a failed `requires`. `appDm`/an
+        // app-scoped `choice` target a DYNAMIC per-entry app (entry.app),
+        // not a fixed one, so they're not in the static ENTRY_TYPE_APP map —
+        // resolved here instead.
+        const entryApp =
+          entry.type === 'appDm' || (entry.type === 'choice' && entry.app)
+            ? entry.app
+            : ENTRY_TYPE_APP[entry.type]
         if (entryApp && !this.enabledAppIds.includes(entryApp)) {
           this.timelineIndex++
           continue
@@ -722,6 +766,14 @@ export const useStoryStore = defineStore('story', {
         }
         if (entry.type === 'dm') {
           this.scheduleDm(entry, chapter, () => {
+            this.timelineIndex++
+            this.save()
+            this.advance()
+          })
+          return
+        }
+        if (entry.type === 'appDm') {
+          this.scheduleAppDm(entry, chapter, () => {
             this.timelineIndex++
             this.save()
             this.advance()
@@ -756,7 +808,11 @@ export const useStoryStore = defineStore('story', {
         // below: processEntry() still shows it (activeInteraction), the
         // timeline just doesn't wait for finishInteraction() before moving
         // on, same "comme les events" behavior requested for this mode.
-        if (entry.type === 'choice' || entry.type === 'call' || (entry.type === 'interaction' && entry.blocking !== false)) {
+        if (
+          entry.type === 'choice' ||
+          entry.type === 'call' ||
+          (entry.type === 'interaction' && entry.blocking !== false)
+        ) {
           this.presentBlockingEntry(entry, chapter, () => {
             this.timelineIndex++
             this.advance()
@@ -813,6 +869,21 @@ export const useStoryStore = defineStore('story', {
       this.typingDm = { thread: entry.thread, contact: entry.from }
       setTimeout(() => {
         this.typingDm = null
+        this.processEntry(entry, chapter)
+        onDone()
+      }, typingDelay(entry.text))
+    },
+
+    // same beat, for a custom app's conversation module — see scheduleDm.
+    scheduleAppDm(entry, chapter, onDone) {
+      if (entry.from === 'me') {
+        this.processEntry(entry, chapter)
+        onDone()
+        return
+      }
+      this.typingAppDm = { app: entry.app, thread: entry.thread, contact: entry.from }
+      setTimeout(() => {
+        this.typingAppDm = null
         this.processEntry(entry, chapter)
         onDone()
       }, typingDelay(entry.text))
@@ -895,8 +966,12 @@ export const useStoryStore = defineStore('story', {
       }
       // Same disabled-app skip as advance() above — a `then` entry is just
       // as much "already-authored content for an app that's gone" as a
-      // top-level one.
-      const entryApp = ENTRY_TYPE_APP[entry.type]
+      // top-level one. See advance()'s own comment on why appDm/app-scoped
+      // choice aren't in the static ENTRY_TYPE_APP map.
+      const entryApp =
+        entry.type === 'appDm' || (entry.type === 'choice' && entry.app)
+          ? entry.app
+          : ENTRY_TYPE_APP[entry.type]
       if (entryApp && !this.enabledAppIds.includes(entryApp)) {
         this.runThen(list, i + 1, chapter, resume)
         return
@@ -909,13 +984,21 @@ export const useStoryStore = defineStore('story', {
         this.scheduleDm(entry, chapter, () => this.runThen(list, i + 1, chapter, resume))
         return
       }
+      if (entry.type === 'appDm') {
+        this.scheduleAppDm(entry, chapter, () => this.runThen(list, i + 1, chapter, resume))
+        return
+      }
       // a nested choice/call blocks just like a top-level one — set the
       // continuation to "carry on with the rest of this `then` list" and
       // stop here until the player answers/hangs up (see makeChoice /
       // declineCall / endCall). presentBlockingEntry queues instead of
       // clobbering if the phone is already busy — see advance()'s own
       // comment on the same helper.
-      if (entry.type === 'choice' || entry.type === 'call' || (entry.type === 'interaction' && entry.blocking !== false)) {
+      if (
+        entry.type === 'choice' ||
+        entry.type === 'call' ||
+        (entry.type === 'interaction' && entry.blocking !== false)
+      ) {
         this.presentBlockingEntry(entry, chapter, () => this.runThen(list, i + 1, chapter, resume))
         return
       }
@@ -995,9 +1078,20 @@ export const useStoryStore = defineStore('story', {
           this.tickBattery()
           break
 
+        case 'appDm':
+          this.pushAppMessage(entry.app, entry.thread, {
+            from: entry.from,
+            text: this.fill(entry.text),
+            image: entry.image,
+          })
+          this.tickClock()
+          this.tickBattery()
+          break
+
         case 'choice':
           this.activeChoice = {
             id: entry.id || `${chapter.id}-${this.timelineIndex}`,
+            app: entry.app || null,
             contact: entry.contact || null,
             thread: entry.thread || null,
             prompt: this.fill(entry.prompt),
@@ -1173,7 +1267,15 @@ export const useStoryStore = defineStore('story', {
       // option.text is already resolved (translation + {name}) — it was
       // filled once when the choice was set up in processEntry, so the
       // button the player saw and the message they end up sending match.
-      if (this.activeChoice.thread) {
+      // `app` takes priority — an app-scoped choice always carries its
+      // target thread id in `thread` too (see ChoiceEntryForm.vue), same
+      // field the native DM branch below already uses.
+      if (this.activeChoice.app) {
+        this.pushAppMessage(this.activeChoice.app, this.activeChoice.thread, {
+          from: 'me',
+          text: option.text,
+        })
+      } else if (this.activeChoice.thread) {
         this.pushDm(this.activeChoice.thread, {
           from: 'me',
           text: option.text,
@@ -1398,6 +1500,55 @@ export const useStoryStore = defineStore('story', {
           text: text || '📷 Photo',
         })
       }
+    },
+
+    ensureAppThread(appId, threadId) {
+      if (!this.appThreads[appId]) this.appThreads[appId] = {}
+      if (!this.appThreads[appId][threadId]) this.appThreads[appId][threadId] = []
+    },
+
+    // Per-app-scoped twin of pushDm() — same message shape/sound, but keyed
+    // by (appId, threadId) instead of one global igThreads bucket. No
+    // "already viewing this thread" suppression (unlike pushDm/pushMessage's
+    // isViewingDmThread/isViewingConversation): a conversation module's
+    // open-thread state is LOCAL to its own block instance (see
+    // ConversationsBlock.vue), not phone-level, so the engine has no cheap
+    // way to know it's on screen — always notifies/bumps unread instead, an
+    // accepted v1 simplification. Notification title is always the
+    // SENDER's own name (`socialHandle`), not the thread's — a group
+    // thread's name is authored on the block (block.threads), invisible to
+    // the engine here, but naming the sender reads fine for a group message
+    // too ("Alice: hey") and needs no group/1:1 branch at all.
+    pushAppMessage(appId, threadId, { from, text, image }) {
+      this.ensureAppThread(appId, threadId)
+      const thread = this.appThreads[appId][threadId]
+      thread.push({
+        id: `${appId}-${threadId}-${thread.length}`,
+        from,
+        text: text || null,
+        image: image || null,
+        ts: this.resolvedClock().toISOString(),
+      })
+      playSound(from === 'me' ? 'social-send' : 'dm-receive')
+      if (from === 'me') return
+      if (!this.appUnread[appId]) this.appUnread[appId] = {}
+      this.appUnread[appId][threadId] = (this.appUnread[appId][threadId] || 0) + 1
+      this.pushNotification({
+        app: appId,
+        thread: threadId,
+        title: this.socialHandle(this.getContact(from)),
+        text: text || '📷 Photo',
+      })
+    },
+
+    // Called when a conversation-block's LOCAL thread view is opened (see
+    // ConversationsBlock.vue) — zeroes the badge and dismisses any pending
+    // notification for it. Doesn't suppress FUTURE messages while open (see
+    // pushAppMessage's comment) — just clears what's already there, same
+    // spirit as tapping into a native thread.
+    markAppThreadRead(appId, threadId) {
+      if (this.appUnread[appId]) this.appUnread[appId][threadId] = 0
+      this.dismissNotificationsFor({ app: appId, thread: threadId })
     },
 
     pushNotification(notif) {

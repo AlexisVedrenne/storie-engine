@@ -201,4 +201,11 @@ export default {
     addLocation: 'Aggiungi posizione',
     music: 'Musica',
   },
+  customApps: {
+    conversations: {
+      empty: 'Nessuna conversazione per ora.',
+      privateNotice:
+        'Le risposte arrivano tramite le scelte della storia — non si può scrivere qui.',
+    },
+  },
 }

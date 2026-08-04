@@ -200,4 +200,10 @@ export default {
     addLocation: 'Add location',
     music: 'Music',
   },
+  customApps: {
+    conversations: {
+      empty: 'No conversations yet.',
+      privateNotice: 'Replies come from choices in the story — no free typing here.',
+    },
+  },
 }

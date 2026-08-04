@@ -50,6 +50,7 @@ import DividerBlock from './DividerBlock.vue'
 import ButtonBlock from './ButtonBlock.vue'
 import TabsBlock from './TabsBlock.vue'
 import ListBlock from './ListBlock.vue'
+import ConversationsBlock from './ConversationsBlock.vue'
 
 const phone = usePhoneStore()
 const story = useStoryStore()
@@ -79,6 +80,7 @@ const BLOCK_COMPONENTS = {
   button: ButtonBlock,
   tabs: TabsBlock,
   list: ListBlock,
+  conversations: ConversationsBlock,
 }
 function blockComponent(type) {
   return BLOCK_COMPONENTS[type] || null

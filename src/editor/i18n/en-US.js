@@ -118,6 +118,10 @@ export default {
         label: 'Pixly DM',
         help: 'An Instagram private message — arrives in a DM conversation, not Messages.',
       },
+      appDm: {
+        label: 'Conversation (custom app)',
+        help: "A message in a custom app's Conversation block — pick which app and which contact/group in the form.",
+      },
       reel: { label: 'Reel', help: "A Reel in Pixly's vertical video tab." },
       call: { label: 'Call', help: 'An incoming call, with a scrolling dialogue script.' },
       effect: {
@@ -208,6 +212,14 @@ export default {
     },
     dm: {
       threadLabel: 'Instagram conversation (1:1 or group)',
+      fromLabel: 'From (who sends the message)',
+      textLabel: 'Message text',
+      textPlaceholder: "e.g.: I'd rather tell you in private 😉",
+      imageLabel: 'Attached photo (optional)',
+    },
+    appDm: {
+      appLabel: 'App',
+      threadLabel: 'Conversation (1:1 or group)',
       fromLabel: 'From (who sends the message)',
       textLabel: 'Message text',
       textPlaceholder: "e.g.: I'd rather tell you in private 😉",
@@ -403,6 +415,7 @@ export default {
     button: { label: 'Button' },
     tabs: { label: 'Tabs' },
     list: { label: 'List (contacts)' },
+    conversations: { label: 'Conversation' },
   },
 
   blockProps: {
@@ -440,6 +453,11 @@ export default {
     onlyFollowedLabel: 'Only followed contacts',
     listHelp:
       'The content below repeats once per contact — use the variable button to insert {item:name} in a text field, or the checkbox above on an avatar block.',
+    conversationsHelp:
+      "A real conversation module (like Messages/Pixly) — thread list, opening a thread, choice-driven replies. Messages are sent from the timeline. Groups come from the project's Threads tab (same contacts/groups as native DM) — nothing to configure here for that.",
+    showAvatarLabel: "Show the contact's avatar",
+    nameFieldName: 'Name',
+    nameFieldPseudo: 'Pseudo (@...)',
   },
 
   colorField: {

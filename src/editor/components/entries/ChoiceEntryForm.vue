@@ -2,80 +2,73 @@
   <div class="entry-form">
     <div class="field-group">
       <div class="section-label">{{ t('entries.choice.replyTargetLabel') }}</div>
-      <div class="row">
-        <q-btn-toggle
-          dense
-          no-caps
-          :model-value="target.mode"
-          :options="[
-            { label: 'SMS', value: 'contact' },
-            { label: 'DM Pixly', value: 'thread' },
-          ]"
-          @update:model-value="setMode"
-        />
-        <q-select
-          v-if="target.mode === 'contact'"
-          dense
-          outlined
-          emit-value
-          map-options
-          class="target-select"
-          :label="t('entries.choice.contactLabel')"
-          :options="contactOptions"
-          v-model="entry.contact"
-        >
-          <template #selected>
-            <span class="selected-row">
-              <span class="option-dot" :style="{ background: contactColor(entry.contact) }" />
-              {{ contactLabel(entry.contact) }}
-            </span>
-          </template>
-          <template #option="scope">
-            <q-item v-bind="scope.itemProps">
-              <q-item-section avatar>
-                <span class="option-dot" :style="{ background: contactColor(scope.opt.value) }" />
-              </q-item-section>
-              <q-item-section>{{ scope.opt.label }}</q-item-section>
-            </q-item>
-          </template>
-        </q-select>
-        <q-select
-          v-else
-          dense
-          outlined
-          emit-value
-          map-options
-          class="target-select"
-          :label="t('entries.choice.threadLabel')"
-          :options="threadOptions"
-          v-model="entry.thread"
-        >
-          <template #selected>
-            <span class="selected-row">
+      <q-btn-toggle
+        dense
+        no-caps
+        :model-value="target.mode"
+        :options="targetModeOptions"
+        @update:model-value="setMode"
+      />
+      <q-select
+        v-if="target.mode === 'contact'"
+        dense
+        outlined
+        emit-value
+        map-options
+        :label="t('entries.choice.contactLabel')"
+        :options="contactOptions"
+        v-model="entry.contact"
+      >
+        <template #selected>
+          <span class="selected-row">
+            <span class="option-dot" :style="{ background: contactColor(entry.contact) }" />
+            {{ contactLabel(entry.contact) }}
+          </span>
+        </template>
+        <template #option="scope">
+          <q-item v-bind="scope.itemProps">
+            <q-item-section avatar>
+              <span class="option-dot" :style="{ background: contactColor(scope.opt.value) }" />
+            </q-item-section>
+            <q-item-section>{{ scope.opt.label }}</q-item-section>
+          </q-item>
+        </template>
+      </q-select>
+      <q-select
+        v-else-if="target.mode === 'thread' || target.mode.startsWith('app:')"
+        dense
+        outlined
+        emit-value
+        map-options
+        :label="t('entries.choice.threadLabel')"
+        :options="threadOptions"
+        v-model="entry.thread"
+      >
+        <template #selected>
+          <span class="selected-row">
+            <span
+              v-if="!isGroupThread(entry.thread)"
+              class="option-dot"
+              :style="{ background: contactColor(entry.thread) }"
+            />
+            <q-icon v-else name="group" size="16px" class="option-icon" />
+            {{ threadLabel(entry.thread) }}
+          </span>
+        </template>
+        <template #option="scope">
+          <q-item v-bind="scope.itemProps">
+            <q-item-section avatar>
               <span
-                v-if="!isGroupThread(entry.thread)"
+                v-if="!scope.opt.group"
                 class="option-dot"
-                :style="{ background: contactColor(entry.thread) }"
+                :style="{ background: contactColor(scope.opt.value) }"
               />
               <q-icon v-else name="group" size="16px" class="option-icon" />
-              {{ threadLabel(entry.thread) }}
-            </span>
-          </template>
-          <template #option="scope">
-            <q-item v-bind="scope.itemProps">
-              <q-item-section avatar>
-                <span
-                  v-if="!scope.opt.group"
-                  class="option-dot"
-                  :style="{ background: contactColor(scope.opt.value) }"
-                />
-                <q-icon v-else name="group" size="16px" class="option-icon" />
-              </q-item-section>
-              <q-item-section>{{ scope.opt.label }}</q-item-section>
-            </q-item>
-          </template>
-        </q-select>
-      </div>
+            </q-item-section>
+            <q-item-section>{{ scope.opt.label }}</q-item-section>
+          </q-item>
+        </template>
+      </q-select>
     </div>
 
     <q-input
@@ -205,6 +198,7 @@
 
 <script setup>
 import { computed, reactive, ref } from 'vue'
+import { useStoryStore } from '@/engine/stores/story'
 import { useContactOptions } from '@/components/shared/useContactOptions'
 import RequiresBuilder from '@/editor/components/RequiresBuilder.vue'
 import EffectsBuilder from '@/editor/components/EffectsBuilder.vue'
@@ -224,6 +218,7 @@ const props = defineProps({
   entry: { type: Object, required: true },
   breadcrumb: { type: Array, default: () => [] },
 })
+const story = useStoryStore()
 const {
   contactOptionsNoMe: contactOptions,
   threadOptions,
@@ -232,6 +227,23 @@ const {
   isGroupThread,
   threadLabel,
 } = useContactOptions()
+
+// "App conversation" target modes — one per custom app, real app name on
+// the toggle button instead of a generic "App custom" pill (picking the
+// button IS picking the app, composite value `app:<appId>`, split back
+// apart in setMode below). The thread picker itself is the SAME
+// `threadOptions`/`isGroupThread`/`threadLabel` the native "DM Pixly" mode
+// already uses (project.threads + contacts) — a group's id/name/
+// participants are project-wide reference data, not something to
+// re-author per app (see the Threads editor tab).
+const targetModeOptions = computed(() => [
+  { label: 'SMS', value: 'contact' },
+  { label: 'DM Pixly', value: 'thread' },
+  ...(story.project?.customApps || []).map((a) => ({
+    label: a.label || a.id,
+    value: `app:${a.id}`,
+  })),
+])
 
 // Controls each option's q-expansion-item (previously uncontrolled) so a
 // breadcrumb click can collapse it programmatically — see optionSegment()
@@ -253,15 +265,25 @@ function optionSegment(option, i) {
   }
 }
 
-const target = computed(() => ({ mode: props.entry.thread ? 'thread' : 'contact' }))
+const target = computed(() => ({
+  mode: props.entry.app ? `app:${props.entry.app}` : props.entry.thread ? 'thread' : 'contact',
+}))
 
 function setMode(mode) {
   if (mode === 'contact') {
+    props.entry.app = undefined
     props.entry.thread = undefined
     if (!props.entry.contact) props.entry.contact = contactOptions.value[0]?.value
-  } else {
+  } else if (mode === 'thread') {
+    props.entry.app = undefined
     props.entry.contact = undefined
     if (!props.entry.thread) props.entry.thread = threadOptions.value[0]?.value
+  } else {
+    props.entry.contact = undefined
+    props.entry.app = mode.slice(4)
+    if (!threadOptions.value.some((o) => o.value === props.entry.thread)) {
+      props.entry.thread = threadOptions.value[0]?.value
+    }
   }
 }
 
@@ -301,16 +323,6 @@ function removeOption(i) {
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
-}
-
-.row {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-}
-
-.target-select {
-  flex: 1;
 }
 
 .selected-row {

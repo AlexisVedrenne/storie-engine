@@ -201,4 +201,11 @@ export default {
     addLocation: 'Standort hinzufügen',
     music: 'Musik',
   },
+  customApps: {
+    conversations: {
+      empty: 'Noch keine Unterhaltungen.',
+      privateNotice:
+        'Antworten kommen über Auswahlmöglichkeiten der Geschichte — hier ist keine freie Eingabe möglich.',
+    },
+  },
 }

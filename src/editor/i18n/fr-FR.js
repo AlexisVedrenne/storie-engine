@@ -124,6 +124,10 @@ export default {
         label: 'DM Pixly',
         help: 'Un message privé Instagram — arrive dans une conversation DM, pas dans Messages.',
       },
+      appDm: {
+        label: 'Conversation (app custom)',
+        help: 'Un message dans le bloc Conversation d’une app custom — choisis quelle app et quel contact/groupe dans le formulaire.',
+      },
       reel: { label: 'Reel', help: 'Un Reel dans l’onglet vidéos verticales de Pixly.' },
       call: {
         label: 'Appel (call)',
@@ -217,6 +221,14 @@ export default {
     },
     dm: {
       threadLabel: 'Conversation Instagram (1:1 ou groupe)',
+      fromLabel: 'De (qui envoie le message)',
+      textLabel: 'Texte du message',
+      textPlaceholder: 'ex: Je préfère te le dire en privé 😉',
+      imageLabel: 'Photo jointe (optionnel)',
+    },
+    appDm: {
+      appLabel: 'Application',
+      threadLabel: 'Conversation (1:1 ou groupe)',
       fromLabel: 'De (qui envoie le message)',
       textLabel: 'Texte du message',
       textPlaceholder: 'ex: Je préfère te le dire en privé 😉',
@@ -413,6 +425,7 @@ export default {
     button: { label: 'Bouton' },
     tabs: { label: 'Onglets' },
     list: { label: 'Liste (contacts)' },
+    conversations: { label: 'Conversation' },
   },
 
   blockProps: {
@@ -452,6 +465,11 @@ export default {
     onlyFollowedLabel: 'Seulement les contacts suivis',
     listHelp:
       'Le contenu ci-dessous est répété une fois par contact — utilise le bouton variable pour insérer {item:name} dans un champ texte, ou la case ci-dessus sur un bloc avatar.',
+    conversationsHelp:
+      'Un vrai module de conversation (comme Messages/Pixly) — liste de discussions, ouverture d’un fil, réponses par choix. Les messages sont envoyés depuis la timeline. Les groupes viennent de l’onglet Threads du projet (même contacts/groupes que les DM natifs) — rien à configurer ici pour ça.',
+    showAvatarLabel: 'Afficher l’avatar du contact',
+    nameFieldName: 'Nom',
+    nameFieldPseudo: 'Pseudo (@...)',
   },
 
   colorField: {

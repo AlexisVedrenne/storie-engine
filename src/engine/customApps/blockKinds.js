@@ -17,6 +17,7 @@ export const BLOCK_KINDS = [
   { type: 'button', icon: 'smart_button' },
   { type: 'tabs', icon: 'tab' },
   { type: 'list', icon: 'repeat' },
+  { type: 'conversations', icon: 'forum' },
 ]
 
 export function paletteIcon(type) {
@@ -59,6 +60,19 @@ export function defaultBlock(type) {
       // contact; its text fields can use the `{item:...}` tokens (see
       // resolveDynamicText.js) to read the current contact.
       return { type, onlyFollowed: false, template: [] }
+    case 'conversations':
+      // The "conversation module" — real interactive chat, not just visual
+      // (see docs — this is the first custom-app block that reads/writes
+      // game state on its own). Thread DEFINITIONS (id/name/participants
+      // for a group; a 1:1 needs none, it's just a project contact id) are
+      // the project's own native `project.threads` (the Threads editor tab)
+      // — reused as-is, not re-authored per block. Only the actual MESSAGE
+      // HISTORY is namespaced per app (story.appThreads), so a custom app's
+      // conversation never crosses into native DM/SMS or another app's own
+      // chat, while "who's in the group" stays single-sourced. `showAvatar`/
+      // `nameField` are the two display options asked for — which contact
+      // info to render, not per-message content.
+      return { type, showAvatar: true, nameField: 'name' }
     default:
       return { type }
   }

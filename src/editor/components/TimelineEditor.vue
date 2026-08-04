@@ -3,13 +3,31 @@
     <div v-if="breadcrumb.length" class="breadcrumb-bar">
       <template v-for="(seg, si) in breadcrumb" :key="si">
         <span class="crumb" @click="seg.collapse">{{ seg.label }}</span>
-        <q-icon v-if="si < breadcrumb.length - 1" name="chevron_right" size="14px" class="crumb-sep" />
+        <q-icon
+          v-if="si < breadcrumb.length - 1"
+          name="chevron_right"
+          size="14px"
+          class="crumb-sep"
+        />
       </template>
     </div>
 
     <div v-if="selected.size >= 2" class="selection-bar">
-      <span>{{ selected.size === 1 ? t('timelineEditor.selectedOne') : t('timelineEditor.selectedMany', { n: selected.size }) }}</span>
-      <q-btn dense flat no-caps icon="create_new_folder" :label="t('timelineEditor.groupSelection')" size="sm" color="primary" @click="groupSelection" />
+      <span>{{
+        selected.size === 1
+          ? t('timelineEditor.selectedOne')
+          : t('timelineEditor.selectedMany', { n: selected.size })
+      }}</span>
+      <q-btn
+        dense
+        flat
+        no-caps
+        icon="create_new_folder"
+        :label="t('timelineEditor.groupSelection')"
+        size="sm"
+        color="primary"
+        @click="groupSelection"
+      />
       <q-btn dense flat no-caps :label="t('common.cancel')" size="sm" @click="selected.clear()" />
     </div>
 
@@ -20,7 +38,12 @@
            always moves the whole block together (moveBlock/onBlockDrop),
            so the contiguity invariant never breaks on its own. -->
       <div
-        v-if="dropLine && dropLine.scope === 'top' && dropLine.blockIdx === bi && dropLine.edge === 'before'"
+        v-if="
+          dropLine &&
+          dropLine.scope === 'top' &&
+          dropLine.blockIdx === bi &&
+          dropLine.edge === 'before'
+        "
         class="drop-line"
       />
       <div
@@ -57,7 +80,9 @@
             {{ entries[block.start].group.label }}
             <q-icon name="edit" size="12px" />
           </span>
-          <span class="group-count">{{ t('timelineEditor.entriesCount', { n: block.end - block.start + 1 }) }}</span>
+          <span class="group-count">{{
+            t('timelineEditor.entriesCount', { n: block.end - block.start + 1 })
+          }}</span>
           <div class="spacer" />
           <q-btn dense flat round icon="link_off" size="sm" @click.stop="ungroup(block)">
             <q-tooltip>{{ t('timelineEditor.ungroup') }}</q-tooltip>
@@ -67,7 +92,13 @@
         <div v-if="!groupCollapsed[block.id]" class="group-members">
           <template v-for="i in memberRange(block)" :key="i">
             <div
-              v-if="dropLine && dropLine.scope === 'member' && dropLine.groupId === block.id && dropLine.index === i && dropLine.edge === 'before'"
+              v-if="
+                dropLine &&
+                dropLine.scope === 'member' &&
+                dropLine.groupId === block.id &&
+                dropLine.index === i &&
+                dropLine.edge === 'before'
+              "
               class="drop-line"
             />
             <div
@@ -97,7 +128,13 @@
               />
             </div>
             <div
-              v-if="dropLine && dropLine.scope === 'member' && dropLine.groupId === block.id && dropLine.index === i && dropLine.edge === 'after'"
+              v-if="
+                dropLine &&
+                dropLine.scope === 'member' &&
+                dropLine.groupId === block.id &&
+                dropLine.index === i &&
+                dropLine.edge === 'after'
+              "
               class="drop-line"
             />
           </template>
@@ -137,7 +174,12 @@
         />
       </div>
       <div
-        v-if="dropLine && dropLine.scope === 'top' && dropLine.blockIdx === bi && dropLine.edge === 'after'"
+        v-if="
+          dropLine &&
+          dropLine.scope === 'top' &&
+          dropLine.blockIdx === bi &&
+          dropLine.edge === 'after'
+        "
         class="drop-line"
       />
     </template>
@@ -184,6 +226,7 @@ import PostEntryForm from '@/editor/components/entries/PostEntryForm.vue'
 import PhotoEntryForm from '@/editor/components/entries/PhotoEntryForm.vue'
 import StoryEntryForm from '@/editor/components/entries/StoryEntryForm.vue'
 import DmEntryForm from '@/editor/components/entries/DmEntryForm.vue'
+import AppDmEntryForm from '@/editor/components/entries/AppDmEntryForm.vue'
 import ReelEntryForm from '@/editor/components/entries/ReelEntryForm.vue'
 import CallEntryForm from '@/editor/components/entries/CallEntryForm.vue'
 import EffectEntryForm from '@/editor/components/entries/EffectEntryForm.vue'
@@ -227,6 +270,7 @@ const FORM_BY_TYPE = {
   photo: PhotoEntryForm,
   story: StoryEntryForm,
   dm: DmEntryForm,
+  appDm: AppDmEntryForm,
   reel: ReelEntryForm,
   call: CallEntryForm,
   effect: EffectEntryForm,
@@ -250,6 +294,7 @@ const ICON_BY_TYPE = {
   photo: 'photo',
   story: 'auto_awesome',
   dm: 'send',
+  appDm: 'forum',
   reel: 'movie',
   call: 'call',
   effect: 'bolt',
@@ -257,8 +302,16 @@ const ICON_BY_TYPE = {
   timeskip: 'update',
   interaction: 'sports_esports',
 }
+// `type` is either a real stored entry.type (from an existing entry card)
+// or a picker option's composite value (`appDm::<appId>`, see
+// appDmOptions above) — only the picker ever produces the latter, so
+// stripping the suffix here covers both callers uniformly.
+function baseType(type) {
+  return type.startsWith('appDm::') ? 'appDm' : type
+}
 function iconFor(type) {
-  return ICON_BY_TYPE[type] || CUSTOM_ENTRY_TYPE_BY_TYPE[type]?.icon || 'help_outline'
+  const base = baseType(type)
+  return ICON_BY_TYPE[base] || CUSTOM_ENTRY_TYPE_BY_TYPE[base]?.icon || 'help_outline'
 }
 
 // One-line plain-language reminder of what each entry type does, shown
@@ -269,16 +322,54 @@ function iconFor(type) {
 // ships in the built game — entryTypeLabel()/entryTypeHelp() look up an
 // editor-dictionary override keyed by `type` first, falling back to that
 // authored text unchanged (see sharedOverrides.js).
-const BUILTIN_TYPES = ['message', 'choice', 'post', 'photo', 'story', 'dm', 'reel', 'call', 'effect', 'vfx', 'timeskip', 'interaction']
+const BUILTIN_TYPES = [
+  'message',
+  'choice',
+  'post',
+  'photo',
+  'story',
+  'dm',
+  'appDm',
+  'reel',
+  'call',
+  'effect',
+  'vfx',
+  'timeskip',
+  'interaction',
+]
 function helpFor(type) {
-  return BUILTIN_TYPES.includes(type) ? t(`timelineEditor.types.${type}.help`) : entryTypeHelp(CUSTOM_ENTRY_TYPE_BY_TYPE[type])
+  const base = baseType(type)
+  return BUILTIN_TYPES.includes(base)
+    ? t(`timelineEditor.types.${base}.help`)
+    : entryTypeHelp(CUSTOM_ENTRY_TYPE_BY_TYPE[base])
 }
 
 // computed, not a plain const — re-evaluates when the editor's own
 // language switches (t() calls inside), same reason TYPE_OPTIONS below is
 // already a computed for enabledAppIds.
+// One "add entry" option PER custom app, showing that app's own name —
+// not a single generic "Conversation (app custom)" entry — so an author
+// scanning the picker sees exactly which app they're adding content for,
+// same expectation as everywhere else in the editor that lists real
+// project data instead of a category placeholder. The value carries the
+// app id right through (`appDm::<appId>`, split back apart in
+// iconFor/helpFor/defaultEntry below) so picking it needs no separate
+// "which app?" step — addEntry() gets a fully-formed entry immediately.
+// If a second app-scoped entry type is ever added, group it under the
+// same per-app block here rather than flattening app+type combinations.
+const appDmOptions = computed(() =>
+  (story.project?.customApps || []).map((app) => ({
+    label: `${t('timelineEditor.types.appDm.label')} — ${app.label || app.id}`,
+    value: `appDm::${app.id}`,
+  })),
+)
+
 const ALL_TYPE_OPTIONS = computed(() => [
-  ...BUILTIN_TYPES.map((type) => ({ label: t(`timelineEditor.types.${type}.label`), value: type })),
+  ...BUILTIN_TYPES.filter((type) => type !== 'appDm').map((type) => ({
+    label: t(`timelineEditor.types.${type}.label`),
+    value: type,
+  })),
+  ...appDmOptions.value,
   // Plug-in entry types (entryTypeRegistry.js) tacked on, not merged in
   // place — keeps the 10 built-ins' own authored order untouched.
   ...CUSTOM_ENTRY_TYPES.map((def) => ({ label: entryTypeLabel(def), value: def.type })),
@@ -292,7 +383,7 @@ const ALL_TYPE_OPTIONS = computed(() => [
 // them at runtime, same silent-skip as a failed `requires`.
 const TYPE_OPTIONS = computed(() =>
   ALL_TYPE_OPTIONS.value.filter((opt) => {
-    const app = ENTRY_TYPE_APP[opt.value]
+    const app = opt.value.startsWith('appDm::') ? opt.value.slice(7) : ENTRY_TYPE_APP[opt.value]
     return !app || story.enabledAppIds.includes(app)
   }),
 )
@@ -302,6 +393,15 @@ function firstContactId() {
 }
 
 function defaultEntry(type) {
+  if (type.startsWith('appDm::')) {
+    return {
+      type: 'appDm',
+      app: type.slice(7),
+      thread: firstContactId(),
+      from: firstContactId(),
+      text: '',
+    }
+  }
   switch (type) {
     case 'message':
       return { type, contact: firstContactId(), text: '' }
@@ -389,6 +489,15 @@ function summaryFor(entry) {
       return `${story.getContact(entry.contact).name} ${entry.emoji || ''}`
     case 'dm':
       return `${entry.thread}: ${entry.text || ''}`
+    case 'appDm': {
+      // Always leads with the app's own label — an author scanning a long
+      // timeline needs to tell an app-scoped conversation apart from native
+      // DM/SMS (and from another custom app's own chat) at a glance, not
+      // just from the icon (see this feature's own scoping discussion).
+      const appLabel =
+        story.project?.customApps?.find((a) => a.id === entry.app)?.label || entry.app || '?'
+      return `[${appLabel}] ${entry.thread}: ${entry.text || ''}`
+    }
     case 'reel':
       return entry.caption || entry.media || ''
     case 'call':
@@ -397,11 +506,16 @@ function summaryFor(entry) {
       return Object.keys(entry.effects || {}).join(', ')
     case 'vfx':
       if (entry.mode === 'stop') return t('timelineEditor.vfxStopSummary')
-      return t(`entries.vfx.kinds.${entry.effect || 'glitch'}`) + (entry.duration ? ` · ${entry.duration}ms` : ` · ${t('timelineEditor.vfxUntilStopped')}`)
+      return (
+        t(`entries.vfx.kinds.${entry.effect || 'glitch'}`) +
+        (entry.duration ? ` · ${entry.duration}ms` : ` · ${t('timelineEditor.vfxUntilStopped')}`)
+      )
     case 'timeskip':
       return entry.label || `${entry.clock || ''} ${entry.date || ''}`.trim()
     case 'interaction': {
-      const def = (story.project?.gameConfig?.interactions || []).find((d) => d.id === entry.interactionId)
+      const def = (story.project?.gameConfig?.interactions || []).find(
+        (d) => d.id === entry.interactionId,
+      )
       const label = def?.name || entry.interactionId || ''
       return `${label} · ${entry.blocking === false ? t('timelineEditor.interactionParallel') : t('timelineEditor.interactionBlocking')}`
     }

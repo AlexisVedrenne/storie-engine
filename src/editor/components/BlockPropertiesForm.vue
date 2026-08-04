@@ -263,6 +263,20 @@
       <BlockBuilder :blocks="ensureTemplate()" :screens="screens" :item-scope="true" />
     </template>
 
+    <template v-else-if="block.type === 'conversations'">
+      <p class="tab-help">{{ t('blockProps.conversationsHelp') }}</p>
+      <q-toggle dense :label="t('blockProps.showAvatarLabel')" v-model="block.showAvatar" />
+      <q-btn-toggle
+        dense
+        no-caps
+        v-model="block.nameField"
+        :options="[
+          { label: t('blockProps.nameFieldName'), value: 'name' },
+          { label: t('blockProps.nameFieldPseudo'), value: 'pseudo' },
+        ]"
+      />
+    </template>
+
     <q-expansion-item
       dense
       :label="t('timelineEntryCard.displayCondition')"

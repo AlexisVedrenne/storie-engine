@@ -41,7 +41,8 @@ function collectReferences(project) {
           if (entry.contact) refs.push({ kind: 'contact', id: entry.contact, label })
           break
         case 'choice':
-          if (entry.contact) refs.push({ kind: 'contact', id: entry.contact, label })
+          if (entry.app) refs.push({ kind: 'app', id: entry.app, label })
+          if (!entry.app && entry.contact) refs.push({ kind: 'contact', id: entry.contact, label })
           if (entry.thread) refs.push({ kind: 'thread', id: entry.thread, label })
           ;(entry.options || []).forEach((option, j) => {
             const optLabel = `${label} → option ${j + 1}`
@@ -50,6 +51,11 @@ function collectReferences(project) {
           })
           break
         case 'dm':
+          if (entry.from) refs.push({ kind: 'contact', id: entry.from, label })
+          if (entry.thread) refs.push({ kind: 'thread', id: entry.thread, label })
+          break
+        case 'appDm':
+          if (entry.app) refs.push({ kind: 'app', id: entry.app, label })
           if (entry.from) refs.push({ kind: 'contact', id: entry.from, label })
           if (entry.thread) refs.push({ kind: 'thread', id: entry.thread, label })
           break
@@ -163,6 +169,10 @@ function threadExists(project, id) {
   return (project.threads || []).some((t) => t.id === id) || contactExists(project, id)
 }
 
+function appExists(project, id) {
+  return (project.customApps || []).some((a) => a.id === id)
+}
+
 // @param project - story.project: {chapters, threads, seed, manifest}
 // @returns {{errors: string[], warnings: string[]}}
 export function validateProject(project) {
@@ -172,9 +182,14 @@ export function validateProject(project) {
 
   for (const ref of collectReferences(project)) {
     const ok =
-      ref.kind === 'contact' ? contactExists(project, ref.id) : threadExists(project, ref.id)
+      ref.kind === 'contact'
+        ? contactExists(project, ref.id)
+        : ref.kind === 'app'
+          ? appExists(project, ref.id)
+          : threadExists(project, ref.id)
     if (!ok) {
-      const noun = ref.kind === 'contact' ? 'contact' : 'thread'
+      const noun =
+        ref.kind === 'contact' ? 'contact' : ref.kind === 'app' ? 'application' : 'thread'
       errors.push(`${ref.label} → ${noun} introuvable : "${ref.id}"`)
     }
   }

@@ -201,4 +201,10 @@ export default {
     addLocation: 'Ajouter le lieu',
     music: 'Musique',
   },
+  customApps: {
+    conversations: {
+      empty: "Aucune conversation pour l'instant.",
+      privateNotice: 'Les réponses arrivent par choix dans l’histoire — pas de saisie libre ici.',
+    },
+  },
 }
