@@ -42,6 +42,29 @@
       <BlockBuilder :blocks="ensureChildren()" :screens="screens" />
     </template>
 
+    <template v-else-if="block.type === 'layout'">
+      <p class="tab-help">{{ t('blockProps.layoutHelp') }}</p>
+      <q-btn-toggle
+        dense
+        no-caps
+        v-model="block.direction"
+        :options="[
+          { label: t('blockProps.directionRow'), value: 'row' },
+          { label: t('blockProps.directionColumn'), value: 'column' },
+        ]"
+      />
+      <q-input
+        dense
+        outlined
+        type="number"
+        :label="t('blockProps.gapLabel')"
+        suffix="px"
+        :model-value="block.gap ?? 8"
+        @update:model-value="(v) => (block.gap = v === null || v === '' ? 8 : Number(v))"
+      />
+      <BlockBuilder :blocks="ensureChildren()" :screens="screens" />
+    </template>
+
     <template v-else-if="block.type === 'badge'">
       <q-input dense outlined :label="t('blockProps.labelLabel')" v-model="block.label" />
       <ColorField v-model="block.color" />

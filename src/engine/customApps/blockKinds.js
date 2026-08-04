@@ -11,6 +11,7 @@ export const BLOCK_KINDS = [
   { type: 'avatar', icon: 'account_circle' },
   { type: 'row', icon: 'list' },
   { type: 'card', icon: 'crop_square' },
+  { type: 'layout', icon: 'view_column' },
   { type: 'badge', icon: 'label' },
   { type: 'divider', icon: 'horizontal_rule' },
   { type: 'button', icon: 'smart_button' },
@@ -35,6 +36,12 @@ export function defaultBlock(type) {
       return { type, icon: '', label: '', sublabel: '', chevron: false }
     case 'card':
       return { type, blocks: [] }
+    case 'layout':
+      // Pure flex arranger — no background/padding chrome of its own,
+      // unlike `card` (which is really "layout, column direction, + a
+      // visible grouped-card background"). `direction` picks row vs column;
+      // `gap` in px between children.
+      return { type, direction: 'row', gap: 8, blocks: [] }
     case 'badge':
       return { type, label: '', color: '#4c8bf5' }
     case 'divider':
