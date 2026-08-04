@@ -26,19 +26,28 @@
         </q-btn>
       </div>
 
+      <AssetField v-if="currentScreen" v-model="currentScreen.background" :label="t('customAppEditor.screenBackgroundLabel')" />
+
       <BlockBuilder v-if="currentScreen" :blocks="ensureBlocks(currentScreen)" :screens="screenOptions" />
     </div>
   </div>
 </template>
 
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { computed, provide, reactive, ref, watch } from 'vue'
 import BlockBuilder from '@/editor/components/BlockBuilder.vue'
+import AssetField from '@/editor/components/AssetField.vue'
 import ColorField from '@/editor/components/ColorField.vue'
 import { useEditorI18n } from '@/editor/i18n'
 
 const { t } = useEditorI18n()
 const props = defineProps({ def: { type: Object, required: true } })
+
+// Shared by every BlockBuilder instance on screen (the top-level one plus
+// one per nested card/layout) so a block can be dragged INTO or OUT OF a
+// container, not just reordered within whichever one it started in — see
+// BlockBuilder.vue's own comment on this.
+provide('blockDragState', reactive({ kind: null, sourceArray: null, sourceIndex: null, draggedBlock: null }))
 
 const activeScreenId = ref(null)
 

@@ -12,6 +12,16 @@ export const usePhoneStore = defineStore('phone', {
     activeConversation: null, // contactId when inside an SMS chat thread
     activeDmThread: null, // threadId when inside an Pixly DM thread
     rebootCount: 0, // bumped by requestReboot() — PhoneShell watches this to replay the boot sequence
+
+    // Set by BlockList.vue (src/components/phone/customApps/) when its
+    // rendered output is clicked — a direct reference to the clicked
+    // block's own object (the SAME reactive object BlockBuilder.vue is
+    // editing, not a copy/path), so the editor's block builder can
+    // auto-expand + scroll to whichever block the author just clicked in
+    // the live phone preview. Written unconditionally (cheap, no visual
+    // effect on its own) even inside a shipped/exported game, where
+    // nothing ever reads it — see docs/interactions-et-apps-custom.md.
+    editorSelectedBlock: null,
   }),
 
   actions: {
@@ -65,6 +75,10 @@ export const usePhoneStore = defineStore('phone', {
     },
     closeDmThread() {
       this.activeDmThread = null
+    },
+
+    selectCustomAppBlock(block) {
+      this.editorSelectedBlock = block
     },
 
     // used by the Settings app after a "reset phone" — puts the shell back

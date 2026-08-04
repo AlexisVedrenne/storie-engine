@@ -1,5 +1,6 @@
 <template>
   <div class="app-screen">
+    <img v-if="currentScreen?.background" :src="resolveAssetUrl(currentScreen.background)" class="screen-background" alt="" />
     <BlockList v-if="currentScreen" :blocks="currentScreen.blocks || []" />
   </div>
 </template>
@@ -15,6 +16,7 @@
 import { computed, provide, ref, watch } from 'vue'
 import { usePhoneStore } from '@/engine/stores/phone'
 import { useStoryStore } from '@/engine/stores/story'
+import { resolveAssetUrl } from '@/engine/assets'
 import BlockList from './BlockList.vue'
 
 const phone = usePhoneStore()
@@ -44,9 +46,20 @@ provide('customAppActiveScreenId', activeScreenId)
 
 <style scoped>
 .app-screen {
+  position: relative;
   height: 100%;
   overflow-y: auto;
   overflow-x: hidden;
   padding: 8px 16px 24px;
+}
+
+/* No z-index needed — placed first in the template, default stacking order
+   already paints it behind BlockList's own (unpositioned) content. */
+.screen-background {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 </style>

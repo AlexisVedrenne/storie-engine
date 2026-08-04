@@ -1,6 +1,14 @@
 <template>
   <div class="block-list" :style="{ flexDirection: direction, gap: `${gap}px` }">
-    <component :is="blockComponent(block.type)" v-for="(block, i) in blocks" :key="i" :block="block" />
+    <div
+      v-for="(block, i) in blocks"
+      :key="i"
+      class="block-wrap"
+      :style="{ marginTop: block.spacingBefore ? `${block.spacingBefore}px` : undefined, marginBottom: block.spacingAfter ? `${block.spacingAfter}px` : undefined }"
+      @click.stop="phone.selectCustomAppBlock(block)"
+    >
+      <component :is="blockComponent(block.type)" :block="block" />
+    </div>
   </div>
 </template>
 
@@ -17,6 +25,14 @@
 // intrinsically-full-width blocks (image, text) on top of each other
 // visually since they don't shrink to content — row layout reads best with
 // blocks that size to their own content (badge, avatar, button).
+//
+// Every block is wrapped in a click-catching div (`@click.stop`, so a
+// nested block's click never also selects its ancestors) that reports the
+// clicked block to phone.editorSelectedBlock — see BlockBuilder.vue, which
+// watches it to auto-expand/scroll to the matching row in the editor. The
+// wrapper also carries the block's own optional spacingBefore/spacingAfter
+// override (see BlockPropertiesForm.vue's generic "advanced" section).
+import { usePhoneStore } from '@/engine/stores/phone'
 import HeaderBlock from './HeaderBlock.vue'
 import TextBlock from './TextBlock.vue'
 import ImageBlock from './ImageBlock.vue'
@@ -34,6 +50,8 @@ defineProps({
   direction: { type: String, default: 'column' },
   gap: { type: [String, Number], default: 10 },
 })
+
+const phone = usePhoneStore()
 
 const BLOCK_COMPONENTS = {
   header: HeaderBlock,
@@ -56,5 +74,9 @@ function blockComponent(type) {
 <style scoped>
 .block-list {
   display: flex;
+}
+
+.block-wrap {
+  min-width: 0;
 }
 </style>

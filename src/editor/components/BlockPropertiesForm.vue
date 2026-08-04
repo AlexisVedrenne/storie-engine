@@ -17,10 +17,26 @@
         ]"
       />
       <q-input dense outlined type="textarea" autogrow :label="t('blockProps.contentLabel')" v-model="block.content" />
+      <div class="row">
+        <ColorField v-model="block.color" :label="t('blockProps.textColorLabel')" default-value="#ffffff" class="grow" />
+        <q-input
+          dense
+          outlined
+          type="number"
+          :label="t('blockProps.textSizeLabel')"
+          :hint="t('blockProps.textSizeHelp')"
+          suffix="px"
+          :model-value="block.size ?? null"
+          @update:model-value="(v) => (block.size = v === null || v === '' ? null : Number(v))"
+          class="grow"
+        />
+      </div>
     </template>
 
     <template v-else-if="block.type === 'image'">
       <AssetField v-model="block.src" :label="t('blockProps.imageLabel')" />
+      <q-toggle dense :label="t('blockProps.fullBleedLabel')" v-model="block.fullBleed" />
+      <p class="tab-help">{{ t('blockProps.fullBleedHelp') }}</p>
     </template>
 
     <template v-else-if="block.type === 'avatar'">
@@ -93,6 +109,31 @@
       </div>
       <q-btn dense flat no-caps icon="add" :label="t('blockProps.addTab')" class="btn-ghost" @click="addTab" />
     </template>
+
+    <q-expansion-item dense :label="t('blockProps.spacingTitle')" class="spacing-section">
+      <div class="spacing-body">
+        <q-input
+          dense
+          outlined
+          type="number"
+          :label="t('blockProps.spacingBeforeLabel')"
+          suffix="px"
+          :model-value="block.spacingBefore ?? null"
+          @update:model-value="(v) => (block.spacingBefore = v === null || v === '' ? null : Number(v))"
+          class="grow"
+        />
+        <q-input
+          dense
+          outlined
+          type="number"
+          :label="t('blockProps.spacingAfterLabel')"
+          suffix="px"
+          :model-value="block.spacingAfter ?? null"
+          @update:model-value="(v) => (block.spacingAfter = v === null || v === '' ? null : Number(v))"
+          class="grow"
+        />
+      </div>
+    </q-expansion-item>
   </div>
 </template>
 
@@ -149,8 +190,25 @@ const screenOptions = computed(() => props.screens.map((s) => ({ label: s.label 
   gap: var(--space-2);
 }
 
+.row {
+  display: flex;
+  gap: var(--space-2);
+}
+
 .grow {
   flex: 1;
+}
+
+.spacing-section {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  margin-top: var(--space-1);
+}
+
+.spacing-body {
+  display: flex;
+  gap: var(--space-2);
+  padding: var(--space-3);
 }
 
 .tab-help {

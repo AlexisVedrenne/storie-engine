@@ -133,6 +133,31 @@ enregistré dans `BlockList.vue`'s dispatch + ses champs dans
 `BlockPropertiesForm.vue`. Pas de registry à toucher ailleurs — même
 patron que les steps d'interaction.
 
+### Confort d'édition (ajouté 2026-08-04, même jour)
+
+- **Drag entre conteneurs** : `BlockBuilder.vue` n'utilise plus un état de
+  drag local — `CustomAppEditor.vue` `provide()` un `blockDragState`
+  réactif partagé par toutes les instances (racine + une par `card`/
+  `layout` imbriqué), donc un bloc glissé peut changer de conteneur, pas
+  juste se réordonner sur place. Garde anti-cycle (`isOwnDescendantArray`)
+  pour empêcher de déposer un conteneur dans ses propres enfants.
+- **Dupliquer** : bouton à côté de supprimer, clone JSON profond.
+- **Presets** : `src/engine/customApps/blockPresets.js` — petits arbres de
+  blocs pré-assemblés (en-tête profil, ligne de stats, section réglages,
+  appel à l'action), insérés en un clic, toujours juste de la donnée du
+  même vocabulaire.
+- **Sélection depuis le preview** : `phone.editorSelectedBlock` (dans
+  `phone.js`, écrit sans condition, inoffensif dans le jeu shippé où rien
+  ne le lit) — `BlockList.vue` enveloppe chaque bloc rendu d'un
+  `@click.stop`, `BlockBuilder.vue` observe ce champ et déplie/scrolle
+  jusqu'à la bonne ligne (et déplie aussi chaque carte/disposition
+  ancêtre sur le chemin).
+- **Fond d'écran par écran** : `screen.background` (asset), même mécanisme
+  que `def.background` des interactions.
+- **Image plein largeur, texte couleur/taille, espacement avant/après par
+  bloc** : champs optionnels supplémentaires sur les blocs existants, rien
+  de structurel.
+
 ### Piège IPC à connaître
 
 `story.project.customApps[i]` est un objet réactif Pinia (Proxy) — jamais

@@ -29,7 +29,7 @@ export function defaultBlock(type) {
     case 'text':
       return { type, style: 'body', content: '' }
     case 'image':
-      return { type, src: '' }
+      return { type, src: '', fullBleed: false }
     case 'avatar':
       return { type, label: '', color: '#607d8b', icon: '', src: '' }
     case 'row':

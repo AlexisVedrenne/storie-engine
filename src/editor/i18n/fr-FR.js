@@ -375,10 +375,19 @@ export default {
     screensTitle: 'Écrans',
     screenLabelLabel: 'Nom de l’écran',
     addScreen: 'Ajouter un écran',
+    screenBackgroundLabel: 'Fond d’écran (optionnel)',
   },
 
   blockBuilder: {
     empty: 'Aucun bloc — glisse-en un depuis la palette au-dessus.',
+    duplicate: 'Dupliquer',
+  },
+
+  blockPresets: {
+    'profile-header': { label: 'En-tête profil' },
+    'stat-row': { label: 'Ligne de stats' },
+    'settings-section': { label: 'Section réglages' },
+    'call-to-action': { label: 'Appel à l’action' },
   },
 
   blockKinds: {
@@ -402,6 +411,11 @@ export default {
     styleBody: 'Paragraphe',
     contentLabel: 'Contenu',
     imageLabel: 'Image',
+    fullBleedLabel: 'Bord à bord (plein largeur)',
+    fullBleedHelp: 'Ignore la marge de l’écran — l’image touche les bords gauche/droit. Ne s’aligne pas parfaitement si le bloc est imbriqué dans une carte/disposition.',
+    textColorLabel: 'Couleur du texte',
+    textSizeLabel: 'Taille (optionnel)',
+    textSizeHelp: 'Laisse vide pour garder la taille du style choisi ci-dessus.',
     labelLabel: 'Texte',
     iconFallbackLabel: 'Icône (si pas d’image)',
     iconFallbackHelp: 'Nom d’icône Material, utilisée seulement si aucune image n’est choisie au-dessus.',
@@ -416,6 +430,9 @@ export default {
     tabLabelLabel: 'Texte de l’onglet',
     tabScreenLabel: 'Écran ciblé',
     addTab: 'Ajouter un onglet',
+    spacingTitle: 'Espacement (avancé)',
+    spacingBeforeLabel: 'Espace avant (optionnel)',
+    spacingAfterLabel: 'Espace après (optionnel)',
   },
 
   colorField: {

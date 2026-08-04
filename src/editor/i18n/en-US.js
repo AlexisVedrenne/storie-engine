@@ -366,10 +366,19 @@ export default {
     screensTitle: 'Screens',
     screenLabelLabel: 'Screen name',
     addScreen: 'Add a screen',
+    screenBackgroundLabel: 'Background (optional)',
   },
 
   blockBuilder: {
     empty: 'No blocks yet — drag one in from the palette above.',
+    duplicate: 'Duplicate',
+  },
+
+  blockPresets: {
+    'profile-header': { label: 'Profile header' },
+    'stat-row': { label: 'Stat row' },
+    'settings-section': { label: 'Settings section' },
+    'call-to-action': { label: 'Call to action' },
   },
 
   blockKinds: {
@@ -393,6 +402,11 @@ export default {
     styleBody: 'Paragraph',
     contentLabel: 'Content',
     imageLabel: 'Image',
+    fullBleedLabel: 'Edge to edge (full width)',
+    fullBleedHelp: "Ignores the screen's own side margin — the image touches the left/right edges. Won't line up perfectly when nested inside a card/layout.",
+    textColorLabel: 'Text color',
+    textSizeLabel: 'Size (optional)',
+    textSizeHelp: "Leave empty to keep the chosen style's own size.",
     labelLabel: 'Text',
     iconFallbackLabel: 'Icon (if no image)',
     iconFallbackHelp: 'Material icon name, only used if no image is picked above.',
@@ -407,6 +421,9 @@ export default {
     tabLabelLabel: 'Tab text',
     tabScreenLabel: 'Target screen',
     addTab: 'Add a tab',
+    spacingTitle: 'Spacing (advanced)',
+    spacingBeforeLabel: 'Space before (optional)',
+    spacingAfterLabel: 'Space after (optional)',
   },
 
   colorField: {
