@@ -468,6 +468,20 @@ session) :
   (iconColor/textColor) — build réussi, tous les champs + le contenu du
   test présents dans le bundle grepé.
 
+### Bug corrigé : picker "app conversation" listait toutes les apps
+
+`TimelineEditor.vue`'s `appDmOptions` et `ChoiceEntryForm.vue`'s
+`targetModeOptions` listaient TOUTES les apps custom du projet, même celles
+sans aucun bloc `conversations` — rien à lire pour un message envoyé là.
+Corrigé via `src/engine/customApps/appHasBlockType(app, type)`
+(`src/engine/customApps/appHasModule.js`, nouveau) : marche l'arbre de
+blocs d'une app (récursif à travers `block.blocks`/`block.template`, même
+forme que `collectAssetRefs`/`rewriteBlockSrcs` de
+`src-electron/ipc/customApps.js` — dupliqué plutôt qu'importé de là, ce
+fichier statically-import `electron`, inutilisable côté éditeur/renderer).
+Les deux pickers filtrent maintenant sur `appHasBlockType(app,
+'conversations')` avant de lister l'app.
+
 ### Piège IPC à connaître
 
 `story.project.customApps[i]` est un objet réactif Pinia (Proxy) — jamais

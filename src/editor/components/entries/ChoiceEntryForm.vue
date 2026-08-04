@@ -199,6 +199,7 @@
 <script setup>
 import { computed, reactive, ref } from 'vue'
 import { useStoryStore } from '@/engine/stores/story'
+import { appHasBlockType } from '@/engine/customApps/appHasModule'
 import { useContactOptions } from '@/components/shared/useContactOptions'
 import RequiresBuilder from '@/editor/components/RequiresBuilder.vue'
 import EffectsBuilder from '@/editor/components/EffectsBuilder.vue'
@@ -236,13 +237,17 @@ const {
 // already uses (project.threads + contacts) — a group's id/name/
 // participants are project-wide reference data, not something to
 // re-author per app (see the Threads editor tab).
+// Only apps that actually place a `conversations` block — same reasoning
+// as TimelineEditor.vue's own appDmOptions filter (see appHasBlockType).
 const targetModeOptions = computed(() => [
   { label: 'SMS', value: 'contact' },
   { label: 'DM Pixly', value: 'thread' },
-  ...(story.project?.customApps || []).map((a) => ({
-    label: a.label || a.id,
-    value: `app:${a.id}`,
-  })),
+  ...(story.project?.customApps || [])
+    .filter((a) => appHasBlockType(a, 'conversations'))
+    .map((a) => ({
+      label: a.label || a.id,
+      value: `app:${a.id}`,
+    })),
 ])
 
 // Controls each option's q-expansion-item (previously uncontrolled) so a

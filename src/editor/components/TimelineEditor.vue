@@ -219,6 +219,7 @@ import { Notify } from 'quasar'
 import { useStoryStore } from '@/engine/stores/story'
 import { ENTRY_TYPE_APP } from '@/engine/apps/appIds'
 import { CUSTOM_ENTRY_TYPES, CUSTOM_ENTRY_TYPE_BY_TYPE } from '@/engine/apps/entryTypeRegistry'
+import { appHasBlockType } from '@/engine/customApps/appHasModule'
 import TimelineEntryCard from '@/editor/components/TimelineEntryCard.vue'
 import MessageEntryForm from '@/editor/components/entries/MessageEntryForm.vue'
 import ChoiceEntryForm from '@/editor/components/entries/ChoiceEntryForm.vue'
@@ -357,11 +358,18 @@ function helpFor(type) {
 // "which app?" step — addEntry() gets a fully-formed entry immediately.
 // If a second app-scoped entry type is ever added, group it under the
 // same per-app block here rather than flattening app+type combinations.
+// Only apps that actually place a `conversations` block somewhere — an app
+// with no such block has nowhere for an appDm entry's messages to ever be
+// read, so offering it here would let an author build content nothing can
+// show (same "don't offer what can't work" reasoning as TYPE_OPTIONS below,
+// which hides an app's plug-in entry types once the app itself is disabled).
 const appDmOptions = computed(() =>
-  (story.project?.customApps || []).map((app) => ({
-    label: `${t('timelineEditor.types.appDm.label')} — ${app.label || app.id}`,
-    value: `appDm::${app.id}`,
-  })),
+  (story.project?.customApps || [])
+    .filter((app) => appHasBlockType(app, 'conversations'))
+    .map((app) => ({
+      label: `${t('timelineEditor.types.appDm.label')} — ${app.label || app.id}`,
+      value: `appDm::${app.id}`,
+    })),
 )
 
 const ALL_TYPE_OPTIONS = computed(() => [
