@@ -151,6 +151,15 @@ function defaultState() {
     // closure, can't survive a reload anyway (same reason timelineResume
     // isn't saved either).
     pendingInteractions: [],
+
+    // { interactionId, steps, background, blocking, onWin, onLose } while an
+    // `interaction` entry's overlay is showing on the phone screen —
+    // transient, not persisted (same reasoning as activeChoice/pendingCall:
+    // a reload just re-presents it via advance() re-reaching the same
+    // timelineIndex, for a blocking one; a non-blocking one simply doesn't
+    // resume on reload, same as any other in-flight cosmetic state here).
+    // See processEntry's 'interaction' case and finishInteraction().
+    activeInteraction: null,
     notifications: [], // transient home-screen banners
     typingContact: null, // contactId currently shown as "typing..." in SMS — transient, not saved
     typingDm: null, // { thread, contact } currently shown as "typing..." in Pixly DM — transient, not saved
@@ -197,6 +206,7 @@ const NON_PERSISTED_KEYS = new Set([
   'activeChoice',
   'timelineResume',
   'pendingCall',
+  'activeInteraction',
   'notifications',
   'typingContact',
   'typingDm',
@@ -715,7 +725,13 @@ export const useStoryStore = defineStore('story', {
         // reaction presented, see handleEngineEvent), this queues instead
         // of clobbering it; presentNextQueuedInteraction() shows it once
         // the phone frees up (see makeChoice/declineCall/endCall).
-        if (entry.type === 'choice' || entry.type === 'call') {
+        // an `interaction` entry blocks the same way UNLESS the author
+        // explicitly set `blocking: false` — see InteractionEntryForm.vue.
+        // A non-blocking one falls through to the generic instant path
+        // below: processEntry() still shows it (activeInteraction), the
+        // timeline just doesn't wait for finishInteraction() before moving
+        // on, same "comme les events" behavior requested for this mode.
+        if (entry.type === 'choice' || entry.type === 'call' || (entry.type === 'interaction' && entry.blocking !== false)) {
           this.presentBlockingEntry(entry, chapter, () => {
             this.timelineIndex++
             this.advance()
@@ -726,7 +742,8 @@ export const useStoryStore = defineStore('story', {
 
         this.processEntry(entry, chapter)
 
-        // everything else (post, photo, story, reel, effect) lands instantly
+        // everything else (post, photo, story, reel, effect, non-blocking
+        // interaction) lands instantly
         // but still gets a light pause before the next entry, so a run of
         // them doesn't all appear in the same frame.
         this.timelineIndex++
@@ -873,7 +890,7 @@ export const useStoryStore = defineStore('story', {
       // declineCall / endCall). presentBlockingEntry queues instead of
       // clobbering if the phone is already busy — see advance()'s own
       // comment on the same helper.
-      if (entry.type === 'choice' || entry.type === 'call') {
+      if (entry.type === 'choice' || entry.type === 'call' || (entry.type === 'interaction' && entry.blocking !== false)) {
         this.presentBlockingEntry(entry, chapter, () => this.runThen(list, i + 1, chapter, resume))
         return
       }
@@ -881,16 +898,17 @@ export const useStoryStore = defineStore('story', {
       setTimeout(() => this.runThen(list, i + 1, chapter, resume), PACE_DELAY)
     },
 
-    // Shows a blocking entry (choice/call) right now if the phone is free,
-    // or queues it if the player is already mid-choice/mid-call — this is
-    // what lets the main chapter timeline and an Event's own reaction
-    // (handleEngineEvent) each have a pending choice/call without one
-    // clobbering the other's activeChoice/pendingCall/timelineResume (they
+    // Shows a blocking entry (choice/call/blocking interaction) right now if
+    // the phone is free, or queues it if the player is already mid-choice/
+    // mid-call/mid-interaction — this is what lets the main chapter timeline
+    // and an Event's own reaction (handleEngineEvent) each have a pending
+    // one without one clobbering the other's activeChoice/pendingCall/
+    // activeInteraction/timelineResume (they
     // used to share those 3 fields directly, so whichever presented second
     // silently ate the first one's state). The queued one is shown by
     // presentNextQueuedInteraction() below, once the current one resolves.
     presentBlockingEntry(entry, chapter, resume) {
-      if (this.activeChoice || this.pendingCall) {
+      if (this.activeChoice || this.pendingCall || this.activeInteraction) {
         this.pendingInteractions.push({ entry, chapter, resume })
         return
       }
@@ -1034,6 +1052,35 @@ export const useStoryStore = defineStore('story', {
           else this.triggerScreenEffect(entry.effect, entry.duration)
           break
 
+        // Author-built phone interaction (see stepKinds.js / game.interactions).
+        // PhoneShell.vue reads activeInteraction to mount InteractionPlayer.vue
+        // full-screen; that component reports the outcome via
+        // finishInteraction() below. Blocking vs non-blocking is decided by
+        // advance()/runThen() (which route here either via
+        // presentBlockingEntry, for a blocking one, or straight through, for
+        // a non-blocking one) — this case itself just shows the interaction
+        // either way.
+        case 'interaction': {
+          // Interactions are project data (game.interactions[], authored in
+          // the editor's own "Interactions" tab), not code — this resolves
+          // the entry's referenced id to its authored steps[] at fire time.
+          // A dangling id (definition deleted, entry not updated) degrades
+          // to an empty step list rather than crashing — InteractionPlayer.vue
+          // treats zero steps as an immediate loss.
+          const def = (this.project?.gameConfig?.interactions || []).find(
+            (d) => d.id === entry.interactionId,
+          )
+          this.activeInteraction = {
+            interactionId: entry.interactionId,
+            steps: def?.steps || [],
+            background: def?.background || null,
+            blocking: entry.blocking !== false,
+            onWin: entry.onWin || null,
+            onLose: entry.onLose || null,
+          }
+          break
+        }
+
         case 'timeskip': {
           // an ellipsis that can happen anywhere in a chapter, not just
           // between two — locks the phone right here. By default this also
@@ -1171,6 +1218,40 @@ export const useStoryStore = defineStore('story', {
       this.timelineResume = null
       this.presentNextQueuedInteraction()
       resume()
+    },
+
+    // Called by PhoneShell.vue when the currently-mounted interaction
+    // component emits `finish` (see interactionRegistry.js's component
+    // contract). Applies the matching win/lose branch's effects/then and
+    // fires the matching event trigger regardless of blocking mode — a
+    // non-blocking interaction's outcome ONLY ever surfaces through these
+    // (the timeline already moved on when it started, see processEntry's
+    // 'interaction' case), same "comme les events" behavior the blocking
+    // mode's `then` list sits on top of.
+    finishInteraction({ success }) {
+      const interaction = this.activeInteraction
+      if (!interaction) return
+      this.activeInteraction = null
+
+      const branch = success ? interaction.onWin : interaction.onLose
+      if (branch?.effects) this.applyEffects(branch.effects)
+      emitEngineEvent(success ? 'interaction.won' : 'interaction.lost', {
+        interactionId: interaction.interactionId,
+      })
+
+      const chapter = this.currentChapter
+      const then = branch?.then || []
+      if (!interaction.blocking) {
+        this.runThen(then, 0, chapter, () => {})
+        return
+      }
+      // Same capture-before-queue-check ordering as makeChoice/declineCall/
+      // endCall above — presentNextQueuedInteraction() may itself set a NEW
+      // this.timelineResume before `then`'s own runThen gets to it.
+      const resume = this.timelineResume
+      this.timelineResume = null
+      this.presentNextQueuedInteraction()
+      this.runThen(then, 0, chapter, resume)
     },
 
     markRead(contactId) {

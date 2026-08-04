@@ -74,6 +74,18 @@ export const TRIGGERS = [
     label: 'Conversation ouverte',
     matchFields: [{ key: 'contactId', label: 'Contact', optionsFrom: 'contacts' }],
   },
+  {
+    name: 'interaction.won',
+    app: null,
+    label: 'Interaction gagnée',
+    matchFields: [{ key: 'interactionId', label: 'Interaction', optionsFrom: 'interactions' }],
+  },
+  {
+    name: 'interaction.lost',
+    app: null,
+    label: 'Interaction perdue',
+    matchFields: [{ key: 'interactionId', label: 'Interaction', optionsFrom: 'interactions' }],
+  },
 ]
 
 export const ENGINE_TRIGGERS = TRIGGERS.map((t) => t.name)

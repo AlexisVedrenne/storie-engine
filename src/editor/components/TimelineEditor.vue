@@ -189,6 +189,7 @@ import CallEntryForm from '@/editor/components/entries/CallEntryForm.vue'
 import EffectEntryForm from '@/editor/components/entries/EffectEntryForm.vue'
 import VfxEntryForm from '@/editor/components/entries/VfxEntryForm.vue'
 import TimeskipEntryForm from '@/editor/components/entries/TimeskipEntryForm.vue'
+import InteractionEntryForm from '@/editor/components/entries/InteractionEntryForm.vue'
 import { useEditorI18n } from '@/editor/i18n'
 import { entryTypeLabel, entryTypeHelp } from '@/editor/i18n/sharedOverrides'
 
@@ -231,6 +232,7 @@ const FORM_BY_TYPE = {
   effect: EffectEntryForm,
   vfx: VfxEntryForm,
   timeskip: TimeskipEntryForm,
+  interaction: InteractionEntryForm,
 }
 // Additive merge, never replacing the hardcoded 10 — a plug-in entry type
 // (src/engine/apps/entryTypeRegistry.js) just adds its own `type` key on
@@ -253,6 +255,7 @@ const ICON_BY_TYPE = {
   effect: 'bolt',
   vfx: 'broken_image',
   timeskip: 'update',
+  interaction: 'sports_esports',
 }
 function iconFor(type) {
   return ICON_BY_TYPE[type] || CUSTOM_ENTRY_TYPE_BY_TYPE[type]?.icon || 'help_outline'
@@ -266,7 +269,7 @@ function iconFor(type) {
 // ships in the built game — entryTypeLabel()/entryTypeHelp() look up an
 // editor-dictionary override keyed by `type` first, falling back to that
 // authored text unchanged (see sharedOverrides.js).
-const BUILTIN_TYPES = ['message', 'choice', 'post', 'photo', 'story', 'dm', 'reel', 'call', 'effect', 'vfx', 'timeskip']
+const BUILTIN_TYPES = ['message', 'choice', 'post', 'photo', 'story', 'dm', 'reel', 'call', 'effect', 'vfx', 'timeskip', 'interaction']
 function helpFor(type) {
   return BUILTIN_TYPES.includes(type) ? t(`timelineEditor.types.${type}.help`) : entryTypeHelp(CUSTOM_ENTRY_TYPE_BY_TYPE[type])
 }
@@ -322,6 +325,14 @@ function defaultEntry(type) {
       return { type, mode: 'start', effect: 'glitch', duration: 1200 }
     case 'timeskip':
       return { type }
+    case 'interaction':
+      return {
+        type,
+        interactionId: story.project?.gameConfig?.interactions?.[0]?.id || '',
+        blocking: true,
+        onWin: {},
+        onLose: {},
+      }
     default: {
       // Additive fallback for plug-in entry types — reached only for a
       // type none of the cases above matches.
@@ -389,6 +400,11 @@ function summaryFor(entry) {
       return t(`entries.vfx.kinds.${entry.effect || 'glitch'}`) + (entry.duration ? ` · ${entry.duration}ms` : ` · ${t('timelineEditor.vfxUntilStopped')}`)
     case 'timeskip':
       return entry.label || `${entry.clock || ''} ${entry.date || ''}`.trim()
+    case 'interaction': {
+      const def = (story.project?.gameConfig?.interactions || []).find((d) => d.id === entry.interactionId)
+      const label = def?.name || entry.interactionId || ''
+      return `${label} · ${entry.blocking === false ? t('timelineEditor.interactionParallel') : t('timelineEditor.interactionBlocking')}`
+    }
     default:
       return ''
   }

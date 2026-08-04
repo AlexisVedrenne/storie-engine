@@ -33,6 +33,9 @@
           <q-tab name="events" icon="sensors">
             <q-tooltip>{{ t('editorPage.tabEvents') }}</q-tooltip>
           </q-tab>
+          <q-tab name="interactions" icon="touch_app">
+            <q-tooltip>{{ t('editorPage.tabInteractions') }}</q-tooltip>
+          </q-tab>
           <q-tab name="contacts" icon="contacts">
             <q-tooltip>{{ t('editorPage.tabContacts') }}</q-tooltip>
           </q-tab>
@@ -254,6 +257,9 @@
               <q-tab-panel name="events">
                 <EventList v-model="selectedEventIndex" />
               </q-tab-panel>
+              <q-tab-panel name="interactions">
+                <InteractionDefList v-model="selectedInteractionIndex" />
+              </q-tab-panel>
               <q-tab-panel name="contacts">
                 <ContactList v-model="selectedContactIndex"
               /></q-tab-panel>
@@ -286,6 +292,11 @@
                   <q-tab-panel name="events">
                     <EventForm v-if="selectedEvent" :event="selectedEvent" />
                     <div v-else class="empty-state">{{ t('editorPage.eventsEmptyState') }}</div>
+                  </q-tab-panel>
+
+                  <q-tab-panel name="interactions">
+                    <InteractionDefForm v-if="selectedInteractionDef" :def="selectedInteractionDef" />
+                    <div v-else class="empty-state">{{ t('editorPage.interactionsEmptyState') }}</div>
                   </q-tab-panel>
 
                   <q-tab-panel name="contacts">
@@ -420,6 +431,8 @@ import GameForm from '@/editor/components/GameForm.vue'
 import FlagsPanel from '@/editor/components/FlagsPanel.vue'
 import EventList from '@/editor/components/EventList.vue'
 import EventForm from '@/editor/components/EventForm.vue'
+import InteractionDefList from '@/editor/components/InteractionDefList.vue'
+import InteractionDefForm from '@/editor/components/InteractionDefForm.vue'
 import AssetsPanel from '@/editor/components/AssetsPanel.vue'
 import AssetTree from '@/editor/components/AssetTree.vue'
 import LocaleList from '@/editor/components/LocaleList.vue'
@@ -498,6 +511,10 @@ const selectedThread = computed(() => story.project?.threads?.[selectedThreadInd
 const selectedEventIndex = ref(0)
 const selectedEvent = computed(
   () => story.project?.gameConfig?.events?.[selectedEventIndex.value] || null,
+)
+const selectedInteractionIndex = ref(0)
+const selectedInteractionDef = computed(
+  () => story.project?.gameConfig?.interactions?.[selectedInteractionIndex.value] || null,
 )
 // Selected folder path within assets/ ('' = root) — same lift-state-up
 // pattern as the selection refs above, shared between AssetTree (left pane)

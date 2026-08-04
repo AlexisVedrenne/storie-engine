@@ -18,6 +18,7 @@ export default {
     unsavedTooltip: 'Modifications non enregistrées',
     tabChapters: 'Chapitres',
     tabEvents: 'Events — réactions aux actions du joueur (hors timeline)',
+    tabInteractions: 'Interactions — gestes téléphone construits par toi, appelables depuis la timeline',
     tabContacts: 'Contacts',
     tabThreads: 'Groupes',
     tabGame: 'Jeu',
@@ -40,6 +41,7 @@ export default {
     flagsTooltip: 'Flags — catalogue de toutes les stats du joueur utilisées dans le projet',
     gameEmptyState: 'Le titre du jeu est un champ unique — pas de liste.',
     eventsEmptyState: 'Sélectionne ou crée un event à gauche.',
+    interactionsEmptyState: 'Sélectionne ou crée une interaction à gauche.',
     contactsEmptyState: 'Sélectionne un contact à gauche.',
     threadsEmptyState: 'Sélectionne un thread à gauche.',
     i18nEmptyState: 'Sélectionne une langue à gauche.',
@@ -98,6 +100,8 @@ export default {
     linesCount: '{n} répliques',
     vfxStopSummary: 'Arrête l’effet en cours',
     vfxUntilStopped: 'jusqu’à arrêt manuel',
+    interactionBlocking: 'bloque la timeline',
+    interactionParallel: 'en parallèle',
     types: {
       message: {
         label: 'Message (SMS)',
@@ -133,6 +137,10 @@ export default {
       timeskip: {
         label: 'Ellipse temporelle (timeskip)',
         help: 'Une ellipse temporelle — verrouille le téléphone et avance l’heure/date.',
+      },
+      interaction: {
+        label: 'Interaction',
+        help: 'Un geste construit par toi dans l’onglet Interactions (brancher un câble, essuyer l’écran...) — gagné/perdu déclenche une branche différente et un event, en bloquant la timeline ou en parallèle selon le réglage.',
       },
     },
   },
@@ -255,6 +263,91 @@ export default {
       blockingLabel: "Bloque la timeline jusqu'au déverrouillage",
       blockingHelp:
         "Activé (par défaut) : l'histoire attend que le joueur déverrouille avant de continuer — coupure nette. Désactivé : la suite se joue en coulisses derrière l'écran verrouillé (messages/DM/appel s'accumulent normalement), comme un vrai téléphone dans une poche.",
+    },
+    interaction: {
+      pickLabel: 'Interaction',
+      blockingLabel: 'Comportement',
+      blockingOn: 'Bloque la timeline',
+      blockingOff: 'En parallèle',
+      blockingOnHelp:
+        "L'histoire attend le résultat (gagné/perdu) avant de continuer — comme un choix ou un appel.",
+      blockingOffHelp:
+        "La timeline continue tout de suite, l'interaction reste jouable à l'écran — son résultat ne se répercute que via ses propres branches et l'event correspondant (interaction.won / interaction.lost), pas en bloquant la suite.",
+      branchesTitle: 'Résultat',
+      winLabel: 'Victoire',
+      loseLabel: 'Défaite',
+      noneAuthoredHelp: 'Aucune interaction créée pour l’instant — construis-en une dans l’onglet Interactions, puis reviens l’appeler ici.',
+      stepsCount: '{n} étapes',
+    },
+  },
+
+  interactionList: {
+    empty: 'Aucune interaction créée.',
+    stepsCount: '{n} étapes',
+    newInteraction: 'Nouvelle interaction',
+    idLabel: 'Identifiant (id)',
+    nameLabel: 'Nom',
+    idTaken: 'Cet identifiant est déjà utilisé.',
+  },
+
+  interactionDefForm: {
+    identityTitle: 'Identité',
+    nameLabel: 'Nom',
+    backgroundTitle: 'Fond d’écran',
+    backgroundHelp: 'Image de fond affichée pendant toute l’interaction (optionnel) — ex: une photo du bas du téléphone pour "brancher le câble", ou l’écran couvert de poussière.',
+    backgroundLabel: 'Image de fond',
+    stepsTitle: 'Étapes',
+    stepsHelp: 'Le joueur doit réussir chaque étape dans l’ordre pour que l’interaction soit gagnée — le dépassement du délai d’une étape la fait échouer.',
+  },
+
+  stepsEditor: {
+    empty: 'Aucune étape — ajoute-en au moins une.',
+    stepHeader: 'Étape {n} — {kind}',
+    kindLabel: 'Type de geste',
+    textLabel: 'Texte affiché',
+    imageLabel: 'Image (ton propre asset — prioritaire sur l’icône)',
+    iconLabel: 'Icône (optionnel, si pas d’image)',
+    iconHelp: 'Nom d’icône Material (ex: power, cleaning_services) — ignoré si une image est choisie au-dessus.',
+    timeLimitLabel: 'Délai maximum (optionnel)',
+    timeLimitHelp: 'Passé ce délai, l’interaction entière échoue. Laisse vide pour ne pas limiter cette étape.',
+    zoneLabel: 'Zone',
+    fromLabel: 'Départ',
+    toLabel: 'Arrivée',
+    directionLabel: 'Direction',
+    directions: {
+      up: 'Haut',
+      down: 'Bas',
+      left: 'Gauche',
+      right: 'Droite',
+    },
+    durationLabel: 'Durée',
+    digitsLabel: 'Code attendu',
+    digitsHelp: 'Chiffres uniquement, ex: 1234.',
+    addStep: 'Ajouter une étape',
+  },
+
+  stepKinds: {
+    tap: { label: 'Toucher' },
+    hold: { label: 'Maintenir appuyé' },
+    swipe: { label: 'Glisser (swipe)' },
+    drag: { label: 'Glisser-déposer (drag)' },
+    wipe: { label: 'Frotter / essuyer' },
+    code: { label: 'Code numérique' },
+    wait: { label: 'Attendre (sans action)' },
+  },
+
+  zonePicker: {
+    anywhere: 'N’importe où',
+    zones: {
+      topLeft: 'Haut gauche',
+      top: 'Haut',
+      topRight: 'Haut droite',
+      left: 'Gauche',
+      center: 'Centre',
+      right: 'Droite',
+      bottomLeft: 'Bas gauche',
+      bottom: 'Bas',
+      bottomRight: 'Bas droite',
     },
   },
 
@@ -633,6 +726,14 @@ export default {
     'conversation.opened': {
       label: 'Conversation ouverte',
       fields: { contactId: { label: 'Contact' } },
+    },
+    'interaction.won': {
+      label: 'Interaction gagnée',
+      fields: { interactionId: { label: 'Interaction' } },
+    },
+    'interaction.lost': {
+      label: 'Interaction perdue',
+      fields: { interactionId: { label: 'Interaction' } },
     },
   },
 

@@ -192,6 +192,9 @@ const activeTab = ref('then')
 const matchFields = computed(() => triggerDef(props.event.trigger)?.matchFields || [])
 
 const appOptions = computed(() => APP_REGISTRY.map((app) => ({ label: storyT(app.labelKey), value: app.id })))
+const interactionOptions = computed(() =>
+  (story.project?.gameConfig?.interactions || []).map((def) => ({ label: def.name || def.id, value: def.id })),
+)
 // Recomputed from the whole project on every access rather than cached —
 // cheap (a handful of chapters/photos) and always reflects the latest
 // authored content without a separate invalidation step.
@@ -238,6 +241,7 @@ function filterPostOptions(val, update) {
 function optionsFor(field) {
   if (field.optionsFrom === 'apps') return appOptions.value
   if (field.optionsFrom === 'contacts') return contactOptions.value
+  if (field.optionsFrom === 'interactions') return interactionOptions.value
   return null
 }
 

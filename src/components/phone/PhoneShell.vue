@@ -50,6 +50,13 @@
         class="screen-effect-veil"
         :class="`effect-${story.screenEffect.kind}`"
       />
+
+      <InteractionPlayer
+        v-if="story.activeInteraction"
+        :steps="story.activeInteraction.steps"
+        :background="story.activeInteraction.background"
+        @finish="story.finishInteraction"
+      />
     </div>
 
     <button
@@ -75,6 +82,7 @@ import NotificationBanner from './NotificationBanner.vue'
 
 import IncomingCallScreen from '@/components/apps/calls/IncomingCallScreen.vue'
 import { APP_REGISTRY } from '@/engine/apps/registry'
+import InteractionPlayer from './interactions/InteractionPlayer.vue'
 
 // `large` lets a caller (EditorPage.vue's "Aperçu seul" mode) raise the
 // phone-frame's hard size cap — see docs/ui-ux-audit.md point 10: the
