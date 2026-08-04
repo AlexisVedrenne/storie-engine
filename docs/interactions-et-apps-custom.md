@@ -335,8 +335,22 @@ déjà présent sur le `dragover` par ligne). Diagnostiqué en direct avec
 l'utilisateur via un `console.log` temporaire dans `performDrop`, pas
 deviné à l'aveugle.
 
-**Reporté** : action de jeu générique sur un bloc `button` — toujours pas
-scopé, prochain module candidat évoqué par l'utilisateur.
+### Actions sur le bloc `button`
+
+Catalogue fixe, deux kinds pour l'instant, choisi avec l'utilisateur avant
+de coder (même discipline que le reste de cette doc) : `block.action.type`
+= `'none'` (défaut, purement visuel, comportement inchangé pour les blocs
+existants sauvegardés avant cette feature) | `'effect'` (applique
+`block.action.effects` via `story.applyEffects()` — exactement le mécanisme
+déjà utilisé par une option de `choice`/`onWin` d'interaction, pas un
+nouveau système) | `'navigateScreen'` (change l'écran actif de l'app via
+`inject('customAppNavigate')` — la MÊME injection que `TabsBlock.vue`
+consomme déjà, un seul mécanisme de navigation dans tout le moteur).
+Authoring : toggle de kind + `EffectsBuilder.vue` (réutilisé tel quel) ou
+un sélecteur d'écran (réutilise `screenOptions`, déjà là pour `tabs`) dans
+`BlockPropertiesForm.vue`. Pas de kind "déclenche une entrée timeline" —
+un bouton n'est pas rattaché à une position dans la timeline, complexité
+jugée inutile tant qu'aucun besoin concret ne le justifie.
 
 ### Piège IPC à connaître
 
@@ -349,8 +363,8 @@ d'envoyer (voir `EditorPage.vue`'s `save()`, cas `'apps'`) — même trick que
 
 ## Limites connues (v1, les deux systèmes)
 
-- Aucune action de jeu branchée sur un bloc d'app custom (bouton visuel
-  seulement) — reporté à une phase 2, pas encore scopée.
+- Bloc `button` : seulement 2 kinds d'action (`effect`/`navigateScreen`) —
+  pas de "déclenche une entrée timeline", voir sa section.
 - Pas de branchement/conditions à l'intérieur d'une séquence de steps
   d'interaction (linéaire uniquement) — évoqué, volontairement pas
   construit tant qu'aucun besoin concret ne le justifie.

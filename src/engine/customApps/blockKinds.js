@@ -49,7 +49,12 @@ export function defaultBlock(type) {
     case 'divider':
       return { type }
     case 'button':
-      return { type, label: '', color: '#4c8bf5' }
+      // `action.type`: 'none' (default, purely visual) | 'effect' (applies
+      // flags/effects, same shape/mechanism as a choice option's own
+      // `effects`) | 'navigateScreen' (switches this app's active screen,
+      // same mechanism as the `tabs` block). Small fixed catalog, not a
+      // generic action system — see ButtonBlock.vue.
+      return { type, label: '', color: '#4c8bf5', action: { type: 'none' } }
     case 'tabs':
       return { type, tabs: [{ label: '', screenId: '' }] }
     case 'list':

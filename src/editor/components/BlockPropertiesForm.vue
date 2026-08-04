@@ -205,7 +205,36 @@
         </template>
       </q-input>
       <ColorField v-model="block.color" />
-      <p class="tab-help">{{ t('blockProps.buttonHelp') }}</p>
+      <q-btn-toggle
+        dense
+        no-caps
+        :model-value="ensureAction().type"
+        :options="[
+          { label: t('blockProps.actionNone'), value: 'none' },
+          { label: t('blockProps.actionEffect'), value: 'effect' },
+          { label: t('blockProps.actionNavigateScreen'), value: 'navigateScreen' },
+        ]"
+        @update:model-value="setButtonActionType"
+      />
+      <template v-if="block.action.type === 'effect'">
+        <p class="tab-help">{{ t('blockProps.actionEffectHelp') }}</p>
+        <EffectsBuilder
+          :model-value="block.action.effects"
+          @update:model-value="(v) => (block.action.effects = v)"
+        />
+      </template>
+      <template v-else-if="block.action.type === 'navigateScreen'">
+        <q-select
+          dense
+          outlined
+          emit-value
+          map-options
+          :label="t('blockProps.actionNavigateScreenLabel')"
+          :options="screenOptions"
+          v-model="block.action.screenId"
+        />
+      </template>
+      <p v-else class="tab-help">{{ t('blockProps.buttonHelp') }}</p>
     </template>
 
     <template v-else-if="block.type === 'tabs'">
@@ -327,6 +356,7 @@ import { computed, ref } from 'vue'
 import AssetField from '@/editor/components/AssetField.vue'
 import ColorField from '@/editor/components/ColorField.vue'
 import RequiresBuilder from '@/editor/components/RequiresBuilder.vue'
+import EffectsBuilder from '@/editor/components/EffectsBuilder.vue'
 import VariablePickerBtn from '@/editor/components/VariablePickerBtn.vue'
 import { insertEmojiAtCaret } from '@/components/shared/emojiInsert'
 // Circular with BlockBuilder.vue (a `card` block recurses into its own
@@ -371,6 +401,20 @@ function ensureChildren() {
 function ensureTemplate() {
   if (!props.block.template) props.block.template = []
   return props.block.template
+}
+
+function ensureAction() {
+  if (!props.block.action) props.block.action = { type: 'none' }
+  return props.block.action
+}
+// Switching kind replaces the action object wholesale (not just its
+// `type`) — keeps stale fields from a previous kind (e.g. `effects` while
+// now `navigateScreen`) from lingering unused in the saved block.
+function setButtonActionType(type) {
+  if (type === 'effect') props.block.action = { type, effects: props.block.action?.effects || {} }
+  else if (type === 'navigateScreen') {
+    props.block.action = { type, screenId: props.block.action?.screenId || '' }
+  } else props.block.action = { type: 'none' }
 }
 
 function ensureTabs() {

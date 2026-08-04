@@ -453,8 +453,13 @@ export default {
     directionRow: 'Rangée (horizontal)',
     directionColumn: 'Colonne (vertical)',
     gapLabel: 'Écart entre les blocs',
-    buttonHelp:
-      'Bouton visuel — pas encore branché à une action (à venir dans une prochaine version).',
+    buttonHelp: 'Bouton purement visuel — choisis une action ci-dessus pour le rendre interactif.',
+    actionNone: 'Aucune',
+    actionEffect: 'Effet',
+    actionNavigateScreen: 'Changer d’écran',
+    actionEffectHelp:
+      'Applique ces effets (flags, social...) au tap — même mécanisme qu’une option de choix.',
+    actionNavigateScreenLabel: 'Écran ciblé',
     tabLabelLabel: 'Texte de l’onglet',
     tabScreenLabel: 'Écran ciblé',
     addTab: 'Ajouter un onglet',
