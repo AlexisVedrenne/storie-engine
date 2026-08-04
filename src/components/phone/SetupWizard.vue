@@ -42,7 +42,9 @@
           maxlength="20"
           @keyup.enter="goName"
         />
-        <button class="primary-btn" :disabled="!name.trim()" @click="goName">{{ t('common.continue') }}</button>
+        <button class="primary-btn" :disabled="!name.trim()" @click="goName">
+          {{ t('common.continue') }}
+        </button>
       </div>
 
       <div v-else-if="step === 'sim'" key="sim" class="step">
@@ -159,7 +161,9 @@
             <q-icon v-if="selectedColor === c" name="check" size="18px" color="white" />
           </button>
         </div>
-        <button class="primary-btn" :disabled="!selectedColor" @click="step = 'done'">{{ t('common.continue') }}</button>
+        <button class="primary-btn" :disabled="!selectedColor" @click="step = 'done'">
+          {{ t('common.continue') }}
+        </button>
       </div>
 
       <div v-else key="done" class="step">
@@ -218,7 +222,7 @@ function backspace() {
 // --- fake Wi-Fi connect ----------------------------------------------------
 const wifiState = ref('scanning') // 'scanning' | 'list' | 'connecting' | 'connected'
 
-watch(step, val => {
+watch(step, (val) => {
   if (val === 'wifi') {
     wifiState.value = 'scanning'
     setTimeout(() => (wifiState.value = 'list'), 900)
@@ -422,7 +426,9 @@ p {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: transform 0.1s ease, background 0.15s ease;
+  transition:
+    transform 0.1s ease,
+    background 0.15s ease;
 }
 
 .key:active:not(:disabled) {
@@ -533,6 +539,8 @@ p {
 
 .sync-grid {
   display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   gap: 16px;
 }
 
