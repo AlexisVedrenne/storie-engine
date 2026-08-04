@@ -1,5 +1,9 @@
 <template>
-  <BlockList :blocks="block.blocks || []" :direction="block.direction || 'row'" :gap="block.gap ?? 8" />
+  <BlockList
+    :blocks="block.blocks || []"
+    :direction="block.direction || 'row'"
+    :gap="block.gap ?? 8"
+  />
 </template>
 
 <script setup>

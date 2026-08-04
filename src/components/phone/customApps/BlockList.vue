@@ -4,7 +4,10 @@
       v-for="(block, i) in visibleBlocks"
       :key="i"
       class="block-wrap"
-      :style="{ marginTop: block.spacingBefore ? `${block.spacingBefore}px` : undefined, marginBottom: block.spacingAfter ? `${block.spacingAfter}px` : undefined }"
+      :style="{
+        marginTop: block.spacingBefore ? `${block.spacingBefore}px` : undefined,
+        marginBottom: block.spacingAfter ? `${block.spacingAfter}px` : undefined,
+      }"
       @click.stop="phone.selectCustomAppBlock(block)"
     >
       <component :is="blockComponent(block.type)" :block="block" />
@@ -46,6 +49,7 @@ import BadgeBlock from './BadgeBlock.vue'
 import DividerBlock from './DividerBlock.vue'
 import ButtonBlock from './ButtonBlock.vue'
 import TabsBlock from './TabsBlock.vue'
+import ListBlock from './ListBlock.vue'
 
 const phone = usePhoneStore()
 const story = useStoryStore()
@@ -74,6 +78,7 @@ const BLOCK_COMPONENTS = {
   divider: DividerBlock,
   button: ButtonBlock,
   tabs: TabsBlock,
+  list: ListBlock,
 }
 function blockComponent(type) {
   return BLOCK_COMPONENTS[type] || null

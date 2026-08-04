@@ -18,7 +18,8 @@ export default {
     unsavedTooltip: 'Modifications non enregistrées',
     tabChapters: 'Chapitres',
     tabEvents: 'Events — réactions aux actions du joueur (hors timeline)',
-    tabInteractions: 'Interactions — gestes téléphone construits par toi, appelables depuis la timeline',
+    tabInteractions:
+      'Interactions — gestes téléphone construits par toi, appelables depuis la timeline',
     tabApps: 'Apps — applications téléphone construites par blocs visuels',
     tabContacts: 'Contacts',
     tabThreads: 'Groupes',
@@ -240,10 +241,12 @@ export default {
       addLine: 'Ajouter une réplique',
     },
     vfx: {
-      intro: 'Déclenche un effet visuel plein écran sur le téléphone. Purement cosmétique — la timeline continue tout de suite, sans attendre la fin de l’effet.',
+      intro:
+        'Déclenche un effet visuel plein écran sur le téléphone. Purement cosmétique — la timeline continue tout de suite, sans attendre la fin de l’effet.',
       modeStart: 'Démarrer',
       modeStop: 'Arrêter',
-      stopHelp: 'Désactive l’effet visuel actuellement affiché, quel qu’il soit — à placer plus loin dans la timeline pour couper un effet laissé actif sans durée.',
+      stopHelp:
+        'Désactive l’effet visuel actuellement affiché, quel qu’il soit — à placer plus loin dans la timeline pour couper un effet laissé actif sans durée.',
       effectLabel: 'Effet',
       kinds: {
         glitch: 'Glitch (distorsion couleur)',
@@ -254,7 +257,8 @@ export default {
         blackout: 'Coupure de courant (flicker puis noir)',
       },
       durationLabel: 'Durée (optionnel)',
-      durationHelp: 'Laisse vide pour que l’effet reste actif jusqu’à un entry « Arrêter » plus loin dans la timeline.',
+      durationHelp:
+        'Laisse vide pour que l’effet reste actif jusqu’à un entry « Arrêter » plus loin dans la timeline.',
     },
     timeskip: {
       intro: "Verrouille le téléphone et fait avancer l'heure/la date d'un coup.",
@@ -278,7 +282,8 @@ export default {
       branchesTitle: 'Résultat',
       winLabel: 'Victoire',
       loseLabel: 'Défaite',
-      noneAuthoredHelp: 'Aucune interaction créée pour l’instant — construis-en une dans l’onglet Interactions, puis reviens l’appeler ici.',
+      noneAuthoredHelp:
+        'Aucune interaction créée pour l’instant — construis-en une dans l’onglet Interactions, puis reviens l’appeler ici.',
       stepsCount: '{n} étapes',
     },
   },
@@ -296,10 +301,12 @@ export default {
     identityTitle: 'Identité',
     nameLabel: 'Nom',
     backgroundTitle: 'Fond d’écran',
-    backgroundHelp: 'Image de fond affichée pendant toute l’interaction (optionnel) — ex: une photo du bas du téléphone pour "brancher le câble", ou l’écran couvert de poussière.',
+    backgroundHelp:
+      'Image de fond affichée pendant toute l’interaction (optionnel) — ex: une photo du bas du téléphone pour "brancher le câble", ou l’écran couvert de poussière.',
     backgroundLabel: 'Image de fond',
     stepsTitle: 'Étapes',
-    stepsHelp: 'Le joueur doit réussir chaque étape dans l’ordre pour que l’interaction soit gagnée — le dépassement du délai d’une étape la fait échouer.',
+    stepsHelp:
+      'Le joueur doit réussir chaque étape dans l’ordre pour que l’interaction soit gagnée — le dépassement du délai d’une étape la fait échouer.',
   },
 
   stepsEditor: {
@@ -309,9 +316,11 @@ export default {
     textLabel: 'Texte affiché',
     imageLabel: 'Image (ton propre asset — prioritaire sur l’icône)',
     iconLabel: 'Icône (optionnel, si pas d’image)',
-    iconHelp: 'Nom d’icône Material (ex: power, cleaning_services) — ignoré si une image est choisie au-dessus.',
+    iconHelp:
+      'Nom d’icône Material (ex: power, cleaning_services) — ignoré si une image est choisie au-dessus.',
     timeLimitLabel: 'Délai maximum (optionnel)',
-    timeLimitHelp: 'Passé ce délai, l’interaction entière échoue. Laisse vide pour ne pas limiter cette étape.',
+    timeLimitHelp:
+      'Passé ce délai, l’interaction entière échoue. Laisse vide pour ne pas limiter cette étape.',
     zoneLabel: 'Zone',
     fromLabel: 'Départ',
     toLabel: 'Arrivée',
@@ -371,7 +380,8 @@ export default {
     identityTitle: 'Identité',
     labelLabel: 'Nom',
     iconLabel: 'Icône (accueil du téléphone)',
-    iconHelp: 'Nom d’icône Material — affichée sur l’écran d’accueil, distincte des icônes posées dans les blocs.',
+    iconHelp:
+      'Nom d’icône Material — affichée sur l’écran d’accueil, distincte des icônes posées dans les blocs.',
     screensTitle: 'Écrans',
     screenLabelLabel: 'Nom de l’écran',
     addScreen: 'Ajouter un écran',
@@ -402,6 +412,7 @@ export default {
     divider: { label: 'Séparateur' },
     button: { label: 'Bouton' },
     tabs: { label: 'Onglets' },
+    list: { label: 'Liste (contacts)' },
   },
 
   blockProps: {
@@ -412,27 +423,35 @@ export default {
     contentLabel: 'Contenu',
     imageLabel: 'Image',
     fullBleedLabel: 'Bord à bord (plein largeur)',
-    fullBleedHelp: 'Ignore la marge de l’écran — l’image touche les bords gauche/droit. Ne s’aligne pas parfaitement si le bloc est imbriqué dans une carte/disposition.',
+    fullBleedHelp:
+      'Ignore la marge de l’écran — l’image touche les bords gauche/droit. Ne s’aligne pas parfaitement si le bloc est imbriqué dans une carte/disposition.',
     textColorLabel: 'Couleur du texte',
     textSizeLabel: 'Taille (optionnel)',
     textSizeHelp: 'Laisse vide pour garder la taille du style choisi ci-dessus.',
     labelLabel: 'Texte',
     iconFallbackLabel: 'Icône (si pas d’image)',
-    iconFallbackHelp: 'Nom d’icône Material, utilisée seulement si aucune image n’est choisie au-dessus.',
+    iconFallbackHelp:
+      'Nom d’icône Material, utilisée seulement si aucune image n’est choisie au-dessus.',
     sublabelLabel: 'Sous-texte (optionnel)',
     chevronLabel: 'Chevron (indique qu’on peut cliquer)',
     cardHelp: 'Une carte regroupe visuellement d’autres blocs à l’intérieur.',
-    layoutHelp: 'Arrange d’autres blocs en rangée ou en colonne, sans fond visuel — contrairement à la carte.',
+    layoutHelp:
+      'Arrange d’autres blocs en rangée ou en colonne, sans fond visuel — contrairement à la carte.',
     directionRow: 'Rangée (horizontal)',
     directionColumn: 'Colonne (vertical)',
     gapLabel: 'Écart entre les blocs',
-    buttonHelp: 'Bouton visuel — pas encore branché à une action (à venir dans une prochaine version).',
+    buttonHelp:
+      'Bouton visuel — pas encore branché à une action (à venir dans une prochaine version).',
     tabLabelLabel: 'Texte de l’onglet',
     tabScreenLabel: 'Écran ciblé',
     addTab: 'Ajouter un onglet',
     spacingTitle: 'Espacement (avancé)',
     spacingBeforeLabel: 'Espace avant (optionnel)',
     spacingAfterLabel: 'Espace après (optionnel)',
+    useItemAvatarLabel: 'Utiliser l’avatar du contact',
+    onlyFollowedLabel: 'Seulement les contacts suivis',
+    listHelp:
+      'Le contenu ci-dessous est répété une fois par contact — utilise le bouton variable pour insérer {item:name} dans un champ texte, ou la case ci-dessus sur un bloc avatar.',
   },
 
   colorField: {
@@ -448,9 +467,16 @@ export default {
       steps: 'Pas (podomètre)',
       stepsGoal: 'Objectif de pas',
       weather: 'Température',
+      itemName: 'Nom du contact',
+      itemHandle: 'Pseudo affiché (@pseudo ou nom)',
+      itemPseudo: 'Pseudo brut',
+      itemFollowers: 'Nombre d’abonnés',
+      itemFollowing: 'Nombre d’abonnements',
+      itemColor: 'Couleur (code hex)',
     },
     flagsTitle: 'Flags du projet',
     noFlags: 'Aucun flag dans ce projet pour l’instant.',
+    itemTitle: 'Contact (bloc liste)',
   },
 
   requiresBuilder: {
@@ -626,7 +652,7 @@ export default {
     brandingTitle: 'Marque du téléphone',
     brandingHelp:
       "Nom du système fictif du téléphone (écran de démarrage, Réglages > Informations) et nom de l'app de réseau social — purement cosmétique.",
-    osNameLabel: "Nom du système (OS)",
+    osNameLabel: 'Nom du système (OS)',
     osNameDefault: 'LustOS',
     socialAppNameLabel: "Nom de l'app réseau social",
     socialAppNameDefault: 'Pixly',
@@ -739,7 +765,8 @@ export default {
     loading: 'Chargement de la preview...',
     readyTitle: 'Preview prête',
     readyHint: 'Rends-toi sur ce lien depuis ton téléphone (même réseau Wi-Fi) :',
-    firewallHint: "Si Windows demande d'autoriser l'accès réseau, clique sur Autoriser (réseaux privés).",
+    firewallHint:
+      "Si Windows demande d'autoriser l'accès réseau, clique sur Autoriser (réseaux privés).",
     errorTitle: 'Échec de la preview',
     stop: 'Arrêter la preview',
   },

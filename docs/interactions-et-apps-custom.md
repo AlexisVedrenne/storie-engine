@@ -196,6 +196,63 @@ dialogue Flags).
 Compteurs sociaux/messages (listés comme option 3 pendant la discussion) :
 écartés, pas assez de besoin concret confirmé pour l'instant.
 
+### Bloc liste — répète un sous-arbre par contact (dynamisme, étape 3)
+
+Troisième pas : un bloc `list` qui répète un **template** (sous-arbre de
+blocs, authored une fois) une fois par contact du projet — première brique
+de composant vraiment dynamique (nombre de rendus variable, pas juste du
+texte/une visibilité qui change). Scope délibérément étroit, décidé avec
+l'utilisateur avant de coder : une seule source possible (`project.contacts`,
+toggle "seulement les suivis" via `story.isFollowing()` — le même mécanisme
+de suivi que le Fil social), pas de source générique ni de pagination/tri.
+
+- `blockKinds.js` : `{ type: 'list', onlyFollowed: false, template: [] }`.
+  `template` a exactement la même forme que `card.blocks`/`layout.blocks`
+  (un sous-arbre de blocs classique) — pas un nouveau concept.
+- Runtime : `ListBlock.vue` calcule la liste de contacts (filtrée ou non),
+  puis pour CHAQUE contact monte une instance de `ListItemScope.vue`
+  (`provide('customAppListItem', item)` + `<BlockList :blocks="template">`).
+  Un `provide()` est scopé à l'instance de composant qui l'appelle — une
+  instance séparée par itération est ce qui permet à chaque copie du
+  template de voir SON PROPRE contact plutôt que le dernier de la boucle.
+  Card/layout imbriqués dans le template héritent du contexte
+  automatiquement (provide/inject traverse tout l'arbre de composants
+  descendants, y compris à travers plusieurs niveaux de récursion).
+- Texte : tokens `{item:name}`/`{item:handle}`/`{item:pseudo}`/
+  `{item:followers}`/`{item:following}`/`{item:color}` (`resolveDynamicText.js`,
+  3ᵉ paramètre `item` optionnel) — `handle`/`followers`/`following` réutilisent
+  `story.socialHandle()`/`story.socialStats()`, les mêmes fonctions qui
+  affichent déjà ces infos sur les écrans sociaux (pas de recalcul parallèle).
+  Chaque composant texte fait `inject('customAppListItem', null)` et le passe
+  en 3ᵇ argument, même patron que `customAppActiveScreenId` (déjà utilisé par
+  `TabsBlock.vue`).
+  Pas de `{item:avatar}` textuel : `AssetField` (le widget image) n'a
+  aucun champ texte libre où taper un token, donc l'avatar contact passe
+  par une case à cocher dédiée à la place (voir juste en dessous).
+- Avatar : `block.useItemAvatar` (bool, uniquement affiché dans le
+  formulaire quand on édite à l'intérieur d'un template de liste) — si
+  coché, `AvatarBlock.vue` prend `listItem.avatar` au lieu de son propre
+  `block.src` statique.
+- Authoring : `itemScope` (bool) est propagé en prop à travers toute la
+  chaîne `BlockBuilder.vue` → `BlockPropertiesForm.vue` → (nested)
+  `BlockBuilder.vue`, forcé à `true` uniquement pour le `BlockBuilder`
+  imbriqué du `template` d'un bloc `list` — ça détermine si
+  `VariablePickerBtn.vue` propose la section "Contact (bloc liste)"
+  (liste séparée `ITEM_TOKENS`, distincte de `FIXED_TOKENS`/flags).
+- Drag & drop / cycle guard / auto-scroll-vers-le-bloc-sélectionné
+  (`BlockBuilder.vue`) et export/import zip (`collectAssetRefs`/
+  `rewriteBlockSrcs`, `src-electron/ipc/customApps.js`) marchent sur
+  `block.template` exactement comme sur `block.blocks` — même traitement,
+  pas de code dupliqué.
+- **Vérifié par un vrai build du jeu compilé** (pas juste lint+build
+  éditeur) : projet de test scratch avec un `apps/*.json` contenant un
+  bloc `list` (contacts + `onlyFollowed`, template avec `card`/`avatar`
+  `useItemAvatar`/`row`/`badge`/`{item:name}`), assemblage manuel du
+  template `game-shell` (même liste de copies que `shellAssembly.js`),
+  `quasar build` réel — succès, et présence confirmée dans le bundle
+  (`useItemAvatar`, `onlyFollowed`, `customAppListItem`, le contenu de
+  l'app de test) en grepant le JS buildé.
+
 ### Piège IPC à connaître
 
 `story.project.customApps[i]` est un objet réactif Pinia (Proxy) — jamais
@@ -212,4 +269,8 @@ d'envoyer (voir `EditorPage.vue`'s `save()`, cas `'apps'`) — même trick que
 - Pas de branchement/conditions à l'intérieur d'une séquence de steps
   d'interaction (linéaire uniquement) — évoqué, volontairement pas
   construit tant qu'aucun besoin concret ne le justifie.
-- Zéro test GUI réel sur les deux systèmes à date de cette doc.
+- Bloc `list` : une seule source possible (contacts du projet) — pas de
+  générateur/source personnalisée, pas de tri/pagination.
+- Zéro test GUI réel sur les deux systèmes à date de cette doc (le bloc
+  `list` a eu un vrai build du jeu compilé en plus du lint+build éditeur —
+  voir sa section — mais toujours aucun clic réel dans l'éditeur).

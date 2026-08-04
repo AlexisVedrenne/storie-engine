@@ -1,6 +1,11 @@
 <template>
   <div class="app-screen">
-    <img v-if="currentScreen?.background" :src="resolveAssetUrl(currentScreen.background)" class="screen-background" alt="" />
+    <img
+      v-if="currentScreen?.background"
+      :src="resolveAssetUrl(currentScreen.background)"
+      class="screen-background"
+      alt=""
+    />
     <BlockList v-if="currentScreen" :blocks="currentScreen.blocks || []" />
   </div>
 </template>
@@ -22,7 +27,9 @@ import BlockList from './BlockList.vue'
 const phone = usePhoneStore()
 const story = useStoryStore()
 
-const appDef = computed(() => (story.project?.customApps || []).find((a) => a.id === phone.currentApp))
+const appDef = computed(() =>
+  (story.project?.customApps || []).find((a) => a.id === phone.currentApp),
+)
 
 // PhoneShell keys `<component :is="...">` by phone.currentApp, so this
 // component instance is destroyed/recreated on every app switch — this
@@ -35,7 +42,10 @@ watch(appDef, (def) => {
 })
 
 const currentScreen = computed(
-  () => appDef.value?.screens?.find((s) => s.id === activeScreenId.value) || appDef.value?.screens?.[0] || null,
+  () =>
+    appDef.value?.screens?.find((s) => s.id === activeScreenId.value) ||
+    appDef.value?.screens?.[0] ||
+    null,
 )
 
 provide('customAppNavigate', (screenId) => {

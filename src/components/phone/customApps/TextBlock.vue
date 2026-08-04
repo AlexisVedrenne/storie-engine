@@ -2,7 +2,10 @@
   <p
     class="text-block"
     :class="block.style || 'body'"
-    :style="{ color: block.color || undefined, fontSize: block.size ? `${block.size}px` : undefined }"
+    :style="{
+      color: block.color || undefined,
+      fontSize: block.size ? `${block.size}px` : undefined,
+    }"
   >
     {{ content }}
   </p>
@@ -12,13 +15,14 @@
 // `color`/`size` are optional overrides on top of the title/body style
 // preset — unset (the common case), the preset's own font-size/opacity
 // below applies untouched.
-import { computed } from 'vue'
+import { computed, inject } from 'vue'
 import { useStoryStore } from '@/engine/stores/story'
 import { resolveDynamicText } from '@/engine/customApps/resolveDynamicText'
 
 const props = defineProps({ block: { type: Object, required: true } })
 const story = useStoryStore()
-const content = computed(() => resolveDynamicText(props.block.content, story) || '')
+const listItem = inject('customAppListItem', null)
+const content = computed(() => resolveDynamicText(props.block.content, story, listItem) || '')
 </script>
 
 <style scoped>

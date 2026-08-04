@@ -16,6 +16,7 @@ export const BLOCK_KINDS = [
   { type: 'divider', icon: 'horizontal_rule' },
   { type: 'button', icon: 'smart_button' },
   { type: 'tabs', icon: 'tab' },
+  { type: 'list', icon: 'repeat' },
 ]
 
 export function paletteIcon(type) {
@@ -50,6 +51,14 @@ export function defaultBlock(type) {
       return { type, label: '', color: '#4c8bf5' }
     case 'tabs':
       return { type, tabs: [{ label: '', screenId: '' }] }
+    case 'list':
+      // v1 has exactly one source (project contacts) — no `source` picker
+      // yet, matching "small bounded vocabulary" until a second source is
+      // actually needed. `template` is a block subtree (same shape as
+      // card/layout's own `blocks[]`) authored ONCE and repeated per
+      // contact; its text fields can use the `{item:...}` tokens (see
+      // resolveDynamicText.js) to read the current contact.
+      return { type, onlyFollowed: false, template: [] }
     default:
       return { type }
   }

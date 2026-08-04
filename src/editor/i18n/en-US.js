@@ -232,10 +232,12 @@ export default {
       addLine: 'Add a line',
     },
     vfx: {
-      intro: 'Triggers a full-screen visual effect on the phone. Purely cosmetic — the timeline keeps going right away, without waiting for the effect to end.',
+      intro:
+        'Triggers a full-screen visual effect on the phone. Purely cosmetic — the timeline keeps going right away, without waiting for the effect to end.',
       modeStart: 'Start',
       modeStop: 'Stop',
-      stopHelp: 'Turns off whichever visual effect is currently showing — place this later in the timeline to clear an effect that was left running with no duration.',
+      stopHelp:
+        'Turns off whichever visual effect is currently showing — place this later in the timeline to clear an effect that was left running with no duration.',
       effectLabel: 'Effect',
       kinds: {
         glitch: 'Glitch (color split)',
@@ -263,13 +265,15 @@ export default {
       blockingLabel: 'Behavior',
       blockingOn: 'Blocks the timeline',
       blockingOff: 'In parallel',
-      blockingOnHelp: 'The story waits for the outcome (won/lost) before continuing — like a choice or a call.',
+      blockingOnHelp:
+        'The story waits for the outcome (won/lost) before continuing — like a choice or a call.',
       blockingOffHelp:
         "The timeline keeps going right away, the interaction stays playable on screen — its outcome only reaches the story through its own branches and the matching event (interaction.won / interaction.lost), not by blocking what's next.",
       branchesTitle: 'Outcome',
       winLabel: 'Win',
       loseLabel: 'Lose',
-      noneAuthoredHelp: 'No interaction created yet — build one in the Interactions tab, then come back to call it here.',
+      noneAuthoredHelp:
+        'No interaction created yet — build one in the Interactions tab, then come back to call it here.',
       stepsCount: '{n} steps',
     },
   },
@@ -287,10 +291,12 @@ export default {
     identityTitle: 'Identity',
     nameLabel: 'Name',
     backgroundTitle: 'Background',
-    backgroundHelp: 'Background image shown for the whole interaction (optional) — e.g. a photo of the bottom of the phone for "plug in the cable", or the screen covered in dust.',
+    backgroundHelp:
+      'Background image shown for the whole interaction (optional) — e.g. a photo of the bottom of the phone for "plug in the cable", or the screen covered in dust.',
     backgroundLabel: 'Background image',
     stepsTitle: 'Steps',
-    stepsHelp: 'The player must complete each step in order for the interaction to be won — a step\'s own time limit expiring fails it.',
+    stepsHelp:
+      "The player must complete each step in order for the interaction to be won — a step's own time limit expiring fails it.",
   },
 
   stepsEditor: {
@@ -300,9 +306,11 @@ export default {
     textLabel: 'Displayed text',
     imageLabel: 'Image (your own asset — takes priority over the icon)',
     iconLabel: 'Icon (optional, if no image)',
-    iconHelp: 'Material icon name (e.g. power, cleaning_services) — ignored if an image is picked above.',
+    iconHelp:
+      'Material icon name (e.g. power, cleaning_services) — ignored if an image is picked above.',
     timeLimitLabel: 'Time limit (optional)',
-    timeLimitHelp: 'Past this delay, the whole interaction fails. Leave empty for no limit on this step.',
+    timeLimitHelp:
+      'Past this delay, the whole interaction fails. Leave empty for no limit on this step.',
     zoneLabel: 'Zone',
     fromLabel: 'From',
     toLabel: 'To',
@@ -362,7 +370,8 @@ export default {
     identityTitle: 'Identity',
     labelLabel: 'Name',
     iconLabel: 'Icon (phone home screen)',
-    iconHelp: 'Material icon name — shown on the home screen, distinct from icons placed inside blocks.',
+    iconHelp:
+      'Material icon name — shown on the home screen, distinct from icons placed inside blocks.',
     screensTitle: 'Screens',
     screenLabelLabel: 'Screen name',
     addScreen: 'Add a screen',
@@ -393,6 +402,7 @@ export default {
     divider: { label: 'Divider' },
     button: { label: 'Button' },
     tabs: { label: 'Tabs' },
+    list: { label: 'List (contacts)' },
   },
 
   blockProps: {
@@ -403,7 +413,8 @@ export default {
     contentLabel: 'Content',
     imageLabel: 'Image',
     fullBleedLabel: 'Edge to edge (full width)',
-    fullBleedHelp: "Ignores the screen's own side margin — the image touches the left/right edges. Won't line up perfectly when nested inside a card/layout.",
+    fullBleedHelp:
+      "Ignores the screen's own side margin — the image touches the left/right edges. Won't line up perfectly when nested inside a card/layout.",
     textColorLabel: 'Text color',
     textSizeLabel: 'Size (optional)',
     textSizeHelp: "Leave empty to keep the chosen style's own size.",
@@ -413,7 +424,8 @@ export default {
     sublabelLabel: 'Sub-text (optional)',
     chevronLabel: 'Chevron (hints it can be tapped)',
     cardHelp: 'A card visually groups other blocks inside it.',
-    layoutHelp: 'Arranges other blocks in a row or column, no background of its own — unlike a card.',
+    layoutHelp:
+      'Arranges other blocks in a row or column, no background of its own — unlike a card.',
     directionRow: 'Row (horizontal)',
     directionColumn: 'Column (vertical)',
     gapLabel: 'Gap between blocks',
@@ -424,6 +436,10 @@ export default {
     spacingTitle: 'Spacing (advanced)',
     spacingBeforeLabel: 'Space before (optional)',
     spacingAfterLabel: 'Space after (optional)',
+    useItemAvatarLabel: "Use the contact's avatar",
+    onlyFollowedLabel: 'Only followed contacts',
+    listHelp:
+      'The content below repeats once per contact — use the variable button to insert {item:name} in a text field, or the checkbox above on an avatar block.',
   },
 
   colorField: {
@@ -439,9 +455,16 @@ export default {
       steps: 'Steps (pedometer)',
       stepsGoal: 'Step goal',
       weather: 'Temperature',
+      itemName: 'Contact name',
+      itemHandle: 'Display handle (@pseudo or name)',
+      itemPseudo: 'Raw pseudo',
+      itemFollowers: 'Follower count',
+      itemFollowing: 'Following count',
+      itemColor: 'Color (hex code)',
     },
     flagsTitle: 'Project flags',
     noFlags: 'No flags in this project yet.',
+    itemTitle: 'Contact (list block)',
   },
 
   requiresBuilder: {

@@ -11,11 +11,11 @@
 // hand-coded built-in apps (Messages/Pixly/Gallery/Calls/Settings). These
 // are a distinct, data-driven system merged with that registry at runtime
 // (see story.js's `mergedAppRegistry` getter).
-import { ipcMain, dialog } from "electron";
-import fs from "node:fs";
-import path from "node:path";
-import AdmZip from "adm-zip";
-import { slugify } from "./project.js";
+import { ipcMain, dialog } from 'electron'
+import fs from 'node:fs'
+import path from 'node:path'
+import AdmZip from 'adm-zip'
+import { slugify } from './project.js'
 
 // Plain JSON, never a JS module: (1) no code to execute means an app shared
 // by a stranger (see exportCustomApp/importCustomApp below) can never smuggle
@@ -24,31 +24,35 @@ import { slugify } from "./project.js";
 // needed the way project.js's `.js` project files require (JSON.parse always
 // reads fresh from disk, there's no module cache to defeat).
 export function scanCustomApps(dir) {
-  if (!fs.existsSync(dir)) return [];
-  const out = [];
+  if (!fs.existsSync(dir)) return []
+  const out = []
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-    if (entry.isDirectory() || !entry.name.endsWith(".json")) continue;
-    const full = path.join(dir, entry.name);
-    const data = JSON.parse(fs.readFileSync(full, "utf-8"));
-    out.push({ ...data, __sourceFile: entry.name });
+    if (entry.isDirectory() || !entry.name.endsWith('.json')) continue
+    const full = path.join(dir, entry.name)
+    const data = JSON.parse(fs.readFileSync(full, 'utf-8'))
+    out.push({ ...data, __sourceFile: entry.name })
   }
-  return out;
+  return out
 }
 
 // Recursively collects every block's `src` (image/avatar blocks) across a
-// screen's block tree, including inside `card` blocks (which nest their own
-// `blocks[]`) — used by exportCustomApp to know which project assets to
-// bundle into the .zip.
+// screen's block tree, including inside `card`/`layout` blocks (which nest
+// their own `blocks[]`) and a `list` block's own `template[]` (see
+// blockKinds.js) — used by exportCustomApp to know which project assets to
+// bundle into the .zip. A `list` block's `useItemAvatar` toggle deliberately
+// isn't collected here — it points at whatever contact the importing
+// project already has, not a bundled asset.
 // Exported alongside scanCustomApps purely so a standalone Node script can
 // exercise the export/import path logic without needing a running Electron
 // main process (dialog/ipcMain aren't available outside one) — not used by
 // any other module.
 export function collectAssetRefs(blocks, out = []) {
   for (const block of blocks || []) {
-    if (typeof block.src === "string" && block.src) out.push(block.src);
-    if (Array.isArray(block.blocks)) collectAssetRefs(block.blocks, out);
+    if (typeof block.src === 'string' && block.src) out.push(block.src)
+    if (Array.isArray(block.blocks)) collectAssetRefs(block.blocks, out)
+    if (Array.isArray(block.template)) collectAssetRefs(block.template, out)
   }
-  return out;
+  return out
 }
 
 // Returns a deep-cloned block tree with every `src` passed through `mapFn` —
@@ -56,37 +60,38 @@ export function collectAssetRefs(blocks, out = []) {
 // inside the IMPORTING project (see the `imported/<id>/` namespacing below).
 export function rewriteBlockSrcs(blocks, mapFn) {
   return (blocks || []).map((block) => {
-    const next = { ...block };
-    if (typeof next.src === "string" && next.src) next.src = mapFn(next.src);
-    if (Array.isArray(next.blocks)) next.blocks = rewriteBlockSrcs(next.blocks, mapFn);
-    return next;
-  });
+    const next = { ...block }
+    if (typeof next.src === 'string' && next.src) next.src = mapFn(next.src)
+    if (Array.isArray(next.blocks)) next.blocks = rewriteBlockSrcs(next.blocks, mapFn)
+    if (Array.isArray(next.template)) next.template = rewriteBlockSrcs(next.template, mapFn)
+    return next
+  })
 }
 
 export function registerCustomAppHandlers(mainWindow) {
-  ipcMain.handle("project:saveCustomApp", async (_evt, { rootPath, sourceFile, data }) => {
-    const dest = path.join(rootPath, "apps", sourceFile);
-    fs.mkdirSync(path.dirname(dest), { recursive: true });
-    fs.writeFileSync(dest, JSON.stringify(data, null, 2) + "\n", "utf-8");
-    return true;
-  });
+  ipcMain.handle('project:saveCustomApp', async (_evt, { rootPath, sourceFile, data }) => {
+    const dest = path.join(rootPath, 'apps', sourceFile)
+    fs.mkdirSync(path.dirname(dest), { recursive: true })
+    fs.writeFileSync(dest, JSON.stringify(data, null, 2) + '\n', 'utf-8')
+    return true
+  })
 
-  ipcMain.handle("project:createCustomApp", async (_evt, { rootPath, id, data }) => {
-    const sourceFile = `${slugify(id)}.json`;
-    const dest = path.join(rootPath, "apps", sourceFile);
+  ipcMain.handle('project:createCustomApp', async (_evt, { rootPath, id, data }) => {
+    const sourceFile = `${slugify(id)}.json`
+    const dest = path.join(rootPath, 'apps', sourceFile)
     if (fs.existsSync(dest)) {
-      throw new Error(`Une application existe déjà pour cet identifiant : ${sourceFile}`);
+      throw new Error(`Une application existe déjà pour cet identifiant : ${sourceFile}`)
     }
-    fs.mkdirSync(path.dirname(dest), { recursive: true });
-    fs.writeFileSync(dest, JSON.stringify(data, null, 2) + "\n", "utf-8");
-    return { sourceFile };
-  });
+    fs.mkdirSync(path.dirname(dest), { recursive: true })
+    fs.writeFileSync(dest, JSON.stringify(data, null, 2) + '\n', 'utf-8')
+    return { sourceFile }
+  })
 
-  ipcMain.handle("project:deleteCustomApp", async (_evt, { rootPath, sourceFile }) => {
-    const target = path.join(rootPath, "apps", sourceFile);
-    if (fs.existsSync(target)) fs.unlinkSync(target);
-    return true;
-  });
+  ipcMain.handle('project:deleteCustomApp', async (_evt, { rootPath, sourceFile }) => {
+    const target = path.join(rootPath, 'apps', sourceFile)
+    if (fs.existsSync(target)) fs.unlinkSync(target)
+    return true
+  })
 
   // Bundles the app's JSON + every asset it references into a single .zip —
   // without the assets, sharing just the JSON leaves referenced images
@@ -96,35 +101,35 @@ export function registerCustomAppHandlers(mainWindow) {
   // and inside the zip's assets/ folder) — no path rewriting needed on
   // export, only on import (see below), since only import changes where the
   // assets actually land.
-  ipcMain.handle("project:exportCustomApp", async (_evt, { rootPath, sourceFile }) => {
-    const src = path.join(rootPath, "apps", sourceFile);
-    if (!fs.existsSync(src)) throw new Error("Application introuvable.");
-    const appData = JSON.parse(fs.readFileSync(src, "utf-8"));
+  ipcMain.handle('project:exportCustomApp', async (_evt, { rootPath, sourceFile }) => {
+    const src = path.join(rootPath, 'apps', sourceFile)
+    if (!fs.existsSync(src)) throw new Error('Application introuvable.')
+    const appData = JSON.parse(fs.readFileSync(src, 'utf-8'))
 
     const result = await dialog.showSaveDialog(mainWindow, {
       title: "Exporter l'application",
-      defaultPath: `${appData.id || "app"}.zip`,
-      filters: [{ name: "Storie App", extensions: ["zip"] }],
-    });
-    if (result.canceled || !result.filePath) return null;
+      defaultPath: `${appData.id || 'app'}.zip`,
+      filters: [{ name: 'Storie App', extensions: ['zip'] }],
+    })
+    if (result.canceled || !result.filePath) return null
 
-    const zip = new AdmZip();
-    zip.addFile("app.json", Buffer.from(JSON.stringify(appData, null, 2), "utf-8"));
+    const zip = new AdmZip()
+    zip.addFile('app.json', Buffer.from(JSON.stringify(appData, null, 2), 'utf-8'))
 
-    const assetsRoot = path.join(rootPath, "assets");
-    const refs = [];
-    for (const screen of appData.screens || []) collectAssetRefs(screen.blocks, refs);
-    const uniqueRefs = [...new Set(refs)];
+    const assetsRoot = path.join(rootPath, 'assets')
+    const refs = []
+    for (const screen of appData.screens || []) collectAssetRefs(screen.blocks, refs)
+    const uniqueRefs = [...new Set(refs)]
     for (const rel of uniqueRefs) {
-      const assetPath = path.join(assetsRoot, rel);
-      if (!fs.existsSync(assetPath)) continue;
-      const zipFolder = path.join("assets", path.dirname(rel)).replace(/\\/g, "/");
-      zip.addLocalFile(assetPath, zipFolder);
+      const assetPath = path.join(assetsRoot, rel)
+      if (!fs.existsSync(assetPath)) continue
+      const zipFolder = path.join('assets', path.dirname(rel)).replace(/\\/g, '/')
+      zip.addLocalFile(assetPath, zipFolder)
     }
 
-    zip.writeZip(result.filePath);
-    return true;
-  });
+    zip.writeZip(result.filePath)
+    return true
+  })
 
   // Reverse of the above: extracts a shared .zip into THIS project. The id
   // is de-collided against apps already here (suffix -2/-3...), and every
@@ -132,39 +137,39 @@ export function registerCustomAppHandlers(mainWindow) {
   // namespace so an imported app can never silently overwrite an unrelated
   // asset already in this project that happens to share a filename/path.
   // Block `src` fields are rewritten to match (see rewriteBlockSrcs).
-  ipcMain.handle("project:importCustomApp", async (_evt, { rootPath }) => {
+  ipcMain.handle('project:importCustomApp', async (_evt, { rootPath }) => {
     const result = await dialog.showOpenDialog(mainWindow, {
-      title: "Importer une application",
-      properties: ["openFile"],
-      filters: [{ name: "Storie App", extensions: ["zip"] }],
-    });
-    if (result.canceled || !result.filePaths[0]) return null;
+      title: 'Importer une application',
+      properties: ['openFile'],
+      filters: [{ name: 'Storie App', extensions: ['zip'] }],
+    })
+    if (result.canceled || !result.filePaths[0]) return null
 
-    const zip = new AdmZip(result.filePaths[0]);
-    const jsonEntry = zip.getEntry("app.json");
-    if (!jsonEntry) throw new Error("Fichier .zip invalide (app.json manquant).");
-    const appData = JSON.parse(zip.readAsText(jsonEntry));
+    const zip = new AdmZip(result.filePaths[0])
+    const jsonEntry = zip.getEntry('app.json')
+    if (!jsonEntry) throw new Error('Fichier .zip invalide (app.json manquant).')
+    const appData = JSON.parse(zip.readAsText(jsonEntry))
 
-    const appsDir = path.join(rootPath, "apps");
-    fs.mkdirSync(appsDir, { recursive: true });
+    const appsDir = path.join(rootPath, 'apps')
+    fs.mkdirSync(appsDir, { recursive: true })
 
-    const existingIds = new Set(scanCustomApps(appsDir).map((a) => a.id));
-    const baseId = slugify(appData.id || "app");
-    let id = baseId;
-    let n = 2;
+    const existingIds = new Set(scanCustomApps(appsDir).map((a) => a.id))
+    const baseId = slugify(appData.id || 'app')
+    let id = baseId
+    let n = 2
     while (existingIds.has(id)) {
-      id = `${baseId}-${n}`;
-      n += 1;
+      id = `${baseId}-${n}`
+      n += 1
     }
 
-    const importDir = `imported/${id}`;
-    const destAssetsDir = path.join(rootPath, "assets", importDir);
+    const importDir = `imported/${id}`
+    const destAssetsDir = path.join(rootPath, 'assets', importDir)
     for (const entry of zip.getEntries()) {
-      if (entry.isDirectory || !entry.entryName.startsWith("assets/")) continue;
-      const rel = entry.entryName.slice("assets/".length);
-      const destPath = path.join(destAssetsDir, rel);
-      fs.mkdirSync(path.dirname(destPath), { recursive: true });
-      fs.writeFileSync(destPath, entry.getData());
+      if (entry.isDirectory || !entry.entryName.startsWith('assets/')) continue
+      const rel = entry.entryName.slice('assets/'.length)
+      const destPath = path.join(destAssetsDir, rel)
+      fs.mkdirSync(path.dirname(destPath), { recursive: true })
+      fs.writeFileSync(destPath, entry.getData())
     }
 
     const rewritten = {
@@ -174,11 +179,15 @@ export function registerCustomAppHandlers(mainWindow) {
         ...screen,
         blocks: rewriteBlockSrcs(screen.blocks, (rel) => `${importDir}/${rel}`),
       })),
-    };
+    }
 
-    const sourceFile = `${id}.json`;
-    fs.writeFileSync(path.join(appsDir, sourceFile), JSON.stringify(rewritten, null, 2) + "\n", "utf-8");
+    const sourceFile = `${id}.json`
+    fs.writeFileSync(
+      path.join(appsDir, sourceFile),
+      JSON.stringify(rewritten, null, 2) + '\n',
+      'utf-8',
+    )
 
-    return { ...rewritten, __sourceFile: sourceFile };
-  });
+    return { ...rewritten, __sourceFile: sourceFile }
+  })
 }

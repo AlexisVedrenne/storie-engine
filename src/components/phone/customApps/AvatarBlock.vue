@@ -1,22 +1,41 @@
 <template>
   <div class="avatar-block">
-    <div v-if="block.icon && !block.src" class="icon-circle" :style="{ background: block.color || '#607d8b' }">
+    <div
+      v-if="block.icon && !src"
+      class="icon-circle"
+      :style="{ background: block.color || '#607d8b' }"
+    >
       <q-icon :name="block.icon" size="28px" color="white" />
     </div>
-    <AppAvatar v-else :name="label || '?'" :color="block.color || '#607d8b'" :image="block.src || ''" :size="block.size || 64" />
+    <AppAvatar
+      v-else
+      :name="label || '?'"
+      :color="block.color || '#607d8b'"
+      :image="src"
+      :size="block.size || 64"
+    />
     <span v-if="label" class="avatar-label">{{ label }}</span>
   </div>
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, inject } from 'vue'
 import { useStoryStore } from '@/engine/stores/story'
 import { resolveDynamicText } from '@/engine/customApps/resolveDynamicText'
 import AppAvatar from '@/components/phone/AppAvatar.vue'
 
 const props = defineProps({ block: { type: Object, required: true } })
 const story = useStoryStore()
-const label = computed(() => resolveDynamicText(props.block.label, story))
+const listItem = inject('customAppListItem', null)
+const label = computed(() => resolveDynamicText(props.block.label, story, listItem))
+// `useItemAvatar` (only meaningful inside a list's per-item template, see
+// BlockPropertiesForm.vue's toggle) swaps in the current contact's own
+// photo — a boolean toggle rather than a `{item:...}` text token since
+// AssetField (the image picker widget) has no free-text field to type one
+// into. Falls back to the block's own static `src` otherwise.
+const src = computed(() =>
+  props.block.useItemAvatar && listItem ? listItem.avatar || '' : props.block.src || '',
+)
 </script>
 
 <style scoped>

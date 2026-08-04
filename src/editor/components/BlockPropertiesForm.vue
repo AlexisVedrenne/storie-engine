@@ -1,9 +1,18 @@
 <template>
   <div class="block-props">
     <template v-if="block.type === 'header'">
-      <q-input dense outlined ref="titleInputRef" :label="t('blockProps.titleLabel')" v-model="block.title">
+      <q-input
+        dense
+        outlined
+        ref="titleInputRef"
+        :label="t('blockProps.titleLabel')"
+        v-model="block.title"
+      >
         <template #append>
-          <VariablePickerBtn @pick="(v) => (block.title = insertEmojiAtCaret(titleInputRef, block.title, v))" />
+          <VariablePickerBtn
+            :item-scope="itemScope"
+            @pick="(v) => (block.title = insertEmojiAtCaret(titleInputRef, block.title, v))"
+          />
         </template>
       </q-input>
       <q-input dense outlined :label="t('blockProps.iconLabel')" v-model="block.icon" />
@@ -20,13 +29,29 @@
           { label: t('blockProps.styleBody'), value: 'body' },
         ]"
       />
-      <q-input dense outlined type="textarea" autogrow ref="contentInputRef" :label="t('blockProps.contentLabel')" v-model="block.content">
+      <q-input
+        dense
+        outlined
+        type="textarea"
+        autogrow
+        ref="contentInputRef"
+        :label="t('blockProps.contentLabel')"
+        v-model="block.content"
+      >
         <template #append>
-          <VariablePickerBtn @pick="(v) => (block.content = insertEmojiAtCaret(contentInputRef, block.content, v))" />
+          <VariablePickerBtn
+            :item-scope="itemScope"
+            @pick="(v) => (block.content = insertEmojiAtCaret(contentInputRef, block.content, v))"
+          />
         </template>
       </q-input>
       <div class="row">
-        <ColorField v-model="block.color" :label="t('blockProps.textColorLabel')" default-value="#ffffff" class="grow" />
+        <ColorField
+          v-model="block.color"
+          :label="t('blockProps.textColorLabel')"
+          default-value="#ffffff"
+          class="grow"
+        />
         <q-input
           dense
           outlined
@@ -48,26 +73,71 @@
     </template>
 
     <template v-else-if="block.type === 'avatar'">
-      <q-input dense outlined ref="avatarLabelInputRef" :label="t('blockProps.labelLabel')" v-model="block.label">
+      <q-input
+        dense
+        outlined
+        ref="avatarLabelInputRef"
+        :label="t('blockProps.labelLabel')"
+        v-model="block.label"
+      >
         <template #append>
-          <VariablePickerBtn @pick="(v) => (block.label = insertEmojiAtCaret(avatarLabelInputRef, block.label, v))" />
+          <VariablePickerBtn
+            :item-scope="itemScope"
+            @pick="(v) => (block.label = insertEmojiAtCaret(avatarLabelInputRef, block.label, v))"
+          />
         </template>
       </q-input>
-      <AssetField v-model="block.src" :label="t('blockProps.imageLabel')" />
-      <q-input dense outlined :label="t('blockProps.iconFallbackLabel')" :hint="t('blockProps.iconFallbackHelp')" v-model="block.icon" />
+      <q-toggle
+        v-if="itemScope"
+        dense
+        :label="t('blockProps.useItemAvatarLabel')"
+        v-model="block.useItemAvatar"
+      />
+      <AssetField
+        v-if="!block.useItemAvatar || !itemScope"
+        v-model="block.src"
+        :label="t('blockProps.imageLabel')"
+      />
+      <q-input
+        dense
+        outlined
+        :label="t('blockProps.iconFallbackLabel')"
+        :hint="t('blockProps.iconFallbackHelp')"
+        v-model="block.icon"
+      />
       <ColorField v-model="block.color" />
     </template>
 
     <template v-else-if="block.type === 'row'">
       <q-input dense outlined :label="t('blockProps.iconLabel')" v-model="block.icon" />
-      <q-input dense outlined ref="rowLabelInputRef" :label="t('blockProps.labelLabel')" v-model="block.label">
+      <q-input
+        dense
+        outlined
+        ref="rowLabelInputRef"
+        :label="t('blockProps.labelLabel')"
+        v-model="block.label"
+      >
         <template #append>
-          <VariablePickerBtn @pick="(v) => (block.label = insertEmojiAtCaret(rowLabelInputRef, block.label, v))" />
+          <VariablePickerBtn
+            :item-scope="itemScope"
+            @pick="(v) => (block.label = insertEmojiAtCaret(rowLabelInputRef, block.label, v))"
+          />
         </template>
       </q-input>
-      <q-input dense outlined ref="rowSublabelInputRef" :label="t('blockProps.sublabelLabel')" v-model="block.sublabel">
+      <q-input
+        dense
+        outlined
+        ref="rowSublabelInputRef"
+        :label="t('blockProps.sublabelLabel')"
+        v-model="block.sublabel"
+      >
         <template #append>
-          <VariablePickerBtn @pick="(v) => (block.sublabel = insertEmojiAtCaret(rowSublabelInputRef, block.sublabel, v))" />
+          <VariablePickerBtn
+            :item-scope="itemScope"
+            @pick="
+              (v) => (block.sublabel = insertEmojiAtCaret(rowSublabelInputRef, block.sublabel, v))
+            "
+          />
         </template>
       </q-input>
       <q-toggle dense :label="t('blockProps.chevronLabel')" v-model="block.chevron" />
@@ -75,7 +145,7 @@
 
     <template v-else-if="block.type === 'card'">
       <p class="tab-help">{{ t('blockProps.cardHelp') }}</p>
-      <BlockBuilder :blocks="ensureChildren()" :screens="screens" />
+      <BlockBuilder :blocks="ensureChildren()" :screens="screens" :item-scope="itemScope" />
     </template>
 
     <template v-else-if="block.type === 'layout'">
@@ -98,22 +168,40 @@
         :model-value="block.gap ?? 8"
         @update:model-value="(v) => (block.gap = v === null || v === '' ? 8 : Number(v))"
       />
-      <BlockBuilder :blocks="ensureChildren()" :screens="screens" />
+      <BlockBuilder :blocks="ensureChildren()" :screens="screens" :item-scope="itemScope" />
     </template>
 
     <template v-else-if="block.type === 'badge'">
-      <q-input dense outlined ref="badgeLabelInputRef" :label="t('blockProps.labelLabel')" v-model="block.label">
+      <q-input
+        dense
+        outlined
+        ref="badgeLabelInputRef"
+        :label="t('blockProps.labelLabel')"
+        v-model="block.label"
+      >
         <template #append>
-          <VariablePickerBtn @pick="(v) => (block.label = insertEmojiAtCaret(badgeLabelInputRef, block.label, v))" />
+          <VariablePickerBtn
+            :item-scope="itemScope"
+            @pick="(v) => (block.label = insertEmojiAtCaret(badgeLabelInputRef, block.label, v))"
+          />
         </template>
       </q-input>
       <ColorField v-model="block.color" />
     </template>
 
     <template v-else-if="block.type === 'button'">
-      <q-input dense outlined ref="buttonLabelInputRef" :label="t('blockProps.labelLabel')" v-model="block.label">
+      <q-input
+        dense
+        outlined
+        ref="buttonLabelInputRef"
+        :label="t('blockProps.labelLabel')"
+        v-model="block.label"
+      >
         <template #append>
-          <VariablePickerBtn @pick="(v) => (block.label = insertEmojiAtCaret(buttonLabelInputRef, block.label, v))" />
+          <VariablePickerBtn
+            :item-scope="itemScope"
+            @pick="(v) => (block.label = insertEmojiAtCaret(buttonLabelInputRef, block.label, v))"
+          />
         </template>
       </q-input>
       <ColorField v-model="block.color" />
@@ -122,9 +210,19 @@
 
     <template v-else-if="block.type === 'tabs'">
       <div v-for="(tab, i) in ensureTabs()" :key="i" class="tab-row">
-        <q-input dense outlined :ref="(el) => (tabLabelRefs[i] = el)" :label="t('blockProps.tabLabelLabel')" v-model="tab.label" class="grow">
+        <q-input
+          dense
+          outlined
+          :ref="(el) => (tabLabelRefs[i] = el)"
+          :label="t('blockProps.tabLabelLabel')"
+          v-model="tab.label"
+          class="grow"
+        >
           <template #append>
-            <VariablePickerBtn @pick="(v) => (tab.label = insertEmojiAtCaret(tabLabelRefs[i], tab.label, v))" />
+            <VariablePickerBtn
+              :item-scope="itemScope"
+              @pick="(v) => (tab.label = insertEmojiAtCaret(tabLabelRefs[i], tab.label, v))"
+            />
           </template>
         </q-input>
         <q-select
@@ -137,15 +235,45 @@
           v-model="tab.screenId"
           class="grow"
         />
-        <q-btn dense flat round icon="close" size="sm" color="negative" :disable="block.tabs.length <= 1" @click="removeTab(i)" />
+        <q-btn
+          dense
+          flat
+          round
+          icon="close"
+          size="sm"
+          color="negative"
+          :disable="block.tabs.length <= 1"
+          @click="removeTab(i)"
+        />
       </div>
-      <q-btn dense flat no-caps icon="add" :label="t('blockProps.addTab')" class="btn-ghost" @click="addTab" />
+      <q-btn
+        dense
+        flat
+        no-caps
+        icon="add"
+        :label="t('blockProps.addTab')"
+        class="btn-ghost"
+        @click="addTab"
+      />
     </template>
 
-    <q-expansion-item dense :label="t('timelineEntryCard.displayCondition')" class="spacing-section">
+    <template v-else-if="block.type === 'list'">
+      <q-toggle dense :label="t('blockProps.onlyFollowedLabel')" v-model="block.onlyFollowed" />
+      <p class="tab-help">{{ t('blockProps.listHelp') }}</p>
+      <BlockBuilder :blocks="ensureTemplate()" :screens="screens" :item-scope="true" />
+    </template>
+
+    <q-expansion-item
+      dense
+      :label="t('timelineEntryCard.displayCondition')"
+      class="spacing-section"
+    >
       <div class="spacing-body condition-body">
         <p class="tab-help">{{ t('timelineEntryCard.displayConditionHelp') }}</p>
-        <RequiresBuilder :model-value="block.requires" @update:model-value="(v) => (block.requires = v)" />
+        <RequiresBuilder
+          :model-value="block.requires"
+          @update:model-value="(v) => (block.requires = v)"
+        />
       </div>
     </q-expansion-item>
 
@@ -158,7 +286,9 @@
           :label="t('blockProps.spacingBeforeLabel')"
           suffix="px"
           :model-value="block.spacingBefore ?? null"
-          @update:model-value="(v) => (block.spacingBefore = v === null || v === '' ? null : Number(v))"
+          @update:model-value="
+            (v) => (block.spacingBefore = v === null || v === '' ? null : Number(v))
+          "
           class="grow"
         />
         <q-input
@@ -168,7 +298,9 @@
           :label="t('blockProps.spacingAfterLabel')"
           suffix="px"
           :model-value="block.spacingAfter ?? null"
-          @update:model-value="(v) => (block.spacingAfter = v === null || v === '' ? null : Number(v))"
+          @update:model-value="
+            (v) => (block.spacingAfter = v === null || v === '' ? null : Number(v))
+          "
           class="grow"
         />
       </div>
@@ -197,6 +329,10 @@ const props = defineProps({
   // the `tabs` block's screen picker. Passed straight through unchanged
   // when this form recurses into a `card` block's own BlockBuilder.
   screens: { type: Array, default: () => [] },
+  // See BlockBuilder.vue's own prop — whether this block is inside a
+  // `list` block's per-item template, so its VariablePickerBtn instances
+  // also offer the `{item:...}` tokens.
+  itemScope: { type: Boolean, default: false },
 })
 
 // One ref per text field that can take a {variable} — a bare template ref
@@ -218,6 +354,11 @@ function ensureChildren() {
   return props.block.blocks
 }
 
+function ensureTemplate() {
+  if (!props.block.template) props.block.template = []
+  return props.block.template
+}
+
 function ensureTabs() {
   if (!props.block.tabs?.length) props.block.tabs = [{ label: '', screenId: '' }]
   return props.block.tabs
@@ -230,7 +371,9 @@ function removeTab(i) {
   props.block.tabs.splice(i, 1)
 }
 
-const screenOptions = computed(() => props.screens.map((s) => ({ label: s.label || s.id, value: s.id })))
+const screenOptions = computed(() =>
+  props.screens.map((s) => ({ label: s.label || s.id, value: s.id })),
+)
 </script>
 
 <style scoped>

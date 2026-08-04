@@ -24,6 +24,25 @@ export const FIXED_TOKENS = [
   { id: 'weather', token: '{weather}' },
 ]
 
+// Only meaningful inside a `list` block's per-item template (see
+// ListBlock.vue/ListItemScope.vue) — every text-shaped field the current
+// iteration's contact already exposes elsewhere in the phone (profile
+// name/handle, social counters). Listed separately from FIXED_TOKENS so
+// VariablePickerBtn only offers these when authoring inside that context
+// (see its `itemScope` prop). No `{item:avatar}` text token — the avatar
+// BLOCK picks up the current contact's photo via its own "use contact's
+// avatar" toggle instead (see AvatarBlock.vue/BlockPropertiesForm.vue),
+// since AssetField (the avatar image widget) has no free-text entry to
+// type a token into.
+export const ITEM_TOKENS = [
+  { id: 'itemName', token: '{item:name}' },
+  { id: 'itemHandle', token: '{item:handle}' },
+  { id: 'itemPseudo', token: '{item:pseudo}' },
+  { id: 'itemFollowers', token: '{item:followers}' },
+  { id: 'itemFollowing', token: '{item:following}' },
+  { id: 'itemColor', token: '{item:color}' },
+]
+
 function resolveFixedToken(id, story) {
   switch (id) {
     case 'playerName':
@@ -41,9 +60,41 @@ function resolveFixedToken(id, story) {
   }
 }
 
-export function resolveDynamicText(text, story) {
+// `handle` reuses story.socialHandle()'s own `@pseudo` (falls back to plain
+// name if the contact has no pseudo) — the exact same formatting already
+// shown on every social screen (Fil/profils/DMs), not a new convention.
+// `followers`/`following` reuse story.socialStats() — base contact value +
+// whatever a chapter's effects have added, same number shown on a profile.
+function resolveItemToken(field, item, story) {
+  switch (field) {
+    case 'name':
+      return item?.name ?? ''
+    case 'handle':
+      return item ? story.socialHandle(item) : ''
+    case 'pseudo':
+      return item?.pseudo ?? ''
+    case 'followers':
+      return item ? String(story.socialStats(item.id).followers) : ''
+    case 'following':
+      return item ? String(story.socialStats(item.id).following) : ''
+    case 'color':
+      return item?.color ?? ''
+    default:
+      return ''
+  }
+}
+
+// `item` is the current contact when resolving inside a list's per-item
+// template (see ListItemScope.vue's provide/TextBlock.vue etc's inject) —
+// undefined everywhere else, in which case `{item:...}` tokens resolve to
+// '' rather than throwing (same "silently absent" spirit as a block failing
+// its display condition).
+export function resolveDynamicText(text, story, item) {
   if (!text) return text
   let out = text.replace(/\{flag:([a-zA-Z0-9_]+)\}/g, (_, key) => String(story.flags?.[key] ?? 0))
+  out = out.replace(/\{item:(name|handle|pseudo|followers|following|color)\}/g, (_, field) =>
+    String(resolveItemToken(field, item, story)),
+  )
   for (const { id, token } of FIXED_TOKENS) {
     if (out.includes(token)) out = out.split(token).join(resolveFixedToken(id, story))
   }

@@ -10,14 +10,15 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, inject } from 'vue'
 import { useStoryStore } from '@/engine/stores/story'
 import { resolveDynamicText } from '@/engine/customApps/resolveDynamicText'
 
 const props = defineProps({ block: { type: Object, required: true } })
 const story = useStoryStore()
-const label = computed(() => resolveDynamicText(props.block.label, story) || '')
-const sublabel = computed(() => resolveDynamicText(props.block.sublabel, story))
+const listItem = inject('customAppListItem', null)
+const label = computed(() => resolveDynamicText(props.block.label, story, listItem) || '')
+const sublabel = computed(() => resolveDynamicText(props.block.sublabel, story, listItem))
 </script>
 
 <style scoped>

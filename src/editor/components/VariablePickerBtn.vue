@@ -15,6 +15,21 @@
           <span class="variable-picker__desc">{{ t(`variablePicker.tokens.${tok.id}`) }}</span>
         </button>
 
+        <template v-if="itemScope">
+          <q-separator class="variable-picker__sep" />
+          <div class="variable-picker__section-label">{{ t('variablePicker.itemTitle') }}</div>
+          <button
+            v-for="tok in ITEM_TOKENS"
+            :key="tok.id"
+            type="button"
+            class="variable-picker__row"
+            @click="pick(tok.token)"
+          >
+            <span class="variable-picker__token">{{ tok.token }}</span>
+            <span class="variable-picker__desc">{{ t(`variablePicker.tokens.${tok.id}`) }}</span>
+          </button>
+        </template>
+
         <q-separator class="variable-picker__sep" />
         <div class="variable-picker__section-label">{{ t('variablePicker.flagsTitle') }}</div>
         <template v-if="flagKeys.length">
@@ -42,13 +57,18 @@
 import { computed, ref } from 'vue'
 import { useStoryStore } from '@/engine/stores/story'
 import { collectFlags } from '@/project/collectFlags'
-import { FIXED_TOKENS } from '@/engine/customApps/resolveDynamicText'
+import { FIXED_TOKENS, ITEM_TOKENS } from '@/engine/customApps/resolveDynamicText'
 import { useEditorI18n } from '@/editor/i18n'
 
 const { t } = useEditorI18n()
 const story = useStoryStore()
 const emit = defineEmits(['pick'])
 const menuRef = ref(null)
+
+// Only true when this field is inside a `list` block's per-item template
+// (forwarded from BlockBuilder.vue/BlockPropertiesForm.vue) — the
+// `{item:...}` tokens are meaningless anywhere else, so hidden by default.
+defineProps({ itemScope: { type: Boolean, default: false } })
 
 // Same project-wide flag catalog already shown in the Flags dialog
 // (FlagsPanel.vue) — flags are authored elsewhere (chapter/event

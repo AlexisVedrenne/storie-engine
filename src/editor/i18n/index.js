@@ -53,7 +53,10 @@ export function setEditorLocale(code) {
 // `params` does simple `{name}` interpolation, same token syntax as
 // vue-i18n's own messages elsewhere in this codebase, for familiarity.
 function lookupPath(dict, keys) {
-  return keys.reduce((node, key) => (node && typeof node === 'object' ? node[key] : undefined), dict)
+  return keys.reduce(
+    (node, key) => (node && typeof node === 'object' ? node[key] : undefined),
+    dict,
+  )
 }
 function lookup(dict, path) {
   return lookupPath(dict, path.split('.'))

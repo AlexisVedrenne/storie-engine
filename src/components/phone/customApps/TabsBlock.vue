@@ -25,9 +25,13 @@ const story = useStoryStore()
 
 const navigate = inject('customAppNavigate', () => {})
 const activeScreenId = inject('customAppActiveScreenId', ref(null))
+const listItem = inject('customAppListItem', null)
 
-const resolvedTabs = computed(
-  () => (props.block.tabs || []).map((tab) => ({ ...tab, label: resolveDynamicText(tab.label, story) || '' })),
+const resolvedTabs = computed(() =>
+  (props.block.tabs || []).map((tab) => ({
+    ...tab,
+    label: resolveDynamicText(tab.label, story, listItem) || '',
+  })),
 )
 </script>
 

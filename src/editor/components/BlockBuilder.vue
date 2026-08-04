@@ -37,7 +37,10 @@
           :ref="(el) => (rowRefs[i] = el)"
           v-model="expanded[i]"
           class="block-row"
-          :class="{ 'drag-source': isDraggedBlock(block), 'just-selected': block === phone.editorSelectedBlock }"
+          :class="{
+            'drag-source': isDraggedBlock(block),
+            'just-selected': block === phone.editorSelectedBlock,
+          }"
           draggable="true"
           @dragstart="onBlockDragStart(i, $event)"
           @dragover="onListDragOver(i, $event)"
@@ -48,7 +51,11 @@
             <q-icon :name="paletteIcon(block.type)" size="16px" class="row-icon" />
             <q-item-section>
               {{ t(`blockKinds.${block.type}.label`) }}{{ summaryFor(block) }}
-              <span v-if="block.requires" class="requires-badge" :title="t('timelineEntryCard.hasCondition')">
+              <span
+                v-if="block.requires"
+                class="requires-badge"
+                :title="t('timelineEntryCard.hasCondition')"
+              >
                 <q-icon name="rule" size="12px" /> {{ t('timelineEntryCard.conditionBadge') }}
               </span>
             </q-item-section>
@@ -57,14 +64,22 @@
                 <q-btn dense flat round icon="content_copy" size="sm" @click.stop="duplicate(i)">
                   <q-tooltip>{{ t('blockBuilder.duplicate') }}</q-tooltip>
                 </q-btn>
-                <q-btn dense flat round icon="close" size="sm" color="negative" @click.stop="remove(i)">
+                <q-btn
+                  dense
+                  flat
+                  round
+                  icon="close"
+                  size="sm"
+                  color="negative"
+                  @click.stop="remove(i)"
+                >
                   <q-tooltip>{{ t('common.delete') }}</q-tooltip>
                 </q-btn>
               </div>
             </q-item-section>
           </template>
           <div class="block-body">
-            <BlockPropertiesForm :block="block" :screens="screens" />
+            <BlockPropertiesForm :block="block" :screens="screens" :item-scope="itemScope" />
           </div>
         </q-expansion-item>
       </template>
@@ -91,6 +106,11 @@ const phone = usePhoneStore()
 const props = defineProps({
   blocks: { type: Array, required: true },
   screens: { type: Array, default: () => [] },
+  // True when this builder edits a `list` block's per-item template (or is
+  // nested inside one) — forwarded down to BlockPropertiesForm so its
+  // VariablePickerBtn instances also offer the `{item:...}` tokens. See
+  // resolveDynamicText.js.
+  itemScope: { type: Boolean, default: false },
 })
 
 const expanded = reactive({})
@@ -134,7 +154,20 @@ function isDraggedBlock(block) {
   return dragState.sourceArray === props.blocks && dragState.draggedBlock === block
 }
 
+// `stopPropagation()` on every one of these handlers matters as soon as a
+// container is nested more than one level deep (a `list`/`card`/`layout`
+// block's OWN row is itself `draggable="true"`, and its nested
+// BlockBuilder's palette/rows are DOM descendants of that row) — a native
+// `dragstart` bubbles, so without this an inner palette button's dragstart
+// would also re-trigger the ANCESTOR row's `onBlockDragStart` right after,
+// overwriting the shared `dragState` (kind → null, sourceArray → the
+// ancestor container itself) before `performDrop` ever runs. Confirmed via
+// a real repro: dragging from a `list` block's own nested palette silently
+// failed to insert because of exactly this (dragState ended up as "moving
+// the list block", not "adding a new block") — bubbling wasn't guarded on
+// dragstart/drop, only on the per-row dragover below.
 function onPaletteDragStart(kind, ev) {
+  ev.stopPropagation()
   dragState.kind = kind
   dragState.sourceArray = null
   dragState.sourceIndex = null
@@ -146,6 +179,7 @@ function onPaletteDragStart(kind, ev) {
 }
 
 function onBlockDragStart(i, ev) {
+  ev.stopPropagation()
   dragState.kind = null
   dragState.sourceArray = props.blocks
   dragState.sourceIndex = i
@@ -170,6 +204,7 @@ function onListDragOver(i, ev) {
 function onRootDragOver(ev) {
   if (dragState.kind === null && dragState.sourceArray === null) return
   ev.preventDefault()
+  ev.stopPropagation()
   if (dropIndex.value === null) dropIndex.value = props.blocks.length
 }
 
@@ -182,17 +217,21 @@ function clearDrag() {
 }
 
 // Whether `block` (a container being dragged) is `arr` itself, or contains
-// it anywhere in its own nested blocks — guards against dropping a
-// card/layout into its own (possibly deeply nested) children, which would
-// create a cyclic reference and hang the renderer.
+// it anywhere in its own nested blocks/template — guards against dropping a
+// card/layout/list into its own (possibly deeply nested) children, which
+// would create a cyclic reference and hang the renderer.
 function isOwnDescendantArray(block, arr) {
-  if (!Array.isArray(block.blocks)) return false
-  if (block.blocks === arr) return true
-  return block.blocks.some((b) => isOwnDescendantArray(b, arr))
+  for (const children of [block.blocks, block.template]) {
+    if (!Array.isArray(children)) continue
+    if (children === arr) return true
+    if (children.some((b) => isOwnDescendantArray(b, arr))) return true
+  }
+  return false
 }
 
 function performDrop(ev) {
   ev.preventDefault()
+  ev.stopPropagation()
   const at = dropIndex.value ?? props.blocks.length
   if (dragState.kind) {
     props.blocks.splice(at, 0, defaultBlock(dragState.kind))
@@ -217,7 +256,9 @@ function performDrop(ev) {
 // card/layout's own row along the way, not just the leaf.
 function blockContains(block, target) {
   if (block === target) return true
-  if (Array.isArray(block.blocks)) return block.blocks.some((b) => blockContains(b, target))
+  for (const children of [block.blocks, block.template]) {
+    if (Array.isArray(children) && children.some((b) => blockContains(b, target))) return true
+  }
   return false
 }
 watch(
