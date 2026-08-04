@@ -13,7 +13,11 @@
     >
       <div class="screen-canvas" :style="canvasStyle">
         <transition name="phase-fade" mode="out-in">
-          <BootScreen v-if="bootPhase === 'boot' || bootPhase === 'reboot'" key="boot" @done="onBootDone" />
+          <BootScreen
+            v-if="bootPhase === 'boot' || bootPhase === 'reboot'"
+            key="boot"
+            @done="onBootDone"
+          />
           <SetupWizard v-else-if="bootPhase === 'setup'" key="setup" @finish="onSetupDone" />
 
           <div v-else key="ready" class="ready-phase">
@@ -29,7 +33,11 @@
                   <transition name="app-switch" mode="out-in">
                     <IncomingCallScreen v-if="story.pendingCall" key="call" />
 
-                    <component :is="currentAppComponent" v-else-if="phone.currentApp" :key="phone.currentApp" />
+                    <component
+                      :is="currentAppComponent"
+                      v-else-if="phone.currentApp"
+                      :key="phone.currentApp"
+                    />
 
                     <HomeScreen v-else key="home" />
                   </transition>
@@ -38,6 +46,7 @@
             </div>
 
             <NotificationBanner />
+            <TimeSkipToast />
           </div>
         </transition>
       </div>
@@ -79,6 +88,7 @@ import StatusBar from './StatusBar.vue'
 import LockScreen from './LockScreen.vue'
 import HomeScreen from './HomeScreen.vue'
 import NotificationBanner from './NotificationBanner.vue'
+import TimeSkipToast from './TimeSkipToast.vue'
 
 import IncomingCallScreen from '@/components/apps/calls/IncomingCallScreen.vue'
 import InteractionPlayer from './interactions/InteractionPlayer.vue'
@@ -148,12 +158,12 @@ watch(
   () => phone.rebootCount,
   () => {
     bootPhase.value = 'boot'
-  }
+  },
 )
 
 // phone frame gently vibrates while a call is ringing and hasn't been picked up yet
 const ringing = computed(
-  () => !!story.pendingCall && !story.calls.some(c => c.id === story.pendingCall.id)
+  () => !!story.pendingCall && !story.calls.some((c) => c.id === story.pendingCall.id),
 )
 
 // Sets --phone-accent on the root of all phone UI so every descendant's CSS
@@ -226,7 +236,7 @@ onBeforeUnmount(() => {
 const canvasStyle = computed(() => ({
   width: `${DESIGN_WIDTH}px`,
   height: `${canvasHeight.value}px`,
-  transform: `translate(-50%, -50%) scale(${canvasScale.value})`
+  transform: `translate(-50%, -50%) scale(${canvasScale.value})`,
 }))
 </script>
 
@@ -387,27 +397,44 @@ const canvasStyle = computed(() => ({
       rgba(255, 0, 90, 0.35) 2px 3px,
       transparent 3px 5px
     ),
-    repeating-linear-gradient(
-      90deg,
-      rgba(0, 220, 255, 0.25) 0 1px,
-      transparent 1px 4px
-    );
+    repeating-linear-gradient(90deg, rgba(0, 220, 255, 0.25) 0 1px, transparent 1px 4px);
   animation:
     glitch-jump 0.25s steps(2, end) infinite,
     glitch-flicker 0.12s steps(1, end) infinite;
 }
 
 @keyframes glitch-jump {
-  0%, 100% { transform: translate(0, 0); clip-path: inset(0 0 0 0); }
-  20% { transform: translate(-6px, 0); clip-path: inset(10% 0 60% 0); }
-  40% { transform: translate(5px, 0); clip-path: inset(55% 0 20% 0); }
-  60% { transform: translate(-4px, 0); clip-path: inset(30% 0 45% 0); }
-  80% { transform: translate(6px, 0); clip-path: inset(75% 0 5% 0); }
+  0%,
+  100% {
+    transform: translate(0, 0);
+    clip-path: inset(0 0 0 0);
+  }
+  20% {
+    transform: translate(-6px, 0);
+    clip-path: inset(10% 0 60% 0);
+  }
+  40% {
+    transform: translate(5px, 0);
+    clip-path: inset(55% 0 20% 0);
+  }
+  60% {
+    transform: translate(-4px, 0);
+    clip-path: inset(30% 0 45% 0);
+  }
+  80% {
+    transform: translate(6px, 0);
+    clip-path: inset(75% 0 5% 0);
+  }
 }
 
 @keyframes glitch-flicker {
-  0%, 100% { opacity: 0.9; }
-  50% { opacity: 0.5; }
+  0%,
+  100% {
+    opacity: 0.9;
+  }
+  50% {
+    opacity: 0.5;
+  }
 }
 
 /* data-corruption blocks — chunky colored bands (green/magenta) that jump
@@ -424,12 +451,42 @@ const canvasStyle = computed(() => ({
 }
 
 @keyframes corrupt-blocks {
-  0% { background-position: 0 0, 0 0; clip-path: inset(0 0 0 0); }
-  20% { background-position: 37px 11px, -18px 4px; clip-path: inset(12% 0 63% 0); }
-  40% { background-position: -22px 5px, 29px -9px; clip-path: inset(58% 0 8% 0); }
-  60% { background-position: 14px -13px, -33px 17px; clip-path: inset(3% 0 71% 0); }
-  80% { background-position: -9px 21px, 12px -6px; clip-path: inset(66% 0 15% 0); }
-  100% { background-position: 0 0, 0 0; clip-path: inset(0 0 0 0); }
+  0% {
+    background-position:
+      0 0,
+      0 0;
+    clip-path: inset(0 0 0 0);
+  }
+  20% {
+    background-position:
+      37px 11px,
+      -18px 4px;
+    clip-path: inset(12% 0 63% 0);
+  }
+  40% {
+    background-position:
+      -22px 5px,
+      29px -9px;
+    clip-path: inset(58% 0 8% 0);
+  }
+  60% {
+    background-position:
+      14px -13px,
+      -33px 17px;
+    clip-path: inset(3% 0 71% 0);
+  }
+  80% {
+    background-position:
+      -9px 21px,
+      12px -6px;
+    clip-path: inset(66% 0 15% 0);
+  }
+  100% {
+    background-position:
+      0 0,
+      0 0;
+    clip-path: inset(0 0 0 0);
+  }
 }
 
 /* power-cut blackout — a few quick flickers then holds solid black. Runs
@@ -445,22 +502,37 @@ const canvasStyle = computed(() => ({
 }
 
 @keyframes blackout-flicker {
-  0% { opacity: 1; }
-  8% { opacity: 0; }
-  16% { opacity: 1; }
-  22% { opacity: 0; }
-  30% { opacity: 1; }
-  38% { opacity: 0.15; }
-  46% { opacity: 1; }
-  100% { opacity: 1; }
+  0% {
+    opacity: 1;
+  }
+  8% {
+    opacity: 0;
+  }
+  16% {
+    opacity: 1;
+  }
+  22% {
+    opacity: 0;
+  }
+  30% {
+    opacity: 1;
+  }
+  38% {
+    opacity: 0.15;
+  }
+  46% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+  }
 }
 
 /* dead-channel TV static — animated noise via a tight repeating checker
    pattern shifted every frame, `steps()` (not `ease`) so it reads as random
    noise rather than a smooth scroll. */
 .screen-effect-veil.effect-static {
-  background-image:
-    repeating-conic-gradient(#fff 0% 25%, #000 0% 50%);
+  background-image: repeating-conic-gradient(#fff 0% 25%, #000 0% 50%);
   background-size: 3px 3px;
   opacity: 0.35;
   mix-blend-mode: overlay;
@@ -468,11 +540,21 @@ const canvasStyle = computed(() => ({
 }
 
 @keyframes static-noise {
-  0% { background-position: 0 0; }
-  25% { background-position: 3px 1px; }
-  50% { background-position: -2px 3px; }
-  75% { background-position: 1px -2px; }
-  100% { background-position: 0 0; }
+  0% {
+    background-position: 0 0;
+  }
+  25% {
+    background-position: 3px 1px;
+  }
+  50% {
+    background-position: -2px 3px;
+  }
+  75% {
+    background-position: 1px -2px;
+  }
+  100% {
+    background-position: 0 0;
+  }
 }
 
 /* cracked/shattered glass — a static (non-animated) web of hairline
@@ -483,7 +565,12 @@ const canvasStyle = computed(() => ({
    real cracked screen doesn't move. */
 .screen-effect-veil.effect-crack {
   background:
-    radial-gradient(circle at 62% 38%, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.5) 1.5%, transparent 3%),
+    radial-gradient(
+      circle at 62% 38%,
+      rgba(255, 255, 255, 0.9) 0%,
+      rgba(255, 255, 255, 0.5) 1.5%,
+      transparent 3%
+    ),
     repeating-conic-gradient(
       from 0deg at 62% 38%,
       rgba(255, 255, 255, 0.5) 0deg 0.6deg,
@@ -494,9 +581,15 @@ const canvasStyle = computed(() => ({
 }
 
 @keyframes crack-flash {
-  0% { opacity: 0; }
-  15% { opacity: 1; }
-  100% { opacity: 1; }
+  0% {
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+  }
 }
 
 /* hard, fast screen-only shake (vs. `.phone-frame.ringing`'s gentler
@@ -514,11 +607,22 @@ const canvasStyle = computed(() => ({
 }
 
 @keyframes screen-shake-hard {
-  0%, 100% { transform: translate(0, 0); }
-  20% { transform: translate(-5px, 3px); }
-  40% { transform: translate(4px, -4px); }
-  60% { transform: translate(-3px, -2px); }
-  80% { transform: translate(5px, 2px); }
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  20% {
+    transform: translate(-5px, 3px);
+  }
+  40% {
+    transform: translate(4px, -4px);
+  }
+  60% {
+    transform: translate(-3px, -2px);
+  }
+  80% {
+    transform: translate(5px, 2px);
+  }
 }
 
 .ready-phase {

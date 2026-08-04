@@ -159,7 +159,17 @@ function rowImage(row) {
   return m.group ? '' : story.getContact(m.participants[0]).avatar
 }
 
-const openThreadId = ref(null)
+// phone.pendingThreadId (set by openApp(), see phone.js) deep-links straight
+// into a specific thread instead of the list view — read and immediately
+// cleared here (consumed once, same pattern as CustomAppRenderer.vue's own
+// pendingScreenId) so a later organic re-open of this app/screen never
+// reuses a stale target. If the app has more than one `conversations` block
+// on the same screen, only the first one mounted claims it — an unlikely
+// authoring shape, not worth extra guarding.
+const initialThreadId = phone.pendingThreadId
+phone.pendingThreadId = null
+const openThreadId = ref(initialThreadId || null)
+if (initialThreadId) story.markAppThreadRead(phone.currentApp, initialThreadId)
 const meta = computed(() => story.getThread(openThreadId.value))
 const headerName = computed(() =>
   meta.value.group ? groupName(meta.value) : displayName(meta.value.participants[0]),

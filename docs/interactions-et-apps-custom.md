@@ -468,6 +468,74 @@ session) :
   (iconColor/textColor) — build réussi, tous les champs + le contenu du
   test présents dans le bundle grepé.
 
+### `timeskip` — atterrir directement sur une app (+ conversation) au réveil
+
+Extension de l'entrée `timeskip` (pas un nouveau système) : deux champs
+optionnels sur l'entrée elle-même.
+
+- `entry.landApp` — id d'une app, N'IMPORTE LAQUELLE (codée en dur ou
+  custom, même catalogue que le panneau Applications de `GameForm.vue`).
+  Non renseigné = comportement inchangé (écran verrouillé classique, retour
+  à l'accueil après déverrouillage). Renseigné = **l'écran verrouillé est
+  entièrement sauté** — le joueur atterrit directement sur l'app choisie,
+  déjà déverrouillé (voir "premier jet corrigé" ci-dessous, ce n'était pas
+  le cas de la toute première version).
+- `entry.landThread` — quel picker de conversation dépend de l'app choisie
+  (`TimeskipEntryForm.vue`'s `landThreadOptions` computed) : `'messages'`
+  (SMS natif) → `contactOptionsNoMe` (1:1 uniquement, comme
+  `MessageEntryForm.vue`) ; `'social'` (DM Pixly natif) → `threadOptions`
+  complet (groupes + 1:1) ; une app custom → `threadOptions` aussi, mais
+  SEULEMENT si elle possède un bloc `conversations` (`appHasBlockType`, voir
+  plus haut) ; toute autre app (Journal, Galerie, Réglages...) → pas de
+  picker, aucun concept de conversation. Résolution de l'écran à afficher
+  pour une app custom via `findScreenWithBlockType(app, 'conversations')`
+  (`appHasModule.js`, fonction sœur de `appHasBlockType`) — trouve L'ÉCRAN
+  qui porte le bloc, pas juste l'app, puisqu'une app peut avoir plusieurs
+  écrans (`tabs`).
+- **Plomberie de "destination différée", app CUSTOM uniquement** :
+  `phone.openApp(appId, { screenId, threadId })` (signature étendue, 2ᵉ
+  param optionnel) pose `phone.pendingScreenId`/`pendingThreadId`
+  (nouveaux, transitoires) au lieu de forcer l'écran/thread par défaut.
+  `CustomAppRenderer.vue` lit et vide `pendingScreenId` à l'initialisation
+  de son `activeScreenId` (consommé une fois). `ConversationsBlock.vue`
+  fait pareil avec `pendingThreadId` (+ `markAppThreadRead` immédiat).
+  Pour une app NATIVE (`messages`/`social`), pas besoin de ce mécanisme —
+  `phone.openConversation(contactId)`/`phone.openDmThread(threadId)`
+  existent déjà (mêmes actions que `NotificationBanner.vue` appelle déjà au
+  clic sur une notif) ; appelées APRÈS `openApp()` (qui les remet à `null`),
+  même ordre que `NotificationBanner.vue`.
+- **Le message change de forme selon le cas** : SANS `landApp`, comportement
+  inchangé — `entry.label` s'affiche sur le lock screen
+  (`pendingTimeSkipLabel`) jusqu'au déverrouillage. AVEC `landApp`, le label
+  n'est PAS posé sur le lock screen (il n'y en a plus) — à la place, un
+  toast fondu-entrée/sortie (`TimeSkipToast.vue`, même patron que
+  `NotificationBanner.vue`, auto-disparition 3.2s), monté dans
+  `PhoneShell.vue`.
+- **Premier jet corrigé — bug trouvé par l'utilisateur en test réel** : la
+  toute première version gardait quand même l'écran verrouillé (atterrissage
+  posé dans `continueAfterTimeSkip()`, appelé seulement APRÈS un tap manuel
+  sur le lock screen) — l'utilisateur a testé en vrai et signalé "j'arrive
+  quand même sur l'écran verrouillé... je dois être directement sur
+  l'application sans devoir déverrouiller le tel". Corrigé en déplaçant
+  toute la logique d'atterrissage dans `processEntry`'s cas `'timeskip'`
+  directement (plus dans `continueAfterTimeSkip`, devenu mort pour ce cas) :
+  `phone.lock()` n'est appelé QUE si `landApp` est absent. `scheduleTimeSkip`
+  avance la timeline tout de suite quand `landApp` est posé
+  (`entry.blocking === false || entry.landApp`, même branche que le mode
+  non-bloquant existant) — puisqu'il n'y a plus de tap sur lock screen pour
+  déclencher la reprise, `entry.blocking` n'a plus d'effet dans ce cas
+  (toggle grisé + tooltip explicite dans `TimeskipEntryForm.vue`). Deuxième
+  correction dans la même remontée utilisateur : le picker de conversation
+  ne marchait QUE pour les apps custom, pas pour Messages/Pixly natifs —
+  étendu comme décrit ci-dessus.
+- **Vérifié par un vrai build du jeu compilé, deux fois** (une fois par
+  correction) : entrées `timeskip` de test avec `landApp: 'vitrine'` +
+  `landThread: 'squad'` (app custom, thread de groupe réel) ET
+  `landApp: 'messages'` + `landThread: 'maman'` (SMS natif, contact réel) —
+  builds réussis, `landApp`/`landThread`/`timeSkipToast`/`pendingScreenId`/
+  `pendingThreadId`/`openConversation`/`openDmThread`/le texte des deux
+  labels de test tous présents dans le bundle.
+
 ### Bug corrigé : picker "app conversation" listait toutes les apps
 
 `TimelineEditor.vue`'s `appDmOptions` et `ChoiceEntryForm.vue`'s

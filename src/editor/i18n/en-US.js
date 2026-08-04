@@ -266,11 +266,20 @@ export default {
       intro: 'Locks the phone and jumps the clock/date forward all at once.',
       clockLabel: 'Time (optional)',
       dateLabel: 'Date (optional)',
-      labelLabel: 'Label shown on the lock screen (optional)',
+      labelLabel: 'Message (optional)',
       labelPlaceholder: 'e.g.: The next day',
+      labelHelp:
+        'Shown on the lock screen by default. If an app is picked below, it fades in at the top of the screen once landed on that app instead, then fades out.',
       blockingLabel: 'Blocks the timeline until unlocked',
       blockingHelp:
         'On (default): the story waits for the player to unlock before continuing — a clean cut. Off: the rest plays out behind the lock screen (messages/DMs/calls still pile up normally), like a real phone in a pocket.',
+      blockingLandAppHelp:
+        'No effect here: an app picked below skips the lock screen entirely, so the story resumes right away.',
+      landAppLabel: 'Open an app on unlock (optional)',
+      landAppHelp:
+        'Without this, the player lands on the home screen as usual, going through the lock screen. With it, they land directly on the chosen app, skipping the lock screen.',
+      landThreadLabel: 'Open a specific conversation (optional)',
+      landThreadHelp: "Otherwise the player lands on the app's own thread list.",
     },
     interaction: {
       pickLabel: 'Interaction',

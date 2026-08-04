@@ -276,11 +276,20 @@ export default {
       intro: "Verrouille le téléphone et fait avancer l'heure/la date d'un coup.",
       clockLabel: 'Heure (optionnel)',
       dateLabel: 'Date (optionnel)',
-      labelLabel: 'Label affiché sur le lock screen (optionnel)',
+      labelLabel: 'Message (optionnel)',
       labelPlaceholder: 'ex: Le lendemain',
+      labelHelp:
+        "Affiché sur l'écran verrouillé par défaut. Si une app est choisie ci-dessous, il apparaît plutôt en fondu en haut de l'écran une fois arrivé sur l'app, puis disparaît.",
       blockingLabel: "Bloque la timeline jusqu'au déverrouillage",
       blockingHelp:
         "Activé (par défaut) : l'histoire attend que le joueur déverrouille avant de continuer — coupure nette. Désactivé : la suite se joue en coulisses derrière l'écran verrouillé (messages/DM/appel s'accumulent normalement), comme un vrai téléphone dans une poche.",
+      blockingLandAppHelp:
+        "Sans effet ici : une app choisie ci-dessous saute l'écran verrouillé, donc la suite reprend tout de suite.",
+      landAppLabel: 'Ouvrir une app au déverrouillage (optionnel)',
+      landAppHelp:
+        "Sans ça, le joueur retombe sur l'écran d'accueil comme d'habitude, en passant par l'écran verrouillé. Avec, il arrive directement sur l'app choisie, sans passer par l'écran verrouillé.",
+      landThreadLabel: 'Ouvrir une conversation précise (optionnel)',
+      landThreadHelp: "Sinon, le joueur arrive sur la liste des discussions de l'app.",
     },
     interaction: {
       pickLabel: 'Interaction',

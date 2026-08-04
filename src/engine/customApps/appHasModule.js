@@ -19,3 +19,15 @@ function blocksContainType(blocks, type) {
 export function appHasBlockType(app, type) {
   return (app?.screens || []).some((screen) => blocksContainType(screen.blocks, type))
 }
+
+// Which screen of an app holds the first block of the given type — used to
+// land the phone directly on that screen (e.g. a `timeskip` entry's
+// landThread needs the screen containing the `conversations` block, not
+// just the app's own default first screen). Null if the app doesn't use
+// that block type at all (see appHasBlockType).
+export function findScreenWithBlockType(app, type) {
+  for (const screen of app?.screens || []) {
+    if (blocksContainType(screen.blocks, type)) return screen.id
+  }
+  return null
+}

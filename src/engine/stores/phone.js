@@ -13,6 +13,16 @@ export const usePhoneStore = defineStore('phone', {
     activeDmThread: null, // threadId when inside an Pixly DM thread
     rebootCount: 0, // bumped by requestReboot() — PhoneShell watches this to replay the boot sequence
 
+    // Consumed once by CustomAppRenderer.vue/ConversationsBlock.vue right
+    // after openApp() sets them (see that action below) — lets a caller
+    // (story.js's continueAfterTimeSkip, for a `timeskip` entry's landApp/
+    // landThread) deep-link straight to a specific screen/conversation
+    // instead of the app's own default first screen. Both components null
+    // these out immediately after reading, so an unrelated later app-switch
+    // (tabs, home button) never accidentally reuses a stale target.
+    pendingScreenId: null,
+    pendingThreadId: null,
+
     // Set by BlockList.vue (src/components/phone/customApps/) when its
     // rendered output is clicked — a direct reference to the clicked
     // block's own object (the SAME reactive object BlockBuilder.vue is
@@ -47,12 +57,14 @@ export const usePhoneStore = defineStore('phone', {
       this.activeConversation = null
       this.activeDmThread = null
     },
-    openApp(appId) {
+    openApp(appId, { screenId = null, threadId = null } = {}) {
       this.closeCurrentApp()
       this.currentApp = appId
       this.appOpenedAt = Date.now()
       this.activeConversation = null
       this.activeDmThread = null
+      this.pendingScreenId = screenId
+      this.pendingThreadId = threadId
       // Fires unconditionally, whether or not any project.events reaction
       // actually listens for it (emit() is a no-op with zero subscribers) —
       // see src/engine/events/eventManager.js.

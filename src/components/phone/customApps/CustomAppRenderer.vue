@@ -36,7 +36,14 @@ const appDef = computed(() =>
 // local state naturally starts fresh each time the app is opened. The watch
 // below only matters for the (currently impossible, defensive) case of the
 // resolved app itself changing without a remount.
-const activeScreenId = ref(appDef.value?.screens?.[0]?.id || null)
+//
+// phone.pendingScreenId (set by openApp(), see phone.js) deep-links straight
+// to a specific screen instead of the app's own default first one — read
+// and immediately cleared here (consumed once) so a later organic app-switch
+// never reuses a stale target.
+const initialScreenId = phone.pendingScreenId
+phone.pendingScreenId = null
+const activeScreenId = ref(initialScreenId || appDef.value?.screens?.[0]?.id || null)
 watch(appDef, (def) => {
   activeScreenId.value = def?.screens?.[0]?.id || null
 })

@@ -7,6 +7,7 @@ import { ENTRY_TYPE_APP } from '@/engine/apps/appIds'
 import { orderedAppList } from '@/engine/apps/appOrder'
 import { APP_REGISTRY } from '@/engine/apps/registry'
 import { CUSTOM_ENTRY_TYPE_BY_TYPE } from '@/engine/apps/entryTypeRegistry'
+import { findScreenWithBlockType } from '@/engine/customApps/appHasModule'
 import CustomAppRenderer from '@/components/phone/customApps/CustomAppRenderer.vue'
 import {
   on as onEngineEvent,
@@ -220,6 +221,7 @@ function defaultState() {
     messagesSinceTick: 0, // counts up to 5 incoming message/dm entries, then adds a minute and resets
     messagesSinceBatteryTick: 0, // counts up to 5 incoming message/dm entries, then drains 2% and resets
     pendingTimeSkipLabel: null, // set by a `timeskip` entry, shown once on the next lock screen
+    timeSkipToast: null, // set once by continueAfterTimeSkip() when entry.landApp is set — TimeSkipToast.vue shows+clears it, transient like timeSkipFading
   }
 }
 
@@ -239,6 +241,7 @@ const NON_PERSISTED_KEYS = new Set([
   'typingDm',
   'typingAppDm',
   'timeSkipFading',
+  'timeSkipToast',
   'screenEffect',
 ])
 
@@ -679,7 +682,11 @@ export const useStoryStore = defineStore('story', {
 
     // called by LockScreen right after every unlock (see PhoneShell/
     // LockScreen) — a no-op unless the timeline is actually parked on a
-    // `timeskip` entry, in which case this is what resumes it.
+    // `timeskip` entry, in which case this is what resumes it. A `landApp`
+    // entry never reaches here at all — it skips the lock screen and
+    // auto-advances itself instead (see processEntry's 'timeskip' case and
+    // scheduleTimeSkip below), so this only ever handles the plain
+    // lock-screen-tap case.
     continueAfterTimeSkip() {
       if (this.pendingTimeSkipLabel) {
         this.pendingTimeSkipLabel = null
@@ -937,7 +944,10 @@ export const useStoryStore = defineStore('story', {
     // screen, already showing the right time. With `blocking: false`, the
     // last step instead resumes the timeline itself, right behind the veil
     // — the player can unlock whenever, continueAfterTimeSkip is then a
-    // no-op since the timeline has already moved past this entry.
+    // no-op since the timeline has already moved past this entry. A
+    // `landApp` entry auto-advances the same way, regardless of its own
+    // `blocking` value — it never shows a lock screen at all (see
+    // processEntry's 'timeskip' case), so there's no tap left to gate on.
     scheduleTimeSkip(entry, chapter) {
       setTimeout(() => {
         this.timeSkipFading = true
@@ -947,7 +957,7 @@ export const useStoryStore = defineStore('story', {
           setTimeout(() => {
             this.timeSkipFading = false
           }, 350)
-          if (entry.blocking === false) {
+          if (entry.blocking === false || entry.landApp) {
             this.timelineIndex++
             this.save()
             this.advance()
@@ -1275,8 +1285,44 @@ export const useStoryStore = defineStore('story', {
             }
           }
 
-          this.pendingTimeSkipLabel = this.fill(entry.label) || null
-          usePhoneStore().lock()
+          // A `landApp` entry skips the lock screen entirely — the player
+          // lands straight on the chosen app, already unlocked, instead of
+          // having to tap through a lock screen just to reach the home
+          // screen behind it (see TimeskipEntryForm.vue's landApp/
+          // landThread fields). The label moves from the lock screen to a
+          // fade-in/out toast shown right here instead (see TimeSkipToast.vue).
+          // Since there's no lock screen tap left to hook a "resume" on,
+          // the timeline is auto-advanced by scheduleTimeSkip below, same as
+          // `blocking: false` — `entry.blocking` has nothing left to gate.
+          const phone = usePhoneStore()
+          if (entry.landApp) {
+            this.pendingTimeSkipLabel = null
+            // `landThread` means different things per app: a plain contact
+            // id for native SMS (1:1 only), a project.threads id (or
+            // contact fallback) for native Pixly DM or a custom app's own
+            // `conversations` block — same group-vs-1:1 shape DM already
+            // has. openApp() resets activeConversation/activeDmThread, so
+            // the native deep-link calls must run AFTER it, not before —
+            // same ordering NotificationBanner.vue's own click-to-open
+            // already follows.
+            if (entry.landApp === 'messages') {
+              phone.openApp('messages')
+              if (entry.landThread) phone.openConversation(entry.landThread)
+            } else if (entry.landApp === 'social') {
+              phone.openApp('social')
+              if (entry.landThread) phone.openDmThread(entry.landThread)
+            } else {
+              const app = this.project?.customApps?.find((a) => a.id === entry.landApp)
+              const screenId = entry.landThread
+                ? findScreenWithBlockType(app, 'conversations')
+                : null
+              phone.openApp(entry.landApp, { screenId, threadId: entry.landThread || null })
+            }
+            this.timeSkipToast = this.fill(entry.label) || null
+          } else {
+            this.pendingTimeSkipLabel = this.fill(entry.label) || null
+            phone.lock()
+          }
           break
         }
 
