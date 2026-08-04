@@ -65,6 +65,46 @@ function addChapterStrings(timeline, set) {
   }
 }
 
+// Every text field a custom-app block's BlockPropertiesForm.vue offers a
+// VariablePickerBtn on (see resolveDynamicText.js) — recurses through
+// block.blocks/block.template, same shape as appHasModule.js's
+// blocksContainType/collectAssetRefs in src-electron/ipc/customApps.js.
+// `conversations` has no static text field of its own to extract (its
+// player-facing chrome — empty state, private notice — lives in the
+// separate src/i18n/ runtime tree already, not authored per app).
+function addBlockStrings(blocks, set) {
+  for (const block of blocks || []) {
+    switch (block.type) {
+      case 'header':
+        if (block.title) set.add(block.title)
+        break
+      case 'text':
+        if (block.content) set.add(block.content)
+        break
+      case 'avatar':
+        if (block.label) set.add(block.label)
+        break
+      case 'row':
+        if (block.label) set.add(block.label)
+        if (block.sublabel) set.add(block.sublabel)
+        break
+      case 'badge':
+        if (block.label) set.add(block.label)
+        break
+      case 'button':
+        if (block.label) set.add(block.label)
+        break
+      case 'tabs':
+        for (const tab of block.tabs || []) {
+          if (tab.label) set.add(tab.label)
+        }
+        break
+    }
+    if (Array.isArray(block.blocks)) addBlockStrings(block.blocks, set)
+    if (Array.isArray(block.template)) addBlockStrings(block.template, set)
+  }
+}
+
 function addCommonStrings(project, set) {
   for (const contact of project.contacts || []) {
     // Matches story.js's contactName getter, which resolves a contact's
@@ -80,6 +120,17 @@ function addCommonStrings(project, set) {
   // a separate per-app bucket (see blockKinds.js/ConversationsBlock.vue).
   for (const thread of project.threads || []) {
     if (thread.group && thread.name) set.add(thread.name)
+  }
+
+  // Custom-app block text — same 'common' bucket as everything else here,
+  // since a block isn't tied to any one chapter either (resolveDynamicText.js
+  // resolves it through translateStory('common') before token substitution,
+  // so the string extracted here — including any {flag:x}/{item:x}/
+  // {playerName} tokens, kept verbatim — is exactly the runtime lookup key).
+  for (const app of project.customApps || []) {
+    for (const screen of app.screens || []) {
+      addBlockStrings(screen.blocks, set)
+    }
   }
 
   const seed = project.seed || {}
@@ -142,6 +193,15 @@ export function extractCommonCategories(project) {
     'Noms de groupes',
     (project.threads || []).filter((t) => t.group).map((t) => t.name),
   )
+
+  // One category per custom app (real name, not a generic "Apps" bucket) —
+  // same "surface real project data in pickers/labels" instinct as the
+  // rest of this editor (see appDm's own naming fix, docs on custom apps).
+  for (const app of project.customApps || []) {
+    const texts = new Set()
+    for (const screen of app.screens || []) addBlockStrings(screen.blocks, texts)
+    push(`App : ${app.label || app.id}`, [...texts])
+  }
 
   const seed = project.seed || {}
   const seedTexts = (bucketName) =>

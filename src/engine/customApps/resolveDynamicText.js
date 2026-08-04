@@ -1,9 +1,12 @@
-// Variable interpolation for custom-app block text — deliberately NOT
-// story.js's own `fill()` (used for `{name}` in chapter/narrative text),
-// which also resolves i18n translation against the CURRENT CHAPTER bucket —
+// Variable interpolation (+ translation) for custom-app block text —
+// deliberately NOT story.js's own `fill()` (used for `{name}` in chapter/
+// narrative text), which resolves i18n against the CURRENT CHAPTER bucket —
 // a custom app screen isn't tied to any chapter, so that lookup wouldn't
-// make sense here. This is a separate, smaller mechanism: plain string
-// substitution, nothing else.
+// make sense here. Translation instead goes through the SAME 'common'
+// bucket contact names/bios/group thread names already use (via
+// story.translateStory(text, 'common')) — same reasoning: none of it is
+// chapter-scoped. See extractTranslatableStrings.js's addBlockStrings for
+// what actually gets surfaced in the i18n editor's "Commun" tab.
 //
 // Two token shapes:
 //   - `{flag:<key>}` — reads story.flags[key] directly. Flags are already
@@ -103,7 +106,11 @@ function resolveItemToken(field, item, story) {
 // its display condition).
 export function resolveDynamicText(text, story, item) {
   if (!text) return text
-  let out = text.replace(/\{flag:([a-zA-Z0-9_]+)\}/g, (_, key) => String(story.flags?.[key] ?? 0))
+  // Translated FIRST (dictionary keyed by the exact French source, tokens
+  // included verbatim), tokens substituted into the result after — same
+  // order as story.js's own fill() (translateStory, then {name}).
+  let out = story.translateStory(text, 'common')
+  out = out.replace(/\{flag:([a-zA-Z0-9_]+)\}/g, (_, key) => String(story.flags?.[key] ?? 0))
   out = out.replace(
     /\{item:(name|handle|pseudo|followers|following|color|key|value)\}/g,
     (_, field) => String(resolveItemToken(field, item, story)),

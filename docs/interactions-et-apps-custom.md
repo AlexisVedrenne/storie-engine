@@ -550,6 +550,44 @@ fichier statically-import `electron`, inutilisable côté éditeur/renderer).
 Les deux pickers filtrent maintenant sur `appHasBlockType(app,
 'conversations')` avant de lister l'app.
 
+### Traduction des textes de bloc
+
+Jusqu'ici les blocs n'étaient JAMAIS traduits — `resolveDynamicText.js`
+faisait exprès de ne PAS passer par `story.fill()` (qui traduit via le
+bucket du chapitre courant, sans rapport avec un écran d'app). Corrigé en
+réutilisant le bucket **'common'** — le même que les noms/bios de contacts
+et les noms de groupe de thread, puisqu'un bloc d'app n'est pas non plus
+rattaché à un chapitre précis.
+
+- `resolveDynamicText(text, story, item)` appelle maintenant
+  `story.translateStory(text, 'common')` EN PREMIER (avant la substitution
+  des tokens `{flag:x}`/`{item:x}`/tokens fixes) — même ordre que
+  `story.js`'s propre `fill()` (traduit d'abord, substitue `{name}`
+  ensuite). La clé de dictionnaire est donc le texte FR authored tel quel,
+  tokens compris littéralement — un auteur qui traduit doit garder les
+  tokens dans sa version traduite, au bon endroit.
+- `extractTranslatableStrings.js` gagne `addBlockStrings(blocks, set)` —
+  marche récursivement `block.blocks`/`block.template` (même forme que
+  `appHasBlockType`/`collectAssetRefs`) et collecte le champ texte de
+  chaque type qui en a un : `header.title`, `text.content`,
+  `avatar.label`, `row.label`/`row.sublabel`, `badge.label`,
+  `button.label`, chaque `tabs.tabs[].label`. `conversations` n'a aucun
+  texte statique à extraire (son texte joueur — état vide, notice privée —
+  vit déjà dans l'arbre `src/i18n/` séparé, pas authored par app).
+  Branché dans `addCommonStrings` (alimente `result.common`, utilisé par
+  le statut traduit/manquant) ET dans `extractCommonCategories` (une
+  catégorie par app, nommée `App : <nom réel>`, même réflexe "vrai nom
+  plutôt que catégorie générique" que le reste de l'éditeur).
+- **Vérifié séparément pour les deux moitiés** : la marche récursive
+  (`addBlockStrings`) via un script Node autonome (copie isolée de la
+  fonction, testée contre un arbre `card`/`list.template`/`tabs`/`button`
+  imbriqué — 8 assertions, toutes passées) puisque `extractTranslatableStrings.js`
+  importe `@/engine/...` (alias Vite, pas résolvable par node nu). Le
+  câblage runtime (`translateStory` dans `resolveDynamicText.js`) via un
+  vrai build du jeu compilé — entrée `'Compte courant'` du dictionnaire
+  `en-US/common.js` ajoutée en test, présente dans le bundle aux côtés de
+  l'appel `translateStory` et du texte FR source.
+
 ### Piège IPC à connaître
 
 `story.project.customApps[i]` est un objet réactif Pinia (Proxy) — jamais
