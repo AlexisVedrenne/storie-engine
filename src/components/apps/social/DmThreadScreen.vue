@@ -37,13 +37,37 @@
               <div v-if="meta.group && item.message.from !== 'me'" class="sender-name">
                 {{ story.socialHandle(story.getContact(item.message.from)) }}
               </div>
-              <img
-                v-if="item.message.image"
-                :src="resolveAssetUrl(item.message.image)"
-                class="bubble-image"
-                @load="scrollToBottom"
-              />
-              <div v-if="item.message.text" class="bubble">{{ item.message.text }}</div>
+              <div
+                v-if="item.message.deleted && !item.message.revealed"
+                class="bubble bubble-deleted"
+                @click="story.toggleDeletedMessage(item.message)"
+              >
+                {{ t('social.deletedMessage') }}
+              </div>
+              <template v-else>
+                <img
+                  v-if="item.message.image"
+                  :src="resolveAssetUrl(item.message.image)"
+                  class="bubble-image"
+                  :class="{
+                    'bubble-deletable': item.message.deleted,
+                    'bubble-revealed': item.message.deleted && item.message.revealed,
+                  }"
+                  @load="scrollToBottom"
+                  @click="item.message.deleted && story.toggleDeletedMessage(item.message)"
+                />
+                <div
+                  v-if="item.message.text"
+                  class="bubble"
+                  :class="{
+                    'bubble-deletable': item.message.deleted,
+                    'bubble-revealed': item.message.deleted && item.message.revealed,
+                  }"
+                  @click="item.message.deleted && story.toggleDeletedMessage(item.message)"
+                >
+                  {{ item.message.text }}
+                </div>
+              </template>
             </div>
           </div>
         </template>
@@ -287,6 +311,22 @@ watch(
 
 .bubble-row.me .bubble {
   background: linear-gradient(135deg, #ee2a7b, #6228d7);
+}
+
+.bubble-deleted {
+  font-style: italic;
+  opacity: 0.55;
+  cursor: pointer;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.bubble-deletable {
+  cursor: pointer;
+}
+
+.bubble-revealed {
+  opacity: 0.7;
 }
 
 .bubble-image {

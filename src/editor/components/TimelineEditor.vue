@@ -504,7 +504,7 @@ function duplicate(i) {
 function summaryFor(entry) {
   switch (entry.type) {
     case 'message':
-      return `${story.getContact(entry.contact).name}: ${entry.text || ''}`
+      return `${story.getContact(entry.contact).name}: ${entry.text || ''}${entry.deleteAfter ? ' 🗑️' : ''}`
     case 'choice':
       return entry.prompt || t('timelineEditor.emptyPrompt')
     case 'post':
@@ -514,7 +514,7 @@ function summaryFor(entry) {
     case 'story':
       return `${story.getContact(entry.contact).name} ${entry.emoji || ''}`
     case 'dm':
-      return `${entry.thread}: ${entry.text || ''}`
+      return `${entry.thread}: ${entry.text || ''}${entry.deleteAfter ? ' 🗑️' : ''}`
     case 'appDm': {
       // Always leads with the app's own label — an author scanning a long
       // timeline needs to tell an app-scoped conversation apart from native

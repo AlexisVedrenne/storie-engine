@@ -116,6 +116,7 @@ export default {
     empty: 'Noch keine Unterhaltungen.',
     noResults: 'Keine Ergebnisse für „{query}".',
     waitingFor: 'Warte auf Antwort von {name}...',
+    deletedMessage: 'Diese Nachricht wurde gelöscht',
   },
 
   email: {
@@ -165,6 +166,7 @@ export default {
     dmNoResults: 'Keine Ergebnisse für „{query}".',
     dmPrivateNotice:
       'Das ist eine private Pixly-Unterhaltung — hier ist noch keine Antwort möglich.',
+    deletedMessage: 'Diese Nachricht wurde gelöscht',
     editProfile: 'Profil bearbeiten',
     following: 'Gefolgt',
     follow: 'Folgen',

@@ -73,6 +73,16 @@
       </template>
     </q-input>
     <AssetField v-model="entry.image" :label="t('entries.dm.imageLabel')" :contact-id="entry.from" />
+    <q-input
+      v-if="entry.from !== 'me'"
+      dense
+      outlined
+      type="number"
+      :label="t('entries.dm.deleteAfterLabel')"
+      suffix="ms"
+      :model-value="entry.deleteAfter ?? null"
+      @update:model-value="(v) => (entry.deleteAfter = v === null || v === '' ? null : Number(v))"
+    />
   </div>
 </template>
 

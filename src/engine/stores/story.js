@@ -1150,6 +1150,7 @@ export const useStoryStore = defineStore('story', {
             from: entry.contact,
             text: this.fill(entry.text),
             image: entry.image || null,
+            deleteAfter: entry.deleteAfter || null,
           })
           this.tickClock()
           this.tickBattery()
@@ -1182,6 +1183,7 @@ export const useStoryStore = defineStore('story', {
             from: entry.from,
             text: this.fill(entry.text),
             image: entry.image,
+            deleteAfter: entry.deleteAfter || null,
           })
           this.tickClock()
           this.tickBattery()
@@ -1675,15 +1677,27 @@ export const useStoryStore = defineStore('story', {
       return phone.currentApp === 'social' && phone.activeDmThread === threadId
     },
 
-    pushMessage(contactId, { from, text, image }) {
+    pushMessage(contactId, { from, text, image, deleteAfter }) {
       if (!this.messages[contactId]) this.messages[contactId] = []
-      this.messages[contactId].push({
+      const msg = {
         id: `${contactId}-${this.messages[contactId].length}`,
         from,
         text,
         image: image || null,
         ts: this.resolvedClock().toISOString(),
-      })
+        deleted: false,
+        revealed: false,
+      }
+      this.messages[contactId].push(msg)
+      // Re-read the just-pushed message back out of the reactive array
+      // instead of scheduling on the local `msg` variable — `msg` is still
+      // the plain object as constructed above, and Vue only wraps it
+      // reactively once it's actually inside the array; a setTimeout that
+      // mutates the pre-insertion object bypasses that proxy entirely, so
+      // the mutation happens but never triggers a re-render (confirmed:
+      // this is exactly why 500ms authored deleteAfter silently did
+      // nothing visible on a real test).
+      this.scheduleMessageDeletion(this.messages[contactId].at(-1), from, deleteAfter)
       // the bubble sound plays unconditionally, unlike the unread badge/
       // notification banner below — a message landing while you're already
       // looking at that exact thread still deserves a sound (that's the
@@ -1695,16 +1709,45 @@ export const useStoryStore = defineStore('story', {
       }
     },
 
-    pushDm(threadId, { from, text, image }) {
+    // A `message`/`dm` entry can be authored with `deleteAfter` (ms) to make
+    // the bubble self-destruct into a "this message was deleted" placeholder
+    // once it's been on screen a while — real messaging apps do this, and
+    // it's a narrative beat on its own (a contact having second thoughts).
+    // Only ever applies to a message actually received (from !== 'me') —
+    // a player's own outgoing line never disappears on them. Fire-and-forget
+    // like vfx/fakeTyping: mutates the message object in place once the
+    // timer fires, which the bubble template already reacts to.
+    scheduleMessageDeletion(msg, from, deleteAfter) {
+      if (!deleteAfter || from === 'me') return
+      setTimeout(() => {
+        msg.deleted = true
+      }, deleteAfter)
+    },
+
+    // Player tap on a "this message was deleted" placeholder — reveals the
+    // original text/image again, and taps again to re-hide it. No-op on a
+    // message that was never deleted in the first place.
+    toggleDeletedMessage(msg) {
+      if (!msg.deleted) return
+      msg.revealed = !msg.revealed
+    },
+
+    pushDm(threadId, { from, text, image, deleteAfter }) {
       this.ensureThread(threadId)
       const thread = this.igThreads[threadId]
-      thread.push({
+      const msg = {
         id: `${threadId}-${thread.length}`,
         from,
         text: text || null,
         image: image || null,
         ts: this.resolvedClock().toISOString(),
-      })
+        deleted: false,
+        revealed: false,
+      }
+      thread.push(msg)
+      // see pushMessage's own comment — must re-read the reactive reference
+      // back out of `thread`, not schedule on the pre-insertion `msg`.
+      this.scheduleMessageDeletion(thread.at(-1), from, deleteAfter)
       playSound(from === 'me' ? 'social-send' : 'dm-receive')
       if (from === 'me') return
 

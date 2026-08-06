@@ -43,6 +43,15 @@
       :label="t('entries.message.imageLabel')"
       :contact-id="entry.contact"
     />
+    <q-input
+      dense
+      outlined
+      type="number"
+      :label="t('entries.message.deleteAfterLabel')"
+      suffix="ms"
+      :model-value="entry.deleteAfter ?? null"
+      @update:model-value="(v) => (entry.deleteAfter = v === null || v === '' ? null : Number(v))"
+    />
   </div>
 </template>
 

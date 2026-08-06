@@ -116,6 +116,7 @@ export default {
     empty: 'No conversations yet.',
     noResults: 'No results for "{query}".',
     waitingFor: 'Waiting for a reply from {name}...',
+    deletedMessage: 'This message was deleted',
   },
 
   email: {
@@ -164,6 +165,7 @@ export default {
     dmEmpty: 'No direct messages yet.',
     dmNoResults: 'No results for "{query}".',
     dmPrivateNotice: 'This is a private Pixly conversation — no reply possible here yet.',
+    deletedMessage: 'This message was deleted',
     editProfile: 'Edit profile',
     following: 'Following',
     follow: 'Follow',

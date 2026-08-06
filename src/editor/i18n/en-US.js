@@ -172,6 +172,7 @@ export default {
       textLabel: 'Message text',
       textPlaceholder: 'e.g.: Hey! How are you?',
       imageLabel: 'Attached photo (optional)',
+      deleteAfterLabel: 'Auto-delete after (optional — the player can tap it again to reveal it)',
     },
     choice: {
       replyTargetLabel: "Where does the player's reply land?",
@@ -228,6 +229,7 @@ export default {
       textLabel: 'Message text',
       textPlaceholder: "e.g.: I'd rather tell you in private 😉",
       imageLabel: 'Attached photo (optional)',
+      deleteAfterLabel: 'Auto-delete after (optional — the player can tap it again to reveal it)',
     },
     appDm: {
       appLabel: 'App',

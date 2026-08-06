@@ -181,6 +181,8 @@ export default {
       textLabel: 'Texte du message',
       textPlaceholder: 'ex: Coucou ! Ça va ?',
       imageLabel: 'Photo jointe (optionnel)',
+      deleteAfterLabel:
+        'Supprimé automatiquement après (optionnel — le joueur peut re-cliquer pour le réafficher)',
     },
     choice: {
       replyTargetLabel: 'Où arrive la réponse du joueur ?',
@@ -237,6 +239,8 @@ export default {
       textLabel: 'Texte du message',
       textPlaceholder: 'ex: Je préfère te le dire en privé 😉',
       imageLabel: 'Photo jointe (optionnel)',
+      deleteAfterLabel:
+        'Supprimé automatiquement après (optionnel — le joueur peut re-cliquer pour le réafficher)',
     },
     appDm: {
       appLabel: 'Application',

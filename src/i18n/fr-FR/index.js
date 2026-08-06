@@ -116,6 +116,7 @@ export default {
     empty: "Aucune conversation pour l'instant.",
     noResults: 'Aucun résultat pour « {query} ».',
     waitingFor: "En attente d'une réponse de {name}...",
+    deletedMessage: 'Ce message a été supprimé',
   },
 
   email: {
@@ -165,6 +166,7 @@ export default {
     dmNoResults: 'Aucun résultat pour « {query} ».',
     dmPrivateNotice:
       "C'est une conversation privée Pixly — pas de réponse possible ici pour l'instant.",
+    deletedMessage: 'Ce message a été supprimé',
     editProfile: 'Modifier le profil',
     following: 'Abonné(e)',
     follow: 'Suivre',
