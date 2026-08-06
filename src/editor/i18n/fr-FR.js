@@ -153,6 +153,14 @@ export default {
         label: 'Hallucination',
         help: 'Une fausse conversation que le joueur ne peut que regarder — les messages s’enchaînent tout seuls puis disparaissent après un effet glitch. Rien n’est écrit dans les vraies discussions.',
       },
+      fakeTyping: {
+        label: 'Faux « en train d’écrire »',
+        help: 'Affiche les 3 petits points « en train d’écrire » dans une conversation SMS ou DM, pendant une durée choisie — aucun message n’arrive ensuite.',
+      },
+      pause: {
+        label: 'Pause',
+        help: 'Ne montre rien — attend simplement une durée choisie avant de reprendre la suite.',
+      },
     },
   },
 
@@ -326,6 +334,20 @@ export default {
       blockingLabel: "Bloque la timeline jusqu'à la fin",
       blockingHelp:
         "Activé (par défaut) : l'histoire attend que l'hallucination se termine avant de continuer. Désactivé : la suite se joue derrière, l'hallucination reste affichée en même temps.",
+    },
+    fakeTyping: {
+      intro:
+        'Affiche les points « en train d’écrire » d’une conversation, sans qu’aucun message n’arrive après — purement cosmétique, la timeline continue tout de suite.',
+      modeSms: 'SMS',
+      modeDm: 'DM Pixly',
+      contactLabel: 'Contact (SMS)',
+      threadLabel: 'Conversation (1:1 ou groupe)',
+      fromLabel: 'Qui « écrit »',
+      durationLabel: 'Durée',
+    },
+    pause: {
+      intro: 'Un silence — rien ne se passe, la timeline attend juste avant de continuer.',
+      durationLabel: 'Durée',
     },
   },
 

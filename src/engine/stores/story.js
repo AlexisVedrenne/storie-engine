@@ -852,6 +852,20 @@ export const useStoryStore = defineStore('story', {
           this.scheduleHallucination(entry, chapter)
           return
         }
+        // A silent beat — nothing shown, nothing changes, the timeline just
+        // waits `duration` ms (author-controlled, unlike PACE_DELAY's fixed
+        // small gap between every "instant" entry) before the next entry.
+        // Same shape as scheduleTimeSkip/scheduleHallucination above (index
+        // not incremented until the wait is over), but with no processEntry
+        // call at all — there's genuinely nothing to do except wait.
+        if (entry.type === 'pause') {
+          setTimeout(() => {
+            this.timelineIndex++
+            this.save()
+            this.advance()
+          }, entry.duration || 1000)
+          return
+        }
 
         // a choice or a ringing call blocks progress until the player acts.
         // Keep the index pointing AT this entry (don't increment) so that a
@@ -1073,6 +1087,16 @@ export const useStoryStore = defineStore('story', {
         this.scheduleAppDm(entry, chapter, () => this.runThen(list, i + 1, chapter, resume))
         return
       }
+      // Same as advance()'s own 'pause' branch — special-cased here too
+      // (unlike vfx/timeskip/hallucination, which just fall through to the
+      // generic processEntry+PACE_DELAY path below) because the whole point
+      // of this entry is an author-controlled wait; falling through would
+      // silently collapse any authored duration down to the fixed 450ms
+      // PACE_DELAY every other instant entry gets inside a `then` list.
+      if (entry.type === 'pause') {
+        setTimeout(() => this.runThen(list, i + 1, chapter, resume), entry.duration || 1000)
+        return
+      }
       // a nested choice/call blocks just like a top-level one — set the
       // continuation to "carry on with the rest of this `then` list" and
       // stop here until the player answers/hangs up (see makeChoice /
@@ -1254,6 +1278,39 @@ export const useStoryStore = defineStore('story', {
         case 'vfx':
           if (entry.mode === 'stop') this.stopScreenEffect()
           else this.triggerScreenEffect(entry.effect, entry.duration)
+          break
+
+        // Shows the real "..." typing indicator (typingContact/typingDm —
+        // the SAME fields scheduleMessage/scheduleDm already set right
+        // before an incoming message lands) with nothing ever arriving
+        // after it. Same fire-and-forget shape as `vfx` above: no dedicated
+        // schedule*/finish* pair, no blocking dispatch branch needed in
+        // advance()/runThen() — this case just sets the flag and manages
+        // its own auto-clear timer, the timeline moves on immediately via
+        // whichever generic path (top-level or nested `then`) called it.
+        case 'fakeTyping': {
+          const clearAfter = entry.duration || 2000
+          if (entry.mode === 'dm') {
+            this.typingDm = { thread: entry.thread, contact: entry.from }
+            setTimeout(() => {
+              this.typingDm = null
+            }, clearAfter)
+          } else {
+            this.typingContact = entry.contact
+            setTimeout(() => {
+              this.typingContact = null
+            }, clearAfter)
+          }
+          break
+        }
+
+        // Genuinely nothing to do here — advance()/runThen() both intercept
+        // 'pause' before it ever reaches this switch (see their own
+        // comments) to honor its authored `duration`. This case only exists
+        // as a safety net so a 'pause' reaching processEntry through some
+        // other path (none exist today) degrades to a silent no-op instead
+        // of the default case's "unknown entry type" warning.
+        case 'pause':
           break
 
         // Author-built phone interaction (see stepKinds.js / game.interactions).

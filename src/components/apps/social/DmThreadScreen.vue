@@ -5,7 +5,12 @@
         <q-icon name="chevron_left" size="26px" />
       </button>
       <button class="thread-identity" @click="$emit('open-profile', otherContact.id)">
-        <AppAvatar :name="otherContact.name" :color="otherContact.color" :image="otherContact.socialAvatar" :size="30" />
+        <AppAvatar
+          :name="otherContact.name"
+          :color="otherContact.color"
+          :image="otherContact.socialAvatar"
+          :size="30"
+        />
         <span class="thread-title">{{ title }}</span>
       </button>
     </div>
@@ -32,7 +37,12 @@
               <div v-if="meta.group && item.message.from !== 'me'" class="sender-name">
                 {{ story.socialHandle(story.getContact(item.message.from)) }}
               </div>
-              <img v-if="item.message.image" :src="resolveAssetUrl(item.message.image)" class="bubble-image" @load="scrollToBottom" />
+              <img
+                v-if="item.message.image"
+                :src="resolveAssetUrl(item.message.image)"
+                class="bubble-image"
+                @load="scrollToBottom"
+              />
               <div v-if="item.message.text" class="bubble">{{ item.message.text }}</div>
             </div>
           </div>
@@ -47,10 +57,10 @@
             :size="24"
           />
           <div class="bubble-col">
-            <div v-if="meta.group" class="sender-name">{{ story.socialHandle(story.getContact(story.typingDm.contact)) }}</div>
-            <div class="bubble typing-bubble">
-              <span></span><span></span><span></span>
+            <div v-if="meta.group" class="sender-name">
+              {{ story.socialHandle(story.getContact(story.typingDm.contact)) }}
             </div>
+            <div class="bubble typing-bubble"><span></span><span></span><span></span></div>
           </div>
         </div>
       </transition-group>
@@ -91,7 +101,7 @@ const meta = computed(() => story.getThread(props.threadId))
 const messages = computed(() => story.igThreads[props.threadId] || [])
 const chatItems = computed(() => toChatItems(messages.value, story.resolvedClock()))
 const choice = computed(() =>
-  story.activeChoice && story.activeChoice.thread === props.threadId ? story.activeChoice : null
+  story.activeChoice && story.activeChoice.thread === props.threadId ? story.activeChoice : null,
 )
 const isTyping = computed(() => story.typingDm && story.typingDm.thread === props.threadId)
 
@@ -100,7 +110,9 @@ const isTyping = computed(() => story.typingDm && story.typingDm.thread === prop
 // as AppAvatar's fallback, socialAvatar as the actual Pixly photo).
 const otherContact = computed(() => story.getContact(meta.value.participants[0]))
 const title = computed(() =>
-  meta.value.group ? story.translateStory(meta.value.name, 'common') : story.socialHandle(otherContact.value)
+  meta.value.group
+    ? story.translateStory(meta.value.name, 'common')
+    : story.socialHandle(otherContact.value),
 )
 
 onMounted(() => story.markDmRead(props.threadId))
@@ -121,7 +133,7 @@ watch(
   [() => messages.value.length, isTyping, choice],
   () => {
     nextTick(scrollToBottom)
-  }
+  },
 )
 </script>
 
@@ -224,6 +236,26 @@ watch(
 .bubble-enter-from {
   opacity: 0;
   transform: translateY(10px) scale(0.96);
+}
+
+/* Mostly relevant for the typing indicator disappearing with no message
+   replacing it (see story.js's `fakeTyping` entry) — a real message
+   arriving masks the removal since something else pops in at the same
+   moment, but the typing dots vanishing into nothing needs their own soft
+   fade or it reads as an abrupt glitch instead of a deliberate beat.
+   Deliberately NOT `position: absolute` here — that pulls the element out
+   of the flex column while it's still fading, and since flex layout has
+   no static "was here" fallback for an absolutely-positioned child, it
+   snapped to the top of the nearest positioned ancestor instead of fading
+   in place (confirmed live: it visibly flew upward instead of just
+   dissolving). A plain opacity fade with no position change is enough —
+   the typing row is always the last element, nothing below it to reflow. */
+.bubble-leave-active {
+  transition: opacity 0.35s ease;
+}
+
+.bubble-leave-to {
+  opacity: 0;
 }
 
 .bubble-row.me {

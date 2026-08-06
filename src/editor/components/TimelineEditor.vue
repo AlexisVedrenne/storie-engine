@@ -235,6 +235,8 @@ import VfxEntryForm from '@/editor/components/entries/VfxEntryForm.vue'
 import TimeskipEntryForm from '@/editor/components/entries/TimeskipEntryForm.vue'
 import InteractionEntryForm from '@/editor/components/entries/InteractionEntryForm.vue'
 import HallucinationEntryForm from '@/editor/components/entries/HallucinationEntryForm.vue'
+import FakeTypingEntryForm from '@/editor/components/entries/FakeTypingEntryForm.vue'
+import PauseEntryForm from '@/editor/components/entries/PauseEntryForm.vue'
 import { useEditorI18n } from '@/editor/i18n'
 import { entryTypeLabel, entryTypeHelp } from '@/editor/i18n/sharedOverrides'
 
@@ -280,6 +282,8 @@ const FORM_BY_TYPE = {
   timeskip: TimeskipEntryForm,
   interaction: InteractionEntryForm,
   hallucination: HallucinationEntryForm,
+  fakeTyping: FakeTypingEntryForm,
+  pause: PauseEntryForm,
 }
 // Additive merge, never replacing the hardcoded 10 — a plug-in entry type
 // (src/engine/apps/entryTypeRegistry.js) just adds its own `type` key on
@@ -305,6 +309,8 @@ const ICON_BY_TYPE = {
   timeskip: 'update',
   interaction: 'sports_esports',
   hallucination: 'blur_on',
+  fakeTyping: 'more_horiz',
+  pause: 'pause',
 }
 // `type` is either a real stored entry.type (from an existing entry card)
 // or a picker option's composite value (`appDm::<appId>`, see
@@ -341,6 +347,8 @@ const BUILTIN_TYPES = [
   'timeskip',
   'interaction',
   'hallucination',
+  'fakeTyping',
+  'pause',
 ]
 function helpFor(type) {
   const base = baseType(type)
@@ -447,6 +455,10 @@ function defaultEntry(type) {
       }
     case 'hallucination':
       return { type, messages: [], enterEffect: 'glitch', exitEffect: 'glitch' }
+    case 'fakeTyping':
+      return { type, mode: 'sms', contact: firstContactId(), duration: 2000 }
+    case 'pause':
+      return { type, duration: 1000 }
     default: {
       // Additive fallback for plug-in entry types — reached only for a
       // type none of the cases above matches.
@@ -535,6 +547,15 @@ function summaryFor(entry) {
     }
     case 'hallucination':
       return t('timelineEditor.linesCount', { n: (entry.messages || []).length })
+    case 'fakeTyping': {
+      const who =
+        entry.mode === 'dm'
+          ? story.getContact(entry.from).name
+          : story.getContact(entry.contact).name
+      return `${who} · ${entry.duration ?? 2000}ms`
+    }
+    case 'pause':
+      return `${entry.duration ?? 1000}ms`
     default:
       return ''
   }

@@ -14,16 +14,19 @@
           <div v-if="item.kind === 'divider'" class="chat-label">{{ item.label }}</div>
           <div v-else class="bubble-row" :class="{ me: item.message.from === 'me' }">
             <div class="bubble-col">
-              <img v-if="item.message.image" :src="resolveAssetUrl(item.message.image)" class="bubble-image" @load="scrollToBottom" />
+              <img
+                v-if="item.message.image"
+                :src="resolveAssetUrl(item.message.image)"
+                class="bubble-image"
+                @load="scrollToBottom"
+              />
               <div v-if="item.message.text" class="bubble">{{ item.message.text }}</div>
             </div>
           </div>
         </template>
         <div v-if="isTyping" key="typing" class="bubble-row">
           <div class="bubble-col">
-            <div class="bubble typing-bubble">
-              <span></span><span></span><span></span>
-            </div>
+            <div class="bubble typing-bubble"><span></span><span></span><span></span></div>
           </div>
         </div>
       </transition-group>
@@ -65,7 +68,7 @@ const displayName = computed(() => story.contactName(props.contactId))
 const messages = computed(() => story.contactMessages(props.contactId))
 const chatItems = computed(() => toChatItems(messages.value, story.resolvedClock()))
 const choice = computed(() =>
-  story.activeChoice && story.activeChoice.contact === props.contactId ? story.activeChoice : null
+  story.activeChoice && story.activeChoice.contact === props.contactId ? story.activeChoice : null,
 )
 const isTyping = computed(() => story.typingContact === props.contactId)
 
@@ -86,7 +89,7 @@ watch(
   [() => messages.value.length, isTyping, choice],
   () => {
     nextTick(scrollToBottom)
-  }
+  },
 )
 </script>
 
@@ -157,6 +160,26 @@ watch(
 .bubble-enter-from {
   opacity: 0;
   transform: translateY(10px) scale(0.96);
+}
+
+/* Mostly relevant for the typing indicator disappearing with no message
+   replacing it (see story.js's `fakeTyping` entry) — a real message
+   arriving masks the removal since something else pops in at the same
+   moment, but the typing dots vanishing into nothing needs their own soft
+   fade or it reads as an abrupt glitch instead of a deliberate beat.
+   Deliberately NOT `position: absolute` here — that pulls the element out
+   of the flex column while it's still fading, and since flex layout has
+   no static "was here" fallback for an absolutely-positioned child, it
+   snapped to the top of the nearest positioned ancestor instead of fading
+   in place (confirmed live: it visibly flew upward instead of just
+   dissolving). A plain opacity fade with no position change is enough —
+   the typing row is always the last element, nothing below it to reflow. */
+.bubble-leave-active {
+  transition: opacity 0.35s ease;
+}
+
+.bubble-leave-to {
+  opacity: 0;
 }
 
 .bubble-row.me {

@@ -72,6 +72,14 @@ function collectReferences(project) {
               refs.push({ kind: 'contact', id: m.from, label: `${label} → message ${k + 1}` })
           })
           break
+        case 'fakeTyping':
+          if (entry.mode === 'dm') {
+            if (entry.thread) refs.push({ kind: 'thread', id: entry.thread, label })
+            if (entry.from) refs.push({ kind: 'contact', id: entry.from, label })
+          } else if (entry.contact) {
+            refs.push({ kind: 'contact', id: entry.contact, label })
+          }
+          break
         case 'post':
           if (entry.author) refs.push({ kind: 'contact', id: entry.author, label })
           ;(entry.comments || []).forEach((c, k) => {

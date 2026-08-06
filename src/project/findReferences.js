@@ -47,6 +47,13 @@ function findContactReferences(project, id) {
         case 'hallucination':
           if ((entry.messages || []).some((m) => m.from === id)) refs.push(`${label} → messages`)
           break
+        case 'fakeTyping':
+          if (entry.mode === 'dm') {
+            if (entry.from === id) refs.push(label)
+          } else if (entry.contact === id) {
+            refs.push(label)
+          }
+          break
         case 'post':
           if (entry.author === id) refs.push(label)
           ;(entry.comments || []).forEach((comment, k) => {
@@ -118,6 +125,9 @@ function findThreadReferences(project, id) {
     ;(timeline || []).forEach((entry, i) => {
       const label = `${chapterLabel} → ${entry.type} #${i + 1}`
       if ((entry.type === 'choice' || entry.type === 'dm') && entry.thread === id) refs.push(label)
+      if (entry.type === 'fakeTyping' && entry.mode === 'dm' && entry.thread === id) {
+        refs.push(label)
+      }
       if (entry.type === 'choice') {
         ;(entry.options || []).forEach((option, j) =>
           walkTimeline(option.then, `${label} → option ${j + 1}`),

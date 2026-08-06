@@ -144,6 +144,14 @@ export default {
         label: 'Hallucination',
         help: 'A fake conversation the player can only watch — messages appear on their own, then vanish after a glitch effect. Nothing is written to any real conversation.',
       },
+      fakeTyping: {
+        label: 'Fake "typing..."',
+        help: 'Shows the "typing..." dots in an SMS or DM conversation for a chosen duration — no message ever arrives after it.',
+      },
+      pause: {
+        label: 'Pause',
+        help: 'Shows nothing — just waits a chosen duration before continuing.',
+      },
     },
   },
 
@@ -315,6 +323,20 @@ export default {
       blockingLabel: 'Blocks the timeline until it ends',
       blockingHelp:
         'On (default): the story waits for the hallucination to finish before continuing. Off: the rest plays out behind it, the hallucination stays showing at the same time.',
+    },
+    fakeTyping: {
+      intro:
+        'Shows a conversation\'s "typing..." dots with no message ever arriving after it — purely cosmetic, the timeline continues right away.',
+      modeSms: 'SMS',
+      modeDm: 'Pixly DM',
+      contactLabel: 'Contact (SMS)',
+      threadLabel: 'Conversation (1:1 or group)',
+      fromLabel: 'Who\'s "typing"',
+      durationLabel: 'Duration',
+    },
+    pause: {
+      intro: 'A silence — nothing happens, the timeline just waits before continuing.',
+      durationLabel: 'Duration',
     },
   },
 
