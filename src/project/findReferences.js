@@ -44,6 +44,9 @@ function findContactReferences(project, id) {
           if (entry.contact === id) refs.push(label)
           if ((entry.script || []).some((line) => line.from === id)) refs.push(`${label} → script`)
           break
+        case 'hallucination':
+          if ((entry.messages || []).some((m) => m.from === id)) refs.push(`${label} → messages`)
+          break
         case 'post':
           if (entry.author === id) refs.push(label)
           ;(entry.comments || []).forEach((comment, k) => {

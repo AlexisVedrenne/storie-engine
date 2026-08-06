@@ -234,6 +234,7 @@ import EffectEntryForm from '@/editor/components/entries/EffectEntryForm.vue'
 import VfxEntryForm from '@/editor/components/entries/VfxEntryForm.vue'
 import TimeskipEntryForm from '@/editor/components/entries/TimeskipEntryForm.vue'
 import InteractionEntryForm from '@/editor/components/entries/InteractionEntryForm.vue'
+import HallucinationEntryForm from '@/editor/components/entries/HallucinationEntryForm.vue'
 import { useEditorI18n } from '@/editor/i18n'
 import { entryTypeLabel, entryTypeHelp } from '@/editor/i18n/sharedOverrides'
 
@@ -278,6 +279,7 @@ const FORM_BY_TYPE = {
   vfx: VfxEntryForm,
   timeskip: TimeskipEntryForm,
   interaction: InteractionEntryForm,
+  hallucination: HallucinationEntryForm,
 }
 // Additive merge, never replacing the hardcoded 10 — a plug-in entry type
 // (src/engine/apps/entryTypeRegistry.js) just adds its own `type` key on
@@ -302,6 +304,7 @@ const ICON_BY_TYPE = {
   vfx: 'broken_image',
   timeskip: 'update',
   interaction: 'sports_esports',
+  hallucination: 'blur_on',
 }
 // `type` is either a real stored entry.type (from an existing entry card)
 // or a picker option's composite value (`appDm::<appId>`, see
@@ -337,6 +340,7 @@ const BUILTIN_TYPES = [
   'vfx',
   'timeskip',
   'interaction',
+  'hallucination',
 ]
 function helpFor(type) {
   const base = baseType(type)
@@ -441,6 +445,8 @@ function defaultEntry(type) {
         onWin: {},
         onLose: {},
       }
+    case 'hallucination':
+      return { type, messages: [], enterEffect: 'glitch', exitEffect: 'glitch' }
     default: {
       // Additive fallback for plug-in entry types — reached only for a
       // type none of the cases above matches.
@@ -527,6 +533,8 @@ function summaryFor(entry) {
       const label = def?.name || entry.interactionId || ''
       return `${label} · ${entry.blocking === false ? t('timelineEditor.interactionParallel') : t('timelineEditor.interactionBlocking')}`
     }
+    case 'hallucination':
+      return t('timelineEditor.linesCount', { n: (entry.messages || []).length })
     default:
       return ''
   }

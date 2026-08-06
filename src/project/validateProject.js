@@ -66,6 +66,12 @@ function collectReferences(project) {
               refs.push({ kind: 'contact', id: line.from, label: `${label} → script ${k + 1}` })
           })
           break
+        case 'hallucination':
+          ;(entry.messages || []).forEach((m, k) => {
+            if (m.from)
+              refs.push({ kind: 'contact', id: m.from, label: `${label} → message ${k + 1}` })
+          })
+          break
         case 'post':
           if (entry.author) refs.push({ kind: 'contact', id: entry.author, label })
           ;(entry.comments || []).forEach((c, k) => {

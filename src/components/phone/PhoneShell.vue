@@ -47,6 +47,20 @@
 
             <NotificationBanner />
             <TimeSkipToast />
+
+            <!-- Inside .screen-canvas (unlike InteractionPlayer below), so
+                 it inherits the SAME 390px-design-width scale transform
+                 every real app screen renders at — mounted outside that
+                 canvas, its bubble/avatar sizes wouldn't actually match
+                 the real Pixly DM thread it's meant to mimic (see its own
+                 comment on why the look matters here). Last in this phase's
+                 DOM, so it naturally paints above the home/app content
+                 beneath it without needing its own z-index for that. -->
+            <HallucinationPlayer
+              v-if="story.activeHallucination"
+              :messages="story.activeHallucination.messages"
+              @finish="story.finishHallucination"
+            />
           </div>
         </transition>
       </div>
@@ -92,6 +106,7 @@ import TimeSkipToast from './TimeSkipToast.vue'
 
 import IncomingCallScreen from '@/components/apps/calls/IncomingCallScreen.vue'
 import InteractionPlayer from './interactions/InteractionPlayer.vue'
+import HallucinationPlayer from './HallucinationPlayer.vue'
 
 // `large` lets a caller (EditorPage.vue's "Aperçu seul" mode) raise the
 // phone-frame's hard size cap — see docs/ui-ux-audit.md point 10: the

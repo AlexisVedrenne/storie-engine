@@ -49,6 +49,11 @@ function addChapterStrings(timeline, set) {
       case 'timeskip':
         if (entry.label) set.add(entry.label)
         break
+      case 'hallucination':
+        for (const msg of entry.messages || []) {
+          if (msg.text) set.add(msg.text)
+        }
+        break
       default: {
         // Additive fallback for plug-in entry types (see
         // src/engine/apps/entryTypeRegistry.js) — only reached for a type

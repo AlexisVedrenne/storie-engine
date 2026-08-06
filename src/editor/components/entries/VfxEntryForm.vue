@@ -42,21 +42,17 @@
 
 <script setup>
 import { computed } from 'vue'
+import { VFX_KINDS } from '@/engine/effects/vfxKinds'
 import { useEditorI18n } from '@/editor/i18n'
 
 const { t } = useEditorI18n()
 defineProps({ entry: { type: Object, required: true } })
 
-// order = roughly "subtle" to "extreme" — see PhoneShell.vue's
-// .effect-* CSS for what each one actually renders.
-const EFFECT_OPTIONS = computed(() => [
-  { label: t('entries.vfx.kinds.glitch'), value: 'glitch' },
-  { label: t('entries.vfx.kinds.static'), value: 'static' },
-  { label: t('entries.vfx.kinds.corrupted'), value: 'corrupted' },
-  { label: t('entries.vfx.kinds.shake'), value: 'shake' },
-  { label: t('entries.vfx.kinds.crack'), value: 'crack' },
-  { label: t('entries.vfx.kinds.blackout'), value: 'blackout' },
-])
+// See VFX_KINDS' own comment — single source of truth, also read by
+// HallucinationEntryForm.vue's enter/exit effect pickers.
+const EFFECT_OPTIONS = computed(() =>
+  VFX_KINDS.map((kind) => ({ label: t(`entries.vfx.kinds.${kind}`), value: kind })),
+)
 </script>
 
 <style scoped>

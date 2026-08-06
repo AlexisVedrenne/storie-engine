@@ -140,6 +140,10 @@ export default {
         label: 'Interaction',
         help: 'A gesture you build yourself in the Interactions tab (plug in a cable, wipe the screen...) — winning/losing triggers a different branch and an event, either blocking the timeline or running in parallel depending on the setting.',
       },
+      hallucination: {
+        label: 'Hallucination',
+        help: 'A fake conversation the player can only watch — messages appear on their own, then vanish after a glitch effect. Nothing is written to any real conversation.',
+      },
     },
   },
 
@@ -296,6 +300,21 @@ export default {
       noneAuthoredHelp:
         'No interaction created yet — build one in the Interactions tab, then come back to call it here.',
       stepsCount: '{n} steps',
+    },
+    hallucination: {
+      intro:
+        'A fake conversation shown over the current screen, one message at a time, then dismissed with a glitch effect — the player can neither reply nor find it again afterward, nothing is written to any real conversation.',
+      messagesTitle: 'Messages',
+      messagesHelp: 'Shown one at a time, in order, with the same "typing..." pacing as an SMS.',
+      noMessages: 'No messages — the hallucination will be empty.',
+      messagePlaceholder: 'Message text',
+      removeMessage: 'Remove',
+      addMessage: 'Add a message',
+      enterEffectLabel: 'Enter effect',
+      exitEffectLabel: 'Exit effect',
+      blockingLabel: 'Blocks the timeline until it ends',
+      blockingHelp:
+        'On (default): the story waits for the hallucination to finish before continuing. Off: the rest plays out behind it, the hallucination stays showing at the same time.',
     },
   },
 

@@ -149,6 +149,10 @@ export default {
         label: 'Interaction',
         help: 'Un geste construit par toi dans l’onglet Interactions (brancher un câble, essuyer l’écran...) — gagné/perdu déclenche une branche différente et un event, en bloquant la timeline ou en parallèle selon le réglage.',
       },
+      hallucination: {
+        label: 'Hallucination',
+        help: 'Une fausse conversation que le joueur ne peut que regarder — les messages s’enchaînent tout seuls puis disparaissent après un effet glitch. Rien n’est écrit dans les vraies discussions.',
+      },
     },
   },
 
@@ -306,6 +310,22 @@ export default {
       noneAuthoredHelp:
         'Aucune interaction créée pour l’instant — construis-en une dans l’onglet Interactions, puis reviens l’appeler ici.',
       stepsCount: '{n} étapes',
+    },
+    hallucination: {
+      intro:
+        'Une fausse conversation qui s’affiche par-dessus l’écran actuel, message par message, puis disparaît après un effet glitch — le joueur ne peut ni y répondre ni la retrouver ensuite, rien n’est écrit dans les vraies discussions.',
+      messagesTitle: 'Messages',
+      messagesHelp:
+        'S’affichent un par un, dans l’ordre, avec le même rythme « en train d’écrire » qu’un SMS.',
+      noMessages: 'Aucun message — l’hallucination sera vide.',
+      messagePlaceholder: 'Texte du message',
+      removeMessage: 'Retirer',
+      addMessage: 'Ajouter un message',
+      enterEffectLabel: 'Effet d’entrée',
+      exitEffectLabel: 'Effet de sortie',
+      blockingLabel: "Bloque la timeline jusqu'à la fin",
+      blockingHelp:
+        "Activé (par défaut) : l'histoire attend que l'hallucination se termine avant de continuer. Désactivé : la suite se joue derrière, l'hallucination reste affichée en même temps.",
     },
   },
 

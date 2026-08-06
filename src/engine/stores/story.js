@@ -187,6 +187,13 @@ function defaultState() {
     // resume on reload, same as any other in-flight cosmetic state here).
     // See processEntry's 'interaction' case and finishInteraction().
     activeInteraction: null,
+    // See processEntry's 'hallucination' case and finishHallucination() —
+    // { messages, exitEffect, blocking }, shown by HallucinationPlayer.vue.
+    // Never touches real thread state (see that component's own comment),
+    // so unlike activeChoice/pendingCall there's nothing to "resume" on
+    // reload — a page reload mid-hallucination just re-triggers this same
+    // entry from scratch via processEntry, same as activeInteraction.
+    activeHallucination: null,
     notifications: [], // transient home-screen banners
     typingContact: null, // contactId currently shown as "typing..." in SMS — transient, not saved
     typingDm: null, // { thread, contact } currently shown as "typing..." in Pixly DM — transient, not saved
@@ -236,6 +243,7 @@ const NON_PERSISTED_KEYS = new Set([
   'timelineResume',
   'pendingCall',
   'activeInteraction',
+  'activeHallucination',
   'notifications',
   'typingContact',
   'typingDm',
@@ -835,6 +843,15 @@ export const useStoryStore = defineStore('story', {
           this.scheduleTimeSkip(entry, chapter)
           return
         }
+        // A hallucinated conversation the player only watches — see
+        // scheduleHallucination/finishHallucination and
+        // HallucinationPlayer.vue. Blocks by default (like `interaction`)
+        // until the player has finished watching it play out, unless the
+        // author set `blocking: false`.
+        if (entry.type === 'hallucination') {
+          this.scheduleHallucination(entry, chapter)
+          return
+        }
 
         // a choice or a ringing call blocks progress until the player acts.
         // Keep the index pointing AT this entry (don't increment) so that a
@@ -964,6 +981,24 @@ export const useStoryStore = defineStore('story', {
           }
         }, 450)
       }, 1400)
+    },
+
+    // a `hallucination` entry — no cinematic pause before it starts (unlike
+    // scheduleTimeSkip above), processEntry shows it immediately. Blocks by
+    // default: the timeline stays parked on this entry (timelineIndex not
+    // incremented) until finishHallucination() runs, once
+    // HallucinationPlayer.vue emits `finish`. `blocking: false` instead
+    // advances right away, same "keeps playing behind it" idea as
+    // timeskip/vfx's own non-blocking modes — the hallucination still shows
+    // and plays out, the story just doesn't wait on it.
+    scheduleHallucination(entry, chapter) {
+      this.processEntry(entry, chapter)
+      this.save()
+      if (entry.blocking === false) {
+        this.timelineIndex++
+        this.save()
+        this.advance()
+      }
     },
 
     // a `vfx` entry — purely cosmetic, non-blocking overlay on top of the
@@ -1326,6 +1361,28 @@ export const useStoryStore = defineStore('story', {
           break
         }
 
+        case 'hallucination': {
+          // A conversation the player can only watch, never write to real
+          // thread state — see HallucinationPlayer.vue's own comment.
+          // Messages are resolved (fill()) up front, same as a `call`
+          // entry's script, since HallucinationPlayer just plays a plain
+          // string list, no further engine lookups. `enterEffect` reuses
+          // the exact same triggerScreenEffect() a `vfx` entry calls — the
+          // "reality glitching" cue in is nothing new, just an author-picked
+          // VFX_KINDS value instead of a fixed 'glitch'.
+          const messages = (entry.messages || []).map((m) => ({
+            from: m.from,
+            text: this.fill(m.text),
+          }))
+          this.triggerScreenEffect(entry.enterEffect || 'glitch', 500)
+          this.activeHallucination = {
+            messages,
+            exitEffect: entry.exitEffect || 'glitch',
+            blocking: entry.blocking !== false,
+          }
+          break
+        }
+
         default: {
           // Additive fallback for plug-in entry types (see
           // src/engine/apps/entryTypeRegistry.js) — the 10 cases above are
@@ -1465,6 +1522,26 @@ export const useStoryStore = defineStore('story', {
       this.timelineResume = null
       this.presentNextQueuedInteraction()
       this.runThen(then, 0, chapter, resume)
+    },
+
+    // called by HallucinationPlayer.vue once every message has been shown
+    // and read (see its own HOLD_AFTER_LAST_MS). Triggers the exit glitch
+    // (same triggerScreenEffect() a `vfx` entry uses) and clears the
+    // overlay — for a non-blocking hallucination the timeline already moved
+    // on back in scheduleHallucination, so this only ever advances it once.
+    finishHallucination() {
+      const hallucination = this.activeHallucination
+      if (!hallucination) return
+      this.activeHallucination = null
+      // Short on purpose — the whole point is a jarring, abrupt cut back to
+      // reality, not a lingering fade (see HallucinationPlayer.vue's own
+      // HOLD_AFTER_LAST_MS comment for the matching reasoning on the other
+      // side of this beat).
+      this.triggerScreenEffect(hallucination.exitEffect || 'glitch', 250)
+      if (hallucination.blocking === false) return
+      this.timelineIndex++
+      this.save()
+      this.advance()
     },
 
     markRead(contactId) {
