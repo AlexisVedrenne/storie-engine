@@ -33,6 +33,15 @@ export default defineConfig((ctx) => {
 
     // https://v2.quasar.dev/quasar-cli-vite/quasar-config-file#build
     build: {
+      // Electron builds always output to the same dist/electron folder,
+      // which gets wiped at the start of every `quasar build`. Chaining
+      // per-platform builds (see npm scripts build:electron:*) would
+      // otherwise have each one erase the previous target's output —
+      // split by -T target so win/linux/mac survive side by side.
+      ...(ctx.mode.electron && ctx.targetName && ctx.targetName !== 'all'
+        ? { distDir: `dist/electron-${ctx.targetName}` }
+        : {}),
+
       target: {
         // browser: 'baseline-widely-available',
         // node: 'node22'
@@ -227,6 +236,15 @@ export default defineConfig((ctx) => {
         // protocol: 'myapp://path',
         // Windows only
         // win32metadata: { ... }
+
+        // Packaged app icon (Explorer/.exe on Windows, Finder/.app on macOS).
+        // No extension: packager resolves .ico/.icns/.png per target platform.
+        // Distinct from src-electron/electron-main.js's BrowserWindow `icon`,
+        // which only sets the runtime window/taskbar icon, not this one.
+        icon: path.join(
+          import.meta.dirname,
+          'src-electron/electron-assets/icons/icon'
+        ),
 
         // src-electron/ipc/build.js (the "export this project as a
         // playable game" pipeline) reads templates/game-shell/ + this
