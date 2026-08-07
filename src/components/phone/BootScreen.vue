@@ -3,7 +3,7 @@
     <div class="boot-logo">
       <q-icon name="smartphone" size="42px" color="white" />
     </div>
-    <div class="boot-title">{{ story.gameConfig?.osName || 'LustOS' }}</div>
+    <div class="boot-title">{{ story.gameConfig?.osName || 'PhoneOS' }}</div>
     <div class="boot-progress">
       <div class="boot-progress-fill" />
     </div>

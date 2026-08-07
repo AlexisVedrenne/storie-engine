@@ -2,7 +2,12 @@
   <div class="app-screen">
     <transition name="screen-swap" mode="out-in">
       <div v-if="screen === 'main'" key="main" class="list-stack">
-        <AppTitleBar :title="t('settings.title')" icon="settings" color="#8e8e93" @back="phone.goHome()" />
+        <AppTitleBar
+          :title="t('settings.title')"
+          icon="settings"
+          color="#8e8e93"
+          @back="phone.goHome()"
+        />
 
         <div class="settings-list">
           <button class="account-card" @click="screen = 'about'">
@@ -26,14 +31,22 @@
             <div class="row">
               <q-icon name="signal_cellular_alt" size="19px" color="#4caf50" />
               <span class="row-label">{{ t('settings.mobileData') }}</span>
-              <button class="switch" :class="{ on: mobileDataOn }" @click="mobileDataOn = !mobileDataOn">
+              <button
+                class="switch"
+                :class="{ on: mobileDataOn }"
+                @click="mobileDataOn = !mobileDataOn"
+              >
                 <span class="knob" />
               </button>
             </div>
             <div class="row">
               <q-icon name="bluetooth" size="19px" color="#2196f3" />
               <span class="row-label">{{ t('settings.bluetooth') }}</span>
-              <button class="switch" :class="{ on: bluetoothOn }" @click="bluetoothOn = !bluetoothOn">
+              <button
+                class="switch"
+                :class="{ on: bluetoothOn }"
+                @click="bluetoothOn = !bluetoothOn"
+              >
                 <span class="knob" />
               </button>
             </div>
@@ -50,7 +63,9 @@
             <button class="row nav-row" @click="screen = 'sound'">
               <q-icon name="volume_up" size="19px" color="#f44336" />
               <span class="row-label">{{ t('settings.sound') }}</span>
-              <span class="row-sub">{{ story.soundEnabled ? `${story.soundVolume}%` : t('settings.soundOff') }}</span>
+              <span class="row-sub">{{
+                story.soundEnabled ? `${story.soundVolume}%` : t('settings.soundOff')
+              }}</span>
               <q-icon name="chevron_right" size="18px" color="rgba(255,255,255,0.3)" />
             </button>
           </div>
@@ -84,7 +99,9 @@
               <q-icon name="language" size="19px" color="#00bcd4" />
               <span class="row-label">{{ t('settings.language') }}</span>
               <select class="language-select" :value="story.activeLocale" @change="onLocaleChange">
-                <option v-for="l in story.availableLocales" :key="l.code" :value="l.code">{{ l.label }}</option>
+                <option v-for="l in story.availableLocales" :key="l.code" :value="l.code">
+                  {{ l.label }}
+                </option>
               </select>
             </div>
           </div>
@@ -112,7 +129,13 @@
         <div class="subpage">
           <div class="brightness-row">
             <q-icon name="brightness_low" size="18px" color="rgba(255,255,255,0.6)" />
-            <input v-model.number="brightness" type="range" min="10" max="100" class="brightness-slider" />
+            <input
+              v-model.number="brightness"
+              type="range"
+              min="10"
+              max="100"
+              class="brightness-slider"
+            />
             <q-icon name="brightness_high" size="18px" color="rgba(255,255,255,0.6)" />
           </div>
           <p class="subpage-hint">{{ t('settings.brightnessHint', { value: brightness }) }}</p>
@@ -124,7 +147,11 @@
         <div class="subpage">
           <div class="sound-toggle-row">
             <span class="row-label">{{ t('settings.soundEnabled') }}</span>
-            <button class="switch" :class="{ on: story.soundEnabled }" @click="story.setSoundEnabled(!story.soundEnabled)">
+            <button
+              class="switch"
+              :class="{ on: story.soundEnabled }"
+              @click="story.setSoundEnabled(!story.soundEnabled)"
+            >
               <span class="knob" />
             </button>
           </div>
@@ -141,7 +168,9 @@
             />
             <q-icon name="volume_up" size="18px" color="rgba(255,255,255,0.6)" />
           </div>
-          <p class="subpage-hint">{{ t('settings.soundVolumeHint', { value: story.soundVolume }) }}</p>
+          <p class="subpage-hint">
+            {{ t('settings.soundVolumeHint', { value: story.soundVolume }) }}
+          </p>
         </div>
       </div>
 
@@ -160,11 +189,26 @@
       <div v-else-if="screen === 'about'" key="about" class="list-stack">
         <AppHeader :title="t('settings.about')" @back="screen = 'main'" />
         <div class="subpage about-list">
-          <div class="about-row"><span>{{ t('settings.aboutDeviceName') }}</span><span>{{ story.myName }}</span></div>
-          <div class="about-row"><span>{{ t('settings.aboutModel') }}</span><span>LustPhone 14</span></div>
-          <div class="about-row"><span>{{ t('settings.aboutOsVersion', { osName }) }}</span><span>1.0.3</span></div>
-          <div class="about-row"><span>{{ t('settings.aboutSerial') }}</span><span>{{ serial }}</span></div>
-          <div class="about-row"><span>{{ t('settings.aboutCapacity') }}</span><span>128 Go</span></div>
+          <div class="about-row">
+            <span>{{ t('settings.aboutDeviceName') }}</span
+            ><span>{{ story.myName }}</span>
+          </div>
+          <div class="about-row">
+            <span>{{ t('settings.aboutModel') }}</span
+            ><span>LustPhone 14</span>
+          </div>
+          <div class="about-row">
+            <span>{{ t('settings.aboutOsVersion', { osName }) }}</span
+            ><span>1.0.3</span>
+          </div>
+          <div class="about-row">
+            <span>{{ t('settings.aboutSerial') }}</span
+            ><span>{{ serial }}</span>
+          </div>
+          <div class="about-row">
+            <span>{{ t('settings.aboutCapacity') }}</span
+            ><span>128 Go</span>
+          </div>
         </div>
       </div>
 
@@ -214,7 +258,7 @@ const estimatedHours = computed(() => `${Math.max(1, Math.round(story.battery / 
 // game.osName (see GameForm.vue) — fictional phone OS brand name, shown
 // here and on BootScreen.vue. Falls back to the engine's default so every
 // project saved before this field existed keeps its current look.
-const osName = computed(() => story.gameConfig?.osName || 'LustOS')
+const osName = computed(() => story.gameConfig?.osName || 'PhoneOS')
 
 // stable-but-fake serial, same trick as the fake follower counts elsewhere
 const serial = computed(() => {

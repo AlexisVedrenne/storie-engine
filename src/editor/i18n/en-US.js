@@ -743,7 +743,7 @@ export default {
     brandingHelp:
       "Name of the phone's fictional OS (boot screen, Settings > About) and of the social-network app — purely cosmetic.",
     osNameLabel: 'OS name',
-    osNameDefault: 'LustOS',
+    osNameDefault: 'PhoneOS',
     socialAppNameLabel: 'Social app name',
     socialAppNameDefault: 'Pixly',
     appsTitle: 'Apps',

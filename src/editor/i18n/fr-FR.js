@@ -761,7 +761,7 @@ export default {
     brandingHelp:
       "Nom du système fictif du téléphone (écran de démarrage, Réglages > Informations) et nom de l'app de réseau social — purement cosmétique.",
     osNameLabel: 'Nom du système (OS)',
-    osNameDefault: 'LustOS',
+    osNameDefault: 'PhoneOS',
     socialAppNameLabel: "Nom de l'app réseau social",
     socialAppNameDefault: 'Pixly',
     appsTitle: 'Applications',
