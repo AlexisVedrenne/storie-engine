@@ -195,7 +195,7 @@
           </div>
           <div class="about-row">
             <span>{{ t('settings.aboutModel') }}</span
-            ><span>LustPhone 14</span>
+            ><span>OS 14</span>
           </div>
           <div class="about-row">
             <span>{{ t('settings.aboutOsVersion', { osName }) }}</span
