@@ -107,6 +107,7 @@ import RequiresBuilder from '@/editor/components/RequiresBuilder.vue'
 import EmojiPickerBtn from '@/components/shared/EmojiPickerBtn.vue'
 import { insertEmojiAtCaret } from '@/components/shared/emojiInsert'
 import { useEditorI18n } from '@/editor/i18n'
+import { generateChapterId } from '@/editor/utils/chapterId'
 
 const { t } = useEditorI18n()
 
@@ -271,7 +272,7 @@ function confirmDelete(chapter) {
 // chapter) so the two don't sit exactly on top of each other on the graph.
 async function duplicateChapter(chapter) {
   const title = `${chapter.title || chapter.id} (copie)`
-  const id = generateChapterId(title)
+  const id = generateChapterId(title, chapters)
   // eslint-disable-next-line no-unused-vars
   const { __sourceFile, position, ...rest } = chapter
   const clone = JSON.parse(JSON.stringify(rest))
@@ -308,30 +309,6 @@ const newChapterDialog = ref(false)
 const newTitle = ref('')
 const newTitleInputRef = ref(null)
 
-function slugify(text) {
-  return (
-    text
-      .trim()
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '') || 'chapter'
-  )
-}
-
-// The id only ever needs to be stable+unique (it drives next[].to, the
-// i18n bucket filename, __sourceFile...), never something the author reads
-// or types — a slug of the title, deduped against every id already in use,
-// covers that with zero manual input. Existing hand-typed ids are left
-// alone; this only applies going forward.
-function generateChapterId(title) {
-  const base = slugify(title)
-  const existing = new Set(chapters.map((c) => c.id))
-  if (!existing.has(base)) return base
-  let n = 2
-  while (existing.has(`${base}-${n}`)) n++
-  return `${base}-${n}`
-}
-
 // Shared by both creation paths below — persists to disk, pushes into the
 // in-memory chapters array, and reports success/failure. Whether to then
 // navigate into it (the "+ Nouveau chapitre" button) or leave the graph
@@ -356,7 +333,7 @@ async function persistNewChapter(chapter) {
 async function createChapter() {
   const title = newTitle.value.trim()
   if (!title) return
-  const id = generateChapterId(title)
+  const id = generateChapterId(title, chapters)
   // Small cascading offset so freshly-created chapters don't stack exactly
   // on top of each other — the author drags it wherever it actually
   // belongs right after creating it anyway.
@@ -379,7 +356,7 @@ async function onPaneContextMenu(event) {
   event.preventDefault()
   const position = screenToFlowCoordinate({ x: event.clientX, y: event.clientY })
   const title = 'Nouveau chapitre'
-  const id = generateChapterId(title)
+  const id = generateChapterId(title, chapters)
   await persistNewChapter({ id, title, timeline: [], next: [], position })
 }
 </script>

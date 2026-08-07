@@ -10,6 +10,28 @@
       </div>
     </q-expansion-item>
 
+    <q-expansion-item dense-toggle icon="flag_circle" class="panel">
+      <template #header>
+        <q-item-section avatar><q-icon name="flag_circle" /></q-item-section>
+        <q-item-section>
+          {{ t('gameForm.entryChapterTitle') }}
+          <FieldHelp :text="t('gameForm.entryChapterHelp')" />
+        </q-item-section>
+      </template>
+      <div class="panel-body">
+        <q-select
+          dense
+          outlined
+          emit-value
+          map-options
+          :model-value="entryChapterId"
+          :options="entryChapterOptions"
+          :label="t('gameForm.entryChapterLabel')"
+          @update:model-value="setEntryChapterId"
+        />
+      </div>
+    </q-expansion-item>
+
     <q-expansion-item dense-toggle icon="apps" :label="t('gameForm.buildIconTitle')" class="panel">
       <template #header>
         <q-item-section avatar><q-icon name="apps" /></q-item-section>
@@ -169,6 +191,27 @@ const { t: storyT } = useI18n()
 const { t } = useEditorI18n()
 const titleInputRef = ref(null)
 const story = useStoryStore()
+
+// project.json's entryChapterId (not game.js — see engine/stores/story.js's
+// startIfNeeded()) isn't part of `props.game`, so it isn't covered by
+// EditorPage.vue's generic autosave watcher — written immediately on every
+// pick instead, same "explicit save on change" shape as project:renameChapter.
+// `null` maps to "unset" (falls back to chapters[0].id at runtime), kept as
+// its own option rather than requiring the author pick a chapter by hand
+// just to get the pre-existing default behavior back.
+const entryChapterId = computed(() => story.project.manifest?.entryChapterId || null)
+const entryChapterOptions = computed(() => [
+  { label: t('gameForm.entryChapterDefault'), value: null },
+  ...(story.project?.chapters || []).map((c) => ({ label: c.title || c.id, value: c.id })),
+])
+async function setEntryChapterId(value) {
+  if (!story.project.manifest) story.project.manifest = {}
+  story.project.manifest.entryChapterId = value || undefined
+  await window.storieAPI.saveManifest({
+    rootPath: story.project.rootPath,
+    manifest: story.project.manifest,
+  })
+}
 
 // `disabledApps` is an explicit opt-out list (same "absent = default"
 // convention as contact.hasSocial/followedByDefault, see ContactForm.vue) —

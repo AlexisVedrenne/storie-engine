@@ -39,6 +39,7 @@ export default {
     switchProjectTooltip: 'Switch project',
     backToGraphTooltip: 'Back to graph',
     chapterTitleLabel: 'Title',
+    chapterRenamed: 'Chapter renamed — id updated.',
     previewFromChapterTooltip: 'Preview from this chapter',
     flagsTooltip: 'Flags — catalog of every player stat used in the project',
     gameEmptyState: 'The game title is a single field — no list.',
@@ -724,6 +725,10 @@ export default {
   gameForm: {
     titleTitle: 'Title',
     titleFieldLabel: 'Title (shown on the lock screen)',
+    entryChapterTitle: 'Starting chapter',
+    entryChapterHelp: 'The chapter the game opens on. Renaming this chapter keeps this setting in sync automatically.',
+    entryChapterLabel: 'Starting chapter',
+    entryChapterDefault: 'First chapter (default)',
     buildIconTitle: 'Build icon',
     buildIconHelp:
       "Icon for the exported .exe file. .ico is recommended for the Windows icon (Explorer/taskbar) — a .png also works but only gives the running window's title-bar icon, not the packaged .exe file's own icon.",

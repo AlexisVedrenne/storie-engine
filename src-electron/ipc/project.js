@@ -181,6 +181,17 @@ export function registerProjectHandlers(mainWindow) {
     return loadProjectFromDisk(rootPath);
   });
 
+  // manifest.entryChapterId (which chapter startIfNeeded() opens on boot,
+  // see engine/stores/story.js) is the only manifest field the editor ever
+  // writes back — everything else (name/version) is set at creation or by
+  // the build pipeline. Used by GameForm.vue's entry-chapter picker and by
+  // EditorPage.vue's renameChapterIfNeeded (keeps it pointed at the right
+  // chapter across an id change).
+  ipcMain.handle("project:saveManifest", async (_evt, { rootPath, manifest }) => {
+    writeManifest(rootPath, manifest);
+    return true;
+  });
+
   // Writes an already-serialized chapter (see serializeChapter.js) to its
   // source file, formatted with Prettier right before hitting disk.
   ipcMain.handle("project:saveChapter", async (_evt, { rootPath, sourceFile, source }) => {
@@ -206,6 +217,42 @@ export function registerProjectHandlers(mainWindow) {
     fs.writeFileSync(dest, await formatJs(source), "utf-8");
 
     return { manifest, sourceFile };
+  });
+
+  // Renaming a chapter's title regenerates its id renderer-side (see
+  // EditorPage.vue's renameChapterIfNeeded) — this handler follows that id
+  // on disk: moves chapters/<oldId>.js to chapters/<newId>.js (same
+  // create-vs-collide check as project:createChapter) and, since a chapter's
+  // i18n strings live in a bucket file named after its id (see
+  // extractTranslatableStrings.js/I18nBucketEditor.vue), renames that
+  // bucket alongside it in every locale that has one — otherwise existing
+  // translations would silently orphan under the old id. Updating other
+  // chapters' `next[].to` that pointed at the old id is the renderer's job
+  // (same split as deleteChapter below), each via its own saveChapter call.
+  ipcMain.handle("project:renameChapter", async (_evt, { rootPath, oldId, newId, oldSourceFile, source }) => {
+    const newSourceFile = `${slugify(newId)}.js`;
+    const oldDest = path.join(rootPath, "chapters", oldSourceFile);
+    const newDest = path.join(rootPath, "chapters", newSourceFile);
+    if (newDest !== oldDest && fs.existsSync(newDest)) {
+      throw new Error(`Un chapitre existe déjà pour ce nom de fichier : ${newSourceFile}`);
+    }
+    fs.mkdirSync(path.dirname(newDest), { recursive: true });
+    fs.writeFileSync(newDest, await formatJs(source), "utf-8");
+    if (newDest !== oldDest && fs.existsSync(oldDest)) fs.unlinkSync(oldDest);
+
+    const i18nDir = path.join(rootPath, "i18n");
+    if (fs.existsSync(i18nDir)) {
+      for (const localeDir of fs.readdirSync(i18nDir, { withFileTypes: true })) {
+        if (!localeDir.isDirectory()) continue;
+        const oldBucket = path.join(i18nDir, localeDir.name, `${oldId}.js`);
+        const newBucket = path.join(i18nDir, localeDir.name, `${newId}.js`);
+        if (fs.existsSync(oldBucket) && !fs.existsSync(newBucket)) {
+          fs.renameSync(oldBucket, newBucket);
+        }
+      }
+    }
+
+    return { sourceFile: newSourceFile };
   });
 
   // Deletion confirmation is the renderer's job (a q-dialog before this is

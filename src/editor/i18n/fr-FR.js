@@ -39,6 +39,7 @@ export default {
     switchProjectTooltip: 'Changer de projet',
     backToGraphTooltip: 'Retour au graphe',
     chapterTitleLabel: 'Titre',
+    chapterRenamed: 'Chapitre renommé — id mis à jour.',
     previewFromChapterTooltip: 'Prévisualiser depuis ce chapitre',
     flagsTooltip: 'Flags — catalogue de toutes les stats du joueur utilisées dans le projet',
     gameEmptyState: 'Le titre du jeu est un champ unique — pas de liste.',
@@ -742,6 +743,10 @@ export default {
   gameForm: {
     titleTitle: 'Titre',
     titleFieldLabel: "Titre (affiché sur l'écran verrouillé)",
+    entryChapterTitle: 'Chapitre de départ',
+    entryChapterHelp: "Le chapitre par lequel le jeu commence. Renommer ce chapitre garde ce réglage à jour automatiquement.",
+    entryChapterLabel: 'Chapitre de départ',
+    entryChapterDefault: 'Premier chapitre (par défaut)',
     buildIconTitle: 'Icône du build',
     buildIconHelp:
       "Icône du fichier .exe exporté. Format .ico recommandé pour l'icône Windows (Explorateur/barre des tâches) — un .png fonctionne aussi mais ne donnera que l'icône de la fenêtre pendant l'exécution, pas celle du fichier .exe lui-même.",

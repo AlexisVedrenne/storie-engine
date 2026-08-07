@@ -190,7 +190,7 @@
                       >
                         <q-tooltip>{{ t('editorPage.backToGraphTooltip') }}</q-tooltip>
                       </q-btn>
-                      <q-input dense outlined ref="chapterTitleInputRef" :label="t('editorPage.chapterTitleLabel')" v-model="selectedChapter.title">
+                      <q-input dense outlined ref="chapterTitleInputRef" :label="t('editorPage.chapterTitleLabel')" v-model="selectedChapter.title" @blur="renameChapterIfNeeded">
                         <template #append>
                           <EmojiPickerBtn @pick="(e) => (selectedChapter.title = insertEmojiAtCaret(chapterTitleInputRef, selectedChapter.title, e))" />
                         </template>
@@ -416,7 +416,7 @@
 </template>
 
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { Dialog, Notify } from 'quasar'
 import { useStoryStore } from '@/engine/stores/story'
@@ -430,6 +430,7 @@ import {
   serializeSeedBucket,
 } from '@/project/serializeChapter'
 import { validateProject, collectAssetPaths } from '@/project/validateProject'
+import { generateChapterId } from '@/editor/utils/chapterId'
 import { DEFAULT_LOCALE } from '@/engine/i18n/locales'
 import PhoneShell from '@/components/phone/PhoneShell.vue'
 import ChapterGraph from '@/editor/components/ChapterGraph.vue'
@@ -630,6 +631,82 @@ watch([viewMode, selectedIndex, selectedCustomAppIndex, selectedLocale, selected
   watchActiveResource()
 })
 watchActiveResource()
+
+// Chapter ids are auto-generated from the title at creation time (see
+// ChapterGraph.vue's createChapter) but never revisited after — this is
+// what keeps them in sync on rename, fired on the title field's blur
+// (not every keystroke: mid-typing collision bumps and file churn would be
+// noisy and pointless). Cascades to everything the id drives: the on-disk
+// chapter file + its per-locale i18n bucket (renamed together by the
+// project:renameChapter handler, see project.js), every other chapter's
+// `next[].to` pointing at the old id (same cleanup ChapterGraph.vue's
+// confirmDelete does for deletion), and the in-memory i18n dict (so the
+// bucket editor doesn't show the chapter's existing translations as
+// orphaned under the old key).
+async function renameChapterIfNeeded() {
+  const chapter = selectedChapter.value
+  if (!chapter) return
+  const title = chapter.title.trim()
+  if (!title) return
+  const newId = generateChapterId(title, story.project.chapters, chapter.id)
+  if (newId === chapter.id) return
+
+  const oldId = chapter.id
+  const oldSourceFile = chapter.__sourceFile
+  clearTimeout(debounceTimer)
+  chapter.id = newId
+  try {
+    const result = await window.storieAPI.renameChapter({
+      rootPath: story.project.rootPath,
+      oldId,
+      newId,
+      oldSourceFile,
+      source: serializeChapter(chapter),
+    })
+    chapter.__sourceFile = result.sourceFile
+
+    const affected = story.project.chapters.filter(
+      (c) => c !== chapter && (c.next || []).some((link) => link.to === oldId),
+    )
+    for (const other of affected) {
+      other.next = other.next.map((link) => (link.to === oldId ? { ...link, to: newId } : link))
+      await window.storieAPI.saveChapter({
+        rootPath: story.project.rootPath,
+        sourceFile: other.__sourceFile,
+        source: serializeChapter(other),
+      })
+    }
+
+    for (const locale of Object.keys(story.project.i18n || {})) {
+      const bucket = story.project.i18n[locale][oldId]
+      if (bucket) {
+        story.project.i18n[locale][newId] = bucket
+        delete story.project.i18n[locale][oldId]
+      }
+    }
+    if (selectedBucket.value === oldId) selectedBucket.value = newId
+
+    // The game's boot chapter (see GameForm.vue's entry-chapter picker) is
+    // stored by id too — silently going stale here would drop the player
+    // into the wrong chapter (or, if the id it's still pointing at now
+    // collides with nothing, fail validateProject's entryChapterId check).
+    if (story.project.manifest?.entryChapterId === oldId) {
+      story.project.manifest.entryChapterId = newId
+      await window.storieAPI.saveManifest({
+        rootPath: story.project.rootPath,
+        manifest: story.project.manifest,
+      })
+    }
+
+    Notify.create({ type: 'positive', message: t('editorPage.chapterRenamed') })
+  } catch (err) {
+    chapter.id = oldId
+    Notify.create({ type: 'negative', message: err.message || String(err) })
+  } finally {
+    await nextTick()
+    dirty.value = false
+  }
+}
 
 async function save() {
   try {
