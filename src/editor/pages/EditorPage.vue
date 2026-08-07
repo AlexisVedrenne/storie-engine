@@ -743,7 +743,7 @@ async function renameChapterIfNeeded() {
       story.project.manifest.entryChapterId = newId
       await window.storieAPI.saveManifest({
         rootPath: story.project.rootPath,
-        manifest: story.project.manifest,
+        manifest: JSON.parse(JSON.stringify(story.project.manifest)),
       })
     }
 
@@ -1043,17 +1043,59 @@ async function buildGame() {
     })
     if (!bumpType) return
 
-    const result = await window.storieAPI.buildGame({ rootPath: story.project.rootPath, bumpType })
+    // Keep ids in sync with BUILD_TARGETS in src-electron/ipc/build.js —
+    // labels are localized here instead since that file runs main-process
+    // side, outside the renderer's i18n.
+    const targetIds = await new Promise((resolve) => {
+      Dialog.create({
+        title: t('editorPage.platformDialogTitle'),
+        message: t('editorPage.platformDialogMessage'),
+        options: {
+          type: 'checkbox',
+          model: ['win32-x64'],
+          items: [
+            { label: t('editorPage.buildTargetWin'), value: 'win32-x64' },
+            { label: t('editorPage.buildTargetMacIntel'), value: 'darwin-x64' },
+            { label: t('editorPage.buildTargetMacArm'), value: 'darwin-arm64' },
+            { label: t('editorPage.buildTargetLinux'), value: 'linux-x64' },
+          ],
+        },
+        cancel: true,
+        persistent: true,
+        color: 'primary',
+        ok: t('editorPage.buildOk'),
+      })
+        .onOk((v) => resolve(v))
+        .onCancel(() => resolve(null))
+    })
+    if (!targetIds || !targetIds.length) return
+
+    const result = await window.storieAPI.buildGame({
+      rootPath: story.project.rootPath,
+      bumpType,
+      targetIds,
+    })
     if (result) {
       story.project.manifest = result.manifest
-      Notify.create({
-        type: 'positive',
-        message: t('editorPage.buildExported', {
-          version: result.manifest.version,
-          outDir: result.outDir,
-        }),
-        timeout: 6000,
-      })
+      if (result.results.length) {
+        Notify.create({
+          type: 'positive',
+          message: t('editorPage.buildExported', {
+            version: result.manifest.version,
+            list: result.results.map((r) => `${r.label} → ${r.outDir}`).join('\n'),
+          }),
+          timeout: 8000,
+        })
+      }
+      if (result.errors.length) {
+        Notify.create({
+          type: 'negative',
+          message: t('editorPage.buildTargetErrors', {
+            list: result.errors.map((e) => `${e.label}: ${e.message}`).join('\n'),
+          }),
+          timeout: 12000,
+        })
+      }
     }
   } catch (err) {
     Notify.create({ type: 'negative', message: err.message || String(err), timeout: 8000 })

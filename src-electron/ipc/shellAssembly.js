@@ -114,8 +114,43 @@ export const VENDORED_NPM_DIR = path.join(TEMPLATE_DIR, 'node-runtime')
 // electron-packager.
 export const VENDORED_ELECTRON_CACHE = path.join(TEMPLATE_DIR, 'electron-cache')
 
-function copyIfExists(src, dest) {
-  if (fs.existsSync(src)) fs.cpSync(src, dest, { recursive: true })
+// Async (fs.promises.cp, not fs.cpSync) — these copies run on Electron's
+// main process (see registerBuildHandlers), and build.js's buildGame() now
+// loops this across up to 4 platform targets in one click (see BUILD_
+// TARGETS). A synchronous copy blocks the main thread for its whole
+// duration; stacked 4x back to back with zero yield in between, that block
+// got long enough for Chromium's own watchdog to consider the process dead
+// mid-build — confirmed by a real run that died partway through the 2nd
+// target with exit code 4294930435, no JS-catchable error anywhere in the
+// call chain (a real test with a single target never showed this).
+//
+// Wrapped with process.noAsar — Electron's built-in fs patches intercept
+// ANY path containing a `*.asar` path segment and try to read it as an
+// asar archive, even for a plain recursive copy that just wants to treat
+// it as an opaque file. The vendored `electron` npm package we're copying
+// here legitimately ships a real file named default_app.asar (see
+// VENDORED_NODE_MODULES), and fs.promises.cp's internal checkPaths/
+// getStats calls fs.stat on it — triggering that interception and throwing
+// "Invalid package <path>" (Electron's own asar-loader error, not
+// filesystem corruption; confirmed via a real packaged-app run whose stack
+// trace bottoms out in node:electron/js2c/node_init). fs.cpSync never hit
+// this (different internal implementation), so it only surfaced once the
+// crash fix above switched to fs.promises.cp. process.noAsar disables the
+// interception for the duration of the copy, restored after — this is
+// Electron's own documented escape hatch for exactly this situation, not a
+// workaround we invented.
+export async function cpAsarSafe(src, dest, options) {
+  const prevNoAsar = process.noAsar
+  process.noAsar = true
+  try {
+    await fs.promises.cp(src, dest, options)
+  } finally {
+    process.noAsar = prevNoAsar
+  }
+}
+
+async function copyIfExists(src, dest) {
+  if (fs.existsSync(src)) await cpAsarSafe(src, dest, { recursive: true })
 }
 
 // Cache-busted dynamic import, same pattern as project.js's loadDefaultOr —
@@ -155,7 +190,7 @@ export async function assembleShell(tmpDir, rootPath) {
   // use for it and shouldn't be blocked by its absence. build.js checks it
   // itself, right before the one step that actually needs it.
 
-  fs.cpSync(TEMPLATE_DIR, tmpDir, {
+  await cpAsarSafe(TEMPLATE_DIR, tmpDir, {
     recursive: true,
     filter: (src) => {
       if (
@@ -172,12 +207,12 @@ export async function assembleShell(tmpDir, rootPath) {
 
   // The engine + phone UI are never duplicated by hand — copied fresh from
   // the editor's own current source every build.
-  copyIfExists(path.join(APP_ROOT, 'src', 'engine'), path.join(tmpDir, 'src', 'engine'))
-  copyIfExists(
+  await copyIfExists(path.join(APP_ROOT, 'src', 'engine'), path.join(tmpDir, 'src', 'engine'))
+  await copyIfExists(
     path.join(APP_ROOT, 'src', 'components', 'phone'),
     path.join(tmpDir, 'src', 'components', 'phone'),
   )
-  copyIfExists(
+  await copyIfExists(
     path.join(APP_ROOT, 'src', 'components', 'apps'),
     path.join(tmpDir, 'src', 'components', 'apps'),
   )
@@ -190,19 +225,19 @@ export async function assembleShell(tmpDir, rootPath) {
   // (never copied here) broke every build the moment the email app was
   // added — moved here specifically so `quasar build -m electron` inside
   // this temp shell can actually resolve it.
-  copyIfExists(
+  await copyIfExists(
     path.join(APP_ROOT, 'src', 'components', 'shared'),
     path.join(tmpDir, 'src', 'components', 'shared'),
   )
-  copyIfExists(path.join(APP_ROOT, 'src', 'boot'), path.join(tmpDir, 'src', 'boot'))
-  copyIfExists(path.join(APP_ROOT, 'src', 'i18n'), path.join(tmpDir, 'src', 'i18n'))
-  copyIfExists(path.join(APP_ROOT, 'src', 'css'), path.join(tmpDir, 'src', 'css'))
+  await copyIfExists(path.join(APP_ROOT, 'src', 'boot'), path.join(tmpDir, 'src', 'boot'))
+  await copyIfExists(path.join(APP_ROOT, 'src', 'i18n'), path.join(tmpDir, 'src', 'i18n'))
+  await copyIfExists(path.join(APP_ROOT, 'src', 'css'), path.join(tmpDir, 'src', 'css'))
   // ChatThread.vue/DmThreadScreen.vue import '@/utils/chatTime' — confirmed
   // by an actual end-to-end test build (see docs/phase3-plan.md); grep
   // `src/components/**` for `from '@/...'` again if new engine code ever
   // adds another such top-level import, since nothing here catches that
   // automatically.
-  copyIfExists(path.join(APP_ROOT, 'src', 'utils'), path.join(tmpDir, 'src', 'utils'))
+  await copyIfExists(path.join(APP_ROOT, 'src', 'utils'), path.join(tmpDir, 'src', 'utils'))
 
   // The one file that legitimately differs between editor and shipped game
   // (see templates/game-shell/engine-overrides/assets.js's own comment).
@@ -213,8 +248,8 @@ export async function assembleShell(tmpDir, rootPath) {
 
   // Engine infra served from public/ (sounds, favicon) — same static-asset
   // mechanism the project's own images will use below.
-  copyIfExists(path.join(APP_ROOT, 'public', 'icons'), path.join(tmpDir, 'public', 'icons'))
-  copyIfExists(path.join(APP_ROOT, 'public', 'sounds'), path.join(tmpDir, 'public', 'sounds'))
+  await copyIfExists(path.join(APP_ROOT, 'public', 'icons'), path.join(tmpDir, 'public', 'icons'))
+  await copyIfExists(path.join(APP_ROOT, 'public', 'sounds'), path.join(tmpDir, 'public', 'sounds'))
   const favicon = path.join(APP_ROOT, 'public', 'favicon.ico')
   if (fs.existsSync(favicon)) fs.copyFileSync(favicon, path.join(tmpDir, 'public', 'favicon.ico'))
 
@@ -225,11 +260,11 @@ export async function assembleShell(tmpDir, rootPath) {
     const src = path.join(rootPath, file)
     if (fs.existsSync(src)) fs.copyFileSync(src, path.join(projectDataDir, file))
   }
-  copyIfExists(path.join(rootPath, 'chapters'), path.join(projectDataDir, 'chapters'))
-  copyIfExists(path.join(rootPath, 'seed'), path.join(projectDataDir, 'seed'))
-  copyIfExists(path.join(rootPath, 'i18n'), path.join(projectDataDir, 'i18n'))
-  copyIfExists(path.join(rootPath, 'apps'), path.join(projectDataDir, 'apps'))
-  copyIfExists(path.join(rootPath, 'assets'), path.join(tmpDir, 'public', 'story-assets'))
+  await copyIfExists(path.join(rootPath, 'chapters'), path.join(projectDataDir, 'chapters'))
+  await copyIfExists(path.join(rootPath, 'seed'), path.join(projectDataDir, 'seed'))
+  await copyIfExists(path.join(rootPath, 'i18n'), path.join(projectDataDir, 'i18n'))
+  await copyIfExists(path.join(rootPath, 'apps'), path.join(projectDataDir, 'apps'))
+  await copyIfExists(path.join(rootPath, 'assets'), path.join(tmpDir, 'public', 'story-assets'))
 
   // Custom build icon (game.icon, see GameForm.vue) — @quasar/app-vite's
   // own default already points electron.packager.icon at
@@ -269,14 +304,20 @@ export async function assembleShell(tmpDir, rootPath) {
   fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + '\n', 'utf-8')
 
   // Real copy — see VENDORED_NODE_MODULES's own comment for why this isn't
-  // a junction/symlink.
-  fs.cpSync(VENDORED_NODE_MODULES, path.join(tmpDir, 'node_modules'), { recursive: true })
+  // a junction/symlink. Async (see copyIfExists's own comment) — this is
+  // the single biggest transfer in the whole pipeline (~600MB). Also the
+  // one that actually contains a default_app.asar (see cpAsarSafe's own
+  // comment) — this specific call is what surfaced the asar-interception
+  // bug in the first place.
+  await cpAsarSafe(VENDORED_NODE_MODULES, path.join(tmpDir, 'node_modules'), {
+    recursive: true,
+  })
 
   // See SRC_ELECTRON_NODE_MODULES's own comment — without this, `quasar
   // build -m electron`'s packager step auto-installs `electron` +
   // `@electron/packager` into this exact path on its own, requiring pnpm +
   // internet on whoever's machine runs this.
-  fs.cpSync(SRC_ELECTRON_NODE_MODULES, path.join(tmpDir, 'src-electron', 'node_modules'), {
+  await cpAsarSafe(SRC_ELECTRON_NODE_MODULES, path.join(tmpDir, 'src-electron', 'node_modules'), {
     recursive: true,
   })
 }

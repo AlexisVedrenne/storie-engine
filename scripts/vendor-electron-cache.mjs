@@ -45,12 +45,26 @@ const { version } = JSON.parse(
   await fs.readFile(path.join(templateDir, 'node_modules', 'electron', 'package.json'), 'utf-8'),
 )
 
-console.log(`Téléchargement du zip Electron v${version} (win32/x64) dans le cache vendoré...`)
-const zipPath = await downloadArtifact({
-  version,
-  platform: 'win32',
-  arch: 'x64',
-  artifactName: 'electron',
-  cacheRoot,
-})
-console.log(`Zip Electron vendoré : ${zipPath}`)
+// One zip per exportable game target — keep in sync with BUILD_TARGETS in
+// src-electron/ipc/build.js and the platform checkboxes in EditorPage.vue's
+// buildGame(). Each entry lands in its own hash-keyed subfolder of
+// cacheRoot (see @electron/get's own cache layout), so they all coexist —
+// no per-target cacheRoot logic needed on the reading side.
+const targets = [
+  { platform: 'win32', arch: 'x64' },
+  { platform: 'darwin', arch: 'x64' },
+  { platform: 'darwin', arch: 'arm64' },
+  { platform: 'linux', arch: 'x64' },
+]
+
+for (const { platform, arch } of targets) {
+  console.log(`Téléchargement du zip Electron v${version} (${platform}/${arch}) dans le cache vendoré...`)
+  const zipPath = await downloadArtifact({
+    version,
+    platform,
+    arch,
+    artifactName: 'electron',
+    cacheRoot,
+  })
+  console.log(`Zip Electron vendoré : ${zipPath}`)
+}

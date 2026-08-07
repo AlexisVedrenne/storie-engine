@@ -12,6 +12,7 @@ import { spawn } from 'node:child_process'
 import {
   assembleShell,
   resolveQuasarCli,
+  cpAsarSafe,
   VENDORED_NODE_BINARY,
   VENDORED_NPM_DIR,
   VENDORED_ELECTRON_CACHE,
@@ -84,6 +85,16 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
+// Keep in sync with scripts/vendor-electron-cache.mjs (which pre-downloads
+// the Electron zip each of these needs) and EditorPage.vue's platform
+// checkboxes (which send back a subset of these `id`s as `targets`).
+export const BUILD_TARGETS = [
+  { id: 'win32-x64', platform: 'win32', arch: 'x64', label: 'Windows (x64)' },
+  { id: 'darwin-x64', platform: 'darwin', arch: 'x64', label: 'macOS (Intel)' },
+  { id: 'darwin-arm64', platform: 'darwin', arch: 'arm64', label: 'macOS (Apple Silicon)' },
+  { id: 'linux-x64', platform: 'linux', arch: 'x64', label: 'Linux (x64)' },
+]
+
 // Windows commonly still holds a lock on some file inside tmpDir for a
 // moment after the build's child processes have exited (electron.exe,
 // antivirus scanning the freshly-written .exe, etc.) — EPERM here is
@@ -106,7 +117,53 @@ async function cleanupWithRetry(dir) {
   }
 }
 
-async function buildGame(rootPath, destPath, bumpType) {
+// Builds ONE target into its own disposable tmpDir (never shared across
+// targets — @quasar/app-vite's electron mode always writes to the same
+// dist/electron/Packaged regardless of -T, so reusing one tmpDir across
+// several -T runs would have each target's build wipe the previous one's
+// output out from under it before it got copied to destPath).
+async function buildTarget(rootPath, destPath, manifest, target) {
+  const tmpDir = path.join(os.tmpdir(), `stories-engine-build-${Date.now()}-${target.id}`)
+  try {
+    await assembleShell(tmpDir, rootPath)
+    const buildOutput = await run(
+      resolveQuasarCli(tmpDir),
+      ['build', '-m', 'electron', '-T', target.platform, '-A', target.arch],
+      tmpDir,
+      {
+        STORIE_ELECTRON_CACHE: VENDORED_ELECTRON_CACHE,
+        // See VENDORED_NPM_DIR's own comment — makes plain `npm` resolve for
+        // the electron-builder step's own package-manager detection without
+        // requiring pnpm/yarn/npm/bun on the end user's machine.
+        PATH: `${VENDORED_NPM_DIR}${path.delimiter}${process.env.PATH}`,
+      },
+    )
+
+    const packagedDir = path.join(tmpDir, 'dist', 'electron', 'Packaged')
+    if (!fs.existsSync(packagedDir)) {
+      throw new Error(
+        'Le build a réussi mais le dossier packagé est introuvable (dist/electron/Packaged).\n' +
+          buildOutput,
+      )
+    }
+
+    const outDir = path.join(destPath, slugify(manifest.name), target.id)
+    // cpAsarSafe, not a raw fs.promises.cp — see its own comment in
+    // shellAssembly.js. packagedDir contains the packager's own app.asar,
+    // so this copy is exactly as exposed to the asar-interception bug as
+    // the vendored node_modules copy that first surfaced it.
+    await cpAsarSafe(packagedDir, outDir, { recursive: true })
+    return outDir
+  } finally {
+    // Never let a cleanup failure override/mask the actual build result —
+    // this used to be a plain `fs.rmSync(...)` here, which on a Windows
+    // EPERM (transient file lock) would replace a successful return value
+    // with this cleanup error instead, hiding that the build had worked.
+    await cleanupWithRetry(tmpDir)
+  }
+}
+
+async function buildGame(rootPath, destPath, bumpType, targetIds) {
   // Bumped and written back to the PROJECT's own project.json (not just the
   // temp build copy) before anything else — a build is what "release cut"
   // means here, so the version increment has to actually stick for next
@@ -129,45 +186,35 @@ async function buildGame(rootPath, destPath, bumpType) {
     )
   }
 
-  const tmpDir = path.join(os.tmpdir(), `stories-engine-build-${Date.now()}`)
-  try {
-    await assembleShell(tmpDir, rootPath)
-    const buildOutput = await run(resolveQuasarCli(tmpDir), ['build', '-m', 'electron'], tmpDir, {
-      STORIE_ELECTRON_CACHE: VENDORED_ELECTRON_CACHE,
-      // See VENDORED_NPM_DIR's own comment — makes plain `npm` resolve for
-      // the electron-builder step's own package-manager detection without
-      // requiring pnpm/yarn/npm/bun on the end user's machine.
-      PATH: `${VENDORED_NPM_DIR}${path.delimiter}${process.env.PATH}`,
-    })
+  const targets = BUILD_TARGETS.filter((t) => targetIds.includes(t.id))
 
-    const packagedDir = path.join(tmpDir, 'dist', 'electron', 'Packaged')
-    if (!fs.existsSync(packagedDir)) {
-      throw new Error(
-        'Le build a réussi mais le dossier packagé est introuvable (dist/electron/Packaged).\n' +
-          buildOutput,
-      )
+  // Sequential, not Promise.all — every target reinstalls a fresh copy of
+  // the vendored node_modules/electron zip into its own tmpDir (real I/O,
+  // see assembleShell()'s own comment on why it's a copy not a symlink);
+  // running 2-4 of those concurrently is a bigger machine-resource risk
+  // than the extra wall-clock time of doing them one at a time.
+  const results = []
+  const errors = []
+  for (const target of targets) {
+    try {
+      const outDir = await buildTarget(rootPath, destPath, manifest, target)
+      results.push({ id: target.id, label: target.label, outDir })
+    } catch (err) {
+      errors.push({ id: target.id, label: target.label, message: err.message || String(err) })
     }
-
-    const outDir = path.join(destPath, slugify(manifest.name))
-    fs.cpSync(packagedDir, outDir, { recursive: true })
-    return { outDir, manifest }
-  } finally {
-    // Never let a cleanup failure override/mask the actual build result —
-    // this used to be a plain `fs.rmSync(...)` here, which on a Windows
-    // EPERM (transient file lock) would replace a successful return value
-    // with this cleanup error instead, hiding that the build had worked.
-    await cleanupWithRetry(tmpDir)
   }
+
+  return { manifest, results, errors }
 }
 
 export function registerBuildHandlers(mainWindow) {
-  ipcMain.handle('project:build', async (_evt, { rootPath, bumpType }) => {
+  ipcMain.handle('project:build', async (_evt, { rootPath, bumpType, targetIds }) => {
     const result = await dialog.showOpenDialog(mainWindow, {
       properties: ['openDirectory', 'createDirectory'],
       title: 'Choisir où exporter le jeu',
     })
     if (result.canceled || !result.filePaths[0]) return null
 
-    return buildGame(rootPath, result.filePaths[0], bumpType)
+    return buildGame(rootPath, result.filePaths[0], bumpType, targetIds)
   })
 }

@@ -68,7 +68,14 @@ export default {
     versionMinor: 'Mineure',
     versionMajor: 'Majeure',
     buildOk: 'Build',
-    buildExported: 'Jeu exporté en v{version} dans {outDir}',
+    platformDialogTitle: 'Plateformes à exporter',
+    platformDialogMessage: 'Choisis au moins une plateforme.',
+    buildTargetWin: 'Windows (x64)',
+    buildTargetMacIntel: 'macOS (Intel)',
+    buildTargetMacArm: 'macOS (Apple Silicon)',
+    buildTargetLinux: 'Linux (x64)',
+    buildExported: 'Jeu exporté en v{version} :\n{list}',
+    buildTargetErrors: 'Certaines plateformes ont échoué :\n{list}',
   },
 
   chapterGraph: {

@@ -209,7 +209,7 @@ async function setEntryChapterId(value) {
   story.project.manifest.entryChapterId = value || undefined
   await window.storieAPI.saveManifest({
     rootPath: story.project.rootPath,
-    manifest: story.project.manifest,
+    manifest: JSON.parse(JSON.stringify(story.project.manifest)),
   })
 }
 
