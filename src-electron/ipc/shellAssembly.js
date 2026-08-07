@@ -1,4 +1,4 @@
-// Assembles a fresh temp copy of templates/game-shell/ + storie-engine's own
+// Assembles a fresh temp copy of templates/game-shell/ + stories-engine's own
 // src/engine and src/components (never a hand-maintained second copy of the
 // phone engine, see docs/phase3-plan.md's "principe" section), then copies
 // the currently open project's content into it. Shared by every consumer
@@ -6,31 +6,31 @@
 // build.js's "export game" (`quasar build -m electron`) and
 // webPreview.js's "preview on your phone" (`quasar dev --host`) — so there's
 // only ever one place that knows what a shipped shell is made of.
-import { app } from "electron";
-import fs from "node:fs";
-import path from "node:path";
-import { pathToFileURL } from "node:url";
+import { app } from 'electron'
+import fs from 'node:fs'
+import path from 'node:path'
+import { pathToFileURL } from 'node:url'
 
-// storie-engine's own source root — `templates/game-shell` and the engine
+// stories-engine's own source root — `templates/game-shell` and the engine
 // source this pipeline copies both live here. Running from source
 // (`pnpm run dev:electron`, or a --skip-pkg build), that's the repo root
 // (process.cwd()). Once packaged, none of that raw source exists inside the
 // app's asar — it's shipped alongside it instead, via quasar.config.js's
 // `electron.packager.extraResource: ['src', 'templates']`, which lands
 // unpacked at process.resourcesPath/{src,templates} (see app.isPackaged).
-export const APP_ROOT = app.isPackaged ? process.resourcesPath : process.cwd();
-export const TEMPLATE_DIR = path.join(APP_ROOT, "templates", "game-shell");
+export const APP_ROOT = app.isPackaged ? process.resourcesPath : process.cwd()
+export const TEMPLATE_DIR = path.join(APP_ROOT, 'templates', 'game-shell')
 
 // A real `pnpm install` of templates/game-shell/package.json (hoisted —
 // see templates/game-shell/.npmrc — a flat node_modules with no internal
 // symlinks, so it survives being moved/copied by whatever the user's
 // install method is), run once ahead of time (`pnpm run vendor:game-
-// shell`) and shipped as part of storie-engine itself (covered by the
+// shell`) and shipped as part of stories-engine itself (covered by the
 // same extraResource copy as TEMPLATE_DIR, since it lives inside it) —
 // never installed at runtime on the END USER's machine. That's the whole
 // point: build.js/webPreview.js used to `pnpm install` fresh into every
 // temp dir, which silently required the user's own machine to have pnpm +
-// Node.js + internet access, none of which a packaged storie-engine.exe
+// Node.js + internet access, none of which a packaged stories-engine.exe
 // can assume.
 //
 // Copied (not junctioned) into every tmpDir despite the ~600MB size — a
@@ -43,7 +43,7 @@ export const TEMPLATE_DIR = path.join(APP_ROOT, "templates", "game-shell");
 // following it, producing a garbage nonexistent path). A real copy has no
 // such failure mode — the extra few seconds per session is the safer
 // trade.
-export const VENDORED_NODE_MODULES = path.join(TEMPLATE_DIR, "node_modules");
+export const VENDORED_NODE_MODULES = path.join(TEMPLATE_DIR, 'node_modules')
 
 // @quasar/app-vite's electron mode needs `electron` + `@electron/packager`
 // installed INSIDE src-electron/ specifically (it auto-provisions them
@@ -56,13 +56,13 @@ export const VENDORED_NODE_MODULES = path.join(TEMPLATE_DIR, "node_modules");
 // time — and a failed/interrupted auto-install here doesn't make `quasar
 // build` exit non-zero, it just skips packaging, which is what used to
 // produce "le dossier packagé est introuvable" with no other clue why.
-export const SRC_ELECTRON_NODE_MODULES = path.join(TEMPLATE_DIR, "src-electron", "node_modules");
+export const SRC_ELECTRON_NODE_MODULES = path.join(TEMPLATE_DIR, 'src-electron', 'node_modules')
 
 // @quasar/app-vite's CLI entry point inside a given assembled shell —
 // resolved from the COPIED node_modules (see assembleShell), so this
 // only makes sense to call after assembleShell() has run for that tmpDir.
 export function resolveQuasarCli(tmpDir) {
-  return path.join(tmpDir, "node_modules", "@quasar", "app-vite", "bin", "quasar.js");
+  return path.join(tmpDir, 'node_modules', '@quasar', 'app-vite', 'bin', 'quasar.js')
 }
 
 // A genuine, standalone Node.js binary (`pnpm run vendor:game-shell`
@@ -84,7 +84,7 @@ export function resolveQuasarCli(tmpDir) {
 // introuvable" with zero further clue. A real node.exe has neither global
 // set, and the exact same pipeline completes normally under it — confirmed
 // end to end against a real assembled shell before this was wired in.
-export const VENDORED_NODE_BINARY = path.join(TEMPLATE_DIR, "node-runtime", "node.exe");
+export const VENDORED_NODE_BINARY = path.join(TEMPLATE_DIR, 'node-runtime', 'node.exe')
 
 // Same node-runtime download as VENDORED_NODE_BINARY (the full Node.js
 // distribution zip, not just the bare node.exe file) also ships npm
@@ -97,7 +97,7 @@ export const VENDORED_NODE_BINARY = path.join(TEMPLATE_DIR, "node-runtime", "nod
 // bare-Windows PATH). build.js prepends this to the spawned process's PATH
 // so plain `npm` resolves without requiring ANY of those on the end
 // user's own machine.
-export const VENDORED_NPM_DIR = path.join(TEMPLATE_DIR, "node-runtime");
+export const VENDORED_NPM_DIR = path.join(TEMPLATE_DIR, 'node-runtime')
 
 // Pre-downloaded copy of the exact Electron zip the exported game's own
 // electron-packager step needs (`pnpm run vendor:game-shell` populates
@@ -112,43 +112,43 @@ export const VENDORED_NPM_DIR = path.join(TEMPLATE_DIR, "node-runtime");
 // whole pipeline's entire point being that it never needs one. Not
 // involved in webPreview.js at all — `quasar dev` never invokes
 // electron-packager.
-export const VENDORED_ELECTRON_CACHE = path.join(TEMPLATE_DIR, "electron-cache");
+export const VENDORED_ELECTRON_CACHE = path.join(TEMPLATE_DIR, 'electron-cache')
 
 function copyIfExists(src, dest) {
-  if (fs.existsSync(src)) fs.cpSync(src, dest, { recursive: true });
+  if (fs.existsSync(src)) fs.cpSync(src, dest, { recursive: true })
 }
 
 // Cache-busted dynamic import, same pattern as project.js's loadDefaultOr —
 // this pipeline doesn't otherwise ever load game.js's actual content (only
 // project.json's manifest, for the productName/output-folder slug).
 async function loadGameConfig(rootPath) {
-  const gamePath = path.join(rootPath, "game.js");
-  if (!fs.existsSync(gamePath)) return {};
-  const mod = await import(pathToFileURL(gamePath).href + "?t=" + Date.now());
-  return mod.default || {};
+  const gamePath = path.join(rootPath, 'game.js')
+  if (!fs.existsSync(gamePath)) return {}
+  const mod = await import(pathToFileURL(gamePath).href + '?t=' + Date.now())
+  return mod.default || {}
 }
 
 export async function assembleShell(tmpDir, rootPath) {
   if (!fs.existsSync(VENDORED_NODE_MODULES)) {
     throw new Error(
-      "Dépendances du moteur de jeu introuvables (templates/game-shell/node_modules). " +
-        "Lance `pnpm run vendor:game-shell` à la racine de storie-engine avant de packager, " +
+      'Dépendances du moteur de jeu introuvables (templates/game-shell/node_modules). ' +
+        'Lance `pnpm run vendor:game-shell` à la racine de stories-engine avant de packager, ' +
         "ou avant d'utiliser Build/Preview web en développement.",
-    );
+    )
   }
   if (!fs.existsSync(SRC_ELECTRON_NODE_MODULES)) {
     throw new Error(
-      "Dépendances electron/packager introuvables (templates/game-shell/src-electron/node_modules). " +
-        "Lance `pnpm run vendor:game-shell` à la racine de storie-engine avant de packager, " +
+      'Dépendances electron/packager introuvables (templates/game-shell/src-electron/node_modules). ' +
+        'Lance `pnpm run vendor:game-shell` à la racine de stories-engine avant de packager, ' +
         "ou avant d'utiliser Build/Preview web en développement.",
-    );
+    )
   }
   if (!fs.existsSync(VENDORED_NODE_BINARY)) {
     throw new Error(
-      "Runtime Node.js introuvable (templates/game-shell/node-runtime/node.exe). " +
-        "Lance `pnpm run vendor:game-shell` à la racine de storie-engine avant de packager, " +
+      'Runtime Node.js introuvable (templates/game-shell/node-runtime/node.exe). ' +
+        'Lance `pnpm run vendor:game-shell` à la racine de stories-engine avant de packager, ' +
         "ou avant d'utiliser Build/Preview web en développement.",
-    );
+    )
   }
   // VENDORED_ELECTRON_CACHE is NOT checked here — webPreview.js (the other
   // caller of this function) never invokes electron-packager, so it has no
@@ -158,19 +158,29 @@ export async function assembleShell(tmpDir, rootPath) {
   fs.cpSync(TEMPLATE_DIR, tmpDir, {
     recursive: true,
     filter: (src) => {
-      if (src.includes(`${path.sep}engine-overrides${path.sep}`) || src.endsWith("engine-overrides")) return false;
+      if (
+        src.includes(`${path.sep}engine-overrides${path.sep}`) ||
+        src.endsWith('engine-overrides')
+      )
+        return false
       // Copied separately below (see VENDORED_NODE_MODULES's own comment)
       // — excluded here so it isn't walked/filtered file-by-file twice.
-      if (src.includes(`${path.sep}node_modules`)) return false;
-      return true;
+      if (src.includes(`${path.sep}node_modules`)) return false
+      return true
     },
-  });
+  })
 
   // The engine + phone UI are never duplicated by hand — copied fresh from
   // the editor's own current source every build.
-  copyIfExists(path.join(APP_ROOT, "src", "engine"), path.join(tmpDir, "src", "engine"));
-  copyIfExists(path.join(APP_ROOT, "src", "components", "phone"), path.join(tmpDir, "src", "components", "phone"));
-  copyIfExists(path.join(APP_ROOT, "src", "components", "apps"), path.join(tmpDir, "src", "components", "apps"));
+  copyIfExists(path.join(APP_ROOT, 'src', 'engine'), path.join(tmpDir, 'src', 'engine'))
+  copyIfExists(
+    path.join(APP_ROOT, 'src', 'components', 'phone'),
+    path.join(tmpDir, 'src', 'components', 'phone'),
+  )
+  copyIfExists(
+    path.join(APP_ROOT, 'src', 'components', 'apps'),
+    path.join(tmpDir, 'src', 'components', 'apps'),
+  )
   // Small utilities genuinely shared between the editor's own authoring
   // forms AND a plug-in app's EntryForm.vue (e.g. src/components/apps/
   // email/EmailEntryForm.vue) — entryTypeRegistry.js eagerly globs every
@@ -180,43 +190,46 @@ export async function assembleShell(tmpDir, rootPath) {
   // (never copied here) broke every build the moment the email app was
   // added — moved here specifically so `quasar build -m electron` inside
   // this temp shell can actually resolve it.
-  copyIfExists(path.join(APP_ROOT, "src", "components", "shared"), path.join(tmpDir, "src", "components", "shared"));
-  copyIfExists(path.join(APP_ROOT, "src", "boot"), path.join(tmpDir, "src", "boot"));
-  copyIfExists(path.join(APP_ROOT, "src", "i18n"), path.join(tmpDir, "src", "i18n"));
-  copyIfExists(path.join(APP_ROOT, "src", "css"), path.join(tmpDir, "src", "css"));
+  copyIfExists(
+    path.join(APP_ROOT, 'src', 'components', 'shared'),
+    path.join(tmpDir, 'src', 'components', 'shared'),
+  )
+  copyIfExists(path.join(APP_ROOT, 'src', 'boot'), path.join(tmpDir, 'src', 'boot'))
+  copyIfExists(path.join(APP_ROOT, 'src', 'i18n'), path.join(tmpDir, 'src', 'i18n'))
+  copyIfExists(path.join(APP_ROOT, 'src', 'css'), path.join(tmpDir, 'src', 'css'))
   // ChatThread.vue/DmThreadScreen.vue import '@/utils/chatTime' — confirmed
   // by an actual end-to-end test build (see docs/phase3-plan.md); grep
   // `src/components/**` for `from '@/...'` again if new engine code ever
   // adds another such top-level import, since nothing here catches that
   // automatically.
-  copyIfExists(path.join(APP_ROOT, "src", "utils"), path.join(tmpDir, "src", "utils"));
+  copyIfExists(path.join(APP_ROOT, 'src', 'utils'), path.join(tmpDir, 'src', 'utils'))
 
   // The one file that legitimately differs between editor and shipped game
   // (see templates/game-shell/engine-overrides/assets.js's own comment).
   fs.copyFileSync(
-    path.join(TEMPLATE_DIR, "engine-overrides", "assets.js"),
-    path.join(tmpDir, "src", "engine", "assets.js"),
-  );
+    path.join(TEMPLATE_DIR, 'engine-overrides', 'assets.js'),
+    path.join(tmpDir, 'src', 'engine', 'assets.js'),
+  )
 
   // Engine infra served from public/ (sounds, favicon) — same static-asset
   // mechanism the project's own images will use below.
-  copyIfExists(path.join(APP_ROOT, "public", "icons"), path.join(tmpDir, "public", "icons"));
-  copyIfExists(path.join(APP_ROOT, "public", "sounds"), path.join(tmpDir, "public", "sounds"));
-  const favicon = path.join(APP_ROOT, "public", "favicon.ico");
-  if (fs.existsSync(favicon)) fs.copyFileSync(favicon, path.join(tmpDir, "public", "favicon.ico"));
+  copyIfExists(path.join(APP_ROOT, 'public', 'icons'), path.join(tmpDir, 'public', 'icons'))
+  copyIfExists(path.join(APP_ROOT, 'public', 'sounds'), path.join(tmpDir, 'public', 'sounds'))
+  const favicon = path.join(APP_ROOT, 'public', 'favicon.ico')
+  if (fs.existsSync(favicon)) fs.copyFileSync(favicon, path.join(tmpDir, 'public', 'favicon.ico'))
 
   // The project itself.
-  const projectDataDir = path.join(tmpDir, "src", "project-data");
-  fs.mkdirSync(projectDataDir, { recursive: true });
-  for (const file of ["contacts.js", "threads.js", "game.js", "project.json"]) {
-    const src = path.join(rootPath, file);
-    if (fs.existsSync(src)) fs.copyFileSync(src, path.join(projectDataDir, file));
+  const projectDataDir = path.join(tmpDir, 'src', 'project-data')
+  fs.mkdirSync(projectDataDir, { recursive: true })
+  for (const file of ['contacts.js', 'threads.js', 'game.js', 'project.json']) {
+    const src = path.join(rootPath, file)
+    if (fs.existsSync(src)) fs.copyFileSync(src, path.join(projectDataDir, file))
   }
-  copyIfExists(path.join(rootPath, "chapters"), path.join(projectDataDir, "chapters"));
-  copyIfExists(path.join(rootPath, "seed"), path.join(projectDataDir, "seed"));
-  copyIfExists(path.join(rootPath, "i18n"), path.join(projectDataDir, "i18n"));
-  copyIfExists(path.join(rootPath, "apps"), path.join(projectDataDir, "apps"));
-  copyIfExists(path.join(rootPath, "assets"), path.join(tmpDir, "public", "story-assets"));
+  copyIfExists(path.join(rootPath, 'chapters'), path.join(projectDataDir, 'chapters'))
+  copyIfExists(path.join(rootPath, 'seed'), path.join(projectDataDir, 'seed'))
+  copyIfExists(path.join(rootPath, 'i18n'), path.join(projectDataDir, 'i18n'))
+  copyIfExists(path.join(rootPath, 'apps'), path.join(projectDataDir, 'apps'))
+  copyIfExists(path.join(rootPath, 'assets'), path.join(tmpDir, 'public', 'story-assets'))
 
   // Custom build icon (game.icon, see GameForm.vue) — @quasar/app-vite's
   // own default already points electron.packager.icon at
@@ -230,13 +243,13 @@ export async function assembleShell(tmpDir, rootPath) {
   // electron-main.js), not the packaged .exe file icon. Documented
   // limitation, not a bug — see docs/phase3-plan.md. Harmless no-op for a
   // web-preview consumer (webPreview.js), which never packages an .exe.
-  const gameConfig = await loadGameConfig(rootPath);
+  const gameConfig = await loadGameConfig(rootPath)
   if (gameConfig.icon) {
-    const iconSrc = path.join(rootPath, "assets", gameConfig.icon);
+    const iconSrc = path.join(rootPath, 'assets', gameConfig.icon)
     if (fs.existsSync(iconSrc)) {
-      const iconsDir = path.join(tmpDir, "src-electron", "electron-assets", "icons");
-      fs.mkdirSync(iconsDir, { recursive: true });
-      fs.copyFileSync(iconSrc, path.join(iconsDir, `icon${path.extname(iconSrc)}`));
+      const iconsDir = path.join(tmpDir, 'src-electron', 'electron-assets', 'icons')
+      fs.mkdirSync(iconsDir, { recursive: true })
+      fs.copyFileSync(iconSrc, path.join(iconsDir, `icon${path.extname(iconSrc)}`))
     }
   }
 
@@ -245,21 +258,25 @@ export async function assembleShell(tmpDir, rootPath) {
   // file version metadata — electron-packager reads package.json's plain
   // "version" field for that. Harmless metadata-only write for a
   // webPreview.js consumer, which never packages anything.
-  const manifestPath = path.join(rootPath, "project.json");
-  const manifest = fs.existsSync(manifestPath) ? JSON.parse(fs.readFileSync(manifestPath, "utf-8")) : {};
-  const pkgPath = path.join(tmpDir, "package.json");
-  const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf-8"));
-  pkg.productName = manifest.name || pkg.productName;
-  if (manifest.version) pkg.version = manifest.version;
-  fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + "\n", "utf-8");
+  const manifestPath = path.join(rootPath, 'project.json')
+  const manifest = fs.existsSync(manifestPath)
+    ? JSON.parse(fs.readFileSync(manifestPath, 'utf-8'))
+    : {}
+  const pkgPath = path.join(tmpDir, 'package.json')
+  const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf-8'))
+  pkg.productName = manifest.name || pkg.productName
+  if (manifest.version) pkg.version = manifest.version
+  fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + '\n', 'utf-8')
 
   // Real copy — see VENDORED_NODE_MODULES's own comment for why this isn't
   // a junction/symlink.
-  fs.cpSync(VENDORED_NODE_MODULES, path.join(tmpDir, "node_modules"), { recursive: true });
+  fs.cpSync(VENDORED_NODE_MODULES, path.join(tmpDir, 'node_modules'), { recursive: true })
 
   // See SRC_ELECTRON_NODE_MODULES's own comment — without this, `quasar
   // build -m electron`'s packager step auto-installs `electron` +
   // `@electron/packager` into this exact path on its own, requiring pnpm +
   // internet on whoever's machine runs this.
-  fs.cpSync(SRC_ELECTRON_NODE_MODULES, path.join(tmpDir, "src-electron", "node_modules"), { recursive: true });
+  fs.cpSync(SRC_ELECTRON_NODE_MODULES, path.join(tmpDir, 'src-electron', 'node_modules'), {
+    recursive: true,
+  })
 }

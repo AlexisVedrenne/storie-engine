@@ -9,7 +9,7 @@
 
     <div v-else class="panel">
       <q-icon name="auto_stories" size="40px" class="brand-icon" />
-      <h1 class="title">Storie Engine</h1>
+      <h1 class="title">Stories Engine</h1>
       <p class="subtitle">{{ t('openProjectPage.subtitle') }}</p>
 
       <q-banner v-if="!hasStorieApi" class="bg-negative text-white banner">
@@ -49,15 +49,33 @@
       <q-card class="new-project-card">
         <q-card-section>
           <div class="text-subtitle1">{{ t('openProjectPage.newBtn') }}</div>
-          <q-input dense outlined ref="newNameInputRef" autofocus :label="t('openProjectPage.nameLabel')" v-model="newName" class="q-mt-sm" @keyup.enter="createProject">
+          <q-input
+            dense
+            outlined
+            ref="newNameInputRef"
+            autofocus
+            :label="t('openProjectPage.nameLabel')"
+            v-model="newName"
+            class="q-mt-sm"
+            @keyup.enter="createProject"
+          >
             <template #append>
-              <EmojiPickerBtn @pick="(e) => (newName = insertEmojiAtCaret(newNameInputRef, newName, e))" />
+              <EmojiPickerBtn
+                @pick="(e) => (newName = insertEmojiAtCaret(newNameInputRef, newName, e))"
+              />
             </template>
           </q-input>
         </q-card-section>
         <q-card-actions align="right">
           <q-btn flat :label="t('common.cancel')" v-close-popup />
-          <q-btn flat :label="t('common.create')" color="primary" :disable="!newName.trim()" @click="createProject" v-close-popup />
+          <q-btn
+            flat
+            :label="t('common.create')"
+            color="primary"
+            :disable="!newName.trim()"
+            @click="createProject"
+            v-close-popup
+          />
         </q-card-actions>
       </q-card>
     </q-dialog>
@@ -78,7 +96,7 @@ const { t } = useEditorI18n()
 // Shared with EditorPage.vue's "Changer de projet" (clears this key) — a
 // deliberate exit shouldn't be silently undone by auto-reopening the same
 // project on the next launch.
-const LAST_PROJECT_KEY = 'storie-engine-last-project'
+const LAST_PROJECT_KEY = 'stories-engine-last-project'
 
 const router = useRouter()
 const story = useStoryStore()
@@ -108,7 +126,7 @@ onMounted(async () => {
     const data = await window.storieAPI.loadProject(last)
     await enterProject(last, data)
   } catch (err) {
-    console.warn('[storie-engine] failed to reopen last project', err)
+    console.warn('[stories-engine] failed to reopen last project', err)
     localStorage.removeItem(LAST_PROJECT_KEY)
   } finally {
     reopening.value = false
@@ -124,7 +142,7 @@ async function openProject() {
     const data = await window.storieAPI.loadProject(folder)
     await enterProject(folder, data)
   } catch (err) {
-    console.error('[storie-engine] failed to load project', err)
+    console.error('[stories-engine] failed to load project', err)
     error.value = t('openProjectPage.loadError', { error: err.message || err })
   } finally {
     loading.value = ''
@@ -143,7 +161,7 @@ async function createProject() {
     const data = await window.storieAPI.loadProject(rootPath)
     await enterProject(rootPath, data)
   } catch (err) {
-    console.error('[storie-engine] failed to create project', err)
+    console.error('[stories-engine] failed to create project', err)
     error.value = t('openProjectPage.createError', { error: err.message || err })
   } finally {
     loading.value = ''

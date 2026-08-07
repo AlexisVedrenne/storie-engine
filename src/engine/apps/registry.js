@@ -49,7 +49,7 @@ export const APP_REGISTRY = Object.entries(manifestModules)
       // A manifest with no matching App.vue is a broken/half-written app
       // module — skip it rather than register something with nothing to
       // render (PhoneShell.vue would just show a blank screen for it).
-      console.warn(`[storie-engine] app "${dir}" has a manifest.js but no App.vue — skipped`)
+      console.warn(`[stories-engine] app "${dir}" has a manifest.js but no App.vue — skipped`)
       return null
     }
     return { ...mod.default, component }

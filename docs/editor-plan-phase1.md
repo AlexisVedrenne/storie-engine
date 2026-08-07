@@ -1,4 +1,4 @@
-# Storie Engine — éditeur visuel du moteur narratif (Phase 1)
+# Stories Engine — éditeur visuel du moteur narratif (Phase 1)
 
 ## Statut : ✅ terminée et confirmée fonctionnelle (2026-07-27)
 
@@ -9,10 +9,11 @@ Pipeline bout-en-bout validé par l'utilisateur : ouverture de projet, chargemen
 Le moteur narratif de NTR (`docs/story-engine.md` dans le dépôt NTR) fonctionne bien mais tout le contenu (chapitres, contacts, seed) s'écrit à la main en JS, sans aperçu, avec un enregistrement manuel de chaque chapitre dans `data/story/index.js`. L'auteur veut un vrai logiciel d'édition : ouvrir/créer un projet n'importe où sur le disque, éditer visuellement (formulaires par type d'entrée, pas du code brut), voir un aperçu téléphone live à côté, et un bouton "Build" qui empaquette projet + moteur en jeu jouable.
 
 Décisions déjà actées avec l'utilisateur (ne pas rediscuter) :
+
 - Chapitres restent en `.js` (pas de migration JSON).
-- **Un seul logiciel** (l'éditeur, Electron + Quasar) — le jeu livré est juste le *résultat* d'un Build, pas un second projet à maintenir.
+- **Un seul logiciel** (l'éditeur, Electron + Quasar) — le jeu livré est juste le _résultat_ d'un Build, pas un second projet à maintenir.
 - Édition visuelle (formulaires) dès le MVP, pas un simple pane de code.
-- Nouveau dépôt : `storie-engine` (ce dépôt). NTR n'est pas touché par ce travail — sert uniquement de référence à porter.
+- Nouveau dépôt : `stories-engine` (ce dépôt). NTR n'est pas touché par ce travail — sert uniquement de référence à porter.
 
 Cette phase 1 vise à dérisquer le point le plus dur avant d'investir dans les formulaires visuels : prouver que l'app Electron peut ouvrir un dossier-projet arbitraire, charger dynamiquement son contenu JS (sans rebuild), et afficher un **aperçu téléphone live en lecture seule**. Pas d'édition de formulaire, pas de Build dans cette phase.
 
@@ -21,7 +22,7 @@ Cette phase 1 vise à dérisquer le point le plus dur avant d'investir dans les 
 - `src/stores/story.js` importe en dur `chapters/getContact/getThread/socialHandle` (`@/data/story`) et les 5 exports seed — un seul projet possible par build. Le reste de la logique (`advance()`, `checkConditions()`, `applyEffects()`, `seedInitialContent()`) est déjà paramétrique sur "ce que sont `chapters`/contacts/threads/seed en ce moment" : seul le **point d'origine** de ces bindings doit changer (import statique → injecté au runtime).
 - **Blocage n°1 : les images.** Partout, `import x from '../images/...'` (51 imports, jamais via `@/assets`) — résolu par Vite au build. Un projet ouvert dynamiquement par Node à l'exécution ne passe pas par ce pipeline. → convention à changer : chemin relatif **string** (`"images/mira/parc_4.png"`), résolu par un helper injectable (`resolveAssetUrl`) différent selon contexte (éditeur vs build final).
 - **Blocage n°2 : i18n story.** `src/i18n/story/index.js` utilise `import.meta.glob(..., {eager:true})`, fixé à un dossier connu au build — même limite, même remède (chargé dynamiquement par `loadProject()`).
-- `contacts.js`/`threads.js` mélangent aujourd'hui données + fonctions (`getContact`, `socialHandle`, `getThread`) — dans le nouveau format projet, ces fichiers deviennent des données pures ; les fonctions renaissent comme *getters* du store, lisant `this.project.contacts`/`this.project.threads`.
+- `contacts.js`/`threads.js` mélangent aujourd'hui données + fonctions (`getContact`, `socialHandle`, `getThread`) — dans le nouveau format projet, ces fichiers deviennent des données pures ; les fonctions renaissent comme _getters_ du store, lisant `this.project.contacts`/`this.project.threads`.
 - Les composants `src/components/phone/*` et `apps/*` (11 + 18 fichiers) sont portables tels quels (pas de vue-router, chaque composant fait son propre `useStoryStore()`) SAUF ~10 fichiers qui importent aussi `getContact`/`contacts`/`gameConfig` directement depuis `@/data/story` — à rebrancher sur le store.
 - `PhonePage.vue` appelle `story.init()` **de façon synchrone, avant le montage** (pas dans `onMounted`) pour que `PhoneShell` sache dès le premier rendu s'il faut afficher l'assistant de configuration. Cet ordre doit être reproduit : `story.loadProject(data)` doit être résolu avant de monter `<PhoneShell/>`.
 - **Risque tooling déjà dérisqué empiriquement** : `Boite-Outil-Merch` (même machine, même stack pnpm/Node/`@quasar/app-vite` rc) a déjà `quasar mode add electron` fonctionnel avec `contextIsolation`, `contextBridge`, un dossier `ipc/` par handler agrégés dans `ipc/index.js`. On réutilise ce pattern tel quel.
@@ -29,7 +30,7 @@ Cette phase 1 vise à dérisquer le point le plus dur avant d'investir dans les 
 ## Décisions verrouillées pour cette phase
 
 1. **Assets = chemins relatifs string**, résolus via `resolveAssetUrl()` injectable. En éditeur : protocole Electron custom `storie-asset://` mappé sur le dossier `assets/` du projet ouvert (plus sûr que `file://`, compatible CSP).
-2. **Portage en fichiers source**, pas de package partagé/monorepo — moteur + UI téléphone copiés dans `storie-engine/src/`, NTR non modifié.
+2. **Portage en fichiers source**, pas de package partagé/monorepo — moteur + UI téléphone copiés dans `stories-engine/src/`, NTR non modifié.
 3. **`loadProject(projectData)`** remplace tous les imports statiques du store ; **aucune persistance réelle en phase 1** (pas de `localStorage`) — l'aperçu vit entièrement en mémoire, réinitialisé à chaque ouverture de projet. Ça évite tout le problème de clé de sauvegarde par projet.
 4. **Format d'un projet sur disque** :
    ```
@@ -45,23 +46,24 @@ Cette phase 1 vise à dérisquer le point le plus dur avant d'investir dans les 
    ```
 5. Electron sécurisé : `contextIsolation: true`, `nodeIntegration: false`, tout passe par `contextBridge` + IPC ; le process main fait les `import()` dynamiques Node des fichiers `.js` du projet et renvoie des données pures (JSON-clonable) au renderer.
 
-## Plan de fichiers — `storie-engine`
+## Plan de fichiers — `stories-engine`
 
 ### `src/engine/` (moteur porté, project-agnostic)
 
-| Fichier | Source NTR | Changement |
-|---|---|---|
-| `src/engine/stores/story.js` | `stores/story.js` | Supprime les imports statiques (`chapters`, `getContact`, `getThread`, `socialHandle`, seed, `storyTranslations`). Ajoute `project: null` à `defaultState()` + action `loadProject(projectData)`. Remplace chaque usage de `chapters` par `this.project?.chapters ?? []`. Transforme `getContact`/`getThread`/`socialHandle` en **getters** lisant `state.project.contacts`/`threads`. `resolveStoryText` lit `this.project.i18n[locale]?.[bucket]` au lieu de l'import glob. Vide `save()`/`load()`/`resetSave()` (no-op, gardés pour ne pas casser les call-sites) — phase 1 sans persistance. Le reste (`advance`, `checkConditions`, `applyEffects`, `seedInitialContent`, timing des messages/timeskip) se porte tel quel. |
-| `src/engine/stores/phone.js` | `stores/phone.js` | Copie conforme, aucune donnée story couplée. |
-| `src/engine/i18n/instance.js`, `locales.js` | `i18n/instance.js`, `i18n/locales.js` | Copie conforme (i18n UI-chrome, indépendant du contenu story). |
-| `src/engine/utils/sound.js` | `utils/sound.js` | Copie conforme, ajuste juste l'import du store. |
-| `src/engine/assets.js` | *(nouveau)* | `resolveAssetUrl(relPath)` → `storie-asset://project/${relPath}` en phase 1 (seule branche nécessaire, celle du build viendra en phase 3). |
+| Fichier                                     | Source NTR                            | Changement                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| ------------------------------------------- | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/engine/stores/story.js`                | `stores/story.js`                     | Supprime les imports statiques (`chapters`, `getContact`, `getThread`, `socialHandle`, seed, `storyTranslations`). Ajoute `project: null` à `defaultState()` + action `loadProject(projectData)`. Remplace chaque usage de `chapters` par `this.project?.chapters ?? []`. Transforme `getContact`/`getThread`/`socialHandle` en **getters** lisant `state.project.contacts`/`threads`. `resolveStoryText` lit `this.project.i18n[locale]?.[bucket]` au lieu de l'import glob. Vide `save()`/`load()`/`resetSave()` (no-op, gardés pour ne pas casser les call-sites) — phase 1 sans persistance. Le reste (`advance`, `checkConditions`, `applyEffects`, `seedInitialContent`, timing des messages/timeskip) se porte tel quel. |
+| `src/engine/stores/phone.js`                | `stores/phone.js`                     | Copie conforme, aucune donnée story couplée.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| `src/engine/i18n/instance.js`, `locales.js` | `i18n/instance.js`, `i18n/locales.js` | Copie conforme (i18n UI-chrome, indépendant du contenu story).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `src/engine/utils/sound.js`                 | `utils/sound.js`                      | Copie conforme, ajuste juste l'import du store.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| `src/engine/assets.js`                      | _(nouveau)_                           | `resolveAssetUrl(relPath)` → `storie-asset://project/${relPath}` en phase 1 (seule branche nécessaire, celle du build viendra en phase 3).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 
 `public/sounds/*.mp3` copiés une fois depuis NTR.
 
 ### `src/components/phone/` + `src/components/apps/`
 
 Portage dossier-pour-dossier (11 + 18 fichiers), deux retouches mécaniques seulement :
+
 1. Les ~10 fichiers importateurs directs de `@/data/story` (`LockScreen`, `CallsApp`, `IncomingCallScreen`, `ChatThread`, `MessagesApp`, `CommentsSheet`, `DmListScreen`, `DmThreadScreen`, `ExploreGrid`, `PostCard`, `ProfileScreen`, `ReelsScreen`, `StoriesBar`) → `useStoryStore()` + `story.getContact(...)` etc.
 2. Chaque binding `<img>` sur une valeur `image`/`media`/`url`/`avatar` passe par `resolveAssetUrl(...)` (`AppAvatar.vue` en particulier).
 
@@ -78,12 +80,12 @@ Scaffoldé via `pnpm exec quasar mode add electron`. Retouches manuelles (modèl
 
 ### `src/editor/` (coquille minimale phase 1)
 
-| Fichier | Rôle |
-|---|---|
-| `src/editor/pages/OpenProjectPage.vue` | Remplace `IndexPage.vue`. Bouton "Ouvrir un projet" → `storieAPI.selectProjectFolder()` → `storieAPI.loadProject(path)` → `story.loadProject(data)` (synchrone, avant navigation) → route vers `/preview`. |
-| `src/editor/pages/PreviewPage.vue` | Quasi identique à `NTR\src\pages\PhonePage.vue` : monte `<PhoneShell/>` + un panneau JSON/arbre repliable en lecture seule du `story.project` chargé. N'appelle pas `story.init()` — les données arrivent déjà chargées. |
-| `src/router/routes.js` | `/` → `OpenProjectPage`, `/preview` → `PreviewPage`. |
-| `src/layouts/MainLayout.vue` | Simplifié à un simple `<router-view/>`. |
+| Fichier                                | Rôle                                                                                                                                                                                                                     |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `src/editor/pages/OpenProjectPage.vue` | Remplace `IndexPage.vue`. Bouton "Ouvrir un projet" → `storieAPI.selectProjectFolder()` → `storieAPI.loadProject(path)` → `story.loadProject(data)` (synchrone, avant navigation) → route vers `/preview`.               |
+| `src/editor/pages/PreviewPage.vue`     | Quasi identique à `NTR\src\pages\PhonePage.vue` : monte `<PhoneShell/>` + un panneau JSON/arbre repliable en lecture seule du `story.project` chargé. N'appelle pas `story.init()` — les données arrivent déjà chargées. |
+| `src/router/routes.js`                 | `/` → `OpenProjectPage`, `/preview` → `PreviewPage`.                                                                                                                                                                     |
+| `src/layouts/MainLayout.vue`           | Simplifié à un simple `<router-view/>`.                                                                                                                                                                                  |
 
 ## `ProjectData` — forme exacte et `loadProject()`
 

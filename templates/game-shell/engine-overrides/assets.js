@@ -1,5 +1,5 @@
 // Replaces src/engine/assets.js AFTER src/engine/ has been copied fresh
-// from storie-engine into the shell build (see src-electron/ipc/build.js) —
+// from stories-engine into the shell build (see src-electron/ipc/build.js) —
 // the only file in the whole engine that legitimately differs between
 // editor and shipped game, because the two run in different environments:
 // the editor resolves an image through Electron's `storie-asset://`

@@ -14,7 +14,7 @@ resté hors périmètre dès le départ).
 Contrairement aux phases précédentes (jamais vérifiées visuellement, bloquées
 « bac à sable sans affichage »), cet audit a été fait contre une **vraie
 fenêtre Electron** : `pnpm run dev:electron` lancé pour de vrai, projet
-fixture `storie-engine-fixtures/demo-project` chargé (auto-repris depuis
+fixture `stories-engine-fixtures/demo-project` chargé (auto-repris depuis
 `localStorage` d'une session précédente), navigation réelle (clics via
 UI Automation Windows + simulation souris), capture d'écran de la fenêtre
 réelle à chaque étape. Tous les constats ci-dessous viennent soit d'un
@@ -49,7 +49,7 @@ navigation et la densité d'information n'ont pas de hiérarchie**, et
 **deux promesses du système de design ne sont pas tenues** (typographie,
 feedback sonore natif). C'est très exactement le symptôme décrit par la
 demande initiale : chaque écran pris isolément est propre, mais se repérer
-*entre* les écrans, ou dans la profondeur d'un seul écran dense (une
+_entre_ les écrans, ou dans la profondeur d'un seul écran dense (une
 timeline de 30 entrées, un choix imbriqué), demande de chercher.
 
 Sévérité : rien de cassé, rien d'illisible au sens contraste — mais plusieurs
@@ -62,10 +62,12 @@ guide existant.
 ### 1. La typographie du guide n'est jamais chargée — regression silencieuse — **corrigé**
 
 `design-tokens.scss` déclare :
+
 ```scss
 --font-ui: 'Inter', 'Fira Sans', sans-serif;
 --font-mono: 'Fira Code', 'JetBrains Mono', monospace;
 ```
+
 Vérifié : **aucun `@font-face`, aucun package `@fontsource/*`, rien dans
 `package.json` ni `quasar.config.js`** ne charge Inter, Fira Sans, Fira Code
 ou JetBrains Mono. Seul `'roboto-font'` (Quasar extras, non utilisé par ces
@@ -74,7 +76,7 @@ navigateur saute silencieusement les deux familles nommées et retombe sur la
 police système générique (`sans-serif` / `monospace` du moteur de rendu) —
 pas de crash, pas d'erreur console, juste une police différente de celle
 prévue par le guide sur chaque poste utilisateur. C'est la seule règle du
-§3 du guide qui n'est *pas* vérifiable visuellement sans regarder le
+§3 du guide qui n'est _pas_ vérifiable visuellement sans regarder le
 `<head>` — donc le genre de régression qui ne se remarque jamais tant que
 personne ne compare deux machines.
 **Fix concret** : `pnpm add @fontsource/inter @fontsource/fira-code` (ou
@@ -87,7 +89,7 @@ renégociation de design — les tokens sont déjà corrects.
 Confirmé à l'écran (capture `choice` → option 1 → onglet « Juste après ») :
 un `choice` peut contenir une option, qui contient un `TimelineEditor` niché
 (même composant, récursif), qui peut elle-même contenir un autre `choice`,
-etc. Rien dans l'UI ne dit *où on est* une fois qu'on a déplié 2-3 niveaux :
+etc. Rien dans l'UI ne dit _où on est_ une fois qu'on a déplié 2-3 niveaux :
 pas de breadcrumb (« Chapitre 1 › Choice "Que réponds-tu ?" › Option 1 ›
 Juste après »), pas d'indentation visuelle progressive, pas de couleur de
 profondeur. Le seul repère est la bordure bleue sur la carte actuellement
@@ -132,8 +134,8 @@ d'intro, section "STATS DU JOUEUR (FLAGS)" avec son état vide, section
 l'écran : une entrée `message` toute simple (juste un texte et un contact)
 affiche quand même ~15 lignes de bloc Condition vide en dessous. Sur un
 chapitre de 30 entrées, dépliées pour édition en série, c'est le même pavé
-vide répété 30 fois. Le guide (§5) demandait *un seul niveau de titre de
-section par écran-enfant* — ce n'est pas respecté : la home page d'un
+vide répété 30 fois. Le guide (§5) demandait _un seul niveau de titre de
+section par écran-enfant_ — ce n'est pas respecté : la home page d'un
 formulaire (`RequiresBuilder`) est ré-instanciée telle quelle à N niveaux
 d'imbrication, sans version condensée pour le cas (majoritaire) où il n'y a
 aucune condition.
@@ -179,8 +181,8 @@ l'hypothèse de désync était fausse) : Quasar's `Dialog.create()` sans
 : 'primary')`, trouvé en lisant `quasar.client.js` directement — un défaut
 non documenté dans le guide, spécifique au dark mode. **Fix appliqué** :
 `color` explicite sur les 8 appels `Dialog.create()` du projet (voir
-« Priorisation proposée » § quick wins). Le guide (§4, *jamais deux
-couleurs "primaires" qui se battent*) est maintenant respecté aussi sur
+« Priorisation proposée » § quick wins). Le guide (§4, _jamais deux
+couleurs "primaires" qui se battent_) est maintenant respecté aussi sur
 les composants Quasar génériques, pas seulement le code maison.
 
 ### 6. Onglets de navigation sans nom accessible — fix appliqué, vérification inconcluante
@@ -204,7 +206,7 @@ systématiquement exposé comme nom accessible non plus).
 
 Comparé côte à côte : `ChapterList`/`ThreadForm` ont un état vide correct
 (une phrase discrète). Mais **Traductions**, avant sélection d'une langue,
-affiche une page quasi entièrement vide avec une seule phrase centrée « 
+affiche une page quasi entièrement vide avec une seule phrase centrée «
 Sélectionne une langue à gauche » (confirmé à l'écran — > 900px de vide
 vertical). Le panneau **Groupes** avec un seul thread affiche un formulaire
 de 3 champs suivi de ~800px de vide (le panel ne fait pas sa propre
@@ -259,7 +261,7 @@ promettait (voir le téléphone en grand).
 **Root cause réelle** (trouvée en relisant `PhoneShell.vue` avant de
 corriger) : `.phone-frame` a déjà `width: min(94vw, 480px, calc(94vh*9/18))`
 — un plafond dur identique en mode docké et en mode focus, basé sur la
-fenêtre *entière* (`vw`/`vh`), pas sur le panneau qui l'entoure. Sur un
+fenêtre _entière_ (`vw`/`vh`), pas sur le panneau qui l'entoure. Sur un
 écran de bureau classique ce plafond (480×960) est déjà atteint en mode
 docké dès que le panneau n'est pas trop étroit — passer en focus ne
 changeait donc que le padding autour, jamais la taille réelle.
@@ -334,6 +336,7 @@ sur le bloc Condition qui alourdit chaque dépli (point 3).
 
 Pour éviter de tout remettre en cause sans discernement (la consigne dit
 « aucune contrainte » mais pas « tout est mauvais ») :
+
 - Système de tokens espacement/couleur/rayon : adopté à 97%, à garder tel quel.
 - Icônes Material par type d'entrée (`iconFor`) + résumé une ligne
   (`summaryFor`) dans `TimelineEditor` : exactement ce qu'il fallait, à
@@ -349,49 +352,47 @@ Pour éviter de tout remettre en cause sans discernement (la consigne dit
 ## Priorisation proposée (à valider avant tout code)
 
 **Quick wins (peu d'effort, gain immédiat, aucun risque de régression) :**
+
 1. [x] Charger réellement Inter + Fira Code (point 1) — `@fontsource/inter`
-   + `@fontsource/fira-code` installés (poids 400/600/700, les seuls
-   utilisés dans `src/editor`), importés dans `src/css/app.scss`. Vérifié
-   à l'écran : rendu change réellement, plus de fallback silencieux.
+   - `@fontsource/fira-code` installés (poids 400/600/700, les seuls
+     utilisés dans `src/editor`), importés dans `src/css/app.scss`. Vérifié
+     à l'écran : rendu change réellement, plus de fallback silencieux.
 2. [x] Couleur du bouton OK des dialogues (point 5) — **root cause
-   corrigée en cours de route** : ce n'était pas `$primary`/`--color-accent`
-   désynchronisés (ils étaient déjà identiques, `#4c8bf5`), mais un défaut
-   Quasar non documenté dans le guide : `Dialog.create()` sans `color`
-   explicite retombe sur `vmColor = props.color || (isDark ? 'amber' :
-   'primary')` — trouvé en lisant le bundle Quasar lui-même
-   (`quasar.client.js`). Les 8 appels `Dialog.create()` du projet
-   (`EditorPage.vue` ×3, `AssetsPanel.vue`, `ChapterList.vue`,
-   `ContactList.vue` ×2, `ThreadList.vue` ×2) ont maintenant un `color`
-   explicite : `'primary'` pour les dialogues informatifs/de confirmation
-   neutre, `'negative'` pour les 4 confirmations de suppression (plus
-   cohérent avec la règle "destructif = danger" du guide §6 qu'un
-   `'primary'` partout). Vérifié à l'écran : OK redevenu bleu.
+       corrigée en cours de route** : ce n'était pas `$primary`/`--color-accent`
+       désynchronisés (ils étaient déjà identiques, `#4c8bf5`), mais un défaut
+       Quasar non documenté dans le guide : `Dialog.create()` sans `color`
+       explicite retombe sur `vmColor = props.color || (isDark ? 'amber' :
+'primary')` — trouvé en lisant le bundle Quasar lui-même
+       (`quasar.client.js`). Les 8 appels `Dialog.create()` du projet
+       (`EditorPage.vue` ×3, `AssetsPanel.vue`, `ChapterList.vue`,
+       `ContactList.vue` ×2, `ThreadList.vue` ×2) ont maintenant un `color`
+       explicite : `'primary'` pour les dialogues informatifs/de confirmation
+       neutre, `'negative'` pour les 4 confirmations de suppression (plus
+       cohérent avec la règle "destructif = danger" du guide §6 qu'un
+       `'primary'` partout). Vérifié à l'écran : OK redevenu bleu.
 3. [x] `:title` ajouté partout où `text-overflow: ellipsis` existait sans
-   lui (point 9) — 7 endroits : `ChapterList.vue` (`.chapter-title`),
-   `ThreadList.vue` (`.thread-name`), `ContactList.vue` (`.contact-name`),
-   `TimelineEditor.vue` + `SeedBucketEditor.vue` (`.summary`),
-   `AssetTree.vue` (`.folder-name`), `AssetsPanel.vue` (`.path` breadcrumb).
+       lui (point 9) — 7 endroits : `ChapterList.vue` (`.chapter-title`),
+       `ThreadList.vue` (`.thread-name`), `ContactList.vue` (`.contact-name`),
+       `TimelineEditor.vue` + `SeedBucketEditor.vue` (`.summary`),
+       `AssetTree.vue` (`.folder-name`), `AssetsPanel.vue` (`.path` breadcrumb).
 4. [x] `aria-label` sur les 7 onglets de navigation (point 6) — via le
-   mécanisme `attrs` du `options` array de `q-btn-toggle` (confirmé dans
-   le code source Quasar : chaque option destructure `attrs` et le spread
-   sur le `QBtn` généré). Correct côté code ; la re-vérification via
-   l'arbre d'accessibilité Windows après coup n'a rien confirmé de concluant
-   (l'arbre a11y de Chromium/Electron est paresseux/capricieux à interroger
-   de l'extérieur par UI Automation — pas un oracle fiable pour ce genre de
-   micro-vérif, à ne pas retenter de cette façon).
+       mécanisme `attrs` du `options` array de `q-btn-toggle` (confirmé dans
+       le code source Quasar : chaque option destructure `attrs` et le spread
+       sur le `QBtn` généré). Correct côté code ; la re-vérification via
+       l'arbre d'accessibilité Windows après coup n'a rien confirmé de concluant
+       (l'arbre a11y de Chromium/Electron est paresseux/capricieux à interroger
+       de l'extérieur par UI Automation — pas un oracle fiable pour ce genre de
+       micro-vérif, à ne pas retenter de cette façon).
 
 Lint (`eslint`) clean sur tous les fichiers touchés par ces 4 points.
 
 **Chantier moyen — fait et vérifié le 2026-07-28 (plan approuvé au
-préalable, voir historique de session) :**
-5. [x] Composant `AudioPreview.vue` maison pour remplacer les 3 `<audio
-   controls>` natifs (point 4). Détail au point 4 ci-dessus.
-6. [x] Bloc Condition condensé en une ligne "+ Ajouter une condition" à
-   tous les niveaux (point 3), tant qu'aucune condition n'existe. Détail
-   au point 3 ci-dessus.
-7. [x] Plafond de taille du téléphone relevé (480×960 → 600×1200) quand
-   `PhoneShell` a la prop `large` (activée par "Aperçu seul"). Détail +
-   nuance honnête sur l'ampleur réelle du gain au point 10 ci-dessus.
+préalable, voir historique de session) :** 5. [x] Composant `AudioPreview.vue` maison pour remplacer les 3 `<audio
+   controls>` natifs (point 4). Détail au point 4 ci-dessus. 6. [x] Bloc Condition condensé en une ligne "+ Ajouter une condition" à
+tous les niveaux (point 3), tant qu'aucune condition n'existe. Détail
+au point 3 ci-dessus. 7. [x] Plafond de taille du téléphone relevé (480×960 → 600×1200) quand
+`PhoneShell` a la prop `large` (activée par "Aperçu seul"). Détail +
+nuance honnête sur l'ampleur réelle du gain au point 10 ci-dessus.
 
 Lint clean sur tous les fichiers touchés (`AudioPreview.vue` nouveau,
 `AssetField.vue`, `AssetsPanel.vue`, `GameForm.vue`, `RequiresBuilder.vue`,
@@ -400,21 +401,18 @@ Lint clean sur tous les fichiers touchés (`AudioPreview.vue` nouveau,
 **Chantier plus large — fait et vérifié le 2026-07-28 (plan approuvé +
 2 questions de cadrage tranchées au préalable — fil d'Ariane cliquable qui
 replie plutôt qu'informatif seul, recherche seule sur les traductions
-plutôt que recherche + suppression groupée) :**
-8. [x] Fil d'Ariane de profondeur pour la navigation imbriquée choice/then
-   (point 2). Détail + limite sticky assumée au point 2 ci-dessus.
-9. [x] Recherche sur la liste des traductions inutilisées (point 8).
-   Détail au point 8 ci-dessus. Pas étendu à `AssetsPanel`/`ChapterList`
-   (pas demandé, pas le même problème d'échelle aujourd'hui).
+plutôt que recherche + suppression groupée) :** 8. [x] Fil d'Ariane de profondeur pour la navigation imbriquée choice/then
+(point 2). Détail + limite sticky assumée au point 2 ci-dessus. 9. [x] Recherche sur la liste des traductions inutilisées (point 8).
+Détail au point 8 ci-dessus. Pas étendu à `AssetsPanel`/`ChapterList`
+(pas demandé, pas le même problème d'échelle aujourd'hui).
 
 Lint clean sur les 3 fichiers touchés (`TimelineEditor.vue`,
 `ChoiceEntryForm.vue`, `I18nBucketEditor.vue`).
 
-**Backlog restant, hors périmètre choisi cette fois :**
-10. Rendre les états vides d'écran entier (Traductions sans langue
-    sélectionnée, Groupes avec peu de contenu) moins vides — probablement
-    en resserrant la mise en page plutôt qu'en ajoutant du contenu factice.
-    Pas demandé lors de ce chantier, reste en attente.
+**Backlog restant, hors périmètre choisi cette fois :** 10. Rendre les états vides d'écran entier (Traductions sans langue
+sélectionnée, Groupes avec peu de contenu) moins vides — probablement
+en resserrant la mise en page plutôt qu'en ajoutant du contenu factice.
+Pas demandé lors de ce chantier, reste en attente.
 
 ## Ce que je n'ai pas encore vérifié
 

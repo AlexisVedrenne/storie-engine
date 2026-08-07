@@ -1,4 +1,4 @@
-# Storie Engine — personnalisation jeu/téléphone (Phase 5)
+# Stories Engine — personnalisation jeu/téléphone (Phase 5)
 
 ## Statut : implémentée, en attente de vérification manuelle Electron (voir plus bas)
 
@@ -12,6 +12,7 @@ personnalisables. Aucun des 4 n'existait avant cette phase, au-delà d'un
 simple champ `title` sur `game.js`.
 
 Décisions actées :
+
 - Couleur d'interface = **reskin complet** (migration de tout usage à rôle
   d'accent réel vers une variable partagée), pas juste boutons/toggles.
 - Sons = **remplacement des 15 sons d'interface fixes existants**
@@ -46,6 +47,7 @@ Pas d'affichage Electron possible ici. Tout ce qui touche le rendu visuel réel 
 ## Feuille de route restante
 
 Rien de plus n'a été demandé explicitement. Restent en attente (pas de Phase 6 définie) :
+
 - Migration opportuniste des 10 formulaires d'entrée vers `useContactOptions()` — **fait** (voir commit `4709bd4`, hors scope de ce doc car réalisé juste avant la Phase 5).
 - Système de musique de fond/narrative — explicitement hors scope de cette phase, à discuter si besoin plus tard.
 - Extension future du catalogue `SUPPORTED_LOCALES` (langues d'interface du moteur) — chantier moteur séparé, mentionné dans `docs/phase4-plan.md`.

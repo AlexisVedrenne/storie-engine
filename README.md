@@ -1,4 +1,4 @@
-# Storie Engine (storie-engine)
+# Stories Engine (stories-engine)
 
 ## Install the dependencies
 

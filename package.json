@@ -1,8 +1,8 @@
 {
-  "name": "storie-engine",
+  "name": "stories-engine",
   "version": "0.0.1",
   "description": "A Quasar Project",
-  "productName": "Storie Engine",
+  "productName": "Stories Engine",
   "author": "Alexis Vedrenne <alexisvedrenne482@gmail.com>",
   "type": "module",
   "private": true,

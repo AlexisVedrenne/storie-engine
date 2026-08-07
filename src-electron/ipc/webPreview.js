@@ -10,22 +10,22 @@
 // build.js, this runs quasar's CLI through VENDORED_NODE_BINARY (see that
 // constant's own comment) against the vendored+junctioned node_modules —
 // no pnpm/Node.js/internet needed on the user's machine.
-import { ipcMain } from "electron";
-import fs from "node:fs";
-import os from "node:os";
-import path from "node:path";
-import http from "node:http";
-import { spawn } from "node:child_process";
-import { assembleShell, resolveQuasarCli, VENDORED_NODE_BINARY } from "./shellAssembly.js";
+import { ipcMain } from 'electron'
+import fs from 'node:fs'
+import os from 'node:os'
+import path from 'node:path'
+import http from 'node:http'
+import { spawn } from 'node:child_process'
+import { assembleShell, resolveQuasarCli, VENDORED_NODE_BINARY } from './shellAssembly.js'
 
-const PREFERRED_PORT = 9200; // distinct from the editor's own dev port (9000) so `pnpm dev` on storie-engine itself never collides with a preview it starts — just a preference: `--port` doesn't stop Vite silently picking another one if this is already taken (see URL parsing below, which is why that's no longer a problem)
+const PREFERRED_PORT = 9200 // distinct from the editor's own dev port (9000) so `pnpm dev` on stories-engine itself never collides with a preview it starts — just a preference: `--port` doesn't stop Vite silently picking another one if this is already taken (see URL parsing below, which is why that's no longer a problem)
 
 // One `session` object per start->stop cycle, tracked here so stop can find
 // and kill it — `aborted` lets a stop requested mid-assembly (before
 // there's a `child` to kill yet) still cancel the steps still to come
 // instead of quietly finishing and leaving an orphaned dev server nothing
 // in the UI still points at.
-let current = null;
+let current = null
 
 // Reads the dev server's OWN printed URL rather than assuming
 // PREFERRED_PORT was actually used, or guessing the LAN address ourselves
@@ -37,10 +37,10 @@ let current = null;
 // timeout. Quasar always prints every reachable URL (localhost + every
 // LAN interface) once truly ready — parsing that is both more honest
 // (it's what actually happened) and simpler than re-deriving it.
-const URL_RE = /https?:\/\/((?:\d{1,3}\.){3}\d{1,3}):(\d+)\//g;
+const URL_RE = /https?:\/\/((?:\d{1,3}\.){3}\d{1,3}):(\d+)\//g
 
 function isPrivateLan(ip) {
-  return /^(192\.168\.|10\.|172\.(1[6-9]|2\d|3[01])\.)/.test(ip);
+  return /^(192\.168\.|10\.|172\.(1[6-9]|2\d|3[01])\.)/.test(ip)
 }
 
 // Prefers a real private-LAN address (what a phone on the same Wi-Fi can
@@ -49,24 +49,24 @@ function isPrivateLan(ip) {
 // "internal" even though they're useless to a phone), and over both is
 // still better than nothing if that's all that got printed.
 function extractBestUrl(text) {
-  let lan = null;
-  let any = null;
+  let lan = null
+  let any = null
   for (const [full, ip] of text.matchAll(URL_RE)) {
-    if (ip === "127.0.0.1") continue;
+    if (ip === '127.0.0.1') continue
     if (isPrivateLan(ip)) {
-      lan = full;
-      break;
+      lan = full
+      break
     }
-    if (!any) any = full;
+    if (!any) any = full
   }
-  return lan || any || null;
+  return lan || any || null
 }
 
 async function stopSession(session) {
-  session.aborted = true;
+  session.aborted = true
   if (session.child) {
     try {
-      session.child.kill();
+      session.child.kill()
     } catch {
       // already dead — fine
     }
@@ -74,17 +74,17 @@ async function stopSession(session) {
   // Best-effort, same non-fatal tolerance as build.js's cleanupWithRetry —
   // a leftover temp dir is harmless, unlike masking that stop worked.
   try {
-    fs.rmSync(session.tmpDir, { recursive: true, force: true });
+    fs.rmSync(session.tmpDir, { recursive: true, force: true })
   } catch {
     // ignore
   }
 }
 
 async function stopCurrent() {
-  if (!current) return;
-  const session = current;
-  current = null;
-  await stopSession(session);
+  if (!current) return
+  const session = current
+  current = null
+  await stopSession(session)
 }
 
 // One last confirm GET against the URL Vite itself printed — belt and
@@ -92,83 +92,86 @@ async function stopCurrent() {
 // "actually serving", but this catches the edge case of a crash landing in
 // the handful of ms between printing it and us returning it to the dialog.
 function confirmReachable(url, timeoutMs) {
-  const { hostname, port } = new URL(url);
-  const deadline = Date.now() + timeoutMs;
+  const { hostname, port } = new URL(url)
+  const deadline = Date.now() + timeoutMs
   return new Promise((resolve, reject) => {
     function attempt() {
       const req = http.get({ host: hostname, port, timeout: 1500 }, (res) => {
-        res.resume();
-        resolve();
-      });
-      req.on("error", () => {
-        if (Date.now() > deadline) reject(new Error("Le serveur de preview s'est arrêté juste après son démarrage."));
-        else setTimeout(attempt, 300);
-      });
-      req.on("timeout", () => req.destroy());
+        res.resume()
+        resolve()
+      })
+      req.on('error', () => {
+        if (Date.now() > deadline)
+          reject(new Error("Le serveur de preview s'est arrêté juste après son démarrage."))
+        else setTimeout(attempt, 300)
+      })
+      req.on('timeout', () => req.destroy())
     }
-    attempt();
-  });
+    attempt()
+  })
 }
 
 export function registerWebPreviewHandlers() {
-  ipcMain.handle("project:startWebPreview", async (_evt, { rootPath }) => {
-    await stopCurrent();
+  ipcMain.handle('project:startWebPreview', async (_evt, { rootPath }) => {
+    await stopCurrent()
 
-    const tmpDir = path.join(os.tmpdir(), `storie-engine-preview-${Date.now()}`);
-    const session = { child: null, tmpDir, aborted: false };
-    current = session;
+    const tmpDir = path.join(os.tmpdir(), `stories-engine-preview-${Date.now()}`)
+    const session = { child: null, tmpDir, aborted: false }
+    current = session
 
-    await assembleShell(tmpDir, rootPath);
-    if (session.aborted) throw new Error("Preview annulée.");
+    await assembleShell(tmpDir, rootPath)
+    if (session.aborted) throw new Error('Preview annulée.')
 
     const devChild = spawn(
       VENDORED_NODE_BINARY,
-      [resolveQuasarCli(tmpDir), "dev", "--hostname", "0.0.0.0", "--port", String(PREFERRED_PORT)],
-      { cwd: tmpDir, env: process.env, stdio: "pipe" },
-    );
-    session.child = devChild;
+      [resolveQuasarCli(tmpDir), 'dev', '--hostname', '0.0.0.0', '--port', String(PREFERRED_PORT)],
+      { cwd: tmpDir, env: process.env, stdio: 'pipe' },
+    )
+    session.child = devChild
 
     // Rolling tail of everything the dev server has printed — both what
     // extractBestUrl() reads readiness from, and what gets attached to
     // whichever error surfaces below (timeout OR early exit) so a failure
     // is actually diagnosable instead of a bare "didn't start in time".
-    let output = "";
-    devChild.stdout.on("data", (d) => (output += d.toString()));
-    devChild.stderr.on("data", (d) => (output += d.toString()));
-    const outputTail = () => output.slice(-3000);
+    let output = ''
+    devChild.stdout.on('data', (d) => (output += d.toString()))
+    devChild.stderr.on('data', (d) => (output += d.toString()))
+    const outputTail = () => output.slice(-3000)
 
-    devChild.on("exit", () => {
-      if (current === session) current = null;
-    });
+    devChild.on('exit', () => {
+      if (current === session) current = null
+    })
 
     // A first-ever run against a freshly-junctioned node_modules can be
     // genuinely slow (Vite's dependency pre-bundling step, not something
     // repeat runs pay again — that cache lives inside the vendored
     // node_modules itself, shared across sessions) — kept generous.
-    const DEADLINE_MS = 120000;
-    const deadline = Date.now() + DEADLINE_MS;
+    const DEADLINE_MS = 120000
+    const deadline = Date.now() + DEADLINE_MS
 
     function waitForUrl() {
       return new Promise((resolve, reject) => {
         function check() {
-          const url = extractBestUrl(output);
+          const url = extractBestUrl(output)
           if (url) {
-            resolve(url);
-            return;
+            resolve(url)
+            return
           }
           if (Date.now() > deadline) {
             reject(
-              new Error(`Le serveur de preview n'a pas démarré à temps.\n\nSortie du serveur :\n${outputTail()}`),
-            );
-            return;
+              new Error(
+                `Le serveur de preview n'a pas démarré à temps.\n\nSortie du serveur :\n${outputTail()}`,
+              ),
+            )
+            return
           }
-          setTimeout(check, 300);
+          setTimeout(check, 300)
         }
-        check();
-      });
+        check()
+      })
     }
 
-    let url;
+    let url
     try {
       // Raced against the child's own exit — ANY exit while still waiting
       // to become ready is a failure worth reporting immediately, rather
@@ -177,31 +180,35 @@ export function registerWebPreviewHandlers() {
       url = await Promise.race([
         waitForUrl(),
         new Promise((_resolve, reject) => {
-          devChild.once("exit", (code) => {
-            reject(new Error(`Le serveur de preview s'est arrêté (code ${code}).\n\nSortie :\n${outputTail()}`));
-          });
+          devChild.once('exit', (code) => {
+            reject(
+              new Error(
+                `Le serveur de preview s'est arrêté (code ${code}).\n\nSortie :\n${outputTail()}`,
+              ),
+            )
+          })
         }),
-      ]);
-      await confirmReachable(url, 10000);
+      ])
+      await confirmReachable(url, 10000)
     } catch (err) {
-      await stopSession(session);
-      if (current === session) current = null;
-      throw err;
+      await stopSession(session)
+      if (current === session) current = null
+      throw err
     }
-    if (session.aborted) throw new Error("Preview annulée.");
+    if (session.aborted) throw new Error('Preview annulée.')
 
-    return { url };
-  });
+    return { url }
+  })
 
-  ipcMain.handle("project:stopWebPreview", async () => {
-    await stopCurrent();
-    return true;
-  });
+  ipcMain.handle('project:stopWebPreview', async () => {
+    await stopCurrent()
+    return true
+  })
 }
 
 // Called from electron-main.js's own 'before-quit' — closing the editor
 // while a preview is running (at ANY stage: still installing, or already
 // serving) must not leave an orphaned process (and its bound port) behind.
 export function stopWebPreviewOnQuit() {
-  return stopCurrent();
+  return stopCurrent()
 }

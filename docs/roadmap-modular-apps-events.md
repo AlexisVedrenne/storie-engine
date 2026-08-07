@@ -1,8 +1,9 @@
-# Storie Engine — roadmap apps modulaires + système d'événements
+# Stories Engine — roadmap apps modulaires + système d'événements
 
 ## Statut : Phase 1 (modularisation + activation) implémentée, reste proposition
 
 **Fait (2026-07-29)** :
+
 - Toggle par app dans l'onglet Jeu (`game.disabledApps`, absent = tout
   activé) + `story.enabledAppIds`.
 - Entrées de timeline liées à une app désactivée : masquées du menu
@@ -30,6 +31,7 @@ joueur).
 **Aussi fait (2026-07-29, même jour)** : les nouveaux types d'entrée de
 timeline (contenu scriptable depuis un chapitre) sont maintenant
 plug-and-play aussi — additif, pas une migration.
+
 - `src/engine/apps/entryTypeRegistry.js` scanne (glob) tout
   `src/components/apps/*/entryType.js` (contrat : type/app/icon/label/help/
   form/defaultEntry/process/extractText/collectReferences).
@@ -53,6 +55,7 @@ plug-and-play aussi — additif, pas une migration.
 
 **Phase 2 — EventManager (2026-07-29, MVP)** : fait, prouvé, pas encore
 d'éditeur graphique.
+
 - `src/engine/events/eventManager.js` — bus pub/sub minimal (`on`/`emit`/
   `clear`), pas un Pinia store (pas besoin de réactivité, évite une
   dépendance store-à-store entre `phone.js` et `story.js`).
@@ -71,8 +74,8 @@ d'éditeur graphique.
   principale est DÉJÀ bloquée sur son propre choix/appel au même moment —
   pas résolu génériquement ; garder les réactions d'event à du non-bloquant
   (message/dm/post/photo/story/reel/effect) pour l'instant.
-**Phase 3 — authoring (2026-07-29, en liste, pas en graphe)** : `game.events`
-n'a plus besoin d'être écrit à la main.
+  **Phase 3 — authoring (2026-07-29, en liste, pas en graphe)** : `game.events`
+  n'a plus besoin d'être écrit à la main.
 - `src/editor/components/EventsEditor.vue` — nouvel onglet "Events" dans
   l'éditeur, entre Jeu et Ressources. Liste de cartes dépliables (même
   patron que `SeedBucketEditor.vue`) : sélecteur de trigger, champ de
@@ -94,6 +97,7 @@ n'a plus besoin d'être écrit à la main.
 **Restructuration liste/détail + catalogue par app (même jour)** : le
 placeholder "listés à droite, pas ici" a été remplacé par le vrai panneau
 gauche, même patron que Contacts/Threads.
+
 - `src/engine/events/triggers.js` — catalogue central (nom, app propriétaire,
   label, champ de correspondance + `optionsFrom: 'apps'|'contacts'`).
   `eventManager.js`/`EventList.vue`/`EventForm.vue` en dérivent tous —
@@ -118,6 +122,7 @@ seul trigger par app pré-rempli à corriger après coup. Structure demandée
 et faite : "Commun" en premier (triggers cross-app), puis un groupe par
 app listant SES triggers propres, cliquables directement (pas d'étape
 intermédiaire "choisis l'app puis corrige").
+
 - Nouveaux triggers réels : `app.closed` (Commun — délai passé dans
   N'IMPORTE quelle app avant de la quitter, seuil minimum en secondes),
   `profile.opened` (Pixly — `ProfileScreen`), `conversation.opened`
@@ -134,6 +139,7 @@ intermédiaire "choisis l'app puis corrige").
   `app.opened` partout.
 
 **Filtres plus fins + titre d'event (même jour, 2ᵉ retour utilisateur)** :
+
 - `matchField` (singulier) → `matchFields` (tableau) — `app.closed` a
   maintenant 2 filtres (application optionnelle + délai minimum), tous les
   autres triggers en ont 1 (pas de cas spécial dans le code, juste un
@@ -163,6 +169,7 @@ intermédiaire "choisis l'app puis corrige").
 retour utilisateur)** : un choix/appel de la timeline principale ET un
 choix/appel déclenché par un Event peuvent maintenant être en attente en
 même temps sans que l'un écrase l'autre.
+
 - `activeChoice`/`pendingCall`/`timelineResume` étaient 3 champs uniques
   partagés — le 2ᵉ qui tentait de s'afficher écrasait silencieusement
   l'état du 1er, qui restait bloqué pour de bon.
@@ -198,6 +205,7 @@ d'onglets de l'éditeur.
 dialogue depuis l'édition d'un chapitre (bouton drapeau à côté du titre,
 pas un onglet séparé — les flags sont project-wide mais l'auteur veut y
 accéder sans quitter le chapitre en cours).
+
 - `src/project/collectFlags.js` (pur, testé en Node) scanne tout le projet
   (chapitres, flèches du graphe, choix imbriqués, events + leur `then`) et
   liste chaque flag : booléen/numérique, nombre d'usages, emplacements
@@ -221,7 +229,8 @@ accéder sans quitter le chapitre en cours).
 imports `@/editor/*`/`@/project/*` s'étaient glissés dans des fichiers
 copiés tels quels dans chaque jeu exporté (`src-electron/ipc/build.js`),
 qui eux ne copient jamais `src/editor/`/`src/project/` — voir mémoire
-`storie-engine-build-boundary`.
+`stories-engine-build-boundary`.
+
 - `story.js` (nouveau getter flags) importait `collectFlags.js` — déplacé
   en calcul local dans `FlagNameField.vue`/`FlagsPanel.vue`, même
   précédent que `collectPhotoOptions`/`collectPostOptions` dans
@@ -244,6 +253,7 @@ en cours de test, ne doit pas changer avec la langue d'édition). Jamais
 copié dans le jeu exporté. Switcher FR/EN dans le topbar + écran
 d'accueil. Les ~37 fichiers de `src/editor/` traduits, dictionnaires
 fr-FR/en-US vérifiés à parité exacte (429 clés des deux côtés).
+
 - `sharedOverrides.js` étend la traduction aux labels de triggers
   (`triggers.js`) et de types d'entrée plug-in (ex: app Email) — fichiers
   qui, eux, SHIPPENT dans le jeu, donc ne peuvent pas importer
@@ -269,7 +279,7 @@ système d'événements interactifs déclaratif).
 
 ---
 
-Pour faire évoluer Storie Engine vers un vrai moteur extensible, je ferais les
+Pour faire évoluer Stories Engine vers un vrai moteur extensible, je ferais les
 modifications dans cet ordre :
 
 # 1. Rendre les applications modulaires
@@ -339,10 +349,7 @@ Exemple :
   "name": "Messages",
   "icon": "sms.png",
   "enabled": true,
-  "permissions": [
-    "notifications",
-    "contacts"
-  ]
+  "permissions": ["notifications", "contacts"]
 }
 ```
 
@@ -467,8 +474,8 @@ Avec :
 
 ```json
 {
- "event": "app.opened",
- "app": "gallery"
+  "event": "app.opened",
+  "app": "gallery"
 }
 ```
 

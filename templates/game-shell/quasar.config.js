@@ -1,5 +1,5 @@
-// Generated game shell — see storie-engine/docs/phase3-plan.md.
-// Deliberately trimmed vs storie-engine's own quasar.config.js: no editor
+// Generated game shell — see stories-engine/docs/phase3-plan.md.
+// Deliberately trimmed vs stories-engine's own quasar.config.js: no editor
 // UI, no vite-plugin-checker/eslint (this project is never hand-edited),
 // no Dialog/Notify plugins (the game itself never shows editor dialogs).
 import { defineConfig } from '#q-app'
@@ -21,16 +21,16 @@ export default defineConfig((ctx) => {
           '@intlify/unplugin-vue-i18n/vite',
           {
             ssr: ctx.mode.ssr || ctx.mode.ssg,
-            include: [ctx.appPaths.resolve.app('src/i18n')]
-          }
-        ]
-      ]
+            include: [ctx.appPaths.resolve.app('src/i18n')],
+          },
+        ],
+      ],
     },
 
     framework: {
       // PhoneShell's design is dark-only.
       config: { dark: true },
-      plugins: []
+      plugins: [],
     },
 
     animations: [],
@@ -51,11 +51,13 @@ export default defineConfig((ctx) => {
         // when this template is built directly from source without going
         // through build.js/webPreview.js — e.g. a maintainer poking at
         // templates/game-shell on its own.
-        download: process.env.STORIE_ELECTRON_CACHE ? { cacheRoot: process.env.STORIE_ELECTRON_CACHE } : undefined
+        download: process.env.STORIE_ELECTRON_CACHE
+          ? { cacheRoot: process.env.STORIE_ELECTRON_CACHE }
+          : undefined,
       },
       builder: {
-        appId: 'storie-game'
-      }
-    }
+        appId: 'storie-game',
+      },
+    },
   }
 })

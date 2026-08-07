@@ -1,4 +1,4 @@
-# Storie Engine — inventaire des fonctionnalités
+# Stories Engine — inventaire des fonctionnalités
 
 Éditeur + moteur pour créer des jeux narratifs où le joueur vit l'histoire à
 travers un faux smartphone (SMS, réseau social façon Instagram, appels,
@@ -15,6 +15,7 @@ forme.
 ## 1. L'éditeur — structure du projet
 
 ### Graphe de chapitres
+
 - Chapitres = nœuds déplaçables sur un canvas (Vue Flow), reliés par des
   flèches **authored** (`chapter.next[].to`) — glisser depuis le port droit
   d'un chapitre vers le port gauche d'un autre crée le lien. Rien n'est
@@ -38,21 +39,22 @@ forme.
   à cet endroit (remplit un joueur/couleur/langue factices si besoin).
 
 ### 10 types d'entrées de timeline
+
 Chaque type a son propre formulaire d'édition, avec sélecteur type
 icône+description :
 
-| Type | Ce qui se passe pour le joueur |
-|---|---|
-| `message` | SMS reçu — délai de frappe proportionnel au texte, badge non-lu + notif (sauf conversation déjà ouverte), son, image jointe possible |
-| `dm` | Comme `message` mais dans un thread Pixly ; envoyé instantanément si `from: 'me'` |
-| `post` | Publication Pixly (n'importe quel contact ou `me`), instantané, pas de notif |
-| `reel` | Reel Pixly (média + légende + musique) |
-| `story` | Story Pixly (média ou emoji sur fond coloré) |
-| `photo` | Photo reçue → atterrit dans la Galerie (et devient matière première pour les posts du joueur) |
-| `choice` | Prompt + options (chacune avec ses propres `requires`/`effects`/`then`) ; bloque la timeline jusqu'au choix ; le texte choisi part comme réponse du joueur |
-| `call` | Appel entrant scripté (répliques ligne par ligne), sonnerie, bloque jusqu'à décroché/raccroché/refusé |
+| Type       | Ce qui se passe pour le joueur                                                                                                                                                |
+| ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `message`  | SMS reçu — délai de frappe proportionnel au texte, badge non-lu + notif (sauf conversation déjà ouverte), son, image jointe possible                                          |
+| `dm`       | Comme `message` mais dans un thread Pixly ; envoyé instantanément si `from: 'me'`                                                                                             |
+| `post`     | Publication Pixly (n'importe quel contact ou `me`), instantané, pas de notif                                                                                                  |
+| `reel`     | Reel Pixly (média + légende + musique)                                                                                                                                        |
+| `story`    | Story Pixly (média ou emoji sur fond coloré)                                                                                                                                  |
+| `photo`    | Photo reçue → atterrit dans la Galerie (et devient matière première pour les posts du joueur)                                                                                 |
+| `choice`   | Prompt + options (chacune avec ses propres `requires`/`effects`/`then`) ; bloque la timeline jusqu'au choix ; le texte choisi part comme réponse du joueur                    |
+| `call`     | Appel entrant scripté (répliques ligne par ligne), sonnerie, bloque jusqu'à décroché/raccroché/refusé                                                                         |
 | `timeskip` | Ellipse narrative : verrouille le téléphone, fondu au noir, avance heure/date/batterie, bloquant ou non (`blocking: false` = l'histoire continue derrière l'écran verrouillé) |
-| `effect` | Entrée invisible qui ne fait qu'appliquer des effets (flags, état du téléphone…) |
+| `effect`   | Entrée invisible qui ne fait qu'appliquer des effets (flags, état du téléphone…)                                                                                              |
 
 Toute entrée (et toute option de choix) peut porter un `requires` optionnel —
 si la condition échoue, l'entrée est silencieusement sautée.
@@ -68,6 +70,7 @@ l'ignore, la timeline reste strictement plate à l'exécution.
 ## 2. Conditions & Effets
 
 ### Conditions (`RequiresBuilder`, réutilisé sur flèches/entrées/options)
+
 - **Flags** : vrai/faux, exactement N, au moins N, au plus N, entre N et M.
   Autocomplete sur tous les flags déjà utilisés dans le projet, ou saisie
   libre pour en créer un nouveau.
@@ -87,6 +90,7 @@ part (bug d'auteur probable). Libellés orphelins (flag renommé/supprimé)
 supprimables individuellement ou en masse.
 
 ### Effets (`EffectsBuilder`)
+
 - **Flags** : additionner/soustraire un nombre (cumulatif), ou fixer
   vrai/faux (idempotent — pas cumulatif).
 - **Widget météo** (ville, température, condition, emoji, légende),
@@ -104,11 +108,13 @@ supprimables individuellement ou en masse.
 ## 3. Le téléphone du joueur — 5 apps + coquille
 
 ### Messages (SMS)
+
 Liste de conversations (recherche, non-lus), thread avec bulles
 gauche/droite, images jointes, animation "en train d'écrire". Pas de champ
 de saisie libre — le joueur ne "parle" que via les choix scriptés.
 
 ### Pixly (réseau social façon Instagram)
+
 - **Fil** : posts des contacts suivis + les siens, like/commentaire
   fonctionnels (partage/enregistrer décoratifs).
 - **Stories** : anneaux vu/pas-vu, viewer plein écran avec barres de
@@ -128,11 +134,13 @@ de saisie libre — le joueur ne "parle" que via les choix scriptés.
 - **Likes** : identique posts/reels, persisté, son + animation cœur.
 
 ### Galerie
+
 Grille 3 colonnes en lecture seule de toutes les photos reçues, viewer
 plein écran. Pas de prise de photo — uniquement réception. Ce pool nourrit
 le wizard "Créer un post".
 
 ### Appels
+
 Onglets Récents (log, manqué/répondu) / Contacts (uniquement ceux ayant
 déjà envoyé un vrai SMS). Le joueur ne peut jamais appeler lui-même — appel
 toujours entrant, déclenché par une entrée `call`. Écran d'appel entrant
@@ -140,6 +148,7 @@ avec vibration du téléphone + sonnerie en boucle. Une fois décroché :
 script ligne par ligne, tap pour avancer.
 
 ### Réglages
+
 - **Fonctionnel** : son (on/off + volume), langue, batterie (réelle, pilotable
   par effet), réinitialiser le téléphone (efface toute la progression, garde
   le projet chargé, relance boot + wizard).
@@ -147,6 +156,7 @@ script ligne par ligne, tap pour avancer.
   factice, à propos (modèle/OS/n° série faux mais stables).
 
 ### Coquille du téléphone
+
 - Cadre 9:18, mode `large` pour l'aperçu plein écran de l'éditeur.
 - Séquence de démarrage : Boot → Setup Wizard (langue → bienvenue → nom →
   faux code PIN → faux wifi → faux sync des comptes → couleur d'accent →
@@ -167,6 +177,7 @@ Deux systèmes i18n distincts et indépendants — changer l'un ne change
 jamais l'autre.
 
 ### Langue du jeu (contenu narratif + chrome du téléphone)
+
 - Langues d'interface intégrées : français (défaut) + anglais. Le contenu
   narratif peut avoir des dictionnaires pour n'importe quel code de langue
   en plus.
@@ -180,6 +191,7 @@ jamais l'autre.
   Fallback gracieux vers le français si non traduit.
 
 ### Langue de l'éditeur lui-même (français + anglais)
+
 - Système séparé (`src/editor/i18n/`) pour les labels/tooltips/dialogues de
   l'éditeur — switcher FR/EN dans le topbar, persisté, sans effet sur la
   langue du jeu testé dans l'aperçu.
@@ -193,6 +205,7 @@ jamais l'autre.
   priorité, texte d'origine en repli sinon.
 
 ## 5. Assets & sons
+
 - Tout dans `assets/`, référencé par chemin relatif. Import (copie externe)
   ou parcourir (réutiliser existant) avec aperçu (image / lecteur audio
   inline).
@@ -206,6 +219,7 @@ jamais l'autre.
   chacun overridable par projet, sinon son par défaut du moteur.
 
 ## 6. Validation avant build
+
 - Intégrité des références (contacts/threads introuvables → erreur précise
   avec localisation).
 - `entryChapterId` et tous les `next[].to` doivent pointer vers un vrai
@@ -216,6 +230,7 @@ jamais l'autre.
 - Erreurs bloquent le build ; avertissements demandent confirmation.
 
 ## 7. Build / export
+
 - Assemblage d'un shell temporaire : template `game-shell` + copie fraîche
   du moteur de l'éditeur (jamais de duplication manuelle) + données du
   projet + assets → `pnpm install` + `quasar build -m electron`.
@@ -230,6 +245,7 @@ jamais l'autre.
   (choix en cours, notifs, appel en attente…).
 
 ## 8. Autres
+
 - **Sélecteur d'emoji** : bouton sur quasiment tous les champs de texte
   libre de l'éditeur — onglets par catégorie, récents, recherche par
   mot-clé insensible aux accents, insertion à la position du curseur.

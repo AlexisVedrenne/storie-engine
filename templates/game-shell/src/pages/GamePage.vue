@@ -22,7 +22,7 @@ import PhoneShell from '../components/phone/PhoneShell.vue'
 // Static equivalent of the editor's OpenProjectPage.vue — instead of an IPC
 // round-trip to the main process, the project data is assembled entirely
 // from files copied into ./project-data/ and public/story-assets/ at build
-// time (see storie-engine/docs/phase3-plan.md). Same ordering constraint as
+// time (see stories-engine/docs/phase3-plan.md). Same ordering constraint as
 // the editor: story.loadProject() must run synchronously, before <PhoneShell/>
 // mounts, so it already knows whether to show the first-boot setup wizard.
 import manifest from '../project-data/project.json'
@@ -80,11 +80,11 @@ story.loadProject({
     dms: seedDms,
     posts: seedPosts,
     reels: seedReels,
-    photos: seedPhotos
+    photos: seedPhotos,
   },
   i18n,
   assetsRoot: 'assets',
-  customApps
+  customApps,
 })
 
 // Resumes a local save if one exists (see story.js's save()/load(),

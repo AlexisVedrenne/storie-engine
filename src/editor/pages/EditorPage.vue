@@ -15,7 +15,9 @@
 
     <template v-else>
       <div class="topbar">
-        <span class="project-name">{{ story.project?.manifest?.name || t('editorPage.untitledProject') }}</span>
+        <span class="project-name">{{
+          story.project?.manifest?.name || t('editorPage.untitledProject')
+        }}</span>
         <span v-if="dirty" class="dirty-dot" :title="t('editorPage.unsavedTooltip')">●</span>
 
         <q-tabs
@@ -71,7 +73,9 @@
           class="btn-ghost"
           @click="focusPreview = !focusPreview"
         >
-          <q-tooltip>{{ focusPreview ? t('editorPage.showEditing') : t('editorPage.previewOnly') }}</q-tooltip>
+          <q-tooltip>{{
+            focusPreview ? t('editorPage.showEditing') : t('editorPage.previewOnly')
+          }}</q-tooltip>
         </q-btn>
         <q-toggle dense v-model="autosave" :label="t('editorPage.autosaveLabel')" color="primary" />
         <q-btn dense flat no-caps round icon="refresh" class="btn-ghost" @click="restartPreview">
@@ -114,7 +118,14 @@
         >
           <q-tooltip>{{ t('editorPage.buildTooltip') }}</q-tooltip>
         </q-btn>
-        <q-btn dense flat round icon="smartphone" color="primary" @click="webPreviewDialogRef?.open()">
+        <q-btn
+          dense
+          flat
+          round
+          icon="smartphone"
+          color="primary"
+          @click="webPreviewDialogRef?.open()"
+        >
           <q-tooltip>{{ t('editorPage.webPreviewTooltip') }}</q-tooltip>
         </q-btn>
         <q-btn
@@ -190,9 +201,25 @@
                       >
                         <q-tooltip>{{ t('editorPage.backToGraphTooltip') }}</q-tooltip>
                       </q-btn>
-                      <q-input dense outlined ref="chapterTitleInputRef" :label="t('editorPage.chapterTitleLabel')" v-model="selectedChapter.title" @blur="renameChapterIfNeeded">
+                      <q-input
+                        dense
+                        outlined
+                        ref="chapterTitleInputRef"
+                        :label="t('editorPage.chapterTitleLabel')"
+                        v-model="selectedChapter.title"
+                        @blur="renameChapterIfNeeded"
+                      >
                         <template #append>
-                          <EmojiPickerBtn @pick="(e) => (selectedChapter.title = insertEmojiAtCaret(chapterTitleInputRef, selectedChapter.title, e))" />
+                          <EmojiPickerBtn
+                            @pick="
+                              (e) =>
+                                (selectedChapter.title = insertEmojiAtCaret(
+                                  chapterTitleInputRef,
+                                  selectedChapter.title,
+                                  e,
+                                ))
+                            "
+                          />
                         </template>
                       </q-input>
                       <q-btn
@@ -206,7 +233,14 @@
                       >
                         <q-tooltip>{{ t('editorPage.previewFromChapterTooltip') }}</q-tooltip>
                       </q-btn>
-                      <q-btn dense flat round icon="flag" class="btn-ghost" @click="flagsDialogOpen = true">
+                      <q-btn
+                        dense
+                        flat
+                        round
+                        icon="flag"
+                        class="btn-ghost"
+                        @click="flagsDialogOpen = true"
+                      >
                         <q-tooltip>{{ t('editorPage.flagsTooltip') }}</q-tooltip>
                       </q-btn>
                     </div>
@@ -301,8 +335,13 @@
                   </q-tab-panel>
 
                   <q-tab-panel name="interactions">
-                    <InteractionDefForm v-if="selectedInteractionDef" :def="selectedInteractionDef" />
-                    <div v-else class="empty-state">{{ t('editorPage.interactionsEmptyState') }}</div>
+                    <InteractionDefForm
+                      v-if="selectedInteractionDef"
+                      :def="selectedInteractionDef"
+                    />
+                    <div v-else class="empty-state">
+                      {{ t('editorPage.interactionsEmptyState') }}
+                    </div>
                   </q-tab-panel>
 
                   <q-tab-panel name="apps">
@@ -461,14 +500,14 @@ import { useEditorI18n } from '@/editor/i18n'
 
 const { t } = useEditorI18n()
 
-const AUTOSAVE_KEY = 'storie-engine-autosave'
-const SPLIT_OUTER_KEY = 'storie-engine-split-outer'
-const SPLIT_INNER_KEY = 'storie-engine-split-inner'
+const AUTOSAVE_KEY = 'stories-engine-autosave'
+const SPLIT_OUTER_KEY = 'stories-engine-split-outer'
+const SPLIT_INNER_KEY = 'stories-engine-split-inner'
 const AUTOSAVE_DEBOUNCE_MS = 1200
 // Shared with OpenProjectPage.vue (set on open/create) — "Changer de projet"
 // clears it so leaving a project is a deliberate exit, not something the
 // next launch silently undoes by reopening the same project.
-const LAST_PROJECT_KEY = 'storie-engine-last-project'
+const LAST_PROJECT_KEY = 'stories-engine-last-project'
 
 const router = useRouter()
 const story = useStoryStore()
@@ -625,11 +664,21 @@ function watchActiveResource() {
 // different objects) — but which conversation is open WITHIN
 // messages/dms is local state inside SeedBucketEditor.vue, never lifted
 // here, so there's no equivalent of selectedContactIndex to exclude.
-watch([viewMode, selectedIndex, selectedCustomAppIndex, selectedLocale, selectedBucket, selectedSeedBucket], () => {
-  dirty.value = false
-  clearTimeout(debounceTimer)
-  watchActiveResource()
-})
+watch(
+  [
+    viewMode,
+    selectedIndex,
+    selectedCustomAppIndex,
+    selectedLocale,
+    selectedBucket,
+    selectedSeedBucket,
+  ],
+  () => {
+    dirty.value = false
+    clearTimeout(debounceTimer)
+    watchActiveResource()
+  },
+)
 watchActiveResource()
 
 // Chapter ids are auto-generated from the title at creation time (see
@@ -728,7 +777,11 @@ async function save() {
         rootPath: story.project.rootPath,
         source: serializeThreads(story.project.threads),
       })
-    } else if (viewMode.value === 'game' || viewMode.value === 'events' || viewMode.value === 'interactions') {
+    } else if (
+      viewMode.value === 'game' ||
+      viewMode.value === 'events' ||
+      viewMode.value === 'interactions'
+    ) {
       await window.storieAPI.saveGame({
         rootPath: story.project.rootPath,
         source: serializeGame(story.project.gameConfig),
@@ -883,7 +936,9 @@ async function computeValidation() {
   })
   for (const missingPath of missing) {
     const ref = assetRefs.find((a) => a.path === missingPath)
-    errors.push(t('editorPage.missingAssetError', { path: missingPath, labels: ref.labels.join(', ') }))
+    errors.push(
+      t('editorPage.missingAssetError', { path: missingPath, labels: ref.labels.join(', ') }),
+    )
   }
   return { errors, warnings }
 }
@@ -899,8 +954,14 @@ function showValidationDialog(errors, warnings) {
     return
   }
   const parts = []
-  if (errors.length) parts.push(`${t('editorPage.validationErrorsHeader', { n: errors.length })}\n${errors.join('\n')}`)
-  if (warnings.length) parts.push(`${t('editorPage.validationWarningsHeader', { n: warnings.length })}\n${warnings.join('\n')}`)
+  if (errors.length)
+    parts.push(
+      `${t('editorPage.validationErrorsHeader', { n: errors.length })}\n${errors.join('\n')}`,
+    )
+  if (warnings.length)
+    parts.push(
+      `${t('editorPage.validationWarningsHeader', { n: warnings.length })}\n${warnings.join('\n')}`,
+    )
   Dialog.create({
     title: t('editorPage.validationTitle'),
     message: parts.join('\n\n'),
@@ -939,7 +1000,10 @@ async function buildGame() {
       const proceed = await new Promise((resolve) => {
         Dialog.create({
           title: t('editorPage.warningsDialogTitle'),
-          message: t('editorPage.warningsDialogMessage', { n: warnings.length, list: warnings.join('\n') }),
+          message: t('editorPage.warningsDialogMessage', {
+            n: warnings.length,
+            list: warnings.join('\n'),
+          }),
           cancel: true,
           persistent: true,
           color: 'primary',
@@ -984,7 +1048,10 @@ async function buildGame() {
       story.project.manifest = result.manifest
       Notify.create({
         type: 'positive',
-        message: t('editorPage.buildExported', { version: result.manifest.version, outDir: result.outDir }),
+        message: t('editorPage.buildExported', {
+          version: result.manifest.version,
+          outDir: result.outDir,
+        }),
         timeout: 6000,
       })
     }

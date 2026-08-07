@@ -1,4 +1,4 @@
-// The Storie Engine EDITOR's own UI language — deliberately independent
+// The Stories Engine EDITOR's own UI language — deliberately independent
 // from `story.locale`/the shared vue-i18n instance in
 // src/engine/i18n/instance.js (that one drives the phone-chrome text AND
 // which project.i18n bucket the preview reads, i.e. "what language is
@@ -7,7 +7,7 @@
 // unrelated settings, two independent localStorage keys.
 //
 // Lives under src/editor/ on purpose — never copied into a built game
-// (see src-electron/ipc/build.js's copy list / [[storie-engine-build-boundary]]
+// (see src-electron/ipc/build.js's copy list / [[stories-engine-build-boundary]]
 // memory), unlike src/i18n/ which ships in every export.
 //
 // A tiny custom lookup instead of a second vue-i18n instance: vue-i18n's
@@ -22,7 +22,7 @@ import enUS from './en-US.js'
 import frFR from './fr-FR.js'
 
 const MESSAGES = { 'fr-FR': frFR, 'en-US': enUS }
-const LOCALE_KEY = 'storie-engine-editor-locale'
+const LOCALE_KEY = 'stories-engine-editor-locale'
 
 function readStored() {
   try {

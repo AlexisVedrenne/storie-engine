@@ -1,7 +1,7 @@
 // Translation overrides for text authored inside files that are SHARED
 // with the shipped game (src/engine/events/triggers.js, a plug-in app's
 // entryType.js under src/components/apps/) — those files can never import
-// src/editor/i18n directly (see [[storie-engine-build-boundary]] memory:
+// src/editor/i18n directly (see [[stories-engine-build-boundary]] memory:
 // it would break every future build the same way EmailEntryForm.vue's old
 // @/editor import did). Instead the ORIGINAL text there stays the
 // fallback, and the editor UI looks up a translation here first, keyed by

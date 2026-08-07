@@ -1,4 +1,4 @@
-# Storie Engine — graphe de chapitres authored (flèches = décisions du moteur)
+# Stories Engine — graphe de chapitres authored (flèches = décisions du moteur)
 
 ## Statut : implémenté
 
@@ -21,6 +21,7 @@ flèches pour dire "ce chapitre mène à celui-là".
 ## Modèle de données
 
 Chapitre (`chapters/<id>.js`) :
+
 ```js
 export default {
   id: 'chapter1',
@@ -33,6 +34,7 @@ export default {
   position: { x: 120, y: 80 }, // position du noeud, persistée
 }
 ```
+
 - Un chapitre n'a plus ni `route`, ni `requires` propre. Une option de choix
   n'a plus de `route` non plus — elle ne fait que ce qu'elle fait déjà
   (`effects`/`then`), typiquement poser un flag.
@@ -46,6 +48,7 @@ export default {
 
 `advance()`, en fin de chapitre, prend la **première arête sortante dont le
 `requires` passe**, dans l'ordre de `chapter.next` :
+
 ```js
 for (const edge of chapter.next || []) {
   if (this.checkConditions(edge.requires)) {
@@ -55,6 +58,7 @@ for (const edge of chapter.next || []) {
 }
 this.save() // aucune arête ne passe (ou aucune arête) → l'histoire s'arrête ici
 ```
+
 - Une arête sans `requires` est toujours prise si c'est la seule sortante.
 - Un chapitre avec `next` vide (ou dont aucune arête ne passe) est une vraie
   fin — pas de scan de secours, pas de fallback sur un ordre de fichier.

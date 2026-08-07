@@ -236,7 +236,7 @@ export default defineConfig((ctx) => {
         // that file). None of that is otherwise bundled by
         // @quasar/app-vite's own build (it only compiles what's actually
         // imported into the editor's SPA output), so it has to be copied in
-        // as raw extra resources or a packaged storie-engine.exe can build
+        // as raw extra resources or a packaged stories-engine.exe can build
         // projects at all (was a known, documented gap — docs/phase3-plan.md
         // — until the editor itself started getting packaged). Whole `src`
         // rather than just the needed subfolders, on purpose: build.js's own
@@ -248,7 +248,7 @@ export default defineConfig((ctx) => {
         // assembleShell() also copies APP_ROOT/public/{icons,sounds} and
         // favicon.ico into the exported game (engine sound effects live in
         // public/sounds/, see src/engine/utils/sound.js) — missing from
-        // this list originally, which made a packaged storie-engine.exe
+        // this list originally, which made a packaged stories-engine.exe
         // silently ship every exported game with zero sound files
         // (copyIfExists() no-ops when the source doesn't exist, no error).
         extraResource: [
@@ -261,7 +261,7 @@ export default defineConfig((ctx) => {
       builder: {
         // https://www.electron.build/configuration
 
-        appId: 'storie-engine',
+        appId: 'stories-engine',
       },
     },
 

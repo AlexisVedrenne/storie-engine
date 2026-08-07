@@ -1,4 +1,4 @@
-# UI/UX moderne et optimisée — guide de référence pour Storie Engine
+# UI/UX moderne et optimisée — guide de référence pour Stories Engine
 
 Doc de référence, pas un plan d'implémentation : explique ce qu'est une UI/UX "moderne et optimisée" pour ce type d'outil (éditeur desktop Electron, thème sombre, UI dense — sidebars, formulaires, panneaux redimensionnables), et sert de base commune avant de rebâtir l'interface de l'éditeur.
 
@@ -7,7 +7,7 @@ Doc de référence, pas un plan d'implémentation : explique ce qu'est une UI/UX
 Une interface "moderne" n'est pas une question de mode visuelle (glassmorphism, néons...) — c'est une question de **clarté au service de la tâche**. Cinq principes non négociables :
 
 1. **Hiérarchie visuelle claire** — à tout instant, l'œil doit savoir ce qui est le plus important sur l'écran. Se fait par la taille, le poids, le contraste, la position — jamais par la couleur seule (accessibilité).
-2. **Densité au service de la tâche, pas de l'esthétique** — un éditeur de contenu (comme celui-ci) affiche BEAUCOUP de champs. La densité est acceptable et même souhaitable, mais elle doit rester *scannable* : espacement régulier, alignement strict, groupement logique.
+2. **Densité au service de la tâche, pas de l'esthétique** — un éditeur de contenu (comme celui-ci) affiche BEAUCOUP de champs. La densité est acceptable et même souhaitable, mais elle doit rester _scannable_ : espacement régulier, alignement strict, groupement logique.
 3. **Cohérence systématique** — un bouton "primaire" a toujours la même couleur/forme partout. Un espacement de 8px est un multiple de 8px partout. Une police pour le code/id, une pour le texte — jamais un mélange ad hoc composant par composant.
 4. **Feedback immédiat** — chaque action (clic, sauvegarde, erreur, chargement) a une réponse visuelle en moins de 300ms. Rien ne doit laisser l'utilisateur se demander "est-ce que ça a marché ?".
 5. **Accessibilité clavier et contraste** — un outil utilisé des heures par jour doit être navigable au clavier (Tab, focus visible) et lisible sans fatigue (contraste texte ≥ 4.5:1 en thème sombre aussi).
@@ -19,20 +19,20 @@ Le symptôme n°1 d'une UI "pas claire" : chaque composant invente son propre es
 ```css
 /* src/css/design-tokens.scss — à créer, source unique de vérité */
 :root {
-  --space-1: 4px;   /* micro-espacement (entre icône et label) */
-  --space-2: 8px;   /* espacement de base */
-  --space-3: 12px;  /* padding standard d'un champ/carte */
-  --space-4: 16px;  /* padding standard d'un panneau */
-  --space-6: 24px;  /* séparation entre sections */
-  --space-8: 32px;  /* séparation entre blocs majeurs */
+  --space-1: 4px; /* micro-espacement (entre icône et label) */
+  --space-2: 8px; /* espacement de base */
+  --space-3: 12px; /* padding standard d'un champ/carte */
+  --space-4: 16px; /* padding standard d'un panneau */
+  --space-6: 24px; /* séparation entre sections */
+  --space-8: 32px; /* séparation entre blocs majeurs */
 
-  --radius-sm: 4px;  /* boutons, badges */
-  --radius-md: 8px;  /* cartes, champs */
+  --radius-sm: 4px; /* boutons, badges */
+  --radius-md: 8px; /* cartes, champs */
   --radius-lg: 12px; /* panneaux, dialogs */
 
-  --header-height: 48px;   /* topbar */
-  --sidebar-width: 280px;  /* ChapterList */
-  --row-height: 36px;      /* une ligne de liste (chapitre, entrée repliée) */
+  --header-height: 48px; /* topbar */
+  --sidebar-width: 280px; /* ChapterList */
+  --row-height: 36px; /* une ligne de liste (chapitre, entrée repliée) */
 }
 ```
 
@@ -42,10 +42,10 @@ Règle simple : **toute valeur de marge/padding dans le CSS doit être une de ce
 
 Deux polices seulement, chacune avec un rôle fixe :
 
-| Rôle | Police | Usage |
-|---|---|---|
-| Interface (labels, boutons, texte courant) | **Inter** ou **Fira Sans** (sans-serif, très lisible en petite taille) | Tout le texte UI |
-| Identifiants / code / chemins de fichiers | **Fira Code** ou **JetBrains Mono** (monospace) | `entry.type`, `chapter.id`, chemins d'assets, JSON |
+| Rôle                                       | Police                                                                 | Usage                                              |
+| ------------------------------------------ | ---------------------------------------------------------------------- | -------------------------------------------------- |
+| Interface (labels, boutons, texte courant) | **Inter** ou **Fira Sans** (sans-serif, très lisible en petite taille) | Tout le texte UI                                   |
+| Identifiants / code / chemins de fichiers  | **Fira Code** ou **JetBrains Mono** (monospace)                        | `entry.type`, `chapter.id`, chemins d'assets, JSON |
 
 Échelle de tailles (peu de paliers, cohérents partout) :
 
@@ -61,18 +61,18 @@ line-height: 1.4 à 1.5 partout (jamais 1 — trop serré, fatigue l'œil sur un
 
 Une UI sombre "moderne" n'est pas juste `#111` partout — elle a une échelle de gris avec des **rôles précis**, plus un seul accent (jamais deux couleurs "primaires" qui se battent) :
 
-| Rôle | Valeur | Usage |
-|---|---|---|
-| `--bg` | `#0F172A` | fond de l'app |
-| `--surface` | `#1E293B` | panneaux, cartes |
-| `--surface-hover` | `#334155` | hover sur une ligne/carte |
-| `--border` | `rgba(255,255,255,0.10)` | séparateurs — jamais plus opaque, jamais moins visible |
-| `--text` | `#F8FAFC` | texte principal |
-| `--text-muted` | `#94A3B8` | labels secondaires, méta-info — **jamais en dessous de ce gris**, sinon illisible |
-| `--accent` | `#4C8BF5` (bleu, déjà utilisé pour "chapitre actif") | action principale, sélection, lien |
-| `--success` | `#22C55E` | sauvegarde réussie |
-| `--danger` | `#F44336` | suppression, erreur |
-| `--warning` | `#FFC107` | "modifié non sauvegardé" (déjà utilisé) |
+| Rôle              | Valeur                                               | Usage                                                                             |
+| ----------------- | ---------------------------------------------------- | --------------------------------------------------------------------------------- |
+| `--bg`            | `#0F172A`                                            | fond de l'app                                                                     |
+| `--surface`       | `#1E293B`                                            | panneaux, cartes                                                                  |
+| `--surface-hover` | `#334155`                                            | hover sur une ligne/carte                                                         |
+| `--border`        | `rgba(255,255,255,0.10)`                             | séparateurs — jamais plus opaque, jamais moins visible                            |
+| `--text`          | `#F8FAFC`                                            | texte principal                                                                   |
+| `--text-muted`    | `#94A3B8`                                            | labels secondaires, méta-info — **jamais en dessous de ce gris**, sinon illisible |
+| `--accent`        | `#4C8BF5` (bleu, déjà utilisé pour "chapitre actif") | action principale, sélection, lien                                                |
+| `--success`       | `#22C55E`                                            | sauvegarde réussie                                                                |
+| `--danger`        | `#F44336`                                            | suppression, erreur                                                               |
+| `--warning`       | `#FFC107`                                            | "modifié non sauvegardé" (déjà utilisé)                                           |
 
 Règle de contraste : texte principal sur fond ≥ 4.5:1 (WCAG AA minimum) — se vérifie en 10 secondes avec n'importe quel color-contrast checker.
 
@@ -82,7 +82,7 @@ Pour un outil dense (formulaires empilés, listes d'entrées, builders imbriqué
 
 - **Groupement par carte/section avec un fond légèrement différent** (`--surface` sur `--bg`) plutôt que des lignes de séparation partout — l'œil regroupe visuellement sans effort.
 - **Un seul niveau de titre de section par écran-enfant** (ex. "Conditions (flags)" dans `RequiresBuilder`) — en `--text-xs` majuscule discret, jamais plus voyant que le contenu qu'il introduit.
-- **Repli/dépli (déjà en place dans `TimelineEditor`)** — la bonne instinct — mais l'état réduit doit donner un résumé *utile immédiatement*, pas juste le type. C'est déjà fait (`summaryFor()`), à pousser plus loin visuellement (icône par type d'entrée plutôt qu'un badge texte — voir §7).
+- **Repli/dépli (déjà en place dans `TimelineEditor`)** — la bonne instinct — mais l'état réduit doit donner un résumé _utile immédiatement_, pas juste le type. C'est déjà fait (`summaryFor()`), à pousser plus loin visuellement (icône par type d'entrée plutôt qu'un badge texte — voir §7).
 
 ## 6. Feedback & affordance
 
@@ -92,7 +92,7 @@ Pour un outil dense (formulaires empilés, listes d'entrées, builders imbriqué
 - **Aucune icône emoji comme icône d'UI** (✨👍 etc. dans le code de l'app, pas dans le contenu narratif édité) — utiliser les icônes Material déjà fournies par Quasar (`q-icon`), cohérentes en taille et en style.
 - **Boutons différenciés par intention** : primaire (Enregistrer, Créer — fond `--accent`), secondaire (Annuler, fermer — contour), destructif (Supprimer — `--danger`, jamais la même couleur qu'un bouton normal).
 
-## 7. Application concrète à Storie Engine — ce qui manque aujourd'hui
+## 7. Application concrète à Stories Engine — ce qui manque aujourd'hui
 
 Constat direct sur le code actuel (`src/editor/**`) :
 

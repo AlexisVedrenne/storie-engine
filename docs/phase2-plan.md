@@ -1,4 +1,4 @@
-# Storie Engine — éditeur visuel par formulaires (Phase 2)
+# Stories Engine — éditeur visuel par formulaires (Phase 2)
 
 ## Statut : implémentée, en attente de vérification manuelle Electron (voir plus bas)
 
@@ -7,6 +7,7 @@
 Phase 1 a prouvé le chargement dynamique d'un projet + aperçu téléphone live en lecture seule. Phase 2 ajoute l'édition réelle : créer/réordonner des chapitres, éditer chaque entrée de leur timeline via un formulaire dédié à son type, et écrire ces modifications sur disque.
 
 Décisions actées :
+
 - Un composant de formulaire sur-mesure par type d'entrée (pas de formulaire générique piloté par schéma).
 - Sauvegarde : bouton "Enregistrer" (+ Ctrl+S) toujours disponible, PLUS un toggle "sauvegarde auto" (débounce ~1.2s).
 - Réordonnancement : boutons monter/descendre (pas de glisser-déposer).
