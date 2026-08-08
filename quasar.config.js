@@ -274,6 +274,20 @@ export default defineConfig((ctx) => {
           path.join(import.meta.dirname, 'templates'),
           path.join(import.meta.dirname, 'public'),
         ],
+
+        // extraResource copies the raw filesystem, gitignore or not — a
+        // real incident: leftover `android/build`/`android/.gradle`
+        // directories from local test builds (deeply nested Gradle
+        // transform-cache folders, e.g. `jar_<hash>_bucket_0`) got shipped
+        // inside a packaged stories-engine.exe and made Windows Explorer
+        // refuse to copy the install folder ("chemin d'accès de
+        // destination trop long"). These are pure build output — the
+        // Android export pipeline (build.js's buildAndroidTarget) works
+        // from a disposable temp copy of templates/game-shell and never
+        // reads this app's own copy of android/build or .gradle — so
+        // excluding them here is never a functional loss, only smaller +
+        // safer packages.
+        ignore: [/[\\/]src-capacitor[\\/]android[\\/](.*[\\/])?(build|\.gradle)([\\/]|$)/],
       },
 
       builder: {
