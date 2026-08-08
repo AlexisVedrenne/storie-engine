@@ -21,6 +21,49 @@ import {
 import { detectJdk, detectSdk, getJdkDir, getSdkDir } from './androidToolchain.js'
 import { getToolchainRoot } from './android.js'
 
+function stripAnsi(str) {
+  // eslint-disable-next-line no-control-regex
+  return str.replace(/\x1b\[[0-9;]*m/g, '')
+}
+
+// Extracts a short human-readable "what's happening right now" line from
+// raw build-tool output, for BuildStepper.vue's step-3 live stage text.
+// None of these tools expose an actual percentage for the compile/package
+// steps (only the JDK/SDK *download* in androidToolchain.js genuinely has
+// bytes-based progress) — this is just the clearest single line seen so
+// far, not a computed fraction.
+const STAGE_PATTERNS = [
+  /WAIT\s*•\s*(.+)$/, // quasar's own "App •  WAIT  • Rolldown • Compiling..."
+  /^>\s*Task\s+:(.+)$/, // gradle's "> Task :app:compileReleaseJavaWithJavac"
+  /^(Downloading .+)$/, // gradle wrapper's own first-run download line
+]
+
+function extractStage(line) {
+  const clean = stripAnsi(line).trim()
+  for (const pattern of STAGE_PATTERNS) {
+    const match = clean.match(pattern)
+    if (match) return match[1].trim()
+  }
+  return null
+}
+
+// Splits a raw stdout/stderr chunk into complete lines, feeding each to
+// onStage() as they arrive — chunks don't align with line boundaries, so
+// an incomplete trailing line is held back and prefixed onto the next
+// chunk rather than parsed early.
+function makeLineFeeder(onStage) {
+  let buffer = ''
+  return (chunk) => {
+    buffer += chunk
+    const lines = buffer.split('\n')
+    buffer = lines.pop()
+    for (const line of lines) {
+      const stage = extractStage(line)
+      if (stage) onStage?.(stage)
+    }
+  }
+}
+
 // Runs the assembled shell's `quasar` CLI via VENDORED_NODE_BINARY (see
 // that constant's own comment for why — this used to spawn this app's OWN
 // electron binary in ELECTRON_RUN_AS_NODE=1 mode instead, which looked
@@ -33,8 +76,9 @@ import { getToolchainRoot } from './android.js'
 // own progress/warnings print (confirmed against a real run: "App • WAIT
 // • electron/packager • Bundling Application...", icon warnings, etc.) —
 // previously discarded entirely, which is why a silent packager skip gave
-// zero clue as to why.
-function run(scriptPath, args, cwd, extraEnv) {
+// zero clue as to why. `onStage`, if given, is fed every line of live
+// output for BuildStepper.vue's step-3 progress text (see extractStage()).
+function run(scriptPath, args, cwd, extraEnv, onStage) {
   return new Promise((resolve, reject) => {
     const child = spawn(VENDORED_NODE_BINARY, [scriptPath, ...args], {
       cwd,
@@ -43,8 +87,17 @@ function run(scriptPath, args, cwd, extraEnv) {
     })
     let stdout = ''
     let stderr = ''
-    child.stdout.on('data', (d) => (stdout += d.toString()))
-    child.stderr.on('data', (d) => (stderr += d.toString()))
+    const feedLines = makeLineFeeder(onStage)
+    child.stdout.on('data', (d) => {
+      const s = d.toString()
+      stdout += s
+      feedLines(s)
+    })
+    child.stderr.on('data', (d) => {
+      const s = d.toString()
+      stderr += s
+      feedLines(s)
+    })
     child.on('error', reject)
     child.on('close', (code) => {
       const output = `${stdout}${stderr}`.slice(-4000)
@@ -89,8 +142,9 @@ function sleep(ms) {
 }
 
 // Keep in sync with scripts/vendor-electron-cache.mjs (which pre-downloads
-// the Electron zip each of these needs) and EditorPage.vue's platform
-// checkboxes (which send back a subset of these `id`s as `targets`).
+// the Electron zip each of these needs) and BuildStepper.vue's distribution
+// checkboxes (which send back a subset of these `id`s, plus optionally
+// 'android', as `targetIds`).
 export const BUILD_TARGETS = [
   { id: 'win32-x64', platform: 'win32', arch: 'x64', label: 'Windows (x64)' },
   { id: 'darwin-x64', platform: 'darwin', arch: 'x64', label: 'macOS (Intel)' },
@@ -125,7 +179,7 @@ async function cleanupWithRetry(dir) {
 // dist/electron/Packaged regardless of -T, so reusing one tmpDir across
 // several -T runs would have each target's build wipe the previous one's
 // output out from under it before it got copied to destPath).
-async function buildTarget(rootPath, destPath, manifest, target) {
+async function buildTarget(rootPath, destPath, manifest, target, onStage) {
   const tmpDir = path.join(os.tmpdir(), `stories-engine-build-${Date.now()}-${target.id}`)
   try {
     await assembleShell(tmpDir, rootPath)
@@ -140,6 +194,7 @@ async function buildTarget(rootPath, destPath, manifest, target) {
         // requiring pnpm/yarn/npm/bun on the end user's machine.
         PATH: `${VENDORED_NPM_DIR}${path.delimiter}${process.env.PATH}`,
       },
+      onStage,
     )
 
     const packagedDir = path.join(tmpDir, 'dist', 'electron', 'Packaged')
@@ -192,12 +247,21 @@ function bumpAndSaveManifest(rootPath, bumpType) {
 // entirely. cross-spawn (not plain node:child_process), same EINVAL reason
 // as androidToolchain.js's own runCommand — gradlew.bat can't be spawned
 // directly on Windows without it.
-function runGradle(gradlewBin, args, cwd, env) {
+function runGradle(gradlewBin, args, cwd, env, onStage) {
   return new Promise((resolve, reject) => {
     const child = gradleSpawn(gradlewBin, args, { cwd, env, stdio: 'pipe' })
     let output = ''
-    child.stdout.on('data', (d) => (output += d.toString()))
-    child.stderr.on('data', (d) => (output += d.toString()))
+    const feedLines = makeLineFeeder(onStage)
+    child.stdout.on('data', (d) => {
+      const s = d.toString()
+      output += s
+      feedLines(s)
+    })
+    child.stderr.on('data', (d) => {
+      const s = d.toString()
+      output += s
+      feedLines(s)
+    })
     child.on('error', reject)
     child.on('close', (code) => {
       if (code === 0) resolve(output.slice(-4000))
@@ -213,24 +277,29 @@ function runGradle(gradlewBin, args, cwd, env) {
 // build -m capacitor -T android --skip-pkg` still does the web-asset build
 // + `cap sync android` (proven reliable — same assembled-shell pipeline as
 // every other target); only the actual gradle invocation is done by hand.
-async function buildAndroidTarget(rootPath, destPath, manifest, toolchainRoot) {
+async function buildAndroidTarget(rootPath, destPath, manifest, toolchainRoot, onStage) {
   const tmpDir = path.join(os.tmpdir(), `stories-engine-build-${Date.now()}-android`)
   try {
     await assembleShell(tmpDir, rootPath)
-    await run(resolveQuasarCli(tmpDir), ['build', '-m', 'capacitor', '-T', 'android', '--skip-pkg'], tmpDir, {
-      PATH: `${VENDORED_NPM_DIR}${path.delimiter}${process.env.PATH}`,
-    })
+    await run(
+      resolveQuasarCli(tmpDir),
+      ['build', '-m', 'capacitor', '-T', 'android', '--skip-pkg'],
+      tmpDir,
+      { PATH: `${VENDORED_NPM_DIR}${path.delimiter}${process.env.PATH}` },
+      onStage,
+    )
 
     const androidDir = path.join(tmpDir, 'src-capacitor', 'android')
     const gradlewBin = path.join(androidDir, process.platform === 'win32' ? 'gradlew.bat' : 'gradlew')
     const jdkDir = getJdkDir(toolchainRoot)
     const sdkDir = getSdkDir(toolchainRoot)
-    await runGradle(gradlewBin, ['assembleRelease'], androidDir, {
-      ...process.env,
-      JAVA_HOME: jdkDir,
-      ANDROID_HOME: sdkDir,
-      ANDROID_SDK_ROOT: sdkDir,
-    })
+    await runGradle(
+      gradlewBin,
+      ['assembleRelease'],
+      androidDir,
+      { ...process.env, JAVA_HOME: jdkDir, ANDROID_HOME: sdkDir, ANDROID_SDK_ROOT: sdkDir },
+      onStage,
+    )
 
     const apkPath = path.join(
       androidDir,
@@ -257,34 +326,75 @@ async function buildAndroidTarget(rootPath, destPath, manifest, toolchainRoot) {
   }
 }
 
-async function buildGame(rootPath, destPath, bumpType, targetIds) {
-  const manifest = bumpAndSaveManifest(rootPath, bumpType)
+// Android alongside BUILD_TARGETS' desktop entries — same shape (id/label),
+// dispatched differently in buildOneTarget() below (capacitor+gradlew, not
+// electron-packager). Single canonical order for BuildStepper.vue's step 3
+// progress list, independent of whatever order the user ticked checkboxes
+// in.
+const ANDROID_TARGET = { id: 'android', label: 'Android (.apk)' }
+const ALL_TARGETS = [...BUILD_TARGETS, ANDROID_TARGET]
 
-  // Checked here, not in shellAssembly.js's shared assembleShell() —
-  // webPreview.js (the other caller) never invokes electron-packager, so
-  // it has no use for this and shouldn't be blocked by its absence.
-  if (!fs.existsSync(VENDORED_ELECTRON_CACHE)) {
+async function buildOneTarget(id, rootPath, destPath, manifest, toolchainRoot, onStage) {
+  if (id === 'android') {
+    return buildAndroidTarget(rootPath, destPath, manifest, toolchainRoot, onStage)
+  }
+  const target = BUILD_TARGETS.find((t) => t.id === id)
+  return buildTarget(rootPath, destPath, manifest, target, onStage)
+}
+
+// Single orchestrator for every distribution — BuildStepper.vue's step 2
+// sends whichever ids were ticked (desktop + optionally 'android') and
+// this drives them all through one combined destPath + one progress
+// stream, instead of the two separate build flows (and two separate
+// "where to export" dialogs) this used to be.
+async function buildAll(rootPath, destPath, bumpType, targetIds, onProgress) {
+  const targets = ALL_TARGETS.filter((t) => targetIds.includes(t.id))
+
+  if (targets.some((t) => t.id !== 'android')) {
+    // Checked here, not in shellAssembly.js's shared assembleShell() —
+    // webPreview.js (the other caller) never invokes electron-packager, so
+    // it has no use for this and shouldn't be blocked by its absence.
+    if (!fs.existsSync(VENDORED_ELECTRON_CACHE)) {
+      throw new Error(
+        'Cache Electron introuvable (templates/game-shell/electron-cache). ' +
+          'Lance `pnpm run vendor:game-shell` à la racine de stories-engine avant de packager.',
+      )
+    }
+  }
+
+  const toolchainRoot = targetIds.includes('android') ? getToolchainRoot() : null
+  if (toolchainRoot && (!detectJdk(toolchainRoot) || !detectSdk(toolchainRoot))) {
+    // BuildStepper.vue's step 2 is expected to have already checked +
+    // installed this before ever letting the user reach step 3 — this is a
+    // last-resort guard against calling it out of order, not the primary
+    // UX path.
     throw new Error(
-      'Cache Electron introuvable (templates/game-shell/electron-cache). ' +
-        'Lance `pnpm run vendor:game-shell` à la racine de stories-engine avant de packager.',
+      "Toolchain Android (JDK/SDK) manquante ou incomplète. Relance l'installation depuis l'étape distribution.",
     )
   }
 
-  const targets = BUILD_TARGETS.filter((t) => targetIds.includes(t.id))
+  const manifest = bumpAndSaveManifest(rootPath, bumpType)
 
-  // Sequential, not Promise.all — every target reinstalls a fresh copy of
-  // the vendored node_modules/electron zip into its own tmpDir (real I/O,
-  // see assembleShell()'s own comment on why it's a copy not a symlink);
-  // running 2-4 of those concurrently is a bigger machine-resource risk
-  // than the extra wall-clock time of doing them one at a time.
+  // Sequential, not Promise.all — every desktop target reinstalls a fresh
+  // copy of the vendored node_modules/electron zip into its own tmpDir
+  // (real I/O, see assembleShell()'s own comment on why it's a copy not a
+  // symlink); running several of those concurrently (Android's gradle
+  // build is its own heavy JVM process on top) is a bigger machine-resource
+  // risk than the extra wall-clock time of doing them one at a time.
   const results = []
   const errors = []
   for (const target of targets) {
+    onProgress?.({ id: target.id, label: target.label, status: 'building' })
+    const onStage = (stage) =>
+      onProgress?.({ id: target.id, label: target.label, status: 'building', stage })
     try {
-      const outDir = await buildTarget(rootPath, destPath, manifest, target)
+      const outDir = await buildOneTarget(target.id, rootPath, destPath, manifest, toolchainRoot, onStage)
       results.push({ id: target.id, label: target.label, outDir })
+      onProgress?.({ id: target.id, label: target.label, status: 'success', outDir })
     } catch (err) {
-      errors.push({ id: target.id, label: target.label, message: err.message || String(err) })
+      const message = err.message || String(err)
+      errors.push({ id: target.id, label: target.label, message })
+      onProgress?.({ id: target.id, label: target.label, status: 'error', message })
     }
   }
 
@@ -292,37 +402,15 @@ async function buildGame(rootPath, destPath, bumpType, targetIds) {
 }
 
 export function registerBuildHandlers(mainWindow) {
-  ipcMain.handle('project:build', async (_evt, { rootPath, bumpType, targetIds }) => {
+  ipcMain.handle('project:buildAll', async (_evt, { rootPath, bumpType, targetIds }) => {
     const result = await dialog.showOpenDialog(mainWindow, {
       properties: ['openDirectory', 'createDirectory'],
       title: 'Choisir où exporter le jeu',
     })
     if (result.canceled || !result.filePaths[0]) return null
 
-    return buildGame(rootPath, result.filePaths[0], bumpType, targetIds)
-  })
-
-  ipcMain.handle('project:buildAndroid', async (_evt, { rootPath, bumpType }) => {
-    const toolchainRoot = getToolchainRoot()
-    // Checked here, not inside buildAndroidTarget() — the renderer is
-    // expected to have already run android:checkToolchain +
-    // android:installToolchain (see EditorPage.vue) before ever calling
-    // this; this is a last-resort guard against calling it out of order,
-    // not the primary UX path.
-    if (!detectJdk(toolchainRoot) || !detectSdk(toolchainRoot)) {
-      throw new Error(
-        "Toolchain Android (JDK/SDK) manquante ou incomplète. Lance l'installation depuis le dialogue d'export Android.",
-      )
-    }
-
-    const result = await dialog.showOpenDialog(mainWindow, {
-      properties: ['openDirectory', 'createDirectory'],
-      title: "Choisir où exporter l'APK",
+    return buildAll(rootPath, result.filePaths[0], bumpType, targetIds, (progress) => {
+      mainWindow.webContents.send('project:buildProgress', progress)
     })
-    if (result.canceled || !result.filePaths[0]) return null
-
-    const manifest = bumpAndSaveManifest(rootPath, bumpType)
-    const outApk = await buildAndroidTarget(rootPath, result.filePaths[0], manifest, toolchainRoot)
-    return { manifest, outApk }
   })
 }

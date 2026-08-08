@@ -64,15 +64,20 @@ contextBridge.exposeInMainWorld("storieAPI", {
   deleteCustomApp: (payload) => ipcRenderer.invoke("project:deleteCustomApp", payload),
   exportCustomApp: (payload) => ipcRenderer.invoke("project:exportCustomApp", payload),
   importCustomApp: (payload) => ipcRenderer.invoke("project:importCustomApp", payload),
-  buildGame: (payload) => ipcRenderer.invoke("project:build", payload),
-  buildAndroidGame: (payload) => ipcRenderer.invoke("project:buildAndroid", payload),
+  buildAll: (payload) => ipcRenderer.invoke("project:buildAll", payload),
   startWebPreview: (payload) => ipcRenderer.invoke("project:startWebPreview", payload),
   stopWebPreview: () => ipcRenderer.invoke("project:stopWebPreview"),
   checkAndroidToolchain: () => ipcRenderer.invoke("android:checkToolchain"),
   installAndroidToolchain: () => ipcRenderer.invoke("android:installToolchain"),
-  // Streamed progress (download/extract/license/package steps), not a
-  // one-shot invoke — first use of main->renderer event push in this app.
-  // Returns an unsubscribe function.
+  // Streamed progress, not a one-shot invoke — both per-distribution build
+  // status (BuildStepper.vue's step 3) and the Android toolchain
+  // download/extract/license/package steps (step 2). Each returns an
+  // unsubscribe function.
+  onBuildProgress: (callback) => {
+    const handler = (_evt, progress) => callback(progress)
+    ipcRenderer.on("project:buildProgress", handler)
+    return () => ipcRenderer.removeListener("project:buildProgress", handler)
+  },
   onAndroidInstallProgress: (callback) => {
     const handler = (_evt, progress) => callback(progress)
     ipcRenderer.on("android:installProgress", handler)

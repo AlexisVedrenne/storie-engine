@@ -34,8 +34,7 @@ export default {
     validateTooltip:
       'Valider le projet — cherche les références cassées (contact/thread/image introuvable) et les problèmes de chapitres',
     saveBtn: 'Enregistrer',
-    buildTooltip: 'Build — exporter ce projet en jeu jouable (app Electron packagée)',
-    buildAndroidTooltip: 'Export Android (bêta) — génère un .apk',
+    buildTooltip: 'Build — exporter ce projet en jeu jouable (desktop et/ou Android)',
     webPreviewTooltip: 'Preview web — tester sur ton téléphone via le Wi-Fi',
     switchProjectTooltip: 'Changer de projet',
     backToGraphTooltip: 'Retour au graphe',
@@ -68,18 +67,10 @@ export default {
     versionPatch: 'Version normale (patch)',
     versionMinor: 'Mineure',
     versionMajor: 'Majeure',
-    buildOk: 'Build',
-    platformDialogTitle: 'Plateformes à exporter',
-    platformDialogMessage: 'Choisis au moins une plateforme.',
     buildTargetWin: 'Windows (x64)',
     buildTargetMacIntel: 'macOS (Intel)',
     buildTargetMacArm: 'macOS (Apple Silicon)',
     buildTargetLinux: 'Linux (x64)',
-    buildExported: 'Jeu exporté en v{version} :\n{list}',
-    buildTargetErrors: 'Certaines plateformes ont échoué :\n{list}',
-    androidToolchainDialogTitle: 'Toolchain Android manquante',
-    androidToolchainDialogMessage:
-      "Premier export Android sur cette machine : télécharge un JDK + Android SDK (~700 Mo), une seule fois. Nécessite une connexion internet.",
     androidToolchainInstallOk: 'Installer',
     androidStageJdkDownload: 'Téléchargement JDK… {percent}%',
     androidStageJdkExtract: 'Extraction JDK…',
@@ -88,7 +79,22 @@ export default {
     androidStageSdkLicenses: 'Acceptation des licences…',
     androidStageSdkPackages: "Installation des paquets SDK…",
     androidStageDone: 'Toolchain prête.',
-    androidExported: 'APK exporté en v{version} : {outApk}',
+  },
+
+  buildStepper: {
+    stepVersionTitle: 'Version',
+    stepDistributionTitle: 'Distribution',
+    stepBuildTitle: 'Build',
+    continue: 'Continuer',
+    back: 'Retour',
+    startBuild: 'Lancer le build',
+    buildTargetAndroid: 'Android (.apk)',
+    toolchainChecking: 'Vérification du toolchain Android…',
+    toolchainReady: 'Toolchain Android prête.',
+    toolchainMissing:
+      "Toolchain Android absente (JDK + SDK, ~700 Mo, une seule fois, connexion internet requise).",
+    buildCancelled: 'Export annulé.',
+    buildingGeneric: 'Build en cours…',
   },
 
   chapterGraph: {
