@@ -35,6 +35,7 @@ export default {
       'Validate project — looks for broken references (missing contact/thread/image) and chapter issues',
     saveBtn: 'Save',
     buildTooltip: 'Build — export this project as a playable game (packaged Electron app)',
+    buildAndroidTooltip: 'Android export (beta) — generates a .apk',
     webPreviewTooltip: 'Web preview — test on your phone over Wi-Fi',
     switchProjectTooltip: 'Switch project',
     backToGraphTooltip: 'Back to graph',
@@ -75,6 +76,18 @@ export default {
     buildTargetLinux: 'Linux (x64)',
     buildExported: 'Game exported as v{version}:\n{list}',
     buildTargetErrors: 'Some platforms failed:\n{list}',
+    androidToolchainDialogTitle: 'Android toolchain missing',
+    androidToolchainDialogMessage:
+      'First Android export on this machine: downloads a JDK + Android SDK (~700MB), once. Requires an internet connection.',
+    androidToolchainInstallOk: 'Install',
+    androidStageJdkDownload: 'Downloading JDK… {percent}%',
+    androidStageJdkExtract: 'Extracting JDK…',
+    androidStageSdkDownload: 'Downloading Android SDK… {percent}%',
+    androidStageSdkExtract: 'Extracting Android SDK…',
+    androidStageSdkLicenses: 'Accepting licenses…',
+    androidStageSdkPackages: 'Installing SDK packages…',
+    androidStageDone: 'Toolchain ready.',
+    androidExported: 'APK exported as v{version}: {outApk}',
   },
 
   chapterGraph: {

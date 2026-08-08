@@ -65,6 +65,17 @@ contextBridge.exposeInMainWorld("storieAPI", {
   exportCustomApp: (payload) => ipcRenderer.invoke("project:exportCustomApp", payload),
   importCustomApp: (payload) => ipcRenderer.invoke("project:importCustomApp", payload),
   buildGame: (payload) => ipcRenderer.invoke("project:build", payload),
+  buildAndroidGame: (payload) => ipcRenderer.invoke("project:buildAndroid", payload),
   startWebPreview: (payload) => ipcRenderer.invoke("project:startWebPreview", payload),
-  stopWebPreview: () => ipcRenderer.invoke("project:stopWebPreview")
+  stopWebPreview: () => ipcRenderer.invoke("project:stopWebPreview"),
+  checkAndroidToolchain: () => ipcRenderer.invoke("android:checkToolchain"),
+  installAndroidToolchain: () => ipcRenderer.invoke("android:installToolchain"),
+  // Streamed progress (download/extract/license/package steps), not a
+  // one-shot invoke — first use of main->renderer event push in this app.
+  // Returns an unsubscribe function.
+  onAndroidInstallProgress: (callback) => {
+    const handler = (_evt, progress) => callback(progress)
+    ipcRenderer.on("android:installProgress", handler)
+    return () => ipcRenderer.removeListener("android:installProgress", handler)
+  }
 })

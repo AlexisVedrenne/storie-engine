@@ -3,6 +3,7 @@ import { registerBuildHandlers } from "./build.js";
 import { registerAppHandlers } from "./app.js";
 import { registerWebPreviewHandlers } from "./webPreview.js";
 import { registerCustomAppHandlers } from "./customApps.js";
+import { registerAndroidHandlers } from "./android.js";
 
 export function registerAllHandlers(mainWindow) {
   registerProjectHandlers(mainWindow);
@@ -10,4 +11,5 @@ export function registerAllHandlers(mainWindow) {
   registerAppHandlers();
   registerWebPreviewHandlers();
   registerCustomAppHandlers(mainWindow);
+  registerAndroidHandlers(mainWindow);
 }

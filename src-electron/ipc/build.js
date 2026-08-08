@@ -9,6 +9,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import os from 'node:os'
 import { spawn } from 'node:child_process'
+import gradleSpawn from 'cross-spawn'
 import {
   assembleShell,
   resolveQuasarCli,
@@ -17,6 +18,8 @@ import {
   VENDORED_NPM_DIR,
   VENDORED_ELECTRON_CACHE,
 } from './shellAssembly.js'
+import { detectJdk, detectSdk, getJdkDir, getSdkDir } from './androidToolchain.js'
+import { getToolchainRoot } from './android.js'
 
 // Runs the assembled shell's `quasar` CLI via VENDORED_NODE_BINARY (see
 // that constant's own comment for why — this used to spawn this app's OWN
@@ -163,18 +166,99 @@ async function buildTarget(rootPath, destPath, manifest, target) {
   }
 }
 
-async function buildGame(rootPath, destPath, bumpType, targetIds) {
-  // Bumped and written back to the PROJECT's own project.json (not just the
-  // temp build copy) before anything else — a build is what "release cut"
-  // means here, so the version increment has to actually stick for next
-  // time, same file assembleShell() below reads moments later to stamp the
-  // packaged .exe's own version metadata.
+// Bumped and written back to the PROJECT's own project.json (not just a
+// temp build copy) before anything else — a build is what "release cut"
+// means here, so the version increment has to actually stick for next
+// time, same file assembleShell() reads moments later to stamp the
+// packaged app's own version metadata. Shared by buildGame() (desktop) and
+// the Android handler — same "a build is a release cut" rule either way.
+function bumpAndSaveManifest(rootPath, bumpType) {
   const manifestPath = path.join(rootPath, 'project.json')
   const manifest = fs.existsSync(manifestPath)
     ? JSON.parse(fs.readFileSync(manifestPath, 'utf-8'))
     : {}
   manifest.version = bumpVersion(manifest.version, bumpType)
   fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + '\n', 'utf-8')
+  return manifest
+}
+
+// Runs gradlew directly (absolute path + cross-spawn), not through `quasar
+// build -m capacitor`'s own gradle invocation step — that one shells out to
+// a RELATIVE `./gradlew.bat` path via @quasar/app-vite's own spawn helper,
+// which failed outright on a real test machine (cmd.exe couldn't find it,
+// likely an OS hardening setting that disables searching the current
+// directory for bare executable names — confirmed reproducible standalone,
+// unrelated to this project's own code). Absolute path sidesteps it
+// entirely. cross-spawn (not plain node:child_process), same EINVAL reason
+// as androidToolchain.js's own runCommand — gradlew.bat can't be spawned
+// directly on Windows without it.
+function runGradle(gradlewBin, args, cwd, env) {
+  return new Promise((resolve, reject) => {
+    const child = gradleSpawn(gradlewBin, args, { cwd, env, stdio: 'pipe' })
+    let output = ''
+    child.stdout.on('data', (d) => (output += d.toString()))
+    child.stderr.on('data', (d) => (output += d.toString()))
+    child.on('error', reject)
+    child.on('close', (code) => {
+      if (code === 0) resolve(output.slice(-4000))
+      else reject(new Error(`"gradlew ${args.join(' ')}" a échoué (code ${code})\n${output.slice(-4000)}`))
+    })
+  })
+}
+
+// Distinct from buildTarget() (desktop/electron) — different mode
+// (capacitor, not electron), different final step (gradlew, not
+// electron-packager), different toolchain dependency (JDK+SDK, checked by
+// the caller before this ever runs — see registerBuildHandlers). `quasar
+// build -m capacitor -T android --skip-pkg` still does the web-asset build
+// + `cap sync android` (proven reliable — same assembled-shell pipeline as
+// every other target); only the actual gradle invocation is done by hand.
+async function buildAndroidTarget(rootPath, destPath, manifest, toolchainRoot) {
+  const tmpDir = path.join(os.tmpdir(), `stories-engine-build-${Date.now()}-android`)
+  try {
+    await assembleShell(tmpDir, rootPath)
+    await run(resolveQuasarCli(tmpDir), ['build', '-m', 'capacitor', '-T', 'android', '--skip-pkg'], tmpDir, {
+      PATH: `${VENDORED_NPM_DIR}${path.delimiter}${process.env.PATH}`,
+    })
+
+    const androidDir = path.join(tmpDir, 'src-capacitor', 'android')
+    const gradlewBin = path.join(androidDir, process.platform === 'win32' ? 'gradlew.bat' : 'gradlew')
+    const jdkDir = getJdkDir(toolchainRoot)
+    const sdkDir = getSdkDir(toolchainRoot)
+    await runGradle(gradlewBin, ['assembleRelease'], androidDir, {
+      ...process.env,
+      JAVA_HOME: jdkDir,
+      ANDROID_HOME: sdkDir,
+      ANDROID_SDK_ROOT: sdkDir,
+    })
+
+    const apkPath = path.join(
+      androidDir,
+      'app',
+      'build',
+      'outputs',
+      'apk',
+      'release',
+      'app-release-unsigned.apk',
+    )
+    if (!fs.existsSync(apkPath)) {
+      throw new Error(
+        "Le build Gradle a réussi mais l'APK est introuvable (app/build/outputs/apk/release).",
+      )
+    }
+
+    const outDir = path.join(destPath, slugify(manifest.name), 'android')
+    fs.mkdirSync(outDir, { recursive: true })
+    const outApk = path.join(outDir, `${slugify(manifest.name)}.apk`)
+    await fs.promises.copyFile(apkPath, outApk)
+    return outApk
+  } finally {
+    await cleanupWithRetry(tmpDir)
+  }
+}
+
+async function buildGame(rootPath, destPath, bumpType, targetIds) {
+  const manifest = bumpAndSaveManifest(rootPath, bumpType)
 
   // Checked here, not in shellAssembly.js's shared assembleShell() —
   // webPreview.js (the other caller) never invokes electron-packager, so
@@ -216,5 +300,29 @@ export function registerBuildHandlers(mainWindow) {
     if (result.canceled || !result.filePaths[0]) return null
 
     return buildGame(rootPath, result.filePaths[0], bumpType, targetIds)
+  })
+
+  ipcMain.handle('project:buildAndroid', async (_evt, { rootPath, bumpType }) => {
+    const toolchainRoot = getToolchainRoot()
+    // Checked here, not inside buildAndroidTarget() — the renderer is
+    // expected to have already run android:checkToolchain +
+    // android:installToolchain (see EditorPage.vue) before ever calling
+    // this; this is a last-resort guard against calling it out of order,
+    // not the primary UX path.
+    if (!detectJdk(toolchainRoot) || !detectSdk(toolchainRoot)) {
+      throw new Error(
+        "Toolchain Android (JDK/SDK) manquante ou incomplète. Lance l'installation depuis le dialogue d'export Android.",
+      )
+    }
+
+    const result = await dialog.showOpenDialog(mainWindow, {
+      properties: ['openDirectory', 'createDirectory'],
+      title: "Choisir où exporter l'APK",
+    })
+    if (result.canceled || !result.filePaths[0]) return null
+
+    const manifest = bumpAndSaveManifest(rootPath, bumpType)
+    const outApk = await buildAndroidTarget(rootPath, result.filePaths[0], manifest, toolchainRoot)
+    return { manifest, outApk }
   })
 }

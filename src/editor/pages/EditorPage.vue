@@ -122,6 +122,18 @@
           dense
           flat
           round
+          icon="android"
+          color="primary"
+          :loading="buildingAndroid"
+          :disable="buildingAndroid"
+          @click="buildAndroidGame"
+        >
+          <q-tooltip>{{ t('editorPage.buildAndroidTooltip') }}</q-tooltip>
+        </q-btn>
+        <q-btn
+          dense
+          flat
+          round
           icon="smartphone"
           color="primary"
           @click="webPreviewDialogRef?.open()"
@@ -1101,6 +1113,138 @@ async function buildGame() {
     Notify.create({ type: 'negative', message: err.message || String(err), timeout: 8000 })
   } finally {
     building.value = false
+  }
+}
+
+// Labels for androidToolchain.js's progress stages (jdk-download,
+// jdk-extract, sdk-download, sdk-extract, sdk-licenses, sdk-packages,
+// done) — kept as a lookup here since that file runs main-process side,
+// outside the renderer's i18n, same split as BUILD_TARGETS' labels above.
+const androidStageLabels = {
+  'jdk-download': 'androidStageJdkDownload',
+  'jdk-extract': 'androidStageJdkExtract',
+  'sdk-download': 'androidStageSdkDownload',
+  'sdk-extract': 'androidStageSdkExtract',
+  'sdk-licenses': 'androidStageSdkLicenses',
+  'sdk-packages': 'androidStageSdkPackages',
+  done: 'androidStageDone',
+}
+
+const buildingAndroid = ref(false)
+async function buildAndroidGame() {
+  buildingAndroid.value = true
+  try {
+    const { errors, warnings } = await computeValidation()
+    if (errors.length) {
+      showValidationDialog(errors, warnings)
+      Notify.create({ type: 'negative', message: t('editorPage.buildCancelled') })
+      return
+    }
+    if (warnings.length) {
+      const proceed = await new Promise((resolve) => {
+        Dialog.create({
+          title: t('editorPage.warningsDialogTitle'),
+          message: t('editorPage.warningsDialogMessage', {
+            n: warnings.length,
+            list: warnings.join('\n'),
+          }),
+          cancel: true,
+          persistent: true,
+          color: 'primary',
+        })
+          .onOk(() => resolve(true))
+          .onCancel(() => resolve(false))
+      })
+      if (!proceed) return
+    }
+
+    const currentVersion = story.project.manifest?.version || '1.0.0'
+    const bumpType = await new Promise((resolve) => {
+      Dialog.create({
+        title: t('editorPage.versionDialogTitle'),
+        message: t('editorPage.versionDialogMessage', { version: currentVersion }),
+        options: {
+          type: 'radio',
+          model: 'patch',
+          items: [
+            { label: t('editorPage.versionNone'), value: 'none' },
+            { label: t('editorPage.versionPatch'), value: 'patch' },
+            { label: t('editorPage.versionMinor'), value: 'minor' },
+            { label: t('editorPage.versionMajor'), value: 'major' },
+          ],
+        },
+        cancel: true,
+        persistent: true,
+        color: 'primary',
+        ok: t('editorPage.buildOk'),
+      })
+        .onOk((v) => resolve(v))
+        .onCancel(() => resolve(null))
+    })
+    if (!bumpType) return
+
+    // Toolchain (JDK+SDK, ~700MB) is downloaded on demand on whichever
+    // machine builds Android — never bundled into stories-engine.exe
+    // itself (see androidToolchain.js's own comment on why). Checked here
+    // rather than always installing silently, since a first-time user
+    // should know a big one-time download is about to start.
+    const { jdkOk, sdkOk } = await window.storieAPI.checkAndroidToolchain()
+    if (!jdkOk || !sdkOk) {
+      const proceed = await new Promise((resolve) => {
+        Dialog.create({
+          title: t('editorPage.androidToolchainDialogTitle'),
+          message: t('editorPage.androidToolchainDialogMessage'),
+          cancel: true,
+          persistent: true,
+          color: 'primary',
+          ok: t('editorPage.androidToolchainInstallOk'),
+        })
+          .onOk(() => resolve(true))
+          .onCancel(() => resolve(false))
+      })
+      if (!proceed) return
+
+      const progressNotify = Notify.create({
+        group: false,
+        timeout: 0,
+        spinner: true,
+        color: 'primary',
+        message: t('editorPage.androidStageJdkDownload', { percent: 0 }),
+      })
+      const unsubscribe = window.storieAPI.onAndroidInstallProgress((p) => {
+        const key = androidStageLabels[p.stage] || p.stage
+        progressNotify({ message: t(`editorPage.${key}`, { percent: Math.round(p.percent * 100) }) })
+      })
+      try {
+        await window.storieAPI.installAndroidToolchain()
+      } catch (err) {
+        progressNotify({ type: 'negative', spinner: false, timeout: 8000, message: err.message || String(err) })
+        return
+      } finally {
+        unsubscribe()
+        progressNotify({ timeout: 1 })
+      }
+    }
+
+    const result = await window.storieAPI.buildAndroidGame({
+      rootPath: story.project.rootPath,
+      bumpType,
+    })
+    if (result) {
+      story.project.manifest = result.manifest
+      Notify.create({
+        type: 'positive',
+        message: t('editorPage.androidExported', {
+          version: result.manifest.version,
+          outApk: result.outApk,
+        }),
+        timeout: 8000,
+      })
+    }
+  } catch (err) {
+    Notify.create({ type: 'negative', message: err.message || String(err), timeout: 8000 })
+  } finally {
+    buildingAndroid.value = false
   }
 }
 </script>

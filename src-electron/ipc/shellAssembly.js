@@ -58,6 +58,12 @@ export const VENDORED_NODE_MODULES = path.join(TEMPLATE_DIR, 'node_modules')
 // produce "le dossier packagé est introuvable" with no other clue why.
 export const SRC_ELECTRON_NODE_MODULES = path.join(TEMPLATE_DIR, 'src-electron', 'node_modules')
 
+// Same reasoning as SRC_ELECTRON_NODE_MODULES, for the Android export
+// pipeline instead (@capacitor/core+cli+android — see build.js's
+// buildAndroidTarget()). Only build.js's Android path actually needs this;
+// harmless extra copy for webPreview.js's own callers.
+export const SRC_CAPACITOR_NODE_MODULES = path.join(TEMPLATE_DIR, 'src-capacitor', 'node_modules')
+
 // @quasar/app-vite's CLI entry point inside a given assembled shell —
 // resolved from the COPIED node_modules (see assembleShell), so this
 // only makes sense to call after assembleShell() has run for that tmpDir.
@@ -318,6 +324,11 @@ export async function assembleShell(tmpDir, rootPath) {
   // `@electron/packager` into this exact path on its own, requiring pnpm +
   // internet on whoever's machine runs this.
   await cpAsarSafe(SRC_ELECTRON_NODE_MODULES, path.join(tmpDir, 'src-electron', 'node_modules'), {
+    recursive: true,
+  })
+
+  // See SRC_CAPACITOR_NODE_MODULES's own comment.
+  await cpAsarSafe(SRC_CAPACITOR_NODE_MODULES, path.join(tmpDir, 'src-capacitor', 'node_modules'), {
     recursive: true,
   })
 }
