@@ -180,6 +180,7 @@ const screenOptions = computed(() =>
 .row {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: var(--space-3);
 }
 
@@ -189,7 +190,7 @@ const screenOptions = computed(() =>
 }
 
 .grow {
-  flex: 1;
+  flex: 1 1 160px;
 }
 
 .screen-tabs {

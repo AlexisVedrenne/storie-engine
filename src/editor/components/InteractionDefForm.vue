@@ -4,7 +4,13 @@
       <div class="section-label">{{ t('interactionDefForm.identityTitle') }}</div>
       <div class="row">
         <q-input dense outlined disabled label="Id" :model-value="def.id" class="id-input" />
-        <q-input dense outlined :label="t('interactionDefForm.nameLabel')" v-model="def.name" class="grow" />
+        <q-input
+          dense
+          outlined
+          :label="t('interactionDefForm.nameLabel')"
+          v-model="def.name"
+          class="grow"
+        />
       </div>
     </div>
 
@@ -66,6 +72,7 @@ function ensureSteps() {
 .row {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: var(--space-3);
 }
 
@@ -75,6 +82,6 @@ function ensureSteps() {
 }
 
 .grow {
-  flex: 1;
+  flex: 1 1 160px;
 }
 </style>

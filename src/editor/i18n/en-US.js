@@ -78,6 +78,14 @@ export default {
     androidStageSdkLicenses: 'Accepting licenses…',
     androidStageSdkPackages: 'Installing SDK packages…',
     androidStageDone: 'Toolchain ready.',
+    moreActionsTooltip: 'More actions',
+    validateLabel: 'Validate',
+    buildLabel: 'Build',
+    webPreviewLabel: 'Web preview',
+    navMenuTooltip: 'Navigation',
+    navLabelEvents: 'Events',
+    navLabelInteractions: 'Interactions',
+    navLabelApps: 'Apps',
   },
 
   buildStepper: {

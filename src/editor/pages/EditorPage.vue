@@ -21,6 +21,7 @@
         <span v-if="dirty" class="dirty-dot" :title="t('editorPage.unsavedTooltip')">●</span>
 
         <q-tabs
+          v-if="!topbarCompact"
           dense
           no-caps
           v-model="viewMode"
@@ -61,42 +62,216 @@
           </q-tab>
         </q-tabs>
 
+        <!-- En dessous de TOPBAR_COLLAPSE_WIDTH : icônes serrées + flèches
+             de scroll intégrées de q-tabs illisibles à 10 onglets (retour
+             utilisateur) — remplacées par un bouton hamburger ouvrant un
+             drawer de navigation en icône+libellé complet. -->
+        <q-btn v-else dense flat round icon="menu" class="btn-ghost" @click="navDrawerOpen = true">
+          <q-tooltip>{{ t('editorPage.navMenuTooltip') }}</q-tooltip>
+        </q-btn>
+
+        <q-dialog v-model="navDrawerOpen" position="left">
+          <q-card class="topbar-drawer">
+            <div class="topbar-drawer-header">
+              <span class="text-subtitle1">{{ t('editorPage.navMenuTooltip') }}</span>
+              <div class="spacer" />
+              <q-btn dense flat round icon="close" v-close-popup />
+            </div>
+            <q-separator />
+            <q-list class="topbar-drawer-list">
+              <q-item
+                v-for="tab in NAV_TABS"
+                :key="tab.name"
+                clickable
+                v-close-popup
+                :active="viewMode === tab.name"
+                active-class="nav-item-active"
+                @click="viewMode = tab.name"
+              >
+                <q-item-section avatar><q-icon :name="tab.icon" /></q-item-section>
+                <q-item-section>{{ t(tab.labelKey) }}</q-item-section>
+              </q-item>
+            </q-list>
+          </q-card>
+        </q-dialog>
+
         <div class="spacer" />
 
-        <EditorLangSwitch />
+        <!-- En dessous de TOPBAR_COLLAPSE_WIDTH, les actions secondaires se
+             replient dans un seul bouton "more_vert" (voir plus bas) — le
+             markup ci-dessous reste identique à avant, juste conditionné. -->
+        <template v-if="!topbarCompact">
+          <EditorLangSwitch />
+
+          <q-btn
+            dense
+            flat
+            round
+            :icon="focusPreview ? 'visibility_off' : 'smartphone'"
+            class="btn-ghost"
+            @click="focusPreview = !focusPreview"
+          >
+            <q-tooltip>{{
+              focusPreview ? t('editorPage.showEditing') : t('editorPage.previewOnly')
+            }}</q-tooltip>
+          </q-btn>
+          <q-toggle
+            dense
+            v-model="autosave"
+            :label="t('editorPage.autosaveLabel')"
+            color="primary"
+          />
+          <q-btn dense flat no-caps round icon="refresh" class="btn-ghost" @click="restartPreview">
+            <q-tooltip>{{ t('editorPage.restartPreviewTooltip') }}</q-tooltip>
+          </q-btn>
+          <CloudSyncButton />
+
+          <div class="topbar-divider" />
+
+          <q-btn
+            dense
+            flat
+            round
+            icon="fact_check"
+            class="btn-ghost"
+            :loading="validating"
+            @click="runValidation"
+          >
+            <q-tooltip>{{ t('editorPage.validateTooltip') }}</q-tooltip>
+          </q-btn>
+          <q-btn
+            dense
+            flat
+            round
+            icon="rocket_launch"
+            color="primary"
+            :loading="openingBuildStepper"
+            :disable="openingBuildStepper"
+            @click="openBuildStepper"
+          >
+            <q-tooltip>{{ t('editorPage.buildTooltip') }}</q-tooltip>
+          </q-btn>
+          <q-btn
+            dense
+            flat
+            round
+            icon="smartphone"
+            color="primary"
+            @click="webPreviewDialogRef?.open()"
+          >
+            <q-tooltip>{{ t('editorPage.webPreviewTooltip') }}</q-tooltip>
+          </q-btn>
+          <q-btn
+            dense
+            flat
+            round
+            icon="folder_open"
+            class="btn-ghost"
+            :disable="building"
+            @click="closeProject"
+          >
+            <q-tooltip>{{ t('editorPage.switchProjectTooltip') }}</q-tooltip>
+          </q-btn>
+        </template>
 
         <q-btn
+          v-else
           dense
           flat
           round
-          :icon="focusPreview ? 'visibility_off' : 'smartphone'"
+          icon="more_vert"
           class="btn-ghost"
-          @click="focusPreview = !focusPreview"
+          @click="topbarDrawerOpen = true"
         >
-          <q-tooltip>{{
-            focusPreview ? t('editorPage.showEditing') : t('editorPage.previewOnly')
-          }}</q-tooltip>
-        </q-btn>
-        <q-toggle dense v-model="autosave" :label="t('editorPage.autosaveLabel')" color="primary" />
-        <q-btn dense flat no-caps round icon="refresh" class="btn-ghost" @click="restartPreview">
-          <q-tooltip>{{ t('editorPage.restartPreviewTooltip') }}</q-tooltip>
-        </q-btn>
-        <CloudSyncButton />
-
-        <div class="topbar-divider" />
-
-        <q-btn
-          dense
-          flat
-          round
-          icon="fact_check"
-          class="btn-ghost"
-          :loading="validating"
-          @click="runValidation"
-        >
-          <q-tooltip>{{ t('editorPage.validateTooltip') }}</q-tooltip>
+          <q-tooltip>{{ t('editorPage.moreActionsTooltip') }}</q-tooltip>
         </q-btn>
 
+        <!-- q-dialog position="right", pas un vrai q-drawer — celui-ci
+             exigerait de vivre dans MainLayout.vue (frère de
+             q-page-container à l'intérieur du q-layout partagé par TOUTES
+             les pages), alors que tout l'état affiché ici est propre à
+             cette page. position="right" donne le même glissement latéral
+             plein écran sans toucher au layout partagé. -->
+        <q-dialog v-model="topbarDrawerOpen" position="right">
+          <q-card class="topbar-drawer">
+            <div class="topbar-drawer-header">
+              <span class="text-subtitle1">{{ t('editorPage.moreActionsTooltip') }}</span>
+              <div class="spacer" />
+              <q-btn dense flat round icon="close" v-close-popup />
+            </div>
+            <q-separator />
+            <q-list dense class="topbar-drawer-list">
+              <q-item>
+                <q-item-section>
+                  <EditorLangSwitch />
+                </q-item-section>
+              </q-item>
+
+              <q-item clickable @click="focusPreview = !focusPreview">
+                <q-item-section avatar>
+                  <q-icon :name="focusPreview ? 'visibility_off' : 'smartphone'" />
+                </q-item-section>
+                <q-item-section>{{
+                  focusPreview ? t('editorPage.showEditing') : t('editorPage.previewOnly')
+                }}</q-item-section>
+              </q-item>
+
+              <q-item>
+                <q-item-section>
+                  <q-toggle
+                    dense
+                    v-model="autosave"
+                    :label="t('editorPage.autosaveLabel')"
+                    color="primary"
+                  />
+                </q-item-section>
+              </q-item>
+
+              <q-item clickable v-close-popup @click="restartPreview">
+                <q-item-section avatar><q-icon name="refresh" /></q-item-section>
+                <q-item-section>{{ t('editorPage.restartPreviewTooltip') }}</q-item-section>
+              </q-item>
+
+              <q-item>
+                <q-item-section>
+                  <CloudSyncButton />
+                </q-item-section>
+              </q-item>
+
+              <q-separator />
+
+              <q-item clickable @click="runValidation">
+                <q-item-section avatar>
+                  <q-spinner v-if="validating" size="20px" />
+                  <q-icon v-else name="fact_check" />
+                </q-item-section>
+                <q-item-section>{{ t('editorPage.validateLabel') }}</q-item-section>
+              </q-item>
+
+              <q-item clickable :disable="openingBuildStepper" @click="openBuildStepper">
+                <q-item-section avatar>
+                  <q-spinner v-if="openingBuildStepper" size="20px" color="primary" />
+                  <q-icon v-else name="rocket_launch" color="primary" />
+                </q-item-section>
+                <q-item-section>{{ t('editorPage.buildLabel') }}</q-item-section>
+              </q-item>
+
+              <q-item clickable v-close-popup @click="webPreviewDialogRef?.open()">
+                <q-item-section avatar><q-icon name="smartphone" color="primary" /></q-item-section>
+                <q-item-section>{{ t('editorPage.webPreviewLabel') }}</q-item-section>
+              </q-item>
+
+              <q-item clickable v-close-popup :disable="building" @click="closeProject">
+                <q-item-section avatar><q-icon name="folder_open" /></q-item-section>
+                <q-item-section>{{ t('editorPage.switchProjectTooltip') }}</q-item-section>
+              </q-item>
+            </q-list>
+          </q-card>
+        </q-dialog>
+
+        <!-- Toujours visible, dans les deux modes, même emplacement à
+             l'extrémité droite — action principale, ne doit jamais se
+             retrouver repliée dans le menu. -->
         <q-btn
           dense
           unelevated
@@ -107,39 +282,6 @@
           :disable="!dirty"
           @click="save"
         />
-        <q-btn
-          dense
-          flat
-          round
-          icon="rocket_launch"
-          color="primary"
-          :loading="openingBuildStepper"
-          :disable="openingBuildStepper"
-          @click="openBuildStepper"
-        >
-          <q-tooltip>{{ t('editorPage.buildTooltip') }}</q-tooltip>
-        </q-btn>
-        <q-btn
-          dense
-          flat
-          round
-          icon="smartphone"
-          color="primary"
-          @click="webPreviewDialogRef?.open()"
-        >
-          <q-tooltip>{{ t('editorPage.webPreviewTooltip') }}</q-tooltip>
-        </q-btn>
-        <q-btn
-          dense
-          flat
-          round
-          icon="folder_open"
-          class="btn-ghost"
-          :disable="building"
-          @click="closeProject"
-        >
-          <q-tooltip>{{ t('editorPage.switchProjectTooltip') }}</q-tooltip>
-        </q-btn>
       </div>
 
       <div class="panes">
@@ -459,7 +601,7 @@
 <script setup>
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { Dialog, Notify } from 'quasar'
+import { Dialog, Notify, useQuasar } from 'quasar'
 import { useStoryStore } from '@/engine/stores/story'
 import { usePhoneStore } from '@/engine/stores/phone'
 import {
@@ -517,6 +659,36 @@ const router = useRouter()
 const story = useStoryStore()
 const phone = usePhoneStore()
 const chapterTitleInputRef = ref(null)
+
+// Repli des actions secondaires de la toolbar en dessous de cette largeur
+// (voir docs/ topbar plan) — calé sur le contenu réel de la toolbar (~15
+// éléments : nom de projet + 10 onglets + ~10 boutons/toggles), pas sur
+// les breakpoints génériques Quasar (sm=1024 ne colle pas, la fenêtre par
+// défaut de l'app fait déjà 1000×600). Constante à réajuster après un
+// premier essai visuel si besoin.
+const $q = useQuasar()
+const TOPBAR_COLLAPSE_WIDTH = 1300
+const topbarCompact = computed(() => $q.screen.width < TOPBAR_COLLAPSE_WIDTH)
+const topbarDrawerOpen = ref(false)
+const navDrawerOpen = ref(false)
+
+// Alimente le drawer de navigation compact — mêmes 10 destinations que la
+// q-tabs pleine largeur, mais avec un libellé COURT (tabEvents/
+// tabInteractions/tabApps sont des phrases-tooltip complètes, trop longues
+// pour une ligne de liste — voir editorPage.navLabel* ci-dessous), pas la
+// description longue utilisée comme tooltip sur les onglets en icône.
+const NAV_TABS = [
+  { name: 'chapters', icon: 'auto_stories', labelKey: 'editorPage.tabChapters' },
+  { name: 'events', icon: 'sensors', labelKey: 'editorPage.navLabelEvents' },
+  { name: 'interactions', icon: 'touch_app', labelKey: 'editorPage.navLabelInteractions' },
+  { name: 'apps', icon: 'widgets', labelKey: 'editorPage.navLabelApps' },
+  { name: 'contacts', icon: 'contacts', labelKey: 'editorPage.tabContacts' },
+  { name: 'threads', icon: 'groups', labelKey: 'editorPage.tabThreads' },
+  { name: 'game', icon: 'sports_esports', labelKey: 'editorPage.tabGame' },
+  { name: 'assets', icon: 'folder', labelKey: 'editorPage.tabAssets' },
+  { name: 'i18n', icon: 'translate', labelKey: 'editorPage.tabI18n' },
+  { name: 'seed', icon: 'inventory_2', labelKey: 'editorPage.tabSeed' },
+]
 
 const flagsDialogOpen = ref(false)
 const webPreviewDialogRef = ref(null)
@@ -1060,6 +1232,12 @@ async function openBuildStepper() {
 }
 
 .project-name {
+  flex-shrink: 1;
+  min-width: 0;
+  max-width: 240px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
   font-weight: 600;
   font-size: var(--text-base);
 }
@@ -1082,6 +1260,35 @@ async function openBuildStepper() {
   align-self: stretch;
   margin: var(--space-2) 0;
   background: var(--color-border);
+}
+
+/* Panneau "more_vert" replié (voir topbarCompact) — q-dialog
+   position="right", pas un q-menu : plein confort pour des rangées qui
+   embarquent des composants entiers (EditorLangSwitch/CloudSyncButton),
+   trop à l'étroit dans un dropdown classique. */
+.topbar-drawer {
+  width: 280px;
+  max-width: 85vw;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.topbar-drawer-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-2) var(--space-2) var(--space-4);
+}
+
+.topbar-drawer-list {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.nav-item-active {
+  color: var(--color-accent);
+  background: var(--color-accent-tint);
 }
 
 .btn-ghost {

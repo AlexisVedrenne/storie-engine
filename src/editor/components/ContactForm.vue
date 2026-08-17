@@ -4,9 +4,18 @@
       <div class="section-label">{{ t('contactForm.identityTitle') }}</div>
       <div class="row">
         <q-input dense outlined disabled label="Id" :model-value="contact.id" class="id-input" />
-        <q-input dense outlined ref="nameInputRef" :label="t('contactForm.nameLabel')" v-model="contact.name" class="grow">
+        <q-input
+          dense
+          outlined
+          ref="nameInputRef"
+          :label="t('contactForm.nameLabel')"
+          v-model="contact.name"
+          class="grow"
+        >
           <template #append>
-            <EmojiPickerBtn @pick="(e) => (contact.name = insertEmojiAtCaret(nameInputRef, contact.name, e))" />
+            <EmojiPickerBtn
+              @pick="(e) => (contact.name = insertEmojiAtCaret(nameInputRef, contact.name, e))"
+            />
           </template>
         </q-input>
       </div>
@@ -22,7 +31,15 @@
       </div>
       <div class="meta-row">
         <span class="filename">{{ contact.color || t('contactForm.defaultColor') }}</span>
-        <q-btn v-if="contact.color" dense flat round icon="close" size="sm" @click="contact.color = undefined">
+        <q-btn
+          v-if="contact.color"
+          dense
+          flat
+          round
+          icon="close"
+          size="sm"
+          @click="contact.color = undefined"
+        >
           <q-tooltip>{{ t('contactForm.resetColor') }}</q-tooltip>
         </q-btn>
       </div>
@@ -30,9 +47,19 @@
 
     <div class="panel">
       <div class="section-label">{{ t('contactForm.bioTitle') }}</div>
-      <q-input dense outlined ref="bioInputRef" type="textarea" autogrow :label="t('contactForm.bioLabel')" v-model="contact.bio">
+      <q-input
+        dense
+        outlined
+        ref="bioInputRef"
+        type="textarea"
+        autogrow
+        :label="t('contactForm.bioLabel')"
+        v-model="contact.bio"
+      >
         <template #append>
-          <EmojiPickerBtn @pick="(e) => (contact.bio = insertEmojiAtCaret(bioInputRef, contact.bio, e))" />
+          <EmojiPickerBtn
+            @pick="(e) => (contact.bio = insertEmojiAtCaret(bioInputRef, contact.bio, e))"
+          />
         </template>
       </q-input>
     </div>
@@ -42,11 +69,30 @@
         {{ t('contactForm.socialTitle') }}
         <FieldHelp :text="t('contactForm.socialHelp')" />
       </div>
-      <q-toggle dense :label="t('contactForm.hasSocialLabel')" :model-value="contact.hasSocial !== false" @update:model-value="(v) => (contact.hasSocial = v ? undefined : false)" />
+      <q-toggle
+        dense
+        :label="t('contactForm.hasSocialLabel')"
+        :model-value="contact.hasSocial !== false"
+        @update:model-value="(v) => (contact.hasSocial = v ? undefined : false)"
+      />
       <q-input dense outlined :label="t('contactForm.pseudoLabel')" v-model="contact.pseudo" />
       <div class="row">
-        <q-input dense outlined type="number" :label="t('contactForm.followersLabel')" v-model.number="contact.followers" class="grow" />
-        <q-input dense outlined type="number" :label="t('contactForm.followingLabel')" v-model.number="contact.following" class="grow" />
+        <q-input
+          dense
+          outlined
+          type="number"
+          :label="t('contactForm.followersLabel')"
+          v-model.number="contact.followers"
+          class="grow"
+        />
+        <q-input
+          dense
+          outlined
+          type="number"
+          :label="t('contactForm.followingLabel')"
+          v-model.number="contact.following"
+          class="grow"
+        />
       </div>
       <q-toggle
         dense
@@ -58,8 +104,16 @@
 
     <div class="panel">
       <div class="section-label">{{ t('contactForm.imagesTitle') }}</div>
-      <AssetField v-model="contact.avatar" :label="t('contactForm.avatarLabel')" :contact-id="contact.id" />
-      <AssetField v-model="contact.socialAvatar" :label="t('contactForm.socialAvatarLabel')" :contact-id="contact.id" />
+      <AssetField
+        v-model="contact.avatar"
+        :label="t('contactForm.avatarLabel')"
+        :contact-id="contact.id"
+      />
+      <AssetField
+        v-model="contact.socialAvatar"
+        :label="t('contactForm.socialAvatarLabel')"
+        :contact-id="contact.id"
+      />
     </div>
   </div>
 </template>
@@ -106,11 +160,12 @@ const bioInputRef = ref(null)
 
 .row {
   display: flex;
+  flex-wrap: wrap;
   gap: var(--space-3);
 }
 
 .grow {
-  flex: 1;
+  flex: 1 1 160px;
 }
 
 .id-input {

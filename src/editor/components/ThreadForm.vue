@@ -7,9 +7,18 @@
       </div>
       <div class="row">
         <q-input dense outlined disabled label="Id" :model-value="thread.id" class="id-input" />
-        <q-input dense outlined ref="nameInputRef" :label="t('threadList.groupNameLabel')" v-model="thread.name" class="grow">
+        <q-input
+          dense
+          outlined
+          ref="nameInputRef"
+          :label="t('threadList.groupNameLabel')"
+          v-model="thread.name"
+          class="grow"
+        >
           <template #append>
-            <EmojiPickerBtn @pick="(e) => (thread.name = insertEmojiAtCaret(nameInputRef, thread.name, e))" />
+            <EmojiPickerBtn
+              @pick="(e) => (thread.name = insertEmojiAtCaret(nameInputRef, thread.name, e))"
+            />
           </template>
         </q-input>
       </div>
@@ -95,11 +104,12 @@ function removeParticipant(id) {
 
 .row {
   display: flex;
+  flex-wrap: wrap;
   gap: var(--space-3);
 }
 
 .grow {
-  flex: 1;
+  flex: 1 1 160px;
 }
 
 .id-input {
