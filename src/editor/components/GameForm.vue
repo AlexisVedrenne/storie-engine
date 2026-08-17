@@ -1,10 +1,24 @@
 <template>
   <div class="game-form">
-    <q-expansion-item default-opened dense-toggle icon="title" :label="t('gameForm.titleTitle')" class="panel">
+    <q-expansion-item
+      default-opened
+      dense-toggle
+      icon="title"
+      :label="t('gameForm.titleTitle')"
+      class="panel"
+    >
       <div class="panel-body">
-        <q-input dense outlined ref="titleInputRef" :label="t('gameForm.titleFieldLabel')" v-model="game.title">
+        <q-input
+          dense
+          outlined
+          ref="titleInputRef"
+          :label="t('gameForm.titleFieldLabel')"
+          v-model="game.title"
+        >
           <template #append>
-            <EmojiPickerBtn @pick="(e) => (game.title = insertEmojiAtCaret(titleInputRef, game.title, e))" />
+            <EmojiPickerBtn
+              @pick="(e) => (game.title = insertEmojiAtCaret(titleInputRef, game.title, e))"
+            />
           </template>
         </q-input>
       </div>
@@ -45,7 +59,12 @@
       </div>
     </q-expansion-item>
 
-    <q-expansion-item dense-toggle icon="wallpaper" :label="t('gameForm.wallpaperTitle')" class="panel">
+    <q-expansion-item
+      dense-toggle
+      icon="wallpaper"
+      :label="t('gameForm.wallpaperTitle')"
+      class="panel"
+    >
       <div class="panel-body">
         <AssetField v-model="game.wallpaper" :label="t('gameForm.wallpaperLabel')" />
         <AssetField v-model="game.lockWallpaper" :label="t('gameForm.lockWallpaperLabel')" />
@@ -68,7 +87,15 @@
         </div>
         <div class="meta-row">
           <span class="filename">{{ game.accentColor || t('gameForm.accentColorDefault') }}</span>
-          <q-btn v-if="game.accentColor" dense flat round icon="close" size="sm" @click="game.accentColor = undefined">
+          <q-btn
+            v-if="game.accentColor"
+            dense
+            flat
+            round
+            icon="close"
+            size="sm"
+            @click="game.accentColor = undefined"
+          >
             <q-tooltip>{{ t('contactForm.resetColor') }}</q-tooltip>
           </q-btn>
         </div>
@@ -84,7 +111,15 @@
         </div>
         <div class="meta-row">
           <span class="filename">{{ game.caseColor || t('gameForm.caseColorDefault') }}</span>
-          <q-btn v-if="game.caseColor" dense flat round icon="close" size="sm" @click="game.caseColor = undefined">
+          <q-btn
+            v-if="game.caseColor"
+            dense
+            flat
+            round
+            icon="close"
+            size="sm"
+            @click="game.caseColor = undefined"
+          >
             <q-tooltip>{{ t('contactForm.resetColor') }}</q-tooltip>
           </q-btn>
         </div>
@@ -100,8 +135,20 @@
         </q-item-section>
       </template>
       <div class="panel-body">
-        <q-input dense outlined :label="t('gameForm.osNameLabel')" v-model="game.osName" :placeholder="t('gameForm.osNameDefault')" />
-        <q-input dense outlined :label="t('gameForm.socialAppNameLabel')" v-model="game.socialAppName" :placeholder="t('gameForm.socialAppNameDefault')" />
+        <q-input
+          dense
+          outlined
+          :label="t('gameForm.osNameLabel')"
+          v-model="game.osName"
+          :placeholder="t('gameForm.osNameDefault')"
+        />
+        <q-input
+          dense
+          outlined
+          :label="t('gameForm.socialAppNameLabel')"
+          v-model="game.socialAppName"
+          :placeholder="t('gameForm.socialAppNameDefault')"
+        />
       </div>
     </q-expansion-item>
 
@@ -113,7 +160,12 @@
           <FieldHelp :text="t('gameForm.appsHelp')" />
         </q-item-section>
       </template>
-      <div class="panel-body app-order-list" @dragover="onListDragOver" @drop="onDrop" @dragend="onDragEnd">
+      <div
+        class="panel-body app-order-list"
+        @dragover="onListDragOver"
+        @drop="onDrop"
+        @dragend="onDragEnd"
+      >
         <div
           v-for="(app, i) in orderedApps"
           :key="app.id"

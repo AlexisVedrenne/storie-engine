@@ -13,9 +13,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import spawn from 'cross-spawn'
-import { Readable } from 'node:stream'
-import { pipeline } from 'node:stream/promises'
-import AdmZip from 'adm-zip'
+import { downloadFile, extractZipFlattenSingleRoot } from './downloadUtils.js'
 
 // Pinned versions — bump deliberately, not "latest", so a build made today
 // behaves the same next year. compileSdkVersion must stay in sync with
@@ -72,7 +70,11 @@ function getCmdlineToolsPlatformTag() {
 }
 
 export function detectJdk(toolchainRoot) {
-  const javaBin = path.join(getJdkDir(toolchainRoot), 'bin', process.platform === 'win32' ? 'java.exe' : 'java')
+  const javaBin = path.join(
+    getJdkDir(toolchainRoot),
+    'bin',
+    process.platform === 'win32' ? 'java.exe' : 'java',
+  )
   return fs.existsSync(javaBin)
 }
 
@@ -84,46 +86,6 @@ export function detectSdk(toolchainRoot) {
     fs.existsSync(path.join(sdkDir, 'platforms', ANDROID_PLATFORM)) &&
     fs.existsSync(path.join(sdkDir, 'build-tools', BUILD_TOOLS_VERSION))
   )
-}
-
-async function downloadFile(url, destPath, onProgress) {
-  const res = await fetch(url)
-  if (!res.ok) {
-    throw new Error(`Téléchargement échoué (${res.status} ${res.statusText}): ${url}`)
-  }
-  const total = Number(res.headers.get('content-length')) || 0
-  let received = 0
-  const nodeStream = Readable.fromWeb(res.body)
-  nodeStream.on('data', (chunk) => {
-    received += chunk.length
-    if (total) onProgress?.(received / total)
-  })
-  await pipeline(nodeStream, fs.createWriteStream(destPath))
-}
-
-// Extracts a zip whose content is a single top-level folder (true of both
-// the JDK and cmdline-tools zips) directly INTO destDir, discarding that
-// wrapper folder's own name — e.g. `jdk-17.0.13+11/bin/...` becomes
-// `<destDir>/bin/...`. Used both for the JDK itself (destDir = jdkDir) and
-// for cmdline-tools (destDir = sdkDir/cmdline-tools/latest — the exact
-// layout sdkmanager requires, see Google's own docs on cmdline-tools
-// placement).
-function extractZipFlattenSingleRoot(zipPath, destDir) {
-  const tmpExtract = `${destDir}.extract-tmp`
-  fs.rmSync(tmpExtract, { recursive: true, force: true })
-  new AdmZip(zipPath).extractAllTo(tmpExtract, true)
-
-  const entries = fs.readdirSync(tmpExtract)
-  if (entries.length !== 1) {
-    throw new Error(
-      `Archive inattendue (${entries.length} entrées à la racine, 1 attendue): ${zipPath}`,
-    )
-  }
-
-  fs.rmSync(destDir, { recursive: true, force: true })
-  fs.mkdirSync(path.dirname(destDir), { recursive: true })
-  fs.renameSync(path.join(tmpExtract, entries[0]), destDir)
-  fs.rmSync(tmpExtract, { recursive: true, force: true })
 }
 
 // `cross-spawn`, not plain node:child_process — sdkmanager ships as a .bat
@@ -142,7 +104,8 @@ function runCommand(cmd, args, opts) {
     child.on('error', reject)
     child.on('close', (code) => {
       if (code === 0) resolve(out)
-      else reject(new Error(`"${cmd} ${args.join(' ')}" a échoué (code ${code})\n${out.slice(-2000)}`))
+      else
+        reject(new Error(`"${cmd} ${args.join(' ')}" a échoué (code ${code})\n${out.slice(-2000)}`))
     })
   })
 }
@@ -207,7 +170,12 @@ export async function installToolchain(toolchainRoot, onProgress) {
   onProgress?.({ stage: 'sdk-packages', percent: 0 })
   await runCommand(
     sdkmanagerBin,
-    [`--sdk_root=${sdkDir}`, 'platform-tools', `platforms;${ANDROID_PLATFORM}`, `build-tools;${BUILD_TOOLS_VERSION}`],
+    [
+      `--sdk_root=${sdkDir}`,
+      'platform-tools',
+      `platforms;${ANDROID_PLATFORM}`,
+      `build-tools;${BUILD_TOOLS_VERSION}`,
+    ],
     { env },
   )
 

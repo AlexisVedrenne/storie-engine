@@ -81,6 +81,7 @@
         <q-btn dense flat no-caps round icon="refresh" class="btn-ghost" @click="restartPreview">
           <q-tooltip>{{ t('editorPage.restartPreviewTooltip') }}</q-tooltip>
         </q-btn>
+        <CloudSyncButton />
 
         <div class="topbar-divider" />
 
@@ -498,6 +499,7 @@ import { insertEmojiAtCaret } from '@/components/shared/emojiInsert'
 import EditorLangSwitch from '@/editor/components/EditorLangSwitch.vue'
 import WebPreviewDialog from '@/editor/components/WebPreviewDialog.vue'
 import BuildStepper from '@/editor/components/BuildStepper.vue'
+import CloudSyncButton from '@/editor/components/CloudSyncButton.vue'
 import { useEditorI18n } from '@/editor/i18n'
 
 const { t } = useEditorI18n()

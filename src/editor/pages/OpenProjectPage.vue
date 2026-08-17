@@ -42,6 +42,7 @@
           icon="add"
           @click="newProjectDialog = true"
         />
+        <CloudLoadButton v-if="hasStorieApi" @loaded="onCloudLoaded" />
       </div>
     </div>
 
@@ -89,6 +90,7 @@ import { useStoryStore } from '@/engine/stores/story'
 import EmojiPickerBtn from '@/components/shared/EmojiPickerBtn.vue'
 import { insertEmojiAtCaret } from '@/components/shared/emojiInsert'
 import EditorLangSwitch from '@/editor/components/EditorLangSwitch.vue'
+import CloudLoadButton from '@/editor/components/CloudLoadButton.vue'
 import { useEditorI18n } from '@/editor/i18n'
 
 const { t } = useEditorI18n()
@@ -147,6 +149,10 @@ async function openProject() {
   } finally {
     loading.value = ''
   }
+}
+
+async function onCloudLoaded(rootPath, data) {
+  await enterProject(rootPath, data)
 }
 
 async function createProject() {

@@ -2,13 +2,11 @@ import { app, BrowserWindow, Menu, protocol, session, net } from 'electron'
 import path from 'node:path'
 import os from 'node:os'
 import { pathToFileURL } from 'node:url'
-import {
-  registerQuasarRuntime,
-  resolveElectronAssetsPath
-} from '#q-app/electron/main'
+import { registerQuasarRuntime, resolveElectronAssetsPath } from '#q-app/electron/main'
 import { registerAllHandlers } from './ipc/index.js'
 import { getCurrentAssetsRoot } from './ipc/project.js'
 import { stopWebPreviewOnQuit } from './ipc/webPreview.js'
+import { stopCloudSyncOnQuit } from './ipc/cloudSync.js'
 
 // needed in case process is undefined under Linux
 const platform = process.platform || os.platform()
@@ -19,11 +17,11 @@ const platform = process.platform || os.platform()
 protocol.registerSchemesAsPrivileged([
   {
     scheme: 'storie-asset',
-    privileges: { standard: true, secure: true, supportFetchAPI: true, stream: true }
-  }
+    privileges: { standard: true, secure: true, supportFetchAPI: true, stream: true },
+  },
 ])
 
-async function createWindow () {
+async function createWindow() {
   /**
    * Initial window options
    */
@@ -36,8 +34,8 @@ async function createWindow () {
     webPreferences: {
       contextIsolation: true,
       // https://v2.quasar.dev/quasar-cli-vite/developing-electron-apps/electron-preload-script
-      preload: path.join(import.meta.dirname, 'electron-preload.cjs')
-    }
+      preload: path.join(import.meta.dirname, 'electron-preload.cjs'),
+    },
   })
 
   mainWindow.once('ready-to-show', () => {
@@ -107,6 +105,9 @@ app.on('window-all-closed', () => {
 // Closing the editor while a web preview is running must not leave an
 // orphaned dev server (and its bound port) behind — WebPreviewDialog.vue's
 // own Stop button covers the normal case, this covers quitting without it.
+// Same reasoning for the rclone rcd daemon (see cloudSync.js) — it's a
+// spawned child process, not a background service the OS manages for us.
 app.on('before-quit', () => {
   stopWebPreviewOnQuit()
+  stopCloudSyncOnQuit()
 })
