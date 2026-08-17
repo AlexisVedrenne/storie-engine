@@ -83,10 +83,15 @@ function getFreePort() {
 let daemon = null // { process, port, user, pass }
 let daemonStarting = null // Promise en cours, évite un double-spawn si deux appels IPC arrivent en même temps.
 
-async function rcCall(method, body = {}) {
-  if (!daemon) throw new Error('Démon rclone non démarré.')
-  const auth = Buffer.from(`${daemon.user}:${daemon.pass}`).toString('base64')
-  const res = await fetch(`http://127.0.0.1:${daemon.port}/${method}`, {
+// Couche HTTP pure, sans effet de bord sur l'état module — prend le
+// démon cible en paramètre explicite plutôt que de lire la variable
+// ambiante `daemon`, pour que waitForDaemonReady() (appelé PENDANT le
+// démarrage, où des échecs de connexion sont normaux/attendus tant que
+// rclone n'a pas fini de binder son port) puisse retenter sans déclencher
+// le nettoyage "démon mort" ci-dessous dans rcCall().
+async function rawRcCall(target, method, body) {
+  const auth = Buffer.from(`${target.user}:${target.pass}`).toString('base64')
+  const res = await fetch(`http://127.0.0.1:${target.port}/${method}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Basic ${auth}` },
     body: JSON.stringify(body),
@@ -104,11 +109,37 @@ async function rcCall(method, body = {}) {
   return json
 }
 
-async function waitForDaemonReady(timeoutMs = 8000) {
+async function rcCall(method, body = {}) {
+  if (!daemon) throw new Error('Démon rclone non démarré.')
+  try {
+    return await rawRcCall(daemon, method, body)
+  } catch (err) {
+    // fetch() lève un TypeError (pas un Error classique) spécifiquement
+    // pour un échec réseau (connexion refusée/reset) — à distinguer d'une
+    // vraie réponse rclone en erreur (déjà un Error propre venu de
+    // rawRcCall ci-dessus, pas un TypeError). Le process a probablement
+    // crashé ou s'est bloqué entre deux appels (voir le commentaire sur
+    // stdio:'ignore' dans startDaemon — c'était la cause la plus probable
+    // observée), pas juste CETTE requête qui a un problème isolé. On
+    // l'oublie plutôt que de garder une référence morte : le prochain
+    // ensureDaemonStarted() (appelé par chaque handler cloud:* avant son
+    // propre rcCall) le relancera tout seul — il suffit de réessayer
+    // l'action, pas besoin de rouvrir l'éditeur.
+    if (err instanceof TypeError) {
+      daemon = null
+      throw new Error(
+        `Le démon rclone ne répond plus (${err.message}) — réessaie, il va redémarrer automatiquement.`,
+      )
+    }
+    throw err
+  }
+}
+
+async function waitForDaemonReady(target, timeoutMs = 8000) {
   const start = Date.now()
   while (Date.now() - start < timeoutMs) {
     try {
-      await rcCall('core/pid')
+      await rawRcCall(target, 'core/pid', {})
       return
     } catch {
       await new Promise((r) => setTimeout(r, 150))
@@ -140,14 +171,25 @@ async function startDaemon() {
       `--rc-pass=${pass}`,
       `--config=${configPath}`,
     ],
-    { stdio: ['ignore', 'pipe', 'pipe'] },
+    // 'ignore' on all 3, not 'pipe' — this is a LONG-RUNNING daemon (the
+    // whole editor session), not a short one-shot command. rclone logs
+    // every RC request to stdout/stderr; a 'pipe' stream nobody ever reads
+    // fills up its OS buffer (~64KB on Windows) after enough requests, and
+    // the child then BLOCKS on write — which looks like the daemon has
+    // silently died (fetch failed / connection reset) even though the
+    // process is still technically alive. Confirmed against a real report:
+    // worked for the first several actions in a session, broke once more
+    // RC calls had accumulated. We never read this daemon's own
+    // stdout/stderr for anything (errors come back in the RC JSON response
+    // body) — 'ignore' is correct here, not a workaround.
+    { stdio: 'ignore' },
   )
   proc.on('exit', () => {
     if (daemon?.process === proc) daemon = null
   })
 
   daemon = { process: proc, port, user, pass }
-  await waitForDaemonReady()
+  await waitForDaemonReady(daemon)
   return daemon
 }
 

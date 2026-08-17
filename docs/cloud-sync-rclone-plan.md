@@ -2,6 +2,54 @@
 
 ## Statut : implémentée (v1), en attente de vérification manuelle Electron (voir plus bas)
 
+## Bug réel trouvé en test (2026-08-17) : `TypeError: fetch failed`
+
+Rapporté par l'utilisateur sur `cloud:push`, reproduit en particulier en
+activant la sauvegarde auto (qui déclenche un premier push immédiat — pas
+un bug spécifique à l'auto-sync, juste la première action qui a fait
+suffisamment de bruit RC dans la session pour révéler le vrai problème).
+
+**Cause racine** : `startDaemon()` (`cloudSync.js`) spawnait `rclone rcd`
+avec `stdio: ['ignore', 'pipe', 'pipe']` — stdout/stderr en pipe, mais
+**jamais lus**. rclone logge chaque requête RC ; un pipe jamais drainé
+remplit son buffer OS (~64 Ko sous Windows) après assez d'appels
+(check/connect/list/etc. accumulés dans la session), et le process enfant
+**se bloque en écriture** dès qu'il déborde — ce qui ressemble exactement
+à un démon mort côté client (connexion refusée/reset), alors que le
+process est toujours technique­ment vivant. Classique piège
+`child_process` : un stream `'pipe'` non consommé n'est jamais un choix
+neutre.
+
+**Fix** :
+- `stdio: 'ignore'` sur les 3 flux — le démon ne sert que via l'API RC
+  JSON (les erreurs reviennent dans le corps de réponse, jamais parsées
+  depuis stdout/stderr), rien à lire ici.
+- Robustesse en plus, au cas où le démon meurt quand même pour une autre
+  raison : `rcCall()` distingue maintenant un `TypeError` (échec réseau
+  de `fetch()` lui-même) d'un `Error` classique (rclone a répondu mais en
+  erreur) — sur `TypeError`, `daemon` est mis à `null` et un message clair
+  est renvoyé ("réessaie, il va redémarrer automatiquement") plutôt que le
+  `TypeError: fetch failed` brut. Le prochain `ensureDaemonStarted()`
+  (appelé par chaque handler `cloud:*`) relance alors un démon frais tout
+  seul.
+- Piège évité au passage : `waitForDaemonReady()` (le polling PENDANT le
+  démarrage, où des échecs de connexion sont normaux tant que rclone n'a
+  pas fini de binder son port) a dû être découplé de `rcCall()` — sinon le
+  premier échec de connexion pendant le démarrage aurait mis `daemon` à
+  `null` en plein milieu de sa propre boucle de retry, la cassant. Nouvelle
+  fonction `rawRcCall(target, method, body)` : couche HTTP pure, sans
+  effet de bord, prend le démon cible en paramètre explicite — `rcCall()`
+  (utilisé par les handlers, avec le nettoyage "démon mort") et
+  `waitForDaemonReady()` (utilisé pendant le démarrage, sans ce nettoyage)
+  s'appuient dessus séparément.
+
+**Non vérifié** : le fix stdio est un correctif de root-cause confiant
+(comportement `child_process` documenté, pas une supposition sur rclone
+lui-même), mais n'a pas pu être revérifié sur une session longue dans cet
+environnement. Si `fetch failed` revient malgré tout après ce fix, le
+`TypeError` est maintenant transformé en message clair — regarder ce
+message-là en premier plutôt que la trace brute.
+
 ## Ce qui a été construit (2026-08-17, 4ᵉ retour utilisateur)
 
 - **Sauvegarde auto en arrière-plan** — toggle "Sauvegarde auto (cloud,
