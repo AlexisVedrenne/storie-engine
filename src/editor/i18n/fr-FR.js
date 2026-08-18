@@ -699,6 +699,13 @@ export default {
     clockClear: 'libérer (revenir à l’heure réelle)',
   },
 
+  editorSettings: {
+    title: 'Réglages',
+    languageLabel: "Langue de l'éditeur",
+    autosaveLabel: 'Sauvegarde',
+    projectLabel: 'Projet',
+  },
+
   contactList: {
     meLocked: 'Le contact « me » est requis par le moteur — non supprimable.',
     newContact: 'Nouveau contact',
@@ -832,7 +839,9 @@ export default {
 
   cloudSyncPanel: {
     title: 'Cloud',
-    help: 'Sauvegarde/restaure ce projet vers un compte cloud (Google Drive, OneDrive, Dropbox, ou un autre fournisseur en mode avancé) via rclone. Sauvegarde manuelle uniquement — aucune synchro automatique en arrière-plan.',
+    help: 'Sauvegarde/restaure ce projet vers un compte cloud (Google Drive, OneDrive, Dropbox, ou un autre fournisseur en mode avancé) via rclone. Manuelle par défaut, ou automatique toutes les 5 min via le toggle ci-dessous.',
+    forceSyncTooltip: 'Forcer la synchro cloud maintenant',
+    configureInSettings: "Configure d'abord un compte cloud dans Réglages",
     checking: 'Vérification de rclone…',
     notInstalled: "rclone n'est pas encore installé sur cette machine.",
     installBtn: 'Installer rclone',

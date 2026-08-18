@@ -101,8 +101,6 @@
              replient dans un seul bouton "more_vert" (voir plus bas) — le
              markup ci-dessous reste identique à avant, juste conditionné. -->
         <template v-if="!topbarCompact">
-          <EditorLangSwitch />
-
           <q-btn
             dense
             flat
@@ -115,12 +113,6 @@
               focusPreview ? t('editorPage.showEditing') : t('editorPage.previewOnly')
             }}</q-tooltip>
           </q-btn>
-          <q-toggle
-            dense
-            v-model="autosave"
-            :label="t('editorPage.autosaveLabel')"
-            color="primary"
-          />
           <q-btn dense flat no-caps round icon="refresh" class="btn-ghost" @click="restartPreview">
             <q-tooltip>{{ t('editorPage.restartPreviewTooltip') }}</q-tooltip>
           </q-btn>
@@ -161,17 +153,6 @@
           >
             <q-tooltip>{{ t('editorPage.webPreviewTooltip') }}</q-tooltip>
           </q-btn>
-          <q-btn
-            dense
-            flat
-            round
-            icon="folder_open"
-            class="btn-ghost"
-            :disable="building"
-            @click="closeProject"
-          >
-            <q-tooltip>{{ t('editorPage.switchProjectTooltip') }}</q-tooltip>
-          </q-btn>
         </template>
 
         <q-btn
@@ -201,12 +182,6 @@
             </div>
             <q-separator />
             <q-list dense class="topbar-drawer-list">
-              <q-item>
-                <q-item-section>
-                  <EditorLangSwitch />
-                </q-item-section>
-              </q-item>
-
               <q-item clickable @click="focusPreview = !focusPreview">
                 <q-item-section avatar>
                   <q-icon :name="focusPreview ? 'visibility_off' : 'smartphone'" />
@@ -214,17 +189,6 @@
                 <q-item-section>{{
                   focusPreview ? t('editorPage.showEditing') : t('editorPage.previewOnly')
                 }}</q-item-section>
-              </q-item>
-
-              <q-item>
-                <q-item-section>
-                  <q-toggle
-                    dense
-                    v-model="autosave"
-                    :label="t('editorPage.autosaveLabel')"
-                    color="primary"
-                  />
-                </q-item-section>
               </q-item>
 
               <q-item clickable v-close-popup @click="restartPreview">
@@ -260,11 +224,6 @@
                 <q-item-section avatar><q-icon name="smartphone" color="primary" /></q-item-section>
                 <q-item-section>{{ t('editorPage.webPreviewLabel') }}</q-item-section>
               </q-item>
-
-              <q-item clickable v-close-popup :disable="building" @click="closeProject">
-                <q-item-section avatar><q-icon name="folder_open" /></q-item-section>
-                <q-item-section>{{ t('editorPage.switchProjectTooltip') }}</q-item-section>
-              </q-item>
             </q-list>
           </q-card>
         </q-dialog>
@@ -290,6 +249,23 @@
           color="primary"
           :disable="!dirty"
           @click="save"
+        />
+
+        <!-- Réglages (langue éditeur/sauvegarde locale+cloud/changer de
+             projet) — regroupés dans un seul dialogue plutôt que dupliqués
+             entre la barre large et le tiroir compact (voir
+             EditorSettingsDialog.vue). Tout à droite, après Enregistrer —
+             dernier item de la barre, un seul bouton, pas de variante
+             compacte nécessaire. -->
+        <q-btn dense flat round icon="settings" class="btn-ghost" @click="editorSettingsDialogRef?.open()">
+          <q-tooltip>{{ t('editorSettings.title') }}</q-tooltip>
+        </q-btn>
+        <EditorSettingsDialog
+          ref="editorSettingsDialogRef"
+          :autosave="autosave"
+          :building="openingBuildStepper"
+          @update:autosave="autosave = $event"
+          @switch-project="closeProject"
         />
       </div>
 
@@ -666,7 +642,7 @@ import SeedBucketList from '@/editor/components/SeedBucketList.vue'
 import SeedBucketEditor from '@/editor/components/SeedBucketEditor.vue'
 import EmojiPickerBtn from '@/components/shared/EmojiPickerBtn.vue'
 import { insertEmojiAtCaret } from '@/components/shared/emojiInsert'
-import EditorLangSwitch from '@/editor/components/EditorLangSwitch.vue'
+import EditorSettingsDialog from '@/editor/components/EditorSettingsDialog.vue'
 import WebPreviewDialog from '@/editor/components/WebPreviewDialog.vue'
 import BuildStepper from '@/editor/components/BuildStepper.vue'
 import CloudSyncButton from '@/editor/components/CloudSyncButton.vue'
@@ -725,6 +701,7 @@ const NAV_TABS = [
 const flagsDialogOpen = ref(false)
 const webPreviewDialogRef = ref(null)
 const buildStepperRef = ref(null)
+const editorSettingsDialogRef = ref(null)
 // Explicit persist — this dialog opens on top of the 'chapters' tab, whose
 // dirty/save watch is armed on `selectedChapter`, not on `gameConfig` (see
 // activeResource below), so editing a flag's label here needs its own

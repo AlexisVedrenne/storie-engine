@@ -682,6 +682,13 @@ export default {
     clockClear: 'release (back to real time)',
   },
 
+  editorSettings: {
+    title: 'Settings',
+    languageLabel: 'Editor language',
+    autosaveLabel: 'Save',
+    projectLabel: 'Project',
+  },
+
   contactList: {
     meLocked: 'The "me" contact is required by the engine — cannot be deleted.',
     newContact: 'New contact',
@@ -813,7 +820,9 @@ export default {
 
   cloudSyncPanel: {
     title: 'Cloud',
-    help: 'Back up/restore this project to a cloud account (Google Drive, OneDrive, Dropbox, or another provider in advanced mode) via rclone. Manual backup only — no automatic background sync.',
+    help: 'Back up/restore this project to a cloud account (Google Drive, OneDrive, Dropbox, or another provider in advanced mode) via rclone. Manual by default, or automatic every 5 min via the toggle below.',
+    forceSyncTooltip: 'Force a cloud sync now',
+    configureInSettings: 'Connect a cloud account in Settings first',
     checking: 'Checking rclone…',
     notInstalled: 'rclone is not installed on this machine yet.',
     installBtn: 'Install rclone',

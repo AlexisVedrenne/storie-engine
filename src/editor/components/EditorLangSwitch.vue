@@ -1,13 +1,11 @@
 <template>
-  <q-btn-toggle
+  <q-select
     dense
-    no-caps
-    unelevated
+    outlined
+    emit-value
+    map-options
     :model-value="locale"
     :options="OPTIONS"
-    color="surface"
-    text-color="text-muted"
-    toggle-color="primary"
     class="lang-switch"
     @update:model-value="setLocale"
   />
@@ -16,20 +14,22 @@
 <script setup>
 // Switches the EDITOR's own UI language — independent from story.locale
 // (the phone-preview/player language, see src/editor/i18n/index.js's own
-// header comment for why they're kept separate).
+// header comment for why they're kept separate). q-select instead of the
+// original q-btn-toggle (2026-08-18 user feedback) — reads better once
+// this lives inside EditorSettingsDialog next to other form-style fields
+// rather than as a compact toolbar toggle.
 import { useEditorI18n } from '@/editor/i18n'
 
 const { locale, setLocale } = useEditorI18n()
 
 const OPTIONS = [
-  { label: 'FR', value: 'fr-FR' },
-  { label: 'EN', value: 'en-US' },
+  { label: 'Français', value: 'fr-FR' },
+  { label: 'English', value: 'en-US' },
 ]
 </script>
 
 <style scoped>
 .lang-switch {
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
+  min-width: 160px;
 }
 </style>
