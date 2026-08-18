@@ -837,6 +837,7 @@ export default {
     advancedDialogTitle: 'Connect another provider',
     advancedSearchLabel: 'Search a provider',
     advancedNameLabel: 'Connection name',
+    advancedMoreOptions: 'Advanced options ({count})',
     advancedConnectBtn: 'Connect',
     remoteLabel: 'Connected account',
     remotePathLabel: 'Remote folder',

@@ -75,7 +75,13 @@
             v-model="advancedName"
           />
 
-          <div v-for="opt in providerOptions" :key="opt.Name" class="option-field">
+          <!-- Un provider OAuth (Drive/OneDrive/Dropbox/...) choisi ICI
+               plutôt que via son bouton rapide a 0 option requise — rclone
+               gère l'auth lui-même — donc ce bloc reste vide et le
+               formulaire est aussi simple que le bouton rapide (retour
+               utilisateur : avant ce fix, TOUTES les options du schéma
+               s'affichaient sans distinction requis/optionnel). -->
+          <div v-for="opt in requiredOptions" :key="opt.Name" class="option-field">
             <q-toggle
               v-if="opt.Type === 'bool'"
               dense
@@ -92,6 +98,26 @@
                  contenu dans sa propre hauteur. -->
             <p v-if="opt.Help" class="option-help">{{ opt.Help }}</p>
           </div>
+
+          <q-expansion-item
+            v-if="optionalOptions.length"
+            dense
+            :label="t('cloudSyncPanel.advancedMoreOptions', { count: optionalOptions.length })"
+            class="optional-options"
+          >
+            <div v-for="opt in optionalOptions" :key="opt.Name" class="option-field">
+              <q-toggle
+                v-if="opt.Type === 'bool'"
+                dense
+                :model-value="!!advancedOptions[opt.Name]"
+                :label="opt.Name"
+                color="primary"
+                @update:model-value="(v) => (advancedOptions[opt.Name] = v)"
+              />
+              <q-input v-else dense outlined :label="opt.Name" v-model="advancedOptions[opt.Name]" />
+              <p v-if="opt.Help" class="option-help">{{ opt.Help }}</p>
+            </div>
+          </q-expansion-item>
         </template>
       </q-card-section>
       <q-card-actions align="right">
@@ -169,6 +195,16 @@ function filterProviders(val, update) {
 }
 
 const providerOptions = computed(() => selectedProvider.value?.Options || [])
+// `Required` per rclone's own option schema (config/providers) — not
+// verified against a live rclone response in this environment (same
+// caveat as everywhere else cloud-sync touches a real remote, see
+// docs/cloud-sync-rclone-plan.md), but it's a stable, documented part of
+// rclone's option struct. An OAuth-capable provider (Drive/OneDrive/
+// Dropbox/...) has zero required options — rclone's own browser-based auth
+// fills in the token — so requiredOptions is empty for those regardless of
+// how many optional/advanced knobs the provider exposes.
+const requiredOptions = computed(() => providerOptions.value.filter((o) => o.Required))
+const optionalOptions = computed(() => providerOptions.value.filter((o) => !o.Required))
 
 function onSelectProvider(provider) {
   for (const key of Object.keys(advancedOptions)) delete advancedOptions[key]
@@ -261,5 +297,19 @@ defineExpose({ closeAdvanced: () => (advancedOpen.value = false) })
   line-height: 1.5;
   color: var(--color-text-muted);
   white-space: normal;
+}
+
+.optional-options {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+.optional-options :deep(.q-item) {
+  padding: var(--space-2) var(--space-3);
+}
+.optional-options .option-field {
+  padding: 0 var(--space-3) var(--space-3);
+}
+.optional-options .option-field:last-child {
+  padding-bottom: var(--space-3);
 }
 </style>

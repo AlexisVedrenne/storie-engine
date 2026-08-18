@@ -856,6 +856,7 @@ export default {
     advancedDialogTitle: 'Connecter un autre fournisseur',
     advancedSearchLabel: 'Rechercher un fournisseur',
     advancedNameLabel: 'Nom de la connexion',
+    advancedMoreOptions: 'Options avancées ({count})',
     advancedConnectBtn: 'Connecter',
     remoteLabel: 'Compte connecté',
     remotePathLabel: 'Dossier distant',
