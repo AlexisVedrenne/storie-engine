@@ -74,15 +74,24 @@
             :label="t('cloudSyncPanel.advancedNameLabel')"
             v-model="advancedName"
           />
-          <q-input
-            v-for="opt in providerOptions"
-            :key="opt.Name"
-            dense
-            outlined
-            :label="opt.Name"
-            :hint="opt.Help"
-            v-model="advancedOptions[opt.Name]"
-          />
+
+          <div v-for="opt in providerOptions" :key="opt.Name" class="option-field">
+            <q-toggle
+              v-if="opt.Type === 'bool'"
+              dense
+              :model-value="!!advancedOptions[opt.Name]"
+              :label="opt.Name"
+              color="primary"
+              @update:model-value="(v) => (advancedOptions[opt.Name] = v)"
+            />
+            <q-input v-else dense outlined :label="opt.Name" v-model="advancedOptions[opt.Name]" />
+            <!-- Aide rclone en bloc à part, pas le :hint de Quasar — ce
+                 slot est prévu pour une ligne courte ; en mode dense un
+                 paragraphe entier (fréquent chez rclone) déborde
+                 visuellement sur le champ suivant au lieu de rester
+                 contenu dans sa propre hauteur. -->
+            <p v-if="opt.Help" class="option-help">{{ opt.Help }}</p>
+          </div>
         </template>
       </q-card-section>
       <q-card-actions align="right">
@@ -217,6 +226,7 @@ defineExpose({ closeAdvanced: () => (advancedOpen.value = false) })
 
 .advanced-card {
   min-width: 420px;
+  width: 520px;
   max-width: 90vw;
 }
 
@@ -224,5 +234,32 @@ defineExpose({ closeAdvanced: () => (advancedOpen.value = false) })
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+/* Many rclone providers (especially local filesystem) expose 20+ advanced
+   options, most with a full sentence of help text — a border between each
+   makes it scannable instead of one continuous wall, and the field/help
+   pair sits in its own flex column so long help text never overlaps the
+   next option (the bug this whole block replaced). */
+.option-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+}
+.option-field:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.option-help {
+  margin: 0;
+  font-size: var(--text-xs);
+  line-height: 1.5;
+  color: var(--color-text-muted);
+  white-space: normal;
 }
 </style>
