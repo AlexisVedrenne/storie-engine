@@ -33,6 +33,9 @@ export default {
     restartPreviewTooltip: "Relancer l'aperçu",
     validateTooltip:
       'Valider le projet — cherche les références cassées (contact/thread/image introuvable) et les problèmes de chapitres',
+    undoTooltip: 'Annuler (Ctrl+Z)',
+    redoTooltip: 'Rétablir (Ctrl+Maj+Z)',
+    undoTargetGone: "Impossible d'annuler : cet élément a été supprimé depuis.",
     saveBtn: 'Enregistrer',
     buildTooltip: 'Build — exporter ce projet en jeu jouable (desktop et/ou Android)',
     webPreviewTooltip: 'Preview web — tester sur ton téléphone via le Wi-Fi',

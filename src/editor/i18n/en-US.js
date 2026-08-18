@@ -33,6 +33,9 @@ export default {
     restartPreviewTooltip: 'Restart preview',
     validateTooltip:
       'Validate project — looks for broken references (missing contact/thread/image) and chapter issues',
+    undoTooltip: 'Undo (Ctrl+Z)',
+    redoTooltip: 'Redo (Ctrl+Shift+Z)',
+    undoTargetGone: "Can't undo: that item has since been deleted.",
     saveBtn: 'Save',
     buildTooltip: 'Build — export this project as a playable game (desktop and/or Android)',
     webPreviewTooltip: 'Web preview — test on your phone over Wi-Fi',

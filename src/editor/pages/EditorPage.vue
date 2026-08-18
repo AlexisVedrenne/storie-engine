@@ -269,6 +269,15 @@
           </q-card>
         </q-dialog>
 
+        <!-- Undo/redo — même règle que Enregistrer juste en dessous :
+             toujours visible, jamais repliée dans le menu compact. -->
+        <q-btn dense flat round icon="undo" :disable="!canUndo" @click="undo">
+          <q-tooltip>{{ t('editorPage.undoTooltip') }}</q-tooltip>
+        </q-btn>
+        <q-btn dense flat round icon="redo" :disable="!canRedo" @click="redo">
+          <q-tooltip>{{ t('editorPage.redoTooltip') }}</q-tooltip>
+        </q-btn>
+
         <!-- Toujours visible, dans les deux modes, même emplacement à
              l'extrémité droite — action principale, ne doit jamais se
              retrouver repliée dans le menu. -->
@@ -642,6 +651,7 @@ import EditorLangSwitch from '@/editor/components/EditorLangSwitch.vue'
 import WebPreviewDialog from '@/editor/components/WebPreviewDialog.vue'
 import BuildStepper from '@/editor/components/BuildStepper.vue'
 import CloudSyncButton from '@/editor/components/CloudSyncButton.vue'
+import { useUndoHistory } from '@/editor/composables/useUndoHistory'
 import { useEditorI18n } from '@/editor/i18n'
 
 const { t } = useEditorI18n()
@@ -650,6 +660,9 @@ const AUTOSAVE_KEY = 'stories-engine-autosave'
 const SPLIT_OUTER_KEY = 'stories-engine-split-outer'
 const SPLIT_INNER_KEY = 'stories-engine-split-inner'
 const AUTOSAVE_DEBOUNCE_MS = 1200
+// Coalescing window for undo history commits — see useUndoHistory.js's own
+// comment for why this is deliberately separate from AUTOSAVE_DEBOUNCE_MS.
+const UNDO_COMMIT_DEBOUNCE_MS = 600
 // Shared with OpenProjectPage.vue (set on open/create) — "Changer de projet"
 // clears it so leaving a project is a deliberate exit, not something the
 // next launch silently undoes by reopening the same project.
@@ -758,50 +771,175 @@ const selectedLocale = ref('')
 const selectedBucket = ref('common')
 const selectedSeedBucket = ref('messages')
 
-// The object currently watched for the dirty flag/autosave — a single
-// chapter for 'chapters' mode, or the whole array/object for the other
-// three modes (their save() call always writes the whole file anyway).
-const activeResource = computed(() => {
+// Identity of whatever's currently being edited — used both to know what
+// the dirty flag/autosave watch below is watching (via resolveResource) and
+// to give the global undo/redo history (useUndoHistory.js) something
+// stable to tag each entry with, independent of what's on screen at the
+// moment an entry is undone. 'game'/'events'/'interactions' deliberately
+// collapse to the SAME descriptor — they all live in game.js, one file,
+// one resource, not three (see resolveResource's own comment).
+function currentDescriptor() {
   switch (viewMode.value) {
     case 'chapters':
-      return selectedChapter.value
+      return selectedChapter.value ? { kind: 'chapter', id: selectedChapter.value.id } : null
     case 'contacts':
-      return story.project?.contacts || null
+      return { kind: 'contacts' }
     case 'threads':
-      return story.project?.threads || null
+      return { kind: 'threads' }
     case 'game':
     case 'events':
     case 'interactions':
-      // Events AND interactions both live inside game.js too
-      // (gameConfig.events/gameConfig.interactions) — same file on disk,
-      // same dirty/save flow as the Jeu tab, not a separate resource.
-      return story.project?.gameConfig || null
+      return { kind: 'game' }
     case 'apps':
-      // Unlike events/interactions, each custom app is its OWN file (see
-      // src-electron/ipc/customApps.js) — watched per-app, saved via
-      // saveCustomApp, not the whole-project saveGame() below.
-      return selectedCustomApp.value
+      return selectedCustomApp.value ? { kind: 'app', id: selectedCustomApp.value.id } : null
     case 'assets':
       // Assets tab has no dirty/save flow — imports/deletes are immediate
       // IPC side effects (see AssetsPanel.vue), not a buffered edit.
       return null
     case 'i18n':
-      return story.project?.i18n?.[selectedLocale.value]?.[selectedBucket.value] ?? null
+      return selectedLocale.value
+        ? { kind: 'i18n', locale: selectedLocale.value, bucket: selectedBucket.value }
+        : null
+    case 'seed':
+      return { kind: 'seed', bucket: selectedSeedBucket.value }
+    default:
+      return null
+  }
+}
+
+// Resolves a descriptor to the live reactive object/array it names — may
+// return null if the target was deleted since (a chapter/app removed via a
+// structural op, which always writes to disk immediately and is never
+// itself undoable, see docs). Single source of truth: activeResource below
+// is just this applied to the CURRENT descriptor, and useUndoHistory.js
+// calls it directly to resolve whatever descriptor a stack entry names.
+function resolveResource(descriptor) {
+  if (!descriptor) return null
+  switch (descriptor.kind) {
+    case 'chapter':
+      return story.project?.chapters?.find((c) => c.id === descriptor.id) || null
+    case 'contacts':
+      return story.project?.contacts || null
+    case 'threads':
+      return story.project?.threads || null
+    case 'game':
+      // Events AND interactions both live inside game.js too
+      // (gameConfig.events/gameConfig.interactions) — same file on disk,
+      // same dirty/save flow as the Jeu tab, not a separate resource.
+      return story.project?.gameConfig || null
+    case 'app':
+      // Unlike events/interactions, each custom app is its OWN file (see
+      // src-electron/ipc/customApps.js) — watched per-app, saved via
+      // saveCustomApp, not the whole-project saveGame() below.
+      return story.project?.customApps?.find((a) => a.id === descriptor.id) || null
+    case 'i18n':
+      return story.project?.i18n?.[descriptor.locale]?.[descriptor.bucket] ?? null
     case 'seed':
       // Whole bucket watched (dict or array), same as contacts/threads —
       // NOT narrowed to whichever conversation is open within
       // messages/dms, matching the established "which sub-item is
       // selected doesn't rearm" rule (that state is local to
       // SeedBucketEditor.vue, not lifted here).
-      return story.project?.seed?.[selectedSeedBucket.value] ?? null
+      return story.project?.seed?.[descriptor.bucket] ?? null
     default:
       return null
   }
-})
+}
+
+// Where to land the user so an undo/redo is actually VISIBLE, not just a
+// data change off-screen. Returns false if the target no longer exists
+// (chapter/app deleted since this history entry was recorded) so the
+// caller can drop the entry instead of navigating nowhere.
+function navigateToResource(descriptor, hint) {
+  if (!descriptor) return false
+  // "Aperçu seul" hides the entire editing panel behind the phone preview
+  // — same fix previewFrom() applies in the opposite direction, needed here
+  // so whatever we navigate to is actually visible, not just correctly
+  // mutated off-screen.
+  focusPreview.value = false
+  switch (descriptor.kind) {
+    case 'chapter': {
+      const idx = story.project?.chapters?.findIndex((c) => c.id === descriptor.id)
+      if (idx == null || idx < 0) return false
+      viewMode.value = 'chapters'
+      selectedIndex.value = idx
+      return true
+    }
+    case 'contacts':
+      viewMode.value = 'contacts'
+      return true
+    case 'threads':
+      viewMode.value = 'threads'
+      return true
+    case 'game':
+      // navHint picks the right sub-tab/row (Jeu/Events/Interactions all
+      // share one descriptor, see currentDescriptor's comment) — without
+      // it, an edit made in Events would land on Jeu, which shows neither
+      // the event list nor its form: correctly undone, invisibly so.
+      viewMode.value = hint?.viewMode || 'game'
+      if (hint?.viewMode === 'events' && hint.eventIndex != null) {
+        selectedEventIndex.value = hint.eventIndex
+      }
+      if (hint?.viewMode === 'interactions' && hint.interactionIndex != null) {
+        selectedInteractionIndex.value = hint.interactionIndex
+      }
+      return true
+    case 'app': {
+      const idx = story.project?.customApps?.findIndex((a) => a.id === descriptor.id)
+      if (idx == null || idx < 0) return false
+      viewMode.value = 'apps'
+      selectedCustomAppIndex.value = idx
+      return true
+    }
+    case 'i18n':
+      viewMode.value = 'i18n'
+      selectedLocale.value = descriptor.locale
+      selectedBucket.value = descriptor.bucket
+      return true
+    case 'seed':
+      viewMode.value = 'seed'
+      selectedSeedBucket.value = descriptor.bucket
+      return true
+    default:
+      return false
+  }
+}
+
+// Non-identity context captured alongside a history entry — see
+// navigateToResource's 'game' case for why this exists (Jeu/Events/
+// Interactions share one descriptor but need different sub-tab navigation).
+function currentNavHint() {
+  if (viewMode.value === 'events') {
+    return { viewMode: 'events', eventIndex: selectedEventIndex.value }
+  }
+  if (viewMode.value === 'interactions') {
+    return { viewMode: 'interactions', interactionIndex: selectedInteractionIndex.value }
+  }
+  return null
+}
+
+// The object currently watched for the dirty flag/autosave.
+const activeResource = computed(() => resolveResource(currentDescriptor()))
 
 const dirty = ref(false)
 const autosave = ref(localStorage.getItem(AUTOSAVE_KEY) === 'true')
 watch(autosave, (val) => localStorage.setItem(AUTOSAVE_KEY, String(val)))
+
+// Global undo/redo, shared across every resource in the project — see
+// useUndoHistory.js for why this is a per-instance composable (not a
+// module-level singleton) and how it uses currentDescriptor/resolveResource/
+// navigateToResource to survive switching tabs instead of resetting.
+const {
+  canUndo,
+  canRedo,
+  undo,
+  redo,
+  notifyMutated: notifyUndoableMutation,
+  resync: resyncUndoHistory,
+} = useUndoHistory(currentDescriptor, resolveResource, navigateToResource, {
+  commitDebounceMs: UNDO_COMMIT_DEBOUNCE_MS,
+  navHint: currentNavHint,
+})
 
 // Panes are resizable (drag the splitter handles) and their ratio persists
 // across sessions — "Aperçu seul" hides the chapters/timeline panes
@@ -822,6 +960,7 @@ function watchActiveResource() {
     activeResource,
     () => {
       dirty.value = true
+      notifyUndoableMutation()
       if (autosave.value) {
         clearTimeout(debounceTimer)
         debounceTimer = setTimeout(save, AUTOSAVE_DEBOUNCE_MS)
@@ -851,12 +990,22 @@ watch(
     selectedSeedBucket,
   ],
   () => {
-    dirty.value = false
+    // resync() flushes whatever was pending on the OLD resource into the
+    // global undo history first, then reports whether the resource
+    // identity actually changed — false for a pure Jeu/Events/Interactions
+    // hop (same gameConfig, same descriptor), in which case `dirty` must
+    // NOT reset: doing so unconditionally used to silently clear "unsaved
+    // changes" on that hop even though nothing was saved (pre-existing bug,
+    // fixed here as a natural consequence of resync() already needing to
+    // know this).
+    const changed = resyncUndoHistory()
+    if (changed) dirty.value = false
     clearTimeout(debounceTimer)
     watchActiveResource()
   },
 )
 watchActiveResource()
+resyncUndoHistory()
 
 // Chapter ids are auto-generated from the title at creation time (see
 // ChapterGraph.vue's createChapter) but never revisited after — this is
@@ -1088,6 +1237,20 @@ function onKeydown(e) {
   if ((e.ctrlKey || e.metaKey) && e.key === 's') {
     e.preventDefault()
     save()
+    return
+  }
+  // Global takeover, same as Ctrl+S above (unconditional, regardless of
+  // focused element) — undo/redo operate on the whole activeResource, not
+  // a single field's native text-input undo.
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
+    e.preventDefault()
+    if (e.shiftKey) redo()
+    else undo()
+    return
+  }
+  if ((e.ctrlKey || e.metaKey) && e.key === 'y') {
+    e.preventDefault()
+    redo()
   }
 }
 onMounted(() => window.addEventListener('keydown', onKeydown))
