@@ -409,10 +409,19 @@ Détail au point 8 ci-dessus. Pas étendu à `AssetsPanel`/`ChapterList`
 Lint clean sur les 3 fichiers touchés (`TimelineEditor.vue`,
 `ChoiceEntryForm.vue`, `I18nBucketEditor.vue`).
 
-**Backlog restant, hors périmètre choisi cette fois :** 10. Rendre les états vides d'écran entier (Traductions sans langue
-sélectionnée, Groupes avec peu de contenu) moins vides — probablement
-en resserrant la mise en page plutôt qu'en ajoutant du contenu factice.
-Pas demandé lors de ce chantier, reste en attente.
+**Backlog restant, hors périmètre choisi cette fois :**
+
+10. [x] États vides d'écran entier (point 7) — **corrigé le 2026-08-18** :
+    `.empty-state` (partagé par les 7 panneaux "rien de sélectionné" —
+    Jeu/Events/Interactions/Apps/Contacts/Threads/Traductions) centre
+    maintenant son contenu verticalement sur toute la hauteur du panneau
+    (`min-height: 60vh`, flex centré) au lieu de rester collé en haut d'un
+    grand vide, plus une icône Material par contexte (même icône que
+    l'onglet correspondant dans `NAV_TABS`) pour donner du poids visuel.
+    Groupes (Threads) avec peu de contenu reste tel quel — c'est un
+    formulaire rempli, pas un état vide, resserrer sa mise en page est un
+    chantier séparé (repositionnement du panel, pas juste `.empty-state`),
+    resté hors scope de ce fix rapide.
 
 ## Ce que je n'ai pas encore vérifié
 

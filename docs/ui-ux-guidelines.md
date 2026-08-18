@@ -69,12 +69,12 @@ Une UI sombre "moderne" n'est pas juste `#111` partout — elle a une échelle d
 | `--border`        | `rgba(255,255,255,0.10)`                             | séparateurs — jamais plus opaque, jamais moins visible                            |
 | `--text`          | `#F8FAFC`                                            | texte principal                                                                   |
 | `--text-muted`    | `#94A3B8`                                            | labels secondaires, méta-info — **jamais en dessous de ce gris**, sinon illisible |
-| `--accent`        | `#4C8BF5` (bleu, déjà utilisé pour "chapitre actif") | action principale, sélection, lien                                                |
+| `--accent`        | `#508DF5` (bleu, déjà utilisé pour "chapitre actif") | action principale, sélection, lien                                                |
 | `--success`       | `#22C55E`                                            | sauvegarde réussie                                                                |
-| `--danger`        | `#F44336`                                            | suppression, erreur                                                               |
+| `--danger`        | `#F55B50`                                            | suppression, erreur                                                               |
 | `--warning`       | `#FFC107`                                            | "modifié non sauvegardé" (déjà utilisé)                                           |
 
-Règle de contraste : texte principal sur fond ≥ 4.5:1 (WCAG AA minimum) — se vérifie en 10 secondes avec n'importe quel color-contrast checker.
+Règle de contraste : texte principal sur fond ≥ 4.5:1 (WCAG AA minimum) — se vérifie en 10 secondes avec n'importe quel color-contrast checker. **Mesuré le 2026-08-18** : `--accent`/`--danger` en petit texte (`--text-xs`) sur `--surface` ressortaient à 4.40:1/3.97:1 — sous le seuil AA texte normal (4.5:1), même s'ils passaient déjà le seuil 3:1 (grand texte/composants UI). Éclaircis légèrement (`#4C8BF5`→`#508DF5`, `#F44336`→`#F55B50`) pour repasser au-dessus de 4.5:1 sur `--bg` ET `--surface` — tous les autres rôles (texte, texte-muted, success, warning) étaient déjà largement au-dessus, aucun changement nécessaire.
 
 ## 5. Hiérarchie & densité de l'information
 
@@ -116,7 +116,7 @@ en place :
 - [x] Chaque type d'entrée a une icône reconnaissable, pas juste un badge texte
 - [x] `cursor: pointer` + hover visible sur tout élément cliquable
 - [x] Focus clavier visible sur tous les champs/boutons (`:focus-visible` global, `src/css/app.scss`)
-- [ ] Contraste texte vérifié (4.5:1 minimum) sur fond sombre — jamais mesuré formellement, à faire si un vrai audit d'accessibilité est demandé un jour.
+- [x] Contraste texte vérifié (4.5:1 minimum) sur fond sombre — mesuré le 2026-08-18 pour tous les rôles de la palette (§4) sur `--bg` ET `--surface` ; `--accent`/`--danger` ajustés, le reste passait déjà.
 - [x] Aucune valeur de spacing/couleur en dur dans un nouveau composant — toujours une variable
 
 ## Prochaine étape

@@ -16,14 +16,17 @@
 // roles; Notify/Dialog already use 'positive'/'negative' (see EditorPage.vue,
 // ChapterList.vue), so keeping these in sync with design-tokens.scss makes
 // every toast/confirm dialog consistent with the rest of the UI for free.
-$primary: #4c8bf5;
+// Kept in sync with design-tokens.scss's --color-accent/--color-danger —
+// see that file's comment (2026-08-18 contrast nudge) for why these aren't
+// the original #4c8bf5/#f44336 anymore.
+$primary: #508df5;
 $secondary: #334155;
-$accent: #4c8bf5;
+$accent: #508df5;
 
 $dark: #1e293b;
 $dark-page: #0f172a;
 
 $positive: #22c55e;
-$negative: #f44336;
+$negative: #f55b50;
 $info: #38bdf8;
 $warning: #ffc107;

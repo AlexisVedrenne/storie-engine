@@ -28,10 +28,17 @@
   --color-border: rgba(255, 255, 255, 0.1);
   --color-text: #f8fafc;
   --color-text-muted: #94a3b8;
-  --color-accent: #4c8bf5;
-  --color-accent-tint: rgba(76, 139, 245, 0.14);
+  // Accent/danger nudged slightly lighter (2026-08-18) — #4c8bf5/#f44336 as
+  // small text on --color-surface measured at 4.40:1/3.97:1, just under the
+  // WCAG AA 4.5:1 body-text threshold (both were already fine at the 3:1
+  // large-text/UI-component threshold, e.g. as button fills or icons — this
+  // only matters for the small text usages, see AssetsPanel.vue's
+  // .error-text). Both values re-measured against --color-bg AND
+  // --color-surface, now ≥4.5:1 on the tighter of the two.
+  --color-accent: #508df5;
+  --color-accent-tint: rgba(80, 141, 245, 0.14);
   --color-success: #22c55e;
-  --color-danger: #f44336;
+  --color-danger: #f55b50;
   --color-warning: #ffc107;
   --color-warning-tint: rgba(255, 193, 7, 0.16);
 

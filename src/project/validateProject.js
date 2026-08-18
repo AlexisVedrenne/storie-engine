@@ -187,6 +187,34 @@ function appExists(project, id) {
   return (project.customApps || []).some((a) => a.id === id)
 }
 
+// Whether a `requires` object actually constrains anything — an edge with
+// none of these set always passes, i.e. is a genuine unconditional
+// fallback. Mirrors checkConditions()'s own notion of "nothing to check"
+// (engine/stores/story.js), kept local here since this file stays
+// dependency-free from the store (see header comment).
+function hasAnyCondition(requires) {
+  if (!requires) return false
+  if (requires.following && Object.keys(requires.following).length) return true
+  if (requires.flags && Object.keys(requires.flags).length) return true
+  if (requires.collections && Object.keys(requires.collections).length) return true
+  return false
+}
+
+// Small, object-only deep-equal — `requires` is always plain
+// {flags?, following?, collections?} nesting, never an array, so this
+// doesn't need the general-purpose machinery a full deep-equal would.
+function requiresEqual(a, b) {
+  return deepEqualPlain(a || {}, b || {})
+}
+function deepEqualPlain(a, b) {
+  if (a === b) return true
+  if (typeof a !== 'object' || typeof b !== 'object' || a === null || b === null) return a === b
+  const aKeys = Object.keys(a)
+  const bKeys = Object.keys(b)
+  if (aKeys.length !== bKeys.length) return false
+  return aKeys.every((k) => Object.prototype.hasOwnProperty.call(b, k) && deepEqualPlain(a[k], b[k]))
+}
+
 // @param project - story.project: {chapters, threads, seed, manifest}
 // @returns {{errors: string[], warnings: string[]}}
 export function validateProject(project) {
@@ -257,6 +285,37 @@ export function validateProject(project) {
         )
       }
     }
+  }
+
+  // Two structural checks, both warnings (not errors) — neither PROVES a
+  // real mistake (an author might genuinely want every branch of a hub
+  // chapter to be conditional, or leave a duplicate condition as a
+  // deliberate no-op), but nothing else in the editor surfaces either case
+  // (see docs/routes-and-branching.md's "Limites connues" — cycles are
+  // fine by design and not checked here, this is specifically about a
+  // chapter that can dead-end silently at runtime, or an edge that can
+  // never fire).
+  for (const chapter of chapters) {
+    const edges = chapter.next || []
+    if (!edges.length) continue
+    const label = chapter.title || chapter.id
+
+    if (edges.every((link) => hasAnyCondition(link.requires))) {
+      warnings.push(
+        `Chapitre "${label}" : toutes les flèches sortantes ont une condition, aucune de secours — si aucune ne passe en jeu, l'histoire s'arrête ici silencieusement`,
+      )
+    }
+
+    edges.forEach((link, j) => {
+      for (let k = 0; k < j; k++) {
+        if (requiresEqual(link.requires, edges[k].requires)) {
+          warnings.push(
+            `Chapitre "${label}" : flèche ${j + 1} a exactement la même condition que la flèche ${k + 1} — ne sera jamais empruntée (la première qui correspond gagne)`,
+          )
+          break
+        }
+      }
+    })
   }
 
   return { errors, warnings }

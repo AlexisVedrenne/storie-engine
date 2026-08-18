@@ -107,7 +107,13 @@ migration du fixture démo, commit correspondant, comme référence).
   ce n'est pas voulu.
 - La validation (`validateProject.js`) vérifie que chaque `next[].to` existe
   et avertit sur les chapitres inatteignables depuis `entryChapterId`
-  (BFS), mais ne vérifie pas qu'au moins une arête sortante d'un chapitre
-  matchera forcément à l'exécution (deux `requires` mutuellement exclusifs
-  mal écrits peuvent laisser un joueur sans arête valide → fin de facto,
-  silencieuse).
+  (BFS). **Depuis 2026-08-18**, avertit aussi (pas une erreur — aucun des
+  deux cas ne PROUVE un vrai bug) : un chapitre dont TOUTES les flèches
+  sortantes sont conditionnelles sans aucune de secours (risque de fin
+  silencieuse si aucune condition ne passe en jeu), et une flèche dont la
+  condition est un doublon exact d'une flèche précédente du même chapitre
+  (ne sera jamais empruntée, la première qui correspond gagne). Reste non
+  détecté, volontairement : deux conditions différentes mais mutuellement
+  exclusives par construction (ex. `flag >= 5` et `flag < 3` côte à côte
+  sans troisième branche) — prouver l'exhaustivité logique de conditions
+  arbitraires est hors de portée d'un simple linter statique.

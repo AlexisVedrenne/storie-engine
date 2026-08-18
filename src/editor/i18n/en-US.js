@@ -29,7 +29,7 @@ export default {
     tabSeed: 'Seed content',
     showEditing: 'Show editing',
     previewOnly: 'Preview only',
-    autosaveLabel: 'Autosave',
+    autosaveLabel: 'Autosave (local)',
     restartPreviewTooltip: 'Restart preview',
     validateTooltip:
       'Validate project — looks for broken references (missing contact/thread/image) and chapter issues',

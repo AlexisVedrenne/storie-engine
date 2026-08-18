@@ -29,7 +29,7 @@ export default {
     tabSeed: 'Contenu initial',
     showEditing: "Afficher l'édition",
     previewOnly: 'Aperçu seul',
-    autosaveLabel: 'Sauvegarde auto',
+    autosaveLabel: 'Sauvegarde auto (locale)',
     restartPreviewTooltip: "Relancer l'aperçu",
     validateTooltip:
       'Valider le projet — cherche les références cassées (contact/thread/image introuvable) et les problèmes de chapitres',

@@ -408,6 +408,10 @@ jamais l'autre.
   chapitre (erreur sinon).
 - Accessibilité : BFS depuis le chapitre d'entrée, chapitre jamais atteint
   = avertissement.
+- Chapitre dont toutes les flèches sortantes sont conditionnelles sans
+  aucune de secours (risque de fin silencieuse) = avertissement. Flèche
+  dont la condition est un doublon exact d'une flèche précédente du même
+  chapitre (ne sera jamais empruntée) = avertissement.
 - Fichiers d'assets manquants sur disque = erreur.
 - Erreurs bloquent le build ; avertissements demandent confirmation.
 
@@ -415,11 +419,17 @@ jamais l'autre.
 
 - Assemblage d'un shell temporaire : template `game-shell` + copie fraîche
   du moteur de l'éditeur (jamais de duplication manuelle) + données du
-  projet + assets → `pnpm install` + `quasar build -m electron`.
+  projet + assets → `pnpm install` + `quasar build -m electron` (desktop)
+  et/ou export Android (voir plus bas).
 - Icône `.exe` personnalisable (`.ico` recommandé), nom/version du build
   pris du projet.
-- **Dialogue de version** à chaque build (aucun/patch/mineure/majeure),
-  écrit immédiatement dans `project.json`.
+- **Assistant de build en 3 étapes** : version (aucun/patch/mineure/
+  majeure, écrit immédiatement dans `project.json`) → cibles de
+  distribution (desktop et/ou Android, cases à cocher) → progression.
+- **Export Android** (APK) : toolchain JDK/SDK téléchargée à la demande
+  (barre de progression dédiée, une fois par machine, même patron que
+  rclone pour le cloud sync), scaffold Capacitor, packagée depuis le même
+  projet — pas un second pipeline à maintenir.
 - Sortie copiée vers un dossier choisi par l'auteur, nettoyage du dossier
   temporaire avec retry (verrous Windows transitoires).
 - **Sauvegarde locale** dans le jeu exporté : `save.json` dans

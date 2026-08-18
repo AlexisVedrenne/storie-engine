@@ -459,7 +459,10 @@
                 <ThreadList v-model="selectedThreadIndex"
               /></q-tab-panel>
               <q-tab-panel name="game">
-                <div class="empty-state">{{ t('editorPage.gameEmptyState') }}</div>
+                <div class="empty-state">
+                  <q-icon name="sports_esports" size="40px" />
+                  {{ t('editorPage.gameEmptyState') }}
+                </div>
               </q-tab-panel>
               <q-tab-panel name="assets">
                 <AssetTree v-model="selectedAssetFolder" />
@@ -483,7 +486,10 @@
                 >
                   <q-tab-panel name="events">
                     <EventForm v-if="selectedEvent" :event="selectedEvent" />
-                    <div v-else class="empty-state">{{ t('editorPage.eventsEmptyState') }}</div>
+                    <div v-else class="empty-state">
+                      <q-icon name="sensors" size="40px" />
+                      {{ t('editorPage.eventsEmptyState') }}
+                    </div>
                   </q-tab-panel>
 
                   <q-tab-panel name="interactions">
@@ -492,23 +498,33 @@
                       :def="selectedInteractionDef"
                     />
                     <div v-else class="empty-state">
+                      <q-icon name="touch_app" size="40px" />
                       {{ t('editorPage.interactionsEmptyState') }}
                     </div>
                   </q-tab-panel>
 
                   <q-tab-panel name="apps">
                     <CustomAppEditor v-if="selectedCustomApp" :def="selectedCustomApp" />
-                    <div v-else class="empty-state">{{ t('editorPage.appsEmptyState') }}</div>
+                    <div v-else class="empty-state">
+                      <q-icon name="widgets" size="40px" />
+                      {{ t('editorPage.appsEmptyState') }}
+                    </div>
                   </q-tab-panel>
 
                   <q-tab-panel name="contacts">
                     <ContactForm v-if="selectedContact" :contact="selectedContact" />
-                    <div v-else class="empty-state">{{ t('editorPage.contactsEmptyState') }}</div>
+                    <div v-else class="empty-state">
+                      <q-icon name="contacts" size="40px" />
+                      {{ t('editorPage.contactsEmptyState') }}
+                    </div>
                   </q-tab-panel>
 
                   <q-tab-panel name="threads">
                     <ThreadForm v-if="selectedThread" :thread="selectedThread" />
-                    <div v-else class="empty-state">{{ t('editorPage.threadsEmptyState') }}</div>
+                    <div v-else class="empty-state">
+                      <q-icon name="groups" size="40px" />
+                      {{ t('editorPage.threadsEmptyState') }}
+                    </div>
                   </q-tab-panel>
 
                   <q-tab-panel name="game">
@@ -525,7 +541,10 @@
                       :locale="selectedLocale"
                       v-model:bucket="selectedBucket"
                     />
-                    <div v-else class="empty-state">{{ t('editorPage.i18nEmptyState') }}</div>
+                    <div v-else class="empty-state">
+                      <q-icon name="translate" size="40px" />
+                      {{ t('editorPage.i18nEmptyState') }}
+                    </div>
                   </q-tab-panel>
 
                   <q-tab-panel name="seed">
@@ -1528,11 +1547,26 @@ async function openBuildStepper() {
   margin-bottom: var(--space-2);
 }
 
+/* Fills the whole pane and centers content vertically — before this, an
+   empty selection (no locale/contact/thread/app picked yet) left its
+   message pinned to the top of a mostly-blank tall panel (confirmed on
+   screen, docs/ui-ux-guidelines.md §7 backlog item), which reads as "not
+   finished" rather than "nothing selected yet". Shared by all 4 usages
+   above (i18n/contacts/threads/apps) — one fix benefits every one of them. */
 .empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: 60vh;
   color: var(--color-text-muted);
   font-size: var(--text-sm);
   padding: var(--space-6);
   text-align: center;
+}
+.empty-state .q-icon {
+  opacity: 0.5;
 }
 
 .preview-pane {
