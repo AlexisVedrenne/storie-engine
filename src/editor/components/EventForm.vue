@@ -192,6 +192,13 @@ const activeTab = ref('then')
 const matchFields = computed(() => triggerDef(props.event.trigger)?.matchFields || [])
 
 const appOptions = computed(() => APP_REGISTRY.map((app) => ({ label: storyT(app.labelKey), value: app.id })))
+// Separate from appOptions/APP_REGISTRY on purpose — button.pressed can
+// only ever fire from a custom app (native apps have no block-based
+// buttons), a per-project dynamic set, not the 5 fixed ids APP_REGISTRY
+// enumerates.
+const customAppOptions = computed(() =>
+  (story.project?.customApps || []).map((app) => ({ label: app.label || app.id, value: app.id })),
+)
 const interactionOptions = computed(() =>
   (story.project?.gameConfig?.interactions || []).map((def) => ({ label: def.name || def.id, value: def.id })),
 )
@@ -240,6 +247,7 @@ function filterPostOptions(val, update) {
 
 function optionsFor(field) {
   if (field.optionsFrom === 'apps') return appOptions.value
+  if (field.optionsFrom === 'customApps') return customAppOptions.value
   if (field.optionsFrom === 'contacts') return contactOptions.value
   if (field.optionsFrom === 'interactions') return interactionOptions.value
   return null

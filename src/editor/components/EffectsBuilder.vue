@@ -83,7 +83,13 @@
           outlined
           class="key-input"
           :label="t('effectsBuilder.itemKeyLabel')"
-          :hint="row.mode === 'add' ? t('effectsBuilder.itemKeyAutoHint') : ''"
+          :hint="
+            row.mode === 'add'
+              ? t('effectsBuilder.itemKeyAutoHint')
+              : row.mode === 'increment'
+                ? t('effectsBuilder.itemKeyRequiredHint')
+                : ''
+          "
           v-model="row.itemKey"
           @update:model-value="sync"
         />
@@ -118,6 +124,16 @@
             @update:model-value="sync"
           />
         </template>
+        <q-input
+          v-else-if="row.mode === 'increment'"
+          dense
+          outlined
+          type="number"
+          class="num-input"
+          :label="t('effectsBuilder.deltaLabel')"
+          v-model.number="row.value"
+          @update:model-value="sync"
+        />
       </div>
     </div>
     <q-btn
@@ -423,6 +439,7 @@ const CLOCK_MODES = computed(() => [
 const COLLECTION_MODES = computed(() => [
   { label: t('effectsBuilder.modeAdd'), value: 'add' },
   { label: t('effectsBuilder.modeRemove'), value: 'remove' },
+  { label: t('effectsBuilder.modeIncrement'), value: 'increment' },
 ])
 const VALUE_TYPES = computed(() => [
   { label: t('effectsBuilder.valueTypeText'), value: 'text' },
@@ -536,6 +553,14 @@ function sync() {
     if (row.mode === 'remove') {
       if (!row.itemKey) continue // nothing to target without a key
       collections.push({ flagKey: row.flagKey, mode: 'remove', itemKey: row.itemKey })
+    } else if (row.mode === 'increment') {
+      if (!row.itemKey) continue // no auto-generated key makes sense for "increment THIS counter"
+      collections.push({
+        flagKey: row.flagKey,
+        mode: 'increment',
+        itemKey: row.itemKey,
+        value: Number(row.value) || 0,
+      })
     } else {
       collections.push({
         flagKey: row.flagKey,

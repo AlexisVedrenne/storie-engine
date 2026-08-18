@@ -20,7 +20,7 @@
 
     <div v-else class="thread-view">
       <div class="thread-header">
-        <button class="back-btn" :aria-label="t('common.back')" @click="openThreadId = null">
+        <button class="back-btn" :aria-label="t('common.back')" @click="closeThread">
           <q-icon name="chevron_left" size="26px" />
         </button>
         <AppAvatar
@@ -112,10 +112,12 @@
 // block instance (openThreadId, a plain ref) rather than phone-level state
 // like the native apps' phone.activeConversation/activeDmThread — the
 // author explicitly wanted this to stay "inside the app's own screen", not
-// take over the whole phone. That's also why pushAppMessage never
-// suppresses notifications/unread while a thread is open here (see its own
-// comment in story.js) — the engine has no phone-level signal to check.
-import { computed, nextTick, onMounted, ref, watch } from 'vue'
+// take over the whole phone. phone.activeAppThread is the one exception:
+// written here specifically so pushAppMessage() (story.js) has a
+// phone-level signal to check for "already viewing this exact thread",
+// same as isViewingDmThread/isViewingConversation do for the native paths
+// — everything else about navigation stays local.
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { usePhoneStore } from '@/engine/stores/phone'
 import { useStoryStore } from '@/engine/stores/story'
@@ -169,7 +171,10 @@ function rowImage(row) {
 const initialThreadId = phone.pendingThreadId
 phone.pendingThreadId = null
 const openThreadId = ref(initialThreadId || null)
-if (initialThreadId) story.markAppThreadRead(phone.currentApp, initialThreadId)
+if (initialThreadId) {
+  story.markAppThreadRead(phone.currentApp, initialThreadId)
+  phone.openAppThread(phone.currentApp, initialThreadId)
+}
 const meta = computed(() => story.getThread(openThreadId.value))
 const headerName = computed(() =>
   meta.value.group ? groupName(meta.value) : displayName(meta.value.participants[0]),
@@ -200,6 +205,11 @@ const isTyping = computed(
 function openThread(id) {
   openThreadId.value = id
   story.markAppThreadRead(phone.currentApp, id)
+  phone.openAppThread(phone.currentApp, id)
+}
+function closeThread() {
+  openThreadId.value = null
+  phone.closeAppThread()
 }
 
 const scrollEl = ref(null)
@@ -209,6 +219,12 @@ function scrollToBottom() {
 watch(openThreadId, () => nextTick(scrollToBottom))
 watch([() => messages.value.length, isTyping, choice], () => nextTick(scrollToBottom))
 onMounted(scrollToBottom)
+// Belt-and-suspenders: also cleared by phone.js's own openApp()/goHome()/
+// lock()/requestReboot() (leaving the app entirely), but this block can
+// also disappear on its own — a `tabs` block switching away from the
+// screen it lives on unmounts it directly, which none of those phone.js
+// actions observe.
+onBeforeUnmount(() => phone.closeAppThread())
 </script>
 
 <style scoped>

@@ -11,6 +11,16 @@ export const usePhoneStore = defineStore('phone', {
     appOpenedAt: null, // Date.now() when currentApp was opened — drives 'app.closed's `seconds` payload
     activeConversation: null, // contactId when inside an SMS chat thread
     activeDmThread: null, // threadId when inside an Pixly DM thread
+    // { appId, threadId } | null — mirrors activeConversation/activeDmThread
+    // for a custom app's `conversations` block, whose own navigation stays
+    // LOCAL to the block instance (see ConversationsBlock.vue's own
+    // comment) rather than living here directly. Written by that block on
+    // open/close so story.js's pushAppMessage() has a phone-level signal to
+    // check (isViewingAppThread(), mirroring isViewingDmThread()) — without
+    // this, a message pushed while the player is actively looking at that
+    // exact thread still bumped unread/fired a notification, an accepted
+    // v1 gap now closed.
+    activeAppThread: null,
     rebootCount: 0, // bumped by requestReboot() — PhoneShell watches this to replay the boot sequence
 
     // Consumed once by CustomAppRenderer.vue/ConversationsBlock.vue right
@@ -56,6 +66,7 @@ export const usePhoneStore = defineStore('phone', {
       this.currentApp = null
       this.activeConversation = null
       this.activeDmThread = null
+      this.activeAppThread = null
     },
     openApp(appId, { screenId = null, threadId = null } = {}) {
       this.closeCurrentApp()
@@ -63,6 +74,7 @@ export const usePhoneStore = defineStore('phone', {
       this.appOpenedAt = Date.now()
       this.activeConversation = null
       this.activeDmThread = null
+      this.activeAppThread = null
       this.pendingScreenId = screenId
       this.pendingThreadId = threadId
       // Fires unconditionally, whether or not any project.events reaction
@@ -75,6 +87,7 @@ export const usePhoneStore = defineStore('phone', {
       this.currentApp = null
       this.activeConversation = null
       this.activeDmThread = null
+      this.activeAppThread = null
     },
     openConversation(contactId) {
       this.activeConversation = contactId
@@ -87,6 +100,12 @@ export const usePhoneStore = defineStore('phone', {
     },
     closeDmThread() {
       this.activeDmThread = null
+    },
+    openAppThread(appId, threadId) {
+      this.activeAppThread = { appId, threadId }
+    },
+    closeAppThread() {
+      this.activeAppThread = null
     },
 
     selectCustomAppBlock(block) {
@@ -103,6 +122,7 @@ export const usePhoneStore = defineStore('phone', {
       this.currentApp = null
       this.activeConversation = null
       this.activeDmThread = null
+      this.activeAppThread = null
       this.rebootCount++
     },
   },

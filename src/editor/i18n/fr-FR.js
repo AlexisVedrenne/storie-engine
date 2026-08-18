@@ -553,9 +553,14 @@ export default {
     actionNone: 'Aucune',
     actionEffect: 'Effet',
     actionNavigateScreen: 'Changer d’écran',
+    actionEvent: 'Événement',
     actionEffectHelp:
       'Applique ces effets (flags, social...) au tap — même mécanisme qu’une option de choix.',
     actionNavigateScreenLabel: 'Écran ciblé',
+    actionEventHelp:
+      'Déclenche l’événement "Bouton pressé" — crée une réaction dans l’onglet Events qui filtre sur cet id pour savoir quel bouton a été pressé.',
+    actionEventButtonIdLabel: 'Id du bouton (optionnel)',
+    actionEventButtonIdHint: 'Laisse vide si un seul bouton de ce genre existe dans le projet.',
     tabLabelLabel: 'Texte de l’onglet',
     tabScreenLabel: 'Écran ciblé',
     addTab: 'Ajouter un onglet',
@@ -652,9 +657,12 @@ export default {
     noCollectionChange: 'Aucune collection modifiée.',
     modeAdd: 'ajouter un élément',
     modeRemove: 'retirer un élément',
+    modeIncrement: 'incrémenter un nombre',
     itemKeyLabel: 'Clé (optionnel)',
     itemKeyAutoHint:
       'Vide = clé générée automatiquement (pratique pour un historique qui s’empile)',
+    itemKeyRequiredHint: 'Requis — c’est la clé du compteur à incrémenter/décrémenter.',
+    deltaLabel: 'Variation (+/-)',
     valueLabel: 'Valeur',
     valueTypeText: 'Texte',
     valueTypeNumber: 'Nombre',
@@ -1072,6 +1080,10 @@ export default {
     'conversation.opened': {
       label: 'Conversation ouverte',
       fields: { contactId: { label: 'Contact' } },
+    },
+    'button.pressed': {
+      label: 'Bouton pressé (app custom)',
+      fields: { app: { label: 'Application' }, buttonId: { label: 'Bouton (id)' } },
     },
     'interaction.won': {
       label: 'Interaction gagnée',

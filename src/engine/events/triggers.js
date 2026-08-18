@@ -75,6 +75,21 @@ export const TRIGGERS = [
     matchFields: [{ key: 'contactId', label: 'Contact', optionsFrom: 'contacts' }],
   },
   {
+    name: 'button.pressed',
+    app: null,
+    // 'Commun', pas scopé à un app natif : les boutons n'existent que dans
+    // les apps custom (voir blockKinds.js), un ensemble dynamique par
+    // projet — pas un des 5 ids fixes d'APP_REGISTRY que `app: '<id>'`
+    // suppose partout ailleurs dans ce catalogue. `app` reste un
+    // matchField ici (optionsFrom: 'customApps', pas 'apps') plutôt
+    // qu'une propriété structurelle de l'entrée.
+    label: 'Bouton pressé (app custom)',
+    matchFields: [
+      { key: 'app', label: 'Application', optionsFrom: 'customApps' },
+      { key: 'buttonId', label: 'Bouton (id)' },
+    ],
+  },
+  {
     name: 'interaction.won',
     app: null,
     label: 'Interaction gagnée',

@@ -599,23 +599,43 @@ d'envoyer (voir `EditorPage.vue`'s `save()`, cas `'apps'`) — même trick que
 
 ## Limites connues (v1, les deux systèmes)
 
-- Bloc `button` : seulement 2 kinds d'action (`effect`/`navigateScreen`) —
-  pas de "déclenche une entrée timeline", voir sa section.
 - Pas de branchement/conditions à l'intérieur d'une séquence de steps
   d'interaction (linéaire uniquement) — évoqué, volontairement pas
   construit tant qu'aucun besoin concret ne le justifie.
 - Bloc `list` : deux sources possibles (contacts, collection de flag) —
   pas de générateur/source personnalisée, pas de tri/pagination (ordre =
   insertion pour une collection).
-- Flags collection : pas de décrément/upsert de valeur numérique par clé
-  (retirer = suppression complète de la clé, pas "en retirer 5") — l'ajout
-  écrase silencieusement si la clé est réutilisée, à l'auteur de laisser
-  la clé vide (auto-générée) pour un historique qui doit s'empiler.
-- Bloc `conversations` : pas de suppression notif/badge quand le thread est
-  déjà affiché (voir sa section) ; pas de saisie libre côté joueur (comme
-  le natif, uniquement des réponses par `choice`).
+- Bloc `conversations` : pas de saisie libre côté joueur (comme le natif,
+  uniquement des réponses par `choice`).
 - Zéro test GUI réel sur les deux systèmes à date de cette doc, À PART le
   glisser-déposer du bloc `list` (voir le bug trouvé et corrigé dans la
   section `conversations`) — premier et seul clic réel en éditeur à ce
   jour. Le bloc `list` et le bloc `conversations` ont chacun eu un vrai
   build du jeu compilé en plus du lint+build éditeur.
+
+### Corrigé le 2026-08-18
+
+- **Bloc `button` : 3ᵉ kind d'action `event`** — déclenche le trigger fixe
+  `button.pressed` (`triggers.js`, groupé "Commun") avec `{app, buttonId}`
+  en payload, réagi depuis l'onglet Events exactement comme `app.opened`/
+  `photo.viewed`. "Déclenche une entrée timeline" reste explicitement
+  écarté (un bouton n'est rattaché à aucune position de timeline) — c'est
+  le système d'événements existant qui est réutilisé, pas un nouveau
+  mécanisme. `buttonId` est un champ libre optionnel sur le bouton
+  (aucun concept d'id de bloc n'existait avant), laissable vide s'il n'y a
+  qu'un seul bouton de ce genre dans le projet.
+- **Flags collection : mode `increment`** — 3ᵉ mode à côté de `add`/`remove`,
+  ajoute un delta (positif ou négatif) à la valeur numérique déjà présente
+  à une clé (contrairement à `add`, qui écrase toujours). `itemKey` requis
+  pour ce mode (pas de clé auto-générée pour "incrémenter CE compteur
+  précis"). Bug trouvé au passage : `EffectsBuilder.vue`'s `sync()` codait
+  en dur `mode: 'add'` pour tout mode ≠ `'remove'` — un `row.mode` autre
+  que ces deux valeurs (impossible avant `increment`, donc jamais
+  déclenché) aurait été silencieusement sérialisé comme `'add'`.
+- **Bloc `conversations` : notif/badge supprimés quand le thread est déjà
+  affiché** — `phone.activeAppThread` (nouveau, `{appId, threadId} | null`)
+  écrit par `ConversationsBlock.vue` lui-même (sa navigation reste LOCALE
+  au bloc pour tout le reste, comme documenté ci-dessus) spécifiquement
+  pour donner à `pushAppMessage()` un signal à lire, via
+  `story.isViewingAppThread()` — même mécanisme que
+  `isViewingDmThread`/`isViewingConversation` pour les threads natifs.

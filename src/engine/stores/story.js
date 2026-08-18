@@ -1677,6 +1677,16 @@ export const useStoryStore = defineStore('story', {
       return phone.currentApp === 'social' && phone.activeDmThread === threadId
     },
 
+    // Same idea for a custom app's `conversations` block — phone.activeAppThread
+    // is written by that block itself (its own navigation is otherwise LOCAL
+    // to the block instance, see its own comment), not derived here.
+    isViewingAppThread(appId, threadId) {
+      const phone = usePhoneStore()
+      return (
+        phone.activeAppThread?.appId === appId && phone.activeAppThread?.threadId === threadId
+      )
+    },
+
     pushMessage(contactId, { from, text, image, deleteAfter }) {
       if (!this.messages[contactId]) this.messages[contactId] = []
       const msg = {
@@ -1771,13 +1781,13 @@ export const useStoryStore = defineStore('story', {
     },
 
     // Per-app-scoped twin of pushDm() — same message shape/sound, but keyed
-    // by (appId, threadId) instead of one global igThreads bucket. No
-    // "already viewing this thread" suppression (unlike pushDm/pushMessage's
-    // isViewingDmThread/isViewingConversation): a conversation module's
-    // open-thread state is LOCAL to its own block instance (see
-    // ConversationsBlock.vue), not phone-level, so the engine has no cheap
-    // way to know it's on screen — always notifies/bumps unread instead, an
-    // accepted v1 simplification. Notification title is always the
+    // by (appId, threadId) instead of one global igThreads bucket.
+    // "Already viewing this thread" suppression mirrors pushDm/pushMessage's
+    // isViewingDmThread/isViewingConversation via isViewingAppThread():
+    // a conversation module's open-thread state is LOCAL to its own block
+    // instance (see ConversationsBlock.vue), not phone-level by default —
+    // that block writes phone.activeAppThread itself specifically so this
+    // check has something to read. Notification title is always the
     // SENDER's own name (`socialHandle`), not the thread's — a group
     // thread's name is authored on the block (block.threads), invisible to
     // the engine here, but naming the sender reads fine for a group message
@@ -1792,8 +1802,12 @@ export const useStoryStore = defineStore('story', {
         image: image || null,
         ts: this.resolvedClock().toISOString(),
       })
+      // Sound plays unconditionally, same reasoning as pushMessage/pushDm's
+      // own comment — a message landing while the thread is open still
+      // deserves a tone, it just doesn't need a badge/banner.
       playSound(from === 'me' ? 'social-send' : 'dm-receive')
       if (from === 'me') return
+      if (this.isViewingAppThread(appId, threadId)) return
       if (!this.appUnread[appId]) this.appUnread[appId] = {}
       this.appUnread[appId][threadId] = (this.appUnread[appId][threadId] || 0) + 1
       this.pushNotification({
@@ -1806,9 +1820,10 @@ export const useStoryStore = defineStore('story', {
 
     // Called when a conversation-block's LOCAL thread view is opened (see
     // ConversationsBlock.vue) — zeroes the badge and dismisses any pending
-    // notification for it. Doesn't suppress FUTURE messages while open (see
-    // pushAppMessage's comment) — just clears what's already there, same
-    // spirit as tapping into a native thread.
+    // notification for it. Suppressing FUTURE messages while open is now
+    // handled separately by isViewingAppThread()/phone.activeAppThread —
+    // this only clears what's already there, same spirit as tapping into a
+    // native thread.
     markAppThreadRead(appId, threadId) {
       if (this.appUnread[appId]) this.appUnread[appId][threadId] = 0
       this.dismissNotificationsFor({ app: appId, thread: threadId })
@@ -1847,15 +1862,20 @@ export const useStoryStore = defineStore('story', {
         }
       }
 
-      // effects.collections = [{ flagKey, mode: 'add'|'remove', itemKey,
-      // value }] — a list of ops (not an object keyed by flagKey) since one
-      // effect can touch the same collection more than once (e.g. two
-      // separate ledger entries in one `effect` block). `itemKey` left
+      // effects.collections = [{ flagKey, mode: 'add'|'remove'|'increment',
+      // itemKey, value }] — a list of ops (not an object keyed by flagKey)
+      // since one effect can touch the same collection more than once (e.g.
+      // two separate ledger entries in one `effect` block). `itemKey` left
       // blank on 'add' auto-generates one (same id-gen shape TimelineEditor
       // already uses for group ids) — the common case for a growing
       // history/log, where the author never needs to think about keys at
       // all. 'remove' with no matching itemKey is a silent no-op, same
-      // "nothing to do" spirit as every other effect here.
+      // "nothing to do" spirit as every other effect here. 'increment' adds
+      // a numeric delta (positive or negative) to whatever's already at
+      // that key — unlike 'add' (which always OVERWRITES, see EffectsBuilder.vue's
+      // own comment), this is the only mode that reads-before-writing;
+      // `itemKey` is required here (no auto-generated key makes sense for
+      // "increment THIS specific counter").
       if (effects.collections) {
         for (const op of effects.collections) {
           if (!op.flagKey) continue
@@ -1863,6 +1883,8 @@ export const useStoryStore = defineStore('story', {
           const map = this.flagCollections[op.flagKey]
           if (op.mode === 'remove') {
             if (op.itemKey) delete map[op.itemKey]
+          } else if (op.mode === 'increment') {
+            if (op.itemKey) map[op.itemKey] = (Number(map[op.itemKey]) || 0) + (Number(op.value) || 0)
           } else {
             const key =
               op.itemKey ||

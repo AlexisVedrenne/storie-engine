@@ -25,10 +25,13 @@
 // this engine.
 import { computed, inject } from 'vue'
 import { useStoryStore } from '@/engine/stores/story'
+import { usePhoneStore } from '@/engine/stores/phone'
 import { resolveDynamicText } from '@/engine/customApps/resolveDynamicText'
+import { emit as emitEngineEvent } from '@/engine/events/eventManager'
 
 const props = defineProps({ block: { type: Object, required: true } })
 const story = useStoryStore()
+const phone = usePhoneStore()
 const listItem = inject('customAppListItem', null)
 const navigate = inject('customAppNavigate', () => {})
 const label = computed(() => resolveDynamicText(props.block.label, story, listItem) || '')
@@ -38,6 +41,14 @@ function onClick() {
   if (!action) return
   if (action.type === 'effect') story.applyEffects(action.effects)
   else if (action.type === 'navigateScreen') navigate(action.screenId)
+  // Fires the fixed `button.pressed` engine trigger (see triggers.js) —
+  // reacted to from the Events tab exactly like app.opened/photo.viewed,
+  // NOT a free-form event name. `phone.currentApp` is reliably this
+  // block's own app id: CustomAppRenderer (and everything inside it,
+  // including this block) only ever mounts while its app is the open one.
+  else if (action.type === 'event') {
+    emitEngineEvent('button.pressed', { app: phone.currentApp, buttonId: action.buttonId || '' })
+  }
 }
 </script>
 

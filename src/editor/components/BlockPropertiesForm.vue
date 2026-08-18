@@ -281,6 +281,7 @@
           { label: t('blockProps.actionNone'), value: 'none' },
           { label: t('blockProps.actionEffect'), value: 'effect' },
           { label: t('blockProps.actionNavigateScreen'), value: 'navigateScreen' },
+          { label: t('blockProps.actionEvent'), value: 'event' },
         ]"
         @update:model-value="setButtonActionType"
       />
@@ -300,6 +301,16 @@
           :label="t('blockProps.actionNavigateScreenLabel')"
           :options="screenOptions"
           v-model="block.action.screenId"
+        />
+      </template>
+      <template v-else-if="block.action.type === 'event'">
+        <p class="tab-help">{{ t('blockProps.actionEventHelp') }}</p>
+        <q-input
+          dense
+          outlined
+          :label="t('blockProps.actionEventButtonIdLabel')"
+          :hint="t('blockProps.actionEventButtonIdHint')"
+          v-model="block.action.buttonId"
         />
       </template>
       <p v-else class="tab-help">{{ t('blockProps.buttonHelp') }}</p>
@@ -508,6 +519,8 @@ function setButtonActionType(type) {
   if (type === 'effect') props.block.action = { type, effects: props.block.action?.effects || {} }
   else if (type === 'navigateScreen') {
     props.block.action = { type, screenId: props.block.action?.screenId || '' }
+  } else if (type === 'event') {
+    props.block.action = { type, buttonId: props.block.action?.buttonId || '' }
   } else props.block.action = { type: 'none' }
 }
 

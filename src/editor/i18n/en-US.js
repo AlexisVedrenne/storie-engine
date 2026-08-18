@@ -538,9 +538,14 @@ export default {
     actionNone: 'None',
     actionEffect: 'Effect',
     actionNavigateScreen: 'Change screen',
+    actionEvent: 'Event',
     actionEffectHelp:
       'Applies these effects (flags, social...) on tap — same mechanism as a choice option.',
     actionNavigateScreenLabel: 'Target screen',
+    actionEventHelp:
+      'Fires the "Button pressed" event — create a reaction in the Events tab filtering on this id to know which button was pressed.',
+    actionEventButtonIdLabel: 'Button id (optional)',
+    actionEventButtonIdHint: 'Leave empty if only one button of this kind exists in the project.',
     tabLabelLabel: 'Tab text',
     tabScreenLabel: 'Target screen',
     addTab: 'Add a tab',
@@ -637,8 +642,11 @@ export default {
     noCollectionChange: 'No collection changed.',
     modeAdd: 'add an item',
     modeRemove: 'remove an item',
+    modeIncrement: 'increment a number',
     itemKeyLabel: 'Key (optional)',
     itemKeyAutoHint: 'Empty = auto-generated key (handy for a history log that keeps stacking up)',
+    itemKeyRequiredHint: 'Required — the key of the counter to increment/decrement.',
+    deltaLabel: 'Change (+/-)',
     valueLabel: 'Value',
     valueTypeText: 'Text',
     valueTypeNumber: 'Number',
@@ -1050,6 +1058,10 @@ export default {
     'conversation.opened': {
       label: 'Conversation opened',
       fields: { contactId: { label: 'Contact' } },
+    },
+    'button.pressed': {
+      label: 'Button pressed (custom app)',
+      fields: { app: { label: 'Application' }, buttonId: { label: 'Button (id)' } },
     },
     'interaction.won': {
       label: 'Interaction won',
