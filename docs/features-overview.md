@@ -495,3 +495,9 @@ rclone lui-même), piloté en local via son démon HTTP/JSON.
   chapitre/app/liste entière, pas une entrée précise à l'intérieur (limite
   assumée, cohérente avec la portée de la navigation existante). Cherche
   uniquement le texte source français, pas les traductions par langue.
+- **Panneau debug/QA** (icône flottante, visible dès qu'un aperçu a
+  démarré) : force la valeur live d'un flag pendant l'aperçu, pour tester
+  une branche ("si `trustLevel >= 5` ici") sans rejouer depuis le début.
+  Toggle pour un flag booléen, champ nombre sinon. Collections exclues
+  (hors scope, éditeur dédié pas construit) ; remis à zéro par "Relancer
+  l'aperçu" comme le reste de l'état de session — pas persistant.

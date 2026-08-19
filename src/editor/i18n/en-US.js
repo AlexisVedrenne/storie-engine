@@ -706,6 +706,13 @@ export default {
     truncated: '{n}+ results, narrow your search to see the rest.',
   },
 
+  debugPanel: {
+    toggleTooltip: 'Debug panel — force flags without replaying',
+    title: 'Debug / QA',
+    hint: 'Force a value to test a branch without replaying from the start. Reset by "Restart preview".',
+    empty: 'No flags in this project yet.',
+  },
+
   contactList: {
     meLocked: 'The "me" contact is required by the engine — cannot be deleted.',
     newContact: 'New contact',

@@ -723,6 +723,13 @@ export default {
     truncated: '{n}+ résultats, affine ta recherche pour voir le reste.',
   },
 
+  debugPanel: {
+    toggleTooltip: 'Panneau debug — forcer des flags sans rejouer',
+    title: 'Debug / QA',
+    hint: 'Force une valeur pour tester une branche sans rejouer depuis le début. Remis à zéro par "Relancer l\'aperçu".',
+    empty: 'Aucun flag dans ce projet pour l’instant.',
+  },
+
   contactList: {
     meLocked: 'Le contact « me » est requis par le moteur — non supprimable.',
     newContact: 'Nouveau contact',

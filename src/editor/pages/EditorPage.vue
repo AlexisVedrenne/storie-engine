@@ -612,6 +612,13 @@
 
     <WebPreviewDialog ref="webPreviewDialogRef" :root-path="story.project.rootPath" />
     <BuildStepper ref="buildStepperRef" />
+    <!-- position: fixed, mounted once at the page root — stays reachable
+         above the phone regardless of which of its 3 Teleport slots is
+         currently active (docked/chapter-page/focus-preview), without
+         needing a topbar button or touching any of those Teleport targets
+         (see the "Invalid Teleport target" warnings elsewhere in this
+         file). Self-contained: owns its own toggle button. -->
+    <DebugPanel v-if="story.started" />
   </q-page>
 </template>
 
@@ -657,6 +664,7 @@ import EmojiPickerBtn from '@/components/shared/EmojiPickerBtn.vue'
 import { insertEmojiAtCaret } from '@/components/shared/emojiInsert'
 import EditorSettingsDialog from '@/editor/components/EditorSettingsDialog.vue'
 import GlobalSearchDialog from '@/editor/components/GlobalSearchDialog.vue'
+import DebugPanel from '@/editor/components/DebugPanel.vue'
 import WebPreviewDialog from '@/editor/components/WebPreviewDialog.vue'
 import BuildStepper from '@/editor/components/BuildStepper.vue'
 import CloudSyncButton from '@/editor/components/CloudSyncButton.vue'
