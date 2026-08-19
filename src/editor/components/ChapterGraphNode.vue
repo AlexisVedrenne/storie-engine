@@ -4,6 +4,9 @@
     :class="{ active: data.isActive, ending: data.isEnding }"
     @click="data.onSelect"
   >
+    <q-icon v-if="data.isVisited" name="check_circle" size="14px" class="visited-badge">
+      <q-tooltip>{{ t('chapterGraph.visitedTooltip') }}</q-tooltip>
+    </q-icon>
     <Handle type="target" :position="Position.Left" />
     <div class="node-body">
       <div class="node-title" :title="data.chapter.title || data.chapter.id">
@@ -66,6 +69,16 @@ defineProps({
 
 .chapter-node.ending {
   border-style: dashed;
+}
+
+.visited-badge {
+  position: absolute;
+  top: -6px;
+  left: -6px;
+  color: var(--color-success);
+  background: var(--color-bg);
+  border-radius: 50%;
+  z-index: 1;
 }
 
 .node-body {

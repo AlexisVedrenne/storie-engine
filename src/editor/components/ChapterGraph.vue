@@ -296,6 +296,11 @@ const displayNodes = computed(() =>
         chapter,
         isEnding,
         isActive: index === props.modelValue,
+        // Reflects the CURRENT preview session only — story.visitedChapterIds
+        // resets with every fresh story.startChapter()/preview restart, same
+        // scope as the Journal app's own progress rail (which reads the same
+        // array) — not a persistent "has this ever been tested" record.
+        isVisited: story.visitedChapterIds.includes(chapter.id),
         onSelect: () => emit('update:modelValue', index),
         onPreview: () => previewFrom(chapter),
         onDuplicate: () => duplicateChapter(chapter),

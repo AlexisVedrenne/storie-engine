@@ -108,6 +108,7 @@ export default {
 
   chapterGraph: {
     newChapter: 'New chapter',
+    visitedTooltip: 'Already visited during this preview',
     titleLabel: 'Title',
     edgeLabelField: 'Label (optional)',
     edgeLabelHint: 'Shown on the arrow instead of the condition. Empty = unchanged behavior.',

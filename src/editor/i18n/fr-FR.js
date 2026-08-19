@@ -110,6 +110,7 @@ export default {
 
   chapterGraph: {
     newChapter: 'Nouveau chapitre',
+    visitedTooltip: 'Déjà visité pendant cet aperçu',
     titleLabel: 'Titre',
     edgeLabelField: 'Libellé (optionnel)',
     edgeLabelHint:
