@@ -47,6 +47,21 @@ export default {
     },
   },
 
+  slotPicker: {
+    title: 'Saves',
+    subtitle: 'Pick a save.',
+    newGame: 'New game',
+    emptySlot: 'Empty slot',
+    justNow: 'Just now',
+    minutesAgo: '{n} min ago',
+    hoursAgo: '{n}h ago',
+    daysAgo: '{n}d ago',
+    deleteTooltip: 'Delete this save',
+    deleteConfirmQuestion: 'Delete this save?',
+    deleteConfirmYes: 'Delete',
+    deleteConfirmNo: 'Cancel',
+  },
+
   settings: {
     title: 'Settings',
     accountSub: '{osName} account, iCloud, device',
@@ -67,6 +82,7 @@ export default {
     privacy: 'Privacy & security',
     about: 'About',
     language: 'Language',
+    switchSlotRow: 'Switch save',
     resetRow: 'Reset phone',
     resetTitle: 'Reset',
     resetConfirmTitle: 'Reset this phone?',

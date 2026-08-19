@@ -87,12 +87,14 @@ story.loadProject({
   customApps,
 })
 
-// Resumes a local save if one exists (see story.js's save()/load(),
+// Fetches the 3 save slots (see story.js's save()/loadSlot(),
 // window.storieGameSave in electron-preload.js) — must run synchronously,
-// right here, before <PhoneShell/> mounts below: PhoneShell decides whether
-// to show the first-boot Setup Wizard from story.playerName at its own
-// setup() time, so that has to already be resolved by the time it mounts.
-story.init()
+// right here, before <PhoneShell/> mounts below: PhoneShell shows the slot
+// picker first, then resumes/starts fresh once the player picks one.
+// Doesn't touch live story state itself (that's loadSlot()'s job, once a
+// slot's actually chosen) — just makes the 3 slots' summaries available for
+// the picker's preview cards.
+story.loadSlotsSummary()
 </script>
 
 <style scoped>

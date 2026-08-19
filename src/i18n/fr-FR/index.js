@@ -47,6 +47,21 @@ export default {
     },
   },
 
+  slotPicker: {
+    title: 'Sauvegardes',
+    subtitle: 'Choisis une partie.',
+    newGame: 'Nouvelle partie',
+    emptySlot: 'Emplacement vide',
+    justNow: "À l'instant",
+    minutesAgo: 'Il y a {n} min',
+    hoursAgo: 'Il y a {n} h',
+    daysAgo: 'Il y a {n} j',
+    deleteTooltip: 'Supprimer cette sauvegarde',
+    deleteConfirmQuestion: 'Supprimer cette sauvegarde ?',
+    deleteConfirmYes: 'Supprimer',
+    deleteConfirmNo: 'Annuler',
+  },
+
   settings: {
     title: 'Réglages',
     accountSub: 'Compte {osName}, iCloud, appareil',
@@ -67,6 +82,7 @@ export default {
     privacy: 'Confidentialité et sécurité',
     about: 'À propos',
     language: 'Langue',
+    switchSlotRow: 'Changer de sauvegarde',
     resetRow: 'Réinitialiser le téléphone',
     resetTitle: 'Réinitialiser',
     resetConfirmTitle: 'Réinitialiser le téléphone ?',

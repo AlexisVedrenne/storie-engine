@@ -432,9 +432,16 @@ jamais l'autre.
   projet — pas un second pipeline à maintenir.
 - Sortie copiée vers un dossier choisi par l'auteur, nettoyage du dossier
   temporaire avec retry (verrous Windows transitoires).
-- **Sauvegarde locale** dans le jeu exporté : `save.json` dans
-  `%APPDATA%/<nom du jeu>/`, tout l'état persiste sauf le transitoire
-  (choix en cours, notifs, appel en attente…).
+- **Sauvegarde locale multi-slots** dans le jeu exporté : 3 emplacements
+  fixes, choisis sur un écran dédié au lancement (nouvelle partie ou
+  reprise, avec titre du chapitre + horodatage relatif par emplacement
+  occupé, suppression possible). Changeable en cours de partie depuis
+  Réglages ("Changer de sauvegarde"), sans perdre la progression de
+  l'emplacement quitté. `saves.json` dans `%APPDATA%/<nom du jeu>/`, tout
+  l'état persiste sauf le transitoire (choix en cours, notifs, appel en
+  attente…). Migration automatique et silencieuse d'un ancien
+  `save.json` à un seul emplacement (jeux déjà exportés avant cette
+  fonctionnalité) vers le 1er emplacement, au premier lancement.
 
 ## 11. Aperçu web (téléphone réel sur le même Wi-Fi)
 

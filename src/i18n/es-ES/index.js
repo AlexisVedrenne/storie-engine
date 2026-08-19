@@ -47,6 +47,21 @@ export default {
     },
   },
 
+  slotPicker: {
+    title: 'Partidas guardadas',
+    subtitle: 'Elige una partida.',
+    newGame: 'Nueva partida',
+    emptySlot: 'Espacio vacío',
+    justNow: 'Justo ahora',
+    minutesAgo: 'Hace {n} min',
+    hoursAgo: 'Hace {n} h',
+    daysAgo: 'Hace {n} d',
+    deleteTooltip: 'Eliminar esta partida',
+    deleteConfirmQuestion: '¿Eliminar esta partida?',
+    deleteConfirmYes: 'Eliminar',
+    deleteConfirmNo: 'Cancelar',
+  },
+
   settings: {
     title: 'Ajustes',
     accountSub: 'Cuenta {osName}, iCloud, dispositivo',
@@ -67,6 +82,7 @@ export default {
     privacy: 'Privacidad y seguridad',
     about: 'Acerca de',
     language: 'Idioma',
+    switchSlotRow: 'Cambiar partida guardada',
     resetRow: 'Restablecer el teléfono',
     resetTitle: 'Restablecer',
     resetConfirmTitle: '¿Restablecer el teléfono?',

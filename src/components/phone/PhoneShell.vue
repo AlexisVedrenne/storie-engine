@@ -13,8 +13,10 @@
     >
       <div class="screen-canvas" :style="canvasStyle">
         <transition name="phase-fade" mode="out-in">
+          <SlotPickerScreen v-if="bootPhase === 'slots'" key="slots" @picked="onSlotPicked" />
+
           <BootScreen
-            v-if="bootPhase === 'boot' || bootPhase === 'reboot'"
+            v-else-if="bootPhase === 'boot' || bootPhase === 'reboot'"
             key="boot"
             @done="onBootDone"
           />
@@ -97,6 +99,7 @@ import { usePhoneStore } from '@/engine/stores/phone'
 import { useStoryStore } from '@/engine/stores/story'
 
 import BootScreen from './BootScreen.vue'
+import SlotPickerScreen from './SlotPickerScreen.vue'
 import SetupWizard from './SetupWizard.vue'
 import StatusBar from './StatusBar.vue'
 import LockScreen from './LockScreen.vue'
@@ -141,18 +144,47 @@ const currentAppComponent = computed(
   () => story.mergedAppRegistry.find((app) => app.id === phone.currentApp)?.component,
 )
 
-// the boot animation + setup wizard are a one-time first-run sequence, not
-// something a real phone replays on every reload once it's already set up —
-// so once playerName exists, skip straight to the phone (story.init(),
-// called synchronously in PhonePage before this component mounts,
-// guarantees playerName is already known at this point).
-const bootPhase = ref(story.playerName ? 'ready' : 'boot') // 'boot' | 'setup' | 'reboot' | 'ready'
-if (story.playerName) story.startIfNeeded() // safety net; no-op if already resumed by story.init()
+// window.storieGameSave only exists in a shipped game (see story.js's own
+// save()/loadSlotsSummary()) — the editor's own live preview embeds this
+// exact same component (EditorPage.vue) and never goes through it, so the
+// slot picker must never show there: gated on the same runtime check
+// story.js already uses everywhere else for "shipped game vs editor
+// preview". In a shipped game, no slot is loaded into story state yet at
+// this point (GamePage.vue only fetched the 3 slots' SUMMARIES
+// synchronously before mount, see loadSlotsSummary()) — story.playerName
+// is genuinely unset until the player picks one, so 'slots' has to be the
+// unconditional starting phase there, not derived from playerName like the
+// editor-preview branch still is.
+const bootPhase = ref(
+  window.storieGameSave ? 'slots' : story.playerName ? 'ready' : 'boot',
+) // 'slots' | 'boot' | 'setup' | 'reboot' | 'ready'
+if (!window.storieGameSave && story.playerName) story.startIfNeeded() // editor-preview safety net only
+
+// Called once the player picks a card on SlotPickerScreen.vue —
+// story.loadSlot() has already run by the time this fires (see that
+// component), so playerName is now whatever that slot actually holds.
+// Mirrors the 'reboot' branch below: an occupied slot skips straight to
+// 'ready' with no boot animation (like reloading an already-set-up real
+// phone), so startIfNeeded() has to be called explicitly here too — it's
+// otherwise only ever reached via onBootDone()'s own branches.
+function onSlotPicked() {
+  bootPhase.value = story.playerName ? 'ready' : 'boot'
+  if (bootPhase.value === 'ready') story.startIfNeeded()
+}
 
 function onBootDone() {
   if (bootPhase.value === 'reboot') {
     bootPhase.value = 'ready'
     story.startIfNeeded() // now that playerName is known, safe to run the timeline
+    return
+  }
+  // Settings' "Changer de sauvegarde" — see phone.js's requestReboot() —
+  // routes back to the picker instead of re-deriving from playerName.
+  // Consumed once so it doesn't leak into the NEXT, unrelated reboot (e.g.
+  // "reset phone" fired right after switching slots).
+  if (phone.rebootTarget === 'slots') {
+    bootPhase.value = 'slots'
+    phone.rebootTarget = 'boot'
     return
   }
   bootPhase.value = story.playerName ? 'ready' : 'setup'
@@ -165,10 +197,12 @@ function onSetupDone() {
   bootPhase.value = 'reboot'
 }
 
-// Settings app "reset phone" — story.resetSave() already wiped the story
-// state (playerName included), so replaying the full boot animation here
-// naturally routes back into onBootDone -> 'setup', same as a real fresh
-// device.
+// Settings app "reset phone"/"changer de sauvegarde" — both bump
+// rebootCount and always replay the boot animation; which phase it lands
+// on afterward is onBootDone()'s job (branches on phone.rebootTarget).
+// "reset phone" already wiped the story state (playerName included) via
+// story.resetSave(), so its own reboot naturally routes to 'setup' there,
+// same as a real fresh device.
 watch(
   () => phone.rebootCount,
   () => {

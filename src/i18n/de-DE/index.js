@@ -47,6 +47,21 @@ export default {
     },
   },
 
+  slotPicker: {
+    title: 'Spielstände',
+    subtitle: 'Wähle einen Spielstand.',
+    newGame: 'Neues Spiel',
+    emptySlot: 'Leerer Speicherplatz',
+    justNow: 'Gerade eben',
+    minutesAgo: 'Vor {n} Min.',
+    hoursAgo: 'Vor {n} Std.',
+    daysAgo: 'Vor {n} Tg.',
+    deleteTooltip: 'Diesen Spielstand löschen',
+    deleteConfirmQuestion: 'Diesen Spielstand löschen?',
+    deleteConfirmYes: 'Löschen',
+    deleteConfirmNo: 'Abbrechen',
+  },
+
   settings: {
     title: 'Einstellungen',
     accountSub: '{osName}-Konto, iCloud, Gerät',
@@ -67,6 +82,7 @@ export default {
     privacy: 'Datenschutz & Sicherheit',
     about: 'Info',
     language: 'Sprache',
+    switchSlotRow: 'Spielstand wechseln',
     resetRow: 'Handy zurücksetzen',
     resetTitle: 'Zurücksetzen',
     resetConfirmTitle: 'Handy zurücksetzen?',

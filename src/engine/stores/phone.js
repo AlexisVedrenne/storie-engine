@@ -22,6 +22,13 @@ export const usePhoneStore = defineStore('phone', {
     // v1 gap now closed.
     activeAppThread: null,
     rebootCount: 0, // bumped by requestReboot() — PhoneShell watches this to replay the boot sequence
+    // Where onBootDone() should land once the replayed boot animation
+    // finishes — 'boot' (default, re-derive from story.playerName, same as
+    // before multi-slot saves existed) or 'slots' (Settings' "Changer de
+    // sauvegarde" — see requestReboot()'s toSlotPicker option). Consumed
+    // once by PhoneShell.vue's onBootDone(), reset back to 'boot' right
+    // after so it never leaks into the NEXT, unrelated reboot.
+    rebootTarget: 'boot',
 
     // Consumed once by CustomAppRenderer.vue/ConversationsBlock.vue right
     // after openApp() sets them (see that action below) — lets a caller
@@ -116,13 +123,21 @@ export const usePhoneStore = defineStore('phone', {
     // in front of the boot animation, same as an actual power cycle, so a
     // fresh save correctly goes through setup again instead of leaving the
     // phone sitting unlocked with a wiped story underneath it.
-    requestReboot() {
+    // toSlotPicker: false (default, unchanged behavior for every existing
+    // call site — EditorPage.vue's restartPreview()/previewFrom()/custom-app
+    // preview all call this with no argument) replays the boot animation
+    // and re-derives the landing phase from story.playerName, same as
+    // always. true (Settings' "Changer de sauvegarde" only) routes back to
+    // the slot picker instead — see phone.js's rebootTarget/
+    // PhoneShell.vue's onBootDone().
+    requestReboot({ toSlotPicker = false } = {}) {
       this.closeCurrentApp()
       this.locked = true
       this.currentApp = null
       this.activeConversation = null
       this.activeDmThread = null
       this.activeAppThread = null
+      this.rebootTarget = toSlotPicker ? 'slots' : 'boot'
       this.rebootCount++
     },
   },

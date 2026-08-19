@@ -229,6 +229,13 @@ function defaultState() {
     messagesSinceBatteryTick: 0, // counts up to 5 incoming message/dm entries, then drains 2% and resets
     pendingTimeSkipLabel: null, // set by a `timeskip` entry, shown once on the next lock screen
     timeSkipToast: null, // set once by continueAfterTimeSkip() when entry.landApp is set — TimeSkipToast.vue shows+clears it, transient like timeSkipFading
+
+    // Which of the 3 fixed save slots this session is writing into — set by
+    // loadSlot() once the player picks one on SlotPickerScreen.vue. Session
+    // meta, not game content: persisting it INSIDE a slot's own snapshot
+    // would be circular (and pointless — a slot's own file position already
+    // says which slot it is). See NON_PERSISTED_KEYS below.
+    activeSlotId: null,
   }
 }
 
@@ -236,6 +243,11 @@ function defaultState() {
 // itself (static per-launch data, reloaded fresh every time — see
 // loadProject()'s own comment) — everything else in defaultState() is real
 // player progress and goes in the save file (see save()/load() below).
+// One-shot local cache of the 3 save slots' raw bundle (see
+// loadSlotsSummary()/loadSlot() below) — plain module-scope variable, not
+// Pinia state, since it doesn't need to be reactive or ever persisted.
+let slotsCache = null
+
 const NON_PERSISTED_KEYS = new Set([
   'project',
   'pendingInteractions',
@@ -251,6 +263,7 @@ const NON_PERSISTED_KEYS = new Set([
   'timeSkipFading',
   'timeSkipToast',
   'screenEffect',
+  'activeSlotId',
 ])
 
 export const useStoryStore = defineStore('story', {
@@ -575,15 +588,47 @@ export const useStoryStore = defineStore('story', {
       this.save()
     },
 
-    init() {
-      if (this.load()) {
+    // Fetches all 3 save slots' summaries (sync IPC, see electron-main.js's
+    // game-save:loadAll) for SlotPickerScreen.vue's preview cards — doesn't
+    // touch live state, just caches the raw bundle for loadSlot() below to
+    // read from a moment later once the player actually picks one. Plain
+    // module-scope variable, not Pinia state — this is a one-shot local
+    // cache, not something that needs to be reactive or ever persisted.
+    loadSlotsSummary() {
+      if (!window.storieGameSave) return { slot1: null, slot2: null, slot3: null }
+      slotsCache = window.storieGameSave.loadAll()
+      return slotsCache
+    },
+
+    // Called once the player picks a card on SlotPickerScreen.vue. Mirrors
+    // what init() used to do (load + advance if resuming), scoped to one
+    // slot: capture `project` (static per-launch data, never part of a
+    // slot's own snapshot), wipe back to defaultState(), restore `project`,
+    // set `activeSlotId` so save() knows where to write from now on, then
+    // apply the slot's own snapshot if it had one. A brand-new save (empty
+    // slot) deliberately does NOT call advance() — `{name}` in the very
+    // first entries would bake in before the setup wizard even asks for it;
+    // PhoneShell.vue calls startIfNeeded() once onboarding is done, same as
+    // before this feature existed.
+    loadSlot(slotId) {
+      const bundle = slotsCache || this.loadSlotsSummary()
+      const snapshot = bundle?.[slotId] || null
+      const project = this.project
+      Object.assign(this, defaultState())
+      this.project = project
+      this.activeSlotId = slotId
+      if (snapshot) {
+        Object.assign(this, snapshot)
         // the chapter that was "finished" when this save happened might not
         // have had a next chapter yet — re-check now in case one was added.
         this.advance()
       }
-      // brand-new save: don't start the timeline yet — `{name}` in the very
-      // first entries would bake in before the setup wizard even asks for
-      // it. PhoneShell calls startIfNeeded() once onboarding is done.
+    },
+
+    deleteSlot(slotId) {
+      if (!window.storieGameSave) return
+      window.storieGameSave.deleteSlot(slotId)
+      if (slotsCache) slotsCache[slotId] = null
     },
 
     startIfNeeded() {
@@ -2029,12 +2074,15 @@ export const useStoryStore = defineStore('story', {
     // templates/game-shell/src-electron/electron-{main,preload}.js) — the
     // editor's own live preview has no such bridge and stays purely
     // in-memory, reset via loadProject() whenever a project is (re)opened,
-    // exactly like before. A real save is a single small JSON file at
-    // app.getPath('userData')/save.json (Roaming, keyed by productName —
-    // survives a reinstall/update, unlike anything next to the .exe).
+    // exactly like before. Saves live in ONE small JSON file at
+    // app.getPath('userData')/saves.json (Roaming, keyed by productName —
+    // survives a reinstall/update, unlike anything next to the .exe),
+    // holding all 3 fixed slots — writes go through activeSlotId (set by
+    // loadSlot() once the player's picked one on SlotPickerScreen.vue), so
+    // this doesn't touch the other 2 slots.
     save() {
-      if (!window.storieGameSave) return
-      const snapshot = {}
+      if (!window.storieGameSave || !this.activeSlotId) return
+      const snapshot = { savedAt: Date.now() }
       for (const [key, value] of Object.entries(this.$state)) {
         if (!NON_PERSISTED_KEYS.has(key)) snapshot[key] = value
       }
@@ -2042,37 +2090,27 @@ export const useStoryStore = defineStore('story', {
       // structured clone algorithm, which can't clone those directly (same
       // reasoning as project.js's loadProjectFromDisk JSON round-trip).
       // This also conveniently drops any stray `undefined`.
-      window.storieGameSave.write(JSON.parse(JSON.stringify(snapshot)))
-    },
-
-    // Synchronous — called from init(), itself called synchronously before
-    // PhoneShell ever mounts (see GamePage.vue), so playerName is already
-    // known by the time PhoneShell decides whether to show the first-boot
-    // wizard. window.storieGameSave.load() is a blocking IPC round-trip for
-    // exactly that reason (see electron-preload.js).
-    load() {
-      if (!window.storieGameSave) return false
-      const snapshot = window.storieGameSave.load()
-      if (!snapshot) return false
-      Object.assign(this, snapshot)
-      return true
+      window.storieGameSave.write(this.activeSlotId, JSON.parse(JSON.stringify(snapshot)))
     },
 
     // Settings app's "reset phone" — a fresh save within the CURRENTLY
-    // LOADED project, not closing it. `defaultState()`'s `project` field is
-    // `null` (see loadProject()'s own doc comment above), so a bare
+    // LOADED project and SAME slot, not closing the project or bouncing
+    // back to the slot picker. `defaultState()`'s `project` field is `null`
+    // (see loadProject()'s own doc comment above), so a bare
     // `Object.assign(this, defaultState())` was wiping the loaded project
     // out from under the editor too — EditorPage.vue's `if (!story.project)
     // router.replace(...)` guard then bounced straight back to
     // open-project, which (via the last-opened-project auto-reload) tried
-    // to load a project with no rootPath, loop + error. Same
-    // preserve-project pattern loadProject() itself uses when switching
-    // projects, just keeping the SAME project instead of swapping in a new
-    // one.
+    // to load a project with no rootPath, loop + error. `activeSlotId` gets
+    // the same preserve-through-wipe treatment for the same reason: without
+    // it, the very next save() (fired by the wizard's own setPlayerName()
+    // right after) would silently no-op, having no slot left to write to.
     resetSave() {
       const project = this.project
+      const activeSlotId = this.activeSlotId
       Object.assign(this, defaultState())
       this.project = project
+      this.activeSlotId = activeSlotId
       // Persists the reset immediately rather than waiting for the wizard's
       // own setPlayerName()/setLocale() calls to do it — otherwise quitting
       // between the reset and finishing the wizard leaves the OLD save on

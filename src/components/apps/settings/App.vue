@@ -115,6 +115,14 @@
           </div>
 
           <div class="section">
+            <button class="row nav-row" @click="switchSlot">
+              <q-icon name="swap_horiz" size="19px" color="rgba(255,255,255,0.6)" />
+              <span class="row-label">{{ t('settings.switchSlotRow') }}</span>
+              <q-icon name="chevron_right" size="18px" color="rgba(255,255,255,0.3)" />
+            </button>
+          </div>
+
+          <div class="section">
             <button class="row danger-row" @click="screen = 'reset'">
               <q-icon name="restart_alt" size="19px" color="#f44336" />
               <span class="row-label danger-label">{{ t('settings.resetRow') }}</span>
@@ -271,6 +279,17 @@ const serial = computed(() => {
 function doReset() {
   story.resetSave()
   phone.requestReboot()
+}
+
+// Explicit flush before leaving — makeChoice()/answerCall()/etc. don't
+// save() themselves, they "ride along" on whatever checkpoint story.js's
+// timeline loop hits next (see that file's own comment); without this, an
+// action taken seconds before switching slots could be lost. Doesn't touch
+// story.resetSave() — switching slots must never erase THIS slot's
+// progress, only "reset phone" does that.
+function switchSlot() {
+  story.save()
+  phone.requestReboot({ toSlotPicker: true })
 }
 </script>
 
