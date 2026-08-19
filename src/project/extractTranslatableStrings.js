@@ -77,7 +77,7 @@ function addChapterStrings(timeline, set) {
 // `conversations` has no static text field of its own to extract (its
 // player-facing chrome — empty state, private notice — lives in the
 // separate src/i18n/ runtime tree already, not authored per app).
-function addBlockStrings(blocks, set) {
+export function addBlockStrings(blocks, set) {
   for (const block of blocks || []) {
     switch (block.type) {
       case 'header':

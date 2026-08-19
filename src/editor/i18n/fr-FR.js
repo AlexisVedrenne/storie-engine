@@ -33,6 +33,7 @@ export default {
     restartPreviewTooltip: "Relancer l'aperçu",
     validateTooltip:
       'Valider le projet — cherche les références cassées (contact/thread/image introuvable) et les problèmes de chapitres',
+    globalSearchTooltip: 'Recherche globale (Ctrl+K)',
     undoTooltip: 'Annuler (Ctrl+Z)',
     redoTooltip: 'Rétablir (Ctrl+Maj+Z)',
     undoTargetGone: "Impossible d'annuler : cet élément a été supprimé depuis.",
@@ -713,6 +714,13 @@ export default {
     languageLabel: "Langue de l'éditeur",
     autosaveLabel: 'Sauvegarde',
     projectLabel: 'Projet',
+  },
+
+  globalSearch: {
+    placeholder: 'Chercher un chapitre, contact, flag, app custom…',
+    hint: 'Tape pour chercher dans tout le projet.',
+    noResults: 'Aucun résultat.',
+    truncated: '{n}+ résultats, affine ta recherche pour voir le reste.',
   },
 
   contactList: {

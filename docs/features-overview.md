@@ -485,4 +485,13 @@ rclone lui-même), piloté en local via son démon HTTP/JSON.
   injectés une fois en début de partie (offset "il y a N jours"),
   contournant complètement notifs/dérive d'horloge — c'est du passif.
 - **UX éditeur** : aperçu plein écran, autosave, Ctrl/Cmd+S, indicateur
-  non-sauvegardé, "relancer l'aperçu".
+  non-sauvegardé, "relancer l'aperçu", historique undo/redo global
+  (Ctrl+Z/Ctrl+Maj+Z, traverse tous les onglets, navigue automatiquement
+  vers la ressource concernée).
+- **Recherche globale** (Ctrl+K) : cherche un mot-clé à travers tout le
+  projet — titres/texte de chapitre, contacts, groupes, apps custom
+  (label + texte des blocs), events, interactions, flags (clé ou libellé).
+  Clic sur un résultat navigue vers la bonne ressource ; granularité =
+  chapitre/app/liste entière, pas une entrée précise à l'intérieur (limite
+  assumée, cohérente avec la portée de la navigation existante). Cherche
+  uniquement le texte source français, pas les traductions par langue.

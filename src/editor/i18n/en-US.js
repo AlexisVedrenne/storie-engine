@@ -33,6 +33,7 @@ export default {
     restartPreviewTooltip: 'Restart preview',
     validateTooltip:
       'Validate project — looks for broken references (missing contact/thread/image) and chapter issues',
+    globalSearchTooltip: 'Global search (Ctrl+K)',
     undoTooltip: 'Undo (Ctrl+Z)',
     redoTooltip: 'Redo (Ctrl+Shift+Z)',
     undoTargetGone: "Can't undo: that item has since been deleted.",
@@ -696,6 +697,13 @@ export default {
     languageLabel: 'Editor language',
     autosaveLabel: 'Save',
     projectLabel: 'Project',
+  },
+
+  globalSearch: {
+    placeholder: 'Search a chapter, contact, flag, custom app…',
+    hint: 'Type to search across the whole project.',
+    noResults: 'No results.',
+    truncated: '{n}+ results, narrow your search to see the rest.',
   },
 
   contactList: {

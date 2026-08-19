@@ -101,6 +101,9 @@
              replient dans un seul bouton "more_vert" (voir plus bas) — le
              markup ci-dessous reste identique à avant, juste conditionné. -->
         <template v-if="!topbarCompact">
+          <q-btn dense flat round icon="search" class="btn-ghost" @click="globalSearchDialogRef?.open()">
+            <q-tooltip>{{ t('editorPage.globalSearchTooltip') }}</q-tooltip>
+          </q-btn>
           <q-btn
             dense
             flat
@@ -182,6 +185,11 @@
             </div>
             <q-separator />
             <q-list dense class="topbar-drawer-list">
+              <q-item clickable v-close-popup @click="globalSearchDialogRef?.open()">
+                <q-item-section avatar><q-icon name="search" /></q-item-section>
+                <q-item-section>{{ t('editorPage.globalSearchTooltip') }}</q-item-section>
+              </q-item>
+
               <q-item clickable @click="focusPreview = !focusPreview">
                 <q-item-section avatar>
                   <q-icon :name="focusPreview ? 'visibility_off' : 'smartphone'" />
@@ -266,6 +274,11 @@
           :building="openingBuildStepper"
           @update:autosave="autosave = $event"
           @switch-project="closeProject"
+        />
+        <GlobalSearchDialog
+          ref="globalSearchDialogRef"
+          @navigate="(descriptor, hint) => navigateToResource(descriptor, hint)"
+          @open-flags="flagsDialogOpen = true"
         />
       </div>
 
@@ -643,6 +656,7 @@ import SeedBucketEditor from '@/editor/components/SeedBucketEditor.vue'
 import EmojiPickerBtn from '@/components/shared/EmojiPickerBtn.vue'
 import { insertEmojiAtCaret } from '@/components/shared/emojiInsert'
 import EditorSettingsDialog from '@/editor/components/EditorSettingsDialog.vue'
+import GlobalSearchDialog from '@/editor/components/GlobalSearchDialog.vue'
 import WebPreviewDialog from '@/editor/components/WebPreviewDialog.vue'
 import BuildStepper from '@/editor/components/BuildStepper.vue'
 import CloudSyncButton from '@/editor/components/CloudSyncButton.vue'
@@ -702,6 +716,7 @@ const flagsDialogOpen = ref(false)
 const webPreviewDialogRef = ref(null)
 const buildStepperRef = ref(null)
 const editorSettingsDialogRef = ref(null)
+const globalSearchDialogRef = ref(null)
 // Explicit persist — this dialog opens on top of the 'chapters' tab, whose
 // dirty/save watch is armed on `selectedChapter`, not on `gameConfig` (see
 // activeResource below), so editing a flag's label here needs its own
@@ -1247,6 +1262,11 @@ function onKeydown(e) {
   if ((e.ctrlKey || e.metaKey) && e.key === 'y') {
     e.preventDefault()
     redo()
+    return
+  }
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+    e.preventDefault()
+    globalSearchDialogRef.value?.open()
   }
 }
 onMounted(() => window.addEventListener('keydown', onKeydown))
