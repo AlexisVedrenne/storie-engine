@@ -8,6 +8,15 @@ export default {
     unlockHint: 'Touch to unlock',
   },
 
+  ageGate: {
+    title: 'Mature content warning',
+    warning:
+      'This game contains scenes or themes intended for a mature audience. You must be at least 18 years old to continue.',
+    confirmYes: "Yes, I'm over 18",
+    confirmNo: 'No',
+    blocked: 'Access to this content requires age confirmation. Please close the application.',
+  },
+
   wizard: {
     welcome: {
       title: 'Welcome',

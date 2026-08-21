@@ -838,6 +838,10 @@ export default {
     osNameDefault: 'PhoneOS',
     socialAppNameLabel: "Nom de l'app réseau social",
     socialAppNameDefault: 'Pixly',
+    matureContentTitle: 'Contenu adulte',
+    matureContentHelp:
+      "Affiche un écran d'avertissement 18+ avant même l'animation de démarrage du téléphone — le joueur doit confirmer son âge pour continuer. Utilise les traductions du jeu compilé (pas celles de l'éditeur).",
+    matureContentLabel: 'Avertir avant de lancer (contenu réservé aux adultes)',
     appsTitle: 'Applications',
     appsHelp:
       "Désactive une app du téléphone pour ce projet — elle disparaît de l'écran d'accueil et de l'animation de démarrage. Rien ne détecte automatiquement du contenu qui pointerait encore vers une app désactivée (ex: un SMS alors que Messages est coupé) — à l'auteur de vérifier.",

@@ -13,7 +13,13 @@
     >
       <div class="screen-canvas" :style="canvasStyle">
         <transition name="phase-fade" mode="out-in">
-          <SlotPickerScreen v-if="bootPhase === 'slots'" key="slots" @picked="onSlotPicked" />
+          <AgeGateScreen
+            v-if="bootPhase === 'ageGate'"
+            :key="`ageGate-${phone.rebootCount}`"
+            @confirmed="onAgeGateConfirmed"
+          />
+
+          <SlotPickerScreen v-else-if="bootPhase === 'slots'" key="slots" @picked="onSlotPicked" />
 
           <BootScreen
             v-else-if="bootPhase === 'boot' || bootPhase === 'reboot'"
@@ -97,7 +103,9 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { usePhoneStore } from '@/engine/stores/phone'
 import { useStoryStore } from '@/engine/stores/story'
+import { DEFAULT_LOCALE } from '@/engine/i18n/locales'
 
+import AgeGateScreen from './AgeGateScreen.vue'
 import BootScreen from './BootScreen.vue'
 import SlotPickerScreen from './SlotPickerScreen.vue'
 import SetupWizard from './SetupWizard.vue'
@@ -155,10 +163,40 @@ const currentAppComponent = computed(
 // is genuinely unset until the player picks one, so 'slots' has to be the
 // unconditional starting phase there, not derived from playerName like the
 // editor-preview branch still is.
-const bootPhase = ref(
-  window.storieGameSave ? 'slots' : story.playerName ? 'ready' : 'boot',
-) // 'slots' | 'boot' | 'setup' | 'reboot' | 'ready'
-if (!window.storieGameSave && story.playerName) story.startIfNeeded() // editor-preview safety net only
+function resolvePastGatePhase() {
+  return window.storieGameSave ? 'slots' : story.playerName ? 'ready' : 'boot'
+}
+
+// The setup wizard's own "Langue · Language" step (SetupWizard.vue) doesn't
+// run until AFTER this gate (and, in a shipped game, the slot picker) — so
+// left alone, the gate's own text would render in DEFAULT_LOCALE (the
+// engine's source language) regardless of the player's real language, right
+// up until the wizard finally lets them pick one. Auto-detecting now avoids
+// that mismatched first impression; same navigator.language matching
+// EditorPage.vue's previewFrom() already uses elsewhere. The wizard's
+// language step still runs afterward and can freely override this.
+function enterAgeGate() {
+  const osLocale = story.availableLocales.some((l) => l.code === navigator.language)
+    ? navigator.language
+    : DEFAULT_LOCALE
+  story.setLocale(osLocale)
+  return 'ageGate'
+}
+
+// gameConfig.matureContent (see GameForm.vue's "Contenu adulte" panel) gates
+// EVERYTHING else, including the slot picker — an 18+ warning that only
+// showed up after already picking a save slot would be pointless. Whatever
+// resolvePastGatePhase() would otherwise have started on runs once the
+// player confirms (see onAgeGateConfirmed below).
+const bootPhase = ref(story.gameConfig?.matureContent ? enterAgeGate() : resolvePastGatePhase()) // 'ageGate' | 'slots' | 'boot' | 'setup' | 'reboot' | 'ready'
+// editor-preview safety net only — scoped to 'ready' (not just story.playerName)
+// so it doesn't fire early while the age gate is still showing.
+if (bootPhase.value === 'ready') story.startIfNeeded()
+
+function onAgeGateConfirmed() {
+  bootPhase.value = resolvePastGatePhase()
+  if (bootPhase.value === 'ready') story.startIfNeeded()
+}
 
 // Called once the player picks a card on SlotPickerScreen.vue —
 // story.loadSlot() has already run by the time this fires (see that
@@ -206,7 +244,17 @@ function onSetupDone() {
 watch(
   () => phone.rebootCount,
   () => {
-    bootPhase.value = 'boot'
+    // Real shipped-game reboots (Settings' "Réinitialiser le téléphone" /
+    // "Changer de sauvegarde") never re-show the gate — the player already
+    // cleared it once this launch, and re-carding them on every in-game
+    // reset would be obnoxious. The editor's OWN reboots (restartPreview()/
+    // previewFrom()/custom-app preview, all plain requestReboot() calls,
+    // window.storieGameSave unset) are different: they're the only way the
+    // author can re-trigger a "fresh launch" to actually see the gate while
+    // building it, since it otherwise only runs once, at this component's
+    // very first mount.
+    bootPhase.value =
+      !window.storieGameSave && story.gameConfig?.matureContent ? enterAgeGate() : 'boot'
   },
 )
 

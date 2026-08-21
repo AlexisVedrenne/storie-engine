@@ -819,6 +819,10 @@ export default {
     osNameDefault: 'PhoneOS',
     socialAppNameLabel: 'Social app name',
     socialAppNameDefault: 'Pixly',
+    matureContentTitle: 'Mature content',
+    matureContentHelp:
+      "Shows an 18+ warning screen before the phone's own boot animation even starts — the player must confirm their age to continue. Uses the compiled game's own translations (not the editor's).",
+    matureContentLabel: 'Warn before launch (content restricted to adults)',
     appsTitle: 'Apps',
     appsHelp:
       'Disables a phone app for this project — it disappears from the home screen and boot animation. Nothing automatically detects content that still points at a disabled app (e.g. an SMS while Messages is off) — up to the author to check.',

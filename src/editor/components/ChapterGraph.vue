@@ -154,12 +154,22 @@ function findChapter(id) {
   return chapters.find((c) => c.id === id)
 }
 
+// Every graph edit (drag, connect, edge condition, edge delete, cascade on
+// chapter delete) writes through here immediately — no dirty/Save button
+// flow like EditorPage.vue's forms, so a failure here used to vanish
+// silently (no try/catch at any call site): the node still LOOKS moved/
+// connected on screen, but nothing hit disk, and the author has no way to
+// know. Centralized here rather than wrapping each call site individually.
 async function persistChapter(chapter) {
-  await window.storieAPI.saveChapter({
-    rootPath: story.project.rootPath,
-    sourceFile: chapter.__sourceFile,
-    source: serializeChapter(chapter),
-  })
+  try {
+    await window.storieAPI.saveChapter({
+      rootPath: story.project.rootPath,
+      sourceFile: chapter.__sourceFile,
+      source: serializeChapter(chapter),
+    })
+  } catch (err) {
+    Notify.create({ type: 'negative', message: err.message || String(err) })
+  }
 }
 
 // Dragging a new arrow from one node's source handle to another's target

@@ -8,6 +8,15 @@ export default {
     unlockHint: 'Toucher pour déverrouiller',
   },
 
+  ageGate: {
+    title: 'Contenu réservé aux adultes',
+    warning:
+      'Ce jeu contient des scènes ou thèmes destinés à un public averti. Vous devez avoir au moins 18 ans pour continuer.',
+    confirmYes: "Oui, j'ai plus de 18 ans",
+    confirmNo: 'Non',
+    blocked: "L'accès à ce contenu nécessite une confirmation d'âge. Merci de fermer l'application.",
+  },
+
   wizard: {
     welcome: {
       title: 'Bienvenue',

@@ -66,7 +66,16 @@ const statusTooltip = computed(() => t(STATUS_TOOLTIP_KEY[cloud.status.value]))
 // Timer vit tant que ce bouton est monté — c-à-d tant qu'un projet est
 // ouvert — pas tant qu'un dialogue est ouvert (il n'y en a plus ici).
 // Reprend la préférence persistée (localStorage) d'une session précédente.
+//
+// checkRclone() ALSO has to happen here, not just in CloudSyncSettings.vue
+// (the Réglages panel) — that panel lives inside a q-dialog, which Quasar
+// leaves unmounted until first opened. Before this fix, cloud.rcloneInstalled
+// stayed at its initial `null` until the author opened Réglages at least
+// once, which left THIS button (bound to cloud.status, itself derived from
+// rcloneInstalled) permanently stuck on "checking" — always disabled, dead
+// on app start, exactly the "cloud autosave looks broken" report this fixes.
 onMounted(() => {
+  if (cloud.rcloneInstalled.value === null) cloud.checkRclone()
   if (cloud.autoSyncEnabled.value) cloud.startAutoSync()
 })
 

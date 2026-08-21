@@ -8,6 +8,15 @@ export default {
     unlockHint: 'Zum Entsperren tippen',
   },
 
+  ageGate: {
+    title: 'Inhalt für Erwachsene',
+    warning:
+      'Dieses Spiel enthält Szenen oder Themen für ein erwachsenes Publikum. Du musst mindestens 18 Jahre alt sein, um fortzufahren.',
+    confirmYes: 'Ja, ich bin über 18',
+    confirmNo: 'Nein',
+    blocked: 'Der Zugriff auf diesen Inhalt erfordert eine Altersbestätigung. Bitte schließe die Anwendung.',
+  },
+
   wizard: {
     welcome: {
       title: 'Willkommen',

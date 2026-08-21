@@ -152,6 +152,24 @@
       </div>
     </q-expansion-item>
 
+    <q-expansion-item dense-toggle icon="explicit" class="panel">
+      <template #header>
+        <q-item-section avatar><q-icon name="explicit" /></q-item-section>
+        <q-item-section>
+          {{ t('gameForm.matureContentTitle') }}
+          <FieldHelp :text="t('gameForm.matureContentHelp')" />
+        </q-item-section>
+      </template>
+      <div class="panel-body">
+        <q-toggle
+          dense
+          :label="t('gameForm.matureContentLabel')"
+          :model-value="!!game.matureContent"
+          @update:model-value="(v) => (game.matureContent = v || undefined)"
+        />
+      </div>
+    </q-expansion-item>
+
     <q-expansion-item dense-toggle icon="apps" class="panel">
       <template #header>
         <q-item-section avatar><q-icon name="apps" /></q-item-section>
