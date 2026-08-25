@@ -4,6 +4,7 @@
   "description": "A Quasar Project",
   "productName": "Stories Engine",
   "author": "Alexis Vedrenne <alexisvedrenne482@gmail.com>",
+  "license": "MIT",
   "type": "module",
   "private": true,
   "scripts": {
