@@ -20,8 +20,11 @@
 import { computed, ref } from 'vue'
 import enUS from './en-US.js'
 import frFR from './fr-FR.js'
+import esES from './es-ES.js'
+import deDE from './de-DE.js'
+import itIT from './it-IT.js'
 
-const MESSAGES = { 'fr-FR': frFR, 'en-US': enUS }
+const MESSAGES = { 'fr-FR': frFR, 'en-US': enUS, 'es-ES': esES, 'de-DE': deDE, 'it-IT': itIT }
 const LOCALE_KEY = 'stories-engine-editor-locale'
 
 function readStored() {

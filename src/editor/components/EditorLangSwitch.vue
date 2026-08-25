@@ -25,6 +25,9 @@ const { locale, setLocale } = useEditorI18n()
 const OPTIONS = [
   { label: 'Français', value: 'fr-FR' },
   { label: 'English', value: 'en-US' },
+  { label: 'Español', value: 'es-ES' },
+  { label: 'Deutsch', value: 'de-DE' },
+  { label: 'Italiano', value: 'it-IT' },
 ]
 </script>
 
