@@ -10,8 +10,10 @@ chapitres, drag/groupement des entrées de timeline, traduction anglais de
 l'éditeur), puis le 2026-08-18 (apps modulaires + système d'événements,
 Interactions, Apps custom, app Journal, refonte Email, 3 nouveaux types
 d'entrée, message supprimable, id de chapitre stable, aperçu web LAN,
-sauvegarde cloud rclone) — à mettre à jour si une fonctionnalité majeure
-change de forme.
+sauvegarde cloud rclone), puis le 2026-08-25 (avertissement contenu adulte
+18+, éditeur en 5 langues, bouton d'app custom déclenchant un event, mode
+incrément sur les flags collection, chapitres visités marqués sur le
+graphe) — à mettre à jour si une fonctionnalité majeure change de forme.
 
 ---
 
@@ -44,6 +46,10 @@ change de forme.
   le chapitre de départ.
 - "Prévisualiser depuis ce chapitre" sur chaque nœud : lance l'aperçu direct
   à cet endroit (remplit un joueur/couleur/langue factices si besoin).
+- **Chapitres visités** pendant la session d'aperçu en cours : badge dédié
+  sur le nœud (réutilise `story.visitedChapterIds`, déjà suivi pour le rail
+  de progression de l'app Journal — pas un état séparé). Remis à zéro par
+  "Relancer l'aperçu".
 
 ### 14 types d'entrées de timeline
 
@@ -133,8 +139,9 @@ renommé/supprimé) supprimables individuellement ou en masse.
 Pour des besoins type historique/relevé de compte/inventaire : un flag
 « collection » est un objet `{clé: valeur}` (`story.flagCollections`),
 séparé des flags numériques classiques (qui restent lisibles/écrivables
-partout ailleurs sous forme de nombre — rien de mélangé). Deux opérations
-seulement (`add`/`remove`), deux types de valeur (texte/nombre) — pas un
+partout ailleurs sous forme de nombre — rien de mélangé). Trois opérations
+(`add`/`remove`/`increment` — ce dernier applique un delta numérique à une
+clé existante), deux types de valeur pour `add` (texte/nombre) — pas un
 moteur de script libre. Clé auto-générée si non renseignée à l'ajout (cas
 courant pour un historique qui s'empile). Alimentable depuis n'importe où
 où `effects` marche déjà (entrée, option de choix, interaction, event,
@@ -197,10 +204,13 @@ l'app), `list` (répète un sous-arbre de blocs — voir plus bas),
   fil + réponses par choix), réutilise entièrement le moteur DM Pixly natif
   (thread 1:1/groupe défini dans l'onglet Groupes, historique isolé par
   app). Entrée timeline `appDm` + `choice` scopé à une app pour scripter
-  les réponses reçues dans une conversation d'app custom.
-- **Bouton `button`** : deux actions possibles — appliquer des effets, ou
-  naviguer vers un autre écran de l'app (rien pour l'instant qui déclenche
-  une entrée de timeline précise).
+  les réponses reçues dans une conversation d'app custom. Badge non-lu/
+  notification supprimé quand le joueur a déjà ce thread précis ouvert au
+  moment où le message arrive (même logique que Messages/DM natifs).
+- **Bouton `button`** : trois actions possibles — appliquer des effets,
+  naviguer vers un autre écran de l'app, ou déclencher l'event fixe
+  `button.pressed` (app + id de bouton optionnel en payload), réagi depuis
+  l'onglet Events comme n'importe quel autre trigger.
 - **Icon picker** (icônes Material) sur tous les champs icône du projet,
   pas seulement les apps custom.
 - **Traduction** : le texte des blocs passe par le même bucket i18n
@@ -253,8 +263,8 @@ choix, éditable dans l'onglet **Events**.
 - **Triggers** groupés par app dans le menu d'ajout ("Commun" en premier,
   puis un groupe par app) : `app.opened`/`app.closed` (avec seuil de délai
   minimum), `photo.viewed`, `post.liked` (par auteur), `contact.followed`,
-  `profile.opened`, `conversation.opened`, plus les triggers propres à une
-  app plug-in.
+  `profile.opened`, `conversation.opened`, `button.pressed` (bouton d'app
+  custom — voir §4), plus les triggers propres à une app plug-in.
 - Chaque event peut avoir plusieurs filtres de correspondance combinés (ET),
   un titre optionnel pour s'y retrouver dans la liste.
 - Une réaction d'event bloquante (choix/appel) et un choix/appel déjà en
@@ -337,9 +347,16 @@ Deux onglets :
 ### Coquille du téléphone
 
 - Cadre 9:18, mode `large` pour l'aperçu plein écran de l'éditeur.
-- Séquence de démarrage : Boot → Setup Wizard (langue → bienvenue → nom →
-  faux code PIN → faux wifi → faux sync des comptes → couleur d'accent →
-  fin) → écran verrouillé.
+- **Avertissement contenu adulte (18+)**, optionnel (`game.matureContent`,
+  toggle dans l'onglet Jeu) : passe avant absolument tout le reste — avant
+  le sélecteur de sauvegarde, avant Boot, avant le Setup Wizard. Petite
+  animation dédiée (logo 18+ qui se forme puis remonte, texte + boutons
+  Oui/Non), langue du joueur auto-détectée pour son propre texte (le
+  wizard ne choisit la langue qu'après). "Non" bloque la session en cours
+  sans recours ; refermer et relancer le jeu redonne une chance propre.
+- Séquence de démarrage (une fois l'avertissement passé, ou absent) : Boot
+  → Setup Wizard (langue → bienvenue → nom → faux code PIN → faux wifi →
+  faux sync des comptes → couleur d'accent → fin) → écran verrouillé.
 - Écran verrouillé : titre du jeu en filigrane, heure/date, notifs
   empilées, bannière time-skip — sauté entièrement si l'entrée `timeskip`
   a un `landApp` (§4).
@@ -359,27 +376,36 @@ jamais l'autre.
 
 ### Langue du jeu (contenu narratif + chrome du téléphone)
 
-- Langues d'interface intégrées : français (défaut) + anglais. Le contenu
-  narratif peut avoir des dictionnaires pour n'importe quel code de langue
-  en plus.
+- Langues d'interface intégrées : français (défaut), anglais, espagnol,
+  allemand, italien — chrome du téléphone (boot, wizard, réglages…)
+  traduit nativement pour les 5. Le contenu narratif peut en plus avoir des
+  dictionnaires pour n'importe quel code de langue ajouté au projet.
 - Le français est toujours la source canonique ; chaque traduction est un
   dictionnaire `{texte français: traduction}` par langue × "bucket"
   (commun, ou par chapitre — le texte des blocs d'app custom vit dans le
   bucket commun, comme les noms de contacts).
+- Ajouter une langue narrative au projet limité aux 5 langues d'interface
+  ci-dessus (sinon menus/réglages resteraient non traduits pour cette
+  langue) — langue système de la machine masquée de la liste si détectée
+  (probablement celle déjà utilisée pour écrire les chapitres). Suppression
+  d'une langue ajoutée possible (irréversible, toutes ses traductions
+  perdues).
 - Éditeur de traduction : recherche, masquer déjà traduit, regroupement par
   origine pour le bucket commun, détection des clés orphelines (traductions
   qui ne correspondent plus à rien), bouton emoji sur chaque champ.
 - Changement de langue en jeu : à tout moment depuis Réglages, sans reset.
   Fallback gracieux vers le français si non traduit.
 
-### Langue de l'éditeur lui-même (français + anglais)
+### Langue de l'éditeur lui-même (5 langues)
 
 - Système séparé (`src/editor/i18n/`) pour les labels/tooltips/dialogues de
-  l'éditeur — switcher FR/EN dans le topbar, persisté, sans effet sur la
-  langue du jeu testé dans l'aperçu.
+  l'éditeur — switcher dans les Réglages (français, anglais, espagnol,
+  allemand, italien — mêmes 5 langues que le jeu, voir plus haut), persisté,
+  sans effet sur la langue du jeu testé dans l'aperçu.
 - Jamais copié dans le jeu exporté (dossier `src/editor/`, exclu du build) —
-  toutes les ~8700 lignes de composants éditeur traduites, dictionnaires
-  fr-FR/en-US vérifiés à parité exacte.
+  français source canonique, fallback automatique dessus si une clé manque
+  dans une autre langue ; les 4 traductions vérifiées à parité exacte de
+  clés avec la source (822/822).
 - Les labels de triggers (`triggers.js`) et de types d'entrée plug-in (une
   app tierce comme Email) sont aussi traduisibles via une couche de
   surcharge (`sharedOverrides.js`) qui ne touche pas ces fichiers
