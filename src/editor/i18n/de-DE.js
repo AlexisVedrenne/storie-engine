@@ -128,6 +128,14 @@ export default {
     duplicate: 'Duplizieren',
   },
 
+  chapterEndScreen: {
+    title: 'Abspann-Bildschirm',
+    help: 'Dieses Kapitel hat keine Fortsetzung — hier den dem Spieler gezeigten Bildschirm anpassen, oder leer lassen für den Standardbildschirm.',
+    titleLabel: 'Titel',
+    textLabel: 'Text (optional)',
+    imageLabel: 'Bild (optional)',
+  },
+
   timelineEditor: {
     selectedOne: '1 Eintrag ausgewählt',
     selectedMany: '{n} Einträge ausgewählt',
@@ -835,6 +843,10 @@ export default {
   gameForm: {
     titleTitle: 'Titel',
     titleFieldLabel: 'Titel (auf dem Sperrbildschirm angezeigt)',
+    creditsTitle: 'Credits',
+    creditsHelp:
+      'Freitext, gezeigt über einen Button auf dem Endbildschirm ("Credits ansehen") — ein einziger Credits-Block für das ganze Spiel, unabhängig vom erreichten Ende.',
+    creditsLabel: 'Credits (Freitext, mehrzeilig)',
     entryChapterTitle: 'Startkapitel',
     entryChapterHelp:
       'Das Kapitel, mit dem das Spiel beginnt. Beim Umbenennen dieses Kapitels wird diese Einstellung automatisch synchron gehalten.',

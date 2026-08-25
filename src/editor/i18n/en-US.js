@@ -125,6 +125,14 @@ export default {
     duplicate: 'Duplicate',
   },
 
+  chapterEndScreen: {
+    title: 'End screen',
+    help: 'This chapter has no continuation — customize the screen shown to the player here, or leave it empty for the default one.',
+    titleLabel: 'Title',
+    textLabel: 'Text (optional)',
+    imageLabel: 'Image (optional)',
+  },
+
   timelineEditor: {
     selectedOne: '1 entry selected',
     selectedMany: '{n} entries selected',
@@ -816,6 +824,10 @@ export default {
   gameForm: {
     titleTitle: 'Title',
     titleFieldLabel: 'Title (shown on the lock screen)',
+    creditsTitle: 'Credits',
+    creditsHelp:
+      'Free text shown via a button on the end screen ("View credits") — one credits block for the whole game, regardless of which ending is reached.',
+    creditsLabel: 'Credits (free text, multi-line)',
     entryChapterTitle: 'Starting chapter',
     entryChapterHelp:
       'The chapter the game opens on. Renaming this chapter keeps this setting in sync automatically.',

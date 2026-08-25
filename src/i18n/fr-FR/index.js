@@ -17,6 +17,14 @@ export default {
     blocked: "L'accès à ce contenu nécessite une confirmation d'âge. Merci de fermer l'application.",
   },
 
+  endScreen: {
+    defaultTitle: 'FIN',
+    replay: 'Rejouer',
+    menu: 'Menu',
+    credits: 'Voir les crédits',
+    creditsTitle: 'Crédits',
+  },
+
   wizard: {
     welcome: {
       title: 'Bienvenue',
@@ -131,6 +139,10 @@ export default {
     emptyProgress: "Ton parcours apparaîtra ici au fil de l'histoire.",
     emptyFlags: 'Aucune statistique à afficher pour le moment.',
     flagUnlocked: 'Débloqué',
+    tabEndings: 'Fins',
+    emptyEndings: 'Ce jeu ne contient aucune fin pour le moment.',
+    endingsUnlockedCount: '{done} / {total} fins débloquées',
+    endingLocked: '???',
   },
 
   messages: {

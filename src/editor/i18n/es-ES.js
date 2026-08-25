@@ -128,6 +128,14 @@ export default {
     duplicate: 'Duplicar',
   },
 
+  chapterEndScreen: {
+    title: 'Pantalla de fin',
+    help: 'Este capítulo no tiene continuación — personaliza aquí la pantalla mostrada al jugador, o déjala vacía para la pantalla por defecto.',
+    titleLabel: 'Título',
+    textLabel: 'Texto (opcional)',
+    imageLabel: 'Imagen (opcional)',
+  },
+
   timelineEditor: {
     selectedOne: '1 entrada seleccionada',
     selectedMany: '{n} entradas seleccionadas',
@@ -838,6 +846,10 @@ export default {
   gameForm: {
     titleTitle: 'Título',
     titleFieldLabel: 'Título (mostrado en la pantalla de bloqueo)',
+    creditsTitle: 'Créditos',
+    creditsHelp:
+      'Texto libre mostrado mediante un botón en la pantalla de fin ("Ver créditos") — un único bloque de créditos para todo el juego, sea cual sea el final obtenido.',
+    creditsLabel: 'Créditos (texto libre, varias líneas)',
     entryChapterTitle: 'Capítulo inicial',
     entryChapterHelp:
       'El capítulo con el que empieza el juego. Renombrar este capítulo mantiene este ajuste sincronizado automáticamente.',

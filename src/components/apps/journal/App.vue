@@ -9,6 +9,9 @@
       <button class="tab-btn" :class="{ active: tab === 'flags' }" @click="tab = 'flags'">
         {{ t('journal.tabFlags') }}
       </button>
+      <button class="tab-btn" :class="{ active: tab === 'endings' }" @click="tab = 'endings'">
+        {{ t('journal.tabEndings') }}
+      </button>
     </div>
 
     <transition name="fade" mode="out-in">
@@ -37,7 +40,7 @@
         </div>
       </div>
 
-      <div v-else key="flags" class="tab-content">
+      <div v-else-if="tab === 'flags'" key="flags" class="tab-content">
         <div v-if="!labeledFlags.length" class="empty">
           <q-icon name="query_stats" size="46px" />
           <span>{{ t('journal.emptyFlags') }}</span>
@@ -51,6 +54,30 @@
           </div>
         </div>
       </div>
+
+      <div v-else key="endings" class="tab-content">
+        <div v-if="!endingCards.length" class="empty">
+          <q-icon name="emoji_events" size="46px" />
+          <span>{{ t('journal.emptyEndings') }}</span>
+        </div>
+        <template v-else>
+          <div class="endings-count">
+            {{ t('journal.endingsUnlockedCount', { done: unlockedCount, total: endingCards.length }) }}
+          </div>
+          <div class="endings-grid">
+            <div
+              v-for="card in endingCards"
+              :key="card.id"
+              class="ending-card"
+              :class="{ locked: !card.unlocked }"
+            >
+              <img v-if="card.unlocked && card.image" :src="resolveAssetUrl(card.image)" class="ending-image" />
+              <q-icon v-else :name="card.unlocked ? 'emoji_events' : 'lock'" size="26px" />
+              <span class="ending-title">{{ card.unlocked ? card.title : t('journal.endingLocked') }}</span>
+            </div>
+          </div>
+        </template>
+      </div>
     </transition>
   </div>
 </template>
@@ -60,13 +87,14 @@ import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { usePhoneStore } from '@/engine/stores/phone'
 import { useStoryStore } from '@/engine/stores/story'
+import { resolveAssetUrl } from '@/engine/assets'
 import AppTitleBar from '@/components/phone/AppTitleBar.vue'
 
 const phone = usePhoneStore()
 const story = useStoryStore()
 const { t } = useI18n()
 
-const tab = ref('progress') // 'progress' | 'flags'
+const tab = ref('progress') // 'progress' | 'flags' | 'endings'
 
 const chaptersById = computed(() => {
   const map = {}
@@ -141,6 +169,36 @@ const labeledFlags = computed(() => {
       value: story.flags[key],
     }))
 })
+
+// Every chapter with no valid outgoing edge (same "this is an ending"
+// definition advance() itself uses, see story.js) — NOT filtered to only
+// what's authored with an endScreen (see ChapterEndScreenForm.vue), since
+// an ending with no custom screen is still a real, unlockable ending, just
+// showing the generic fallback when reached. Locked cards deliberately
+// reveal nothing about the ending (no title/image) — same spoiler-avoidance
+// convention as progressNodes' unexplored branch-forks above.
+const endingCards = computed(() =>
+  (story.project?.chapters || [])
+    .filter((c) => !c.next?.length)
+    .map((c) => {
+      const unlocked = story.unlockedEndings.includes(c.id)
+      return {
+        id: c.id,
+        unlocked,
+        image: unlocked ? c.endScreen?.image : null,
+        // chapterTitle() already runs the chapter's own title through
+        // translateStory() itself — only wrap endScreen.title here (raw
+        // French source text, same convention as everything else authored
+        // in the editor), never double-translate the fallback.
+        title: unlocked
+          ? c.endScreen?.title
+            ? story.translateStory(c.endScreen.title, 'common')
+            : chapterTitle(c)
+          : null,
+      }
+    }),
+)
+const unlockedCount = computed(() => endingCards.value.filter((c) => c.unlocked).length)
 </script>
 
 <style scoped>
@@ -371,5 +429,64 @@ const labeledFlags = computed(() => {
   font-weight: 700;
   opacity: 1;
   color: #b299ff;
+}
+
+/* --- endings tab --- */
+.endings-count {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.6);
+  margin-bottom: 12px;
+}
+
+.endings-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.ending-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  aspect-ratio: 1;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+  padding: 10px;
+  text-align: center;
+  overflow: hidden;
+}
+
+.ending-card.locked {
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.ending-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ending-card:has(.ending-image) {
+  position: relative;
+}
+
+.ending-card:has(.ending-image) .ending-title {
+  position: relative;
+  z-index: 1;
+  background: rgba(0, 0, 0, 0.45);
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+.ending-title {
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.3;
 }
 </style>

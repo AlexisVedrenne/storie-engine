@@ -386,6 +386,8 @@
                       </q-btn>
                     </div>
 
+                    <ChapterEndScreenForm v-if="isEndingChapter" :chapter="selectedChapter" />
+
                     <TimelineEditor :entries="selectedChapter.timeline" />
                   </template>
                 </div>
@@ -642,6 +644,7 @@ import { DEFAULT_LOCALE } from '@/engine/i18n/locales'
 import PhoneShell from '@/components/phone/PhoneShell.vue'
 import ChapterGraph from '@/editor/components/ChapterGraph.vue'
 import TimelineEditor from '@/editor/components/TimelineEditor.vue'
+import ChapterEndScreenForm from '@/editor/components/ChapterEndScreenForm.vue'
 import ContactList from '@/editor/components/ContactList.vue'
 import ContactForm from '@/editor/components/ContactForm.vue'
 import ThreadList from '@/editor/components/ThreadList.vue'
@@ -757,6 +760,11 @@ const selectedIndex = ref(null)
 const selectedChapter = computed(() =>
   selectedIndex.value == null ? null : story.project?.chapters?.[selectedIndex.value] || null,
 )
+// Same "no outgoing edges" condition ChapterGraph.vue already uses for the
+// "FIN" badge — gates ChapterEndScreenForm.vue's visibility so it only ever
+// shows up on a chapter that's actually an ending, never dead UI on an
+// ordinary one.
+const isEndingChapter = computed(() => !selectedChapter.value?.next?.length)
 // Whether the chapter graph (not a chapter's own 2-pane form) is the thing
 // actually on screen — passed to ChapterGraph.vue as `active` too, so it
 // can re-fit the view on every transition into this state, not just once

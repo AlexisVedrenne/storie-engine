@@ -24,6 +24,26 @@
       </div>
     </q-expansion-item>
 
+    <q-expansion-item dense-toggle icon="groups" class="panel">
+      <template #header>
+        <q-item-section avatar><q-icon name="groups" /></q-item-section>
+        <q-item-section>
+          {{ t('gameForm.creditsTitle') }}
+          <FieldHelp :text="t('gameForm.creditsHelp')" />
+        </q-item-section>
+      </template>
+      <div class="panel-body">
+        <q-input
+          dense
+          outlined
+          type="textarea"
+          autogrow
+          :label="t('gameForm.creditsLabel')"
+          v-model="game.credits"
+        />
+      </div>
+    </q-expansion-item>
+
     <q-expansion-item dense-toggle icon="flag_circle" class="panel">
       <template #header>
         <q-item-section avatar><q-icon name="flag_circle" /></q-item-section>

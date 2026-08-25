@@ -69,6 +69,8 @@
               :messages="story.activeHallucination.messages"
               @finish="story.finishHallucination"
             />
+
+            <EndScreen v-if="story.activeEnding" />
           </div>
         </transition>
       </div>
@@ -119,6 +121,7 @@ import TimeSkipToast from './TimeSkipToast.vue'
 import IncomingCallScreen from '@/components/apps/calls/IncomingCallScreen.vue'
 import InteractionPlayer from './interactions/InteractionPlayer.vue'
 import HallucinationPlayer from './HallucinationPlayer.vue'
+import EndScreen from './EndScreen.vue'
 
 // `large` lets a caller (EditorPage.vue's "Aperçu seul" mode) raise the
 // phone-frame's hard size cap — see docs/ui-ux-audit.md point 10: the

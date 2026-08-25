@@ -17,6 +17,14 @@ export default {
     blocked: 'Der Zugriff auf diesen Inhalt erfordert eine Altersbestätigung. Bitte schließe die Anwendung.',
   },
 
+  endScreen: {
+    defaultTitle: 'ENDE',
+    replay: 'Nochmal spielen',
+    menu: 'Menü',
+    credits: 'Credits ansehen',
+    creditsTitle: 'Credits',
+  },
+
   wizard: {
     welcome: {
       title: 'Willkommen',
@@ -131,6 +139,10 @@ export default {
     emptyProgress: 'Dein Verlauf erscheint hier im Laufe der Geschichte.',
     emptyFlags: 'Noch keine Statistiken verfügbar.',
     flagUnlocked: 'Freigeschaltet',
+    tabEndings: 'Enden',
+    emptyEndings: 'Dieses Spiel hat noch keine Enden.',
+    endingsUnlockedCount: '{done} / {total} Enden freigeschaltet',
+    endingLocked: '???',
   },
 
   messages: {

@@ -121,6 +121,13 @@ function defaultState() {
     soundEnabled: true, // Réglages > Sons et vibrations toggle
     soundVolume: 70, // 0-100, same row's volume slider
     musicVolume: 70, // 0-100, dedicated slider under the same screen — layered on top of soundVolume (see sound.js's playMusic), not a replacement for it, so a player who wants SFX loud but music quiet (or off) has that as its own control
+    // Chapter ids of every ending (a chapter with no valid outgoing edge,
+    // see advance()) reached at least once this playthrough — real
+    // progress, persisted like visitedChapterIds. The Journal app's
+    // "Fins" tab reads this against every ending chapter in the project to
+    // show a "X/Y débloquées" count without spoiling ones not yet reached
+    // (see App.vue's own comment on that tab).
+    unlockedEndings: [],
     flags: {},
     // A "collection" flag — same authoring concept as a regular flag
     // (created/labeled in the Flags panel, referenced by key), but holding
@@ -210,6 +217,14 @@ function defaultState() {
     timeSkipFading: false, // true while the black veil is covering a `timeskip` cut — transient, not saved
     screenEffect: null, // { kind, id } while a `vfx` entry's overlay is showing on the phone screen — transient, not saved; see triggerScreenEffect
     nowPlaying: null, // { title } while a `music` entry's track is actually playing — transient, not saved; see startMusic. HomeWidgets.vue reads this for the home screen's music widget
+    // { title, text, image } once advance() runs out of a valid outgoing
+    // edge on the current chapter (see advance()'s own comment — no
+    // next[], or none whose requires currently holds) — EndScreen.vue reads
+    // this. Transient, not saved: re-derived by advance() itself every time
+    // (including on resume, which always re-runs it once — see loadSlot()'s
+    // own comment on why), from chapter.endScreen (author-set in the editor,
+    // see ChapterEndScreenForm.vue) or {} for the generic fallback screen.
+    activeEnding: null,
 
     // "phone state" widgets — purely decorative on their own, but the story
     // can drive them via `effects` (see applyEffects) for extra immersion:
@@ -274,6 +289,7 @@ const NON_PERSISTED_KEYS = new Set([
   'timeSkipToast',
   'screenEffect',
   'nowPlaying',
+  'activeEnding',
   'activeSlotId',
 ])
 
@@ -982,7 +998,9 @@ export const useStoryStore = defineStore('story', {
       // chapter finished — take the first authored outgoing edge whose
       // `requires` passes (see chapter.next, authored as arrows in
       // ChapterGraph.vue). No edges, or none whose requires currently
-      // holds, means this chapter is where the story ends for this player.
+      // holds, means this chapter is where the story ends for this player —
+      // show EndScreen.vue (author's chapter.endScreen if set, generic
+      // fallback otherwise) instead of just quietly going nowhere.
       for (const edge of chapter.next || []) {
         if (this.checkConditions(edge.requires)) {
           this.startChapter(edge.to)
@@ -990,6 +1008,8 @@ export const useStoryStore = defineStore('story', {
         }
       }
 
+      this.activeEnding = { ...(chapter.endScreen || {}) }
+      if (!this.unlockedEndings.includes(chapter.id)) this.unlockedEndings.push(chapter.id)
       this.save()
     },
 

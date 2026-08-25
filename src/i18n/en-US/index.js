@@ -17,6 +17,14 @@ export default {
     blocked: 'Access to this content requires age confirmation. Please close the application.',
   },
 
+  endScreen: {
+    defaultTitle: 'THE END',
+    replay: 'Play again',
+    menu: 'Menu',
+    credits: 'View credits',
+    creditsTitle: 'Credits',
+  },
+
   wizard: {
     welcome: {
       title: 'Welcome',
@@ -131,6 +139,10 @@ export default {
     emptyProgress: 'Your path will appear here as the story unfolds.',
     emptyFlags: 'No stats to show yet.',
     flagUnlocked: 'Unlocked',
+    tabEndings: 'Endings',
+    emptyEndings: "This game doesn't have any endings yet.",
+    endingsUnlockedCount: '{done} / {total} endings unlocked',
+    endingLocked: '???',
   },
 
   messages: {

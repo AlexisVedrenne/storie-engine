@@ -127,6 +127,14 @@ export default {
     duplicate: 'Duplica',
   },
 
+  chapterEndScreen: {
+    title: 'Schermata di fine',
+    help: 'Questo capitolo non ha seguito — personalizza qui la schermata mostrata al giocatore, oppure lasciala vuota per quella predefinita.',
+    titleLabel: 'Titolo',
+    textLabel: 'Testo (opzionale)',
+    imageLabel: 'Immagine (opzionale)',
+  },
+
   timelineEditor: {
     selectedOne: '1 elemento selezionato',
     selectedMany: '{n} elementi selezionati',
@@ -833,6 +841,10 @@ export default {
   gameForm: {
     titleTitle: 'Titolo',
     titleFieldLabel: 'Titolo (mostrato sulla schermata di blocco)',
+    creditsTitle: 'Crediti',
+    creditsHelp:
+      'Testo libero mostrato tramite un pulsante nella schermata di fine ("Vedi i crediti") — un unico blocco di crediti per tutto il gioco, indipendentemente dal finale raggiunto.',
+    creditsLabel: 'Crediti (testo libero, multi-riga)',
     entryChapterTitle: 'Capitolo iniziale',
     entryChapterHelp:
       'Il capitolo con cui si apre il gioco. Rinominare questo capitolo mantiene questa impostazione sincronizzata automaticamente.',
