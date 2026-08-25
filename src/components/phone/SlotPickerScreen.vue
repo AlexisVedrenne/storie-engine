@@ -132,7 +132,7 @@ function doDelete(slotId) {
   align-items: center;
   justify-content: center;
   margin-bottom: 6px;
-  background: linear-gradient(135deg, #7b5cff, #f5576c);
+  background: var(--phone-accent-gradient, linear-gradient(135deg, #7b5cff, #f5576c));
   box-shadow: 0 0 30px rgba(123, 92, 255, 0.35);
 }
 

@@ -98,7 +98,7 @@ const apps = computed(() =>
 
 .home-screen::before {
   background:
-    radial-gradient(circle at 20% 15%, #7b5cff 0%, transparent 45%),
+    radial-gradient(circle at 20% 15%, var(--phone-accent, #7b5cff) 0%, transparent 45%),
     radial-gradient(circle at 85% 75%, #3ad0ff 0%, transparent 45%);
   animation: mesh-drift-1 22s ease-in-out infinite;
 }

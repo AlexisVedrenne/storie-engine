@@ -306,7 +306,7 @@ function finish() {
   align-items: center;
   justify-content: center;
   margin-bottom: 6px;
-  background: linear-gradient(135deg, #7b5cff, #f5576c);
+  background: var(--phone-accent-gradient, linear-gradient(135deg, #7b5cff, #f5576c));
   box-shadow: 0 0 30px rgba(123, 92, 255, 0.35);
   animation: step-icon-in 0.4s cubic-bezier(0.34, 1.4, 0.64, 1) both;
 }
@@ -361,7 +361,7 @@ p {
 
 .primary-btn {
   width: 100%;
-  background: linear-gradient(135deg, #7b5cff, #f5576c);
+  background: var(--phone-accent-gradient, linear-gradient(135deg, #7b5cff, #f5576c));
   border: none;
   border-radius: 12px;
   color: #fff;

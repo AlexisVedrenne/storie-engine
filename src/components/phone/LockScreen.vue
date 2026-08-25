@@ -107,7 +107,7 @@ watch(unlocking, val => {
 
 .lock-screen::before {
   background:
-    radial-gradient(circle at 25% 20%, #7b5cff 0%, transparent 45%),
+    radial-gradient(circle at 25% 20%, var(--phone-accent, #7b5cff) 0%, transparent 45%),
     radial-gradient(circle at 80% 15%, #ff6fb5 0%, transparent 40%),
     radial-gradient(circle at 70% 80%, #3ad0ff 0%, transparent 45%);
   animation: mesh-drift-1 22s ease-in-out infinite;

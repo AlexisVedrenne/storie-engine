@@ -46,7 +46,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #7b5cff, #f5576c);
+  background: var(--phone-accent-gradient, linear-gradient(135deg, #7b5cff, #f5576c));
   animation:
     boot-pop 0.6s cubic-bezier(0.34, 1.4, 0.64, 1) both,
     boot-pulse 1.6s ease-in-out 0.6s infinite;
@@ -103,7 +103,7 @@ onMounted(() => {
   height: 100%;
   width: 0%;
   border-radius: 2px;
-  background: linear-gradient(90deg, #7b5cff, #f5576c);
+  background: var(--phone-accent-gradient, linear-gradient(90deg, #7b5cff, #f5576c));
   animation: boot-fill 2.7s ease-in-out 0.3s forwards;
 }
 

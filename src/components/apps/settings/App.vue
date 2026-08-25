@@ -492,7 +492,7 @@ function switchSlot() {
 .storage-fill {
   width: 38%;
   height: 100%;
-  background: linear-gradient(90deg, #9c27b0, #f5576c);
+  background: var(--phone-accent-gradient, linear-gradient(90deg, #9c27b0, #f5576c));
   border-radius: 3px;
 }
 

@@ -106,7 +106,7 @@ function decline() {
   width: 104px;
   height: 104px;
   border-radius: 50%;
-  border: 5px solid #f5576c;
+  border: 5px solid var(--phone-accent, #f5576c);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -146,7 +146,7 @@ function decline() {
   left: 50%;
   width: 135%;
   height: 5px;
-  background: #f5576c;
+  background: var(--phone-accent, #f5576c);
   border-radius: 3px;
   transform: translate(-50%, -50%) rotate(-45deg) scaleX(0);
   transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
@@ -213,7 +213,7 @@ function decline() {
 }
 
 .primary-btn {
-  background: linear-gradient(135deg, #7b5cff, #f5576c);
+  background: var(--phone-accent-gradient, linear-gradient(135deg, #7b5cff, #f5576c));
   color: #fff;
 }
 

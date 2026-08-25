@@ -104,6 +104,7 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { usePhoneStore } from '@/engine/stores/phone'
 import { useStoryStore } from '@/engine/stores/story'
 import { DEFAULT_LOCALE } from '@/engine/i18n/locales'
+import { accentGradient } from '@/engine/utils/color'
 
 import AgeGateScreen from './AgeGateScreen.vue'
 import BootScreen from './BootScreen.vue'
@@ -273,11 +274,20 @@ const ringing = computed(
 // game.caseColor (see GameForm.vue) — recolors the outer frame/notch, only
 // ever visible in the desktop mockup (a real-device `fillMobileViewport`
 // render drops the frame entirely, see .fill-mobile below).
+// --phone-accent-gradient: the same override, auto-turned into a two-stop
+// gradient (see color.js's own comment) so the boot/wizard/lock/slot-picker/
+// age-gate/réglages screens — which hardcode the engine's own default
+// violet->pink duotone rather than a flat color — can re-theme too, without
+// an author having to pick a second color themselves. Left unset when no
+// override exists, same "CSS's own fallback is the single source of truth
+// for the un-customized look" reasoning as --phone-accent itself.
 const accentStyle = computed(() => {
   const color = story.gameConfig?.accentColor
   const caseColor = story.gameConfig?.caseColor
+  const gradient = color ? accentGradient(color) : null
   return {
     ...(color ? { '--phone-accent': color } : {}),
+    ...(gradient ? { '--phone-accent-gradient': gradient } : {}),
     ...(caseColor ? { '--phone-case': caseColor } : {}),
   }
 })
