@@ -83,6 +83,7 @@ export default {
     soundOff: 'Deaktiviert',
     soundEnabled: 'Töne aktiviert',
     soundVolumeHint: 'Lautstärke: {value}%',
+    musicVolumeHint: 'Musiklautstärke: {value}%',
     display: 'Anzeige & Helligkeit',
     brightnessHint: 'Helligkeit: {value}%',
     battery: 'Akku',
@@ -116,10 +117,7 @@ export default {
       journal: 'Tagebuch',
     },
     stepsUnit: 'Schritte',
-    musicTitle: 'Abendstimmung',
-    musicArtist: 'Imaginäre Playlist',
-    musicPauseAria: 'Pause',
-    musicPlayAria: 'Wiedergabe',
+    musicTitle: 'Keine Musik',
   },
 
   journal: {

@@ -142,6 +142,7 @@ export default {
     linesCount: '{n} líneas',
     vfxStopSummary: 'Detiene el efecto actual',
     vfxUntilStopped: 'hasta que se detenga manualmente',
+    musicStopSummary: 'Detiene la música actual',
     interactionBlocking: 'bloquea la línea temporal',
     interactionParallel: 'en paralelo',
     types: {
@@ -182,6 +183,10 @@ export default {
       vfx: {
         label: 'Efecto visual (vfx)',
         help: 'Un efecto visual a pantalla completa en el teléfono (glitch, estática, corrupción, temblor, pantalla agrietada, apagón) — puramente estético, nunca bloquea la línea temporal. Puede desaparecer solo tras una duración, o mantenerse hasta un vfx posterior en modo "Detener".',
+      },
+      music: {
+        label: 'Música',
+        help: 'Reproduce música de fondo en el teléfono — inicia una pista (en bucle por defecto) o detiene la que esté sonando. Puramente estético, nunca bloquea la línea temporal.',
       },
       timeskip: {
         label: 'Salto de tiempo',
@@ -329,6 +334,26 @@ export default {
       durationLabel: 'Duración (opcional)',
       durationHelp:
         'Deja vacío para mantener el efecto activo hasta una entrada "Detener" posterior.',
+    },
+    music: {
+      intro:
+        'Reproduce música de fondo en el teléfono. Puramente estético — la línea temporal continúa de inmediato, sin esperar.',
+      modeStart: 'Iniciar',
+      modeStop: 'Detener',
+      stopHelp:
+        'Detiene la música que esté sonando actualmente, sea cual sea — colócalo más adelante en la línea temporal para cortar una pista dejada en bucle.',
+      trackLabel: 'Pista (archivo de audio)',
+      titleLabel: 'Título mostrado (opcional)',
+      titleHelp:
+        'Se muestra en el widget de música de la pantalla de inicio. Vacío = deducido del nombre del archivo.',
+      loopLabel: 'Repetir en bucle',
+      volumeLabel: 'Volumen de la pista',
+      volumeHelp:
+        'Nivel de mezcla propio de esta pista — se combina con el volumen de música del jugador (Ajustes), no lo sustituye.',
+      fadeLabel: 'Fundido (opcional)',
+      fadeStartHelp:
+        'Duración del fundido de entrada. Si ya sonaba música, se desvanece en la misma duración en lugar de cortarse de golpe.',
+      fadeStopHelp: 'Duración del fundido de salida antes de detenerse por completo.',
     },
     timeskip: {
       intro: 'Bloquea el teléfono y salta el reloj/la fecha hacia delante de golpe.',

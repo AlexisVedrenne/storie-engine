@@ -179,6 +179,22 @@
           <p class="subpage-hint">
             {{ t('settings.soundVolumeHint', { value: story.soundVolume }) }}
           </p>
+
+          <div class="brightness-row music-volume-row">
+            <q-icon name="music_note" size="18px" color="rgba(255,255,255,0.6)" />
+            <input
+              :value="story.musicVolume"
+              type="range"
+              min="0"
+              max="100"
+              class="brightness-slider"
+              :disabled="!story.soundEnabled"
+              @input="story.setMusicVolume($event.target.valueAsNumber)"
+            />
+          </div>
+          <p class="subpage-hint">
+            {{ t('settings.musicVolumeHint', { value: story.musicVolume }) }}
+          </p>
         </div>
       </div>
 

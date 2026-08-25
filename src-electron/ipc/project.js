@@ -418,20 +418,27 @@ export function registerProjectHandlers(mainWindow) {
   // Opens a file picker rooted at the project's assets/ folder, returns a
   // path relative to it (what image/media fields store) — rejects a pick
   // made outside assets/ rather than silently writing an unusable path.
-  ipcMain.handle('project:pickAsset', async (_evt, { rootPath }) => {
+  ipcMain.handle('project:pickAsset', async (_evt, { rootPath, accept }) => {
     const assetsRoot = path.join(rootPath, 'assets')
     fs.mkdirSync(assetsRoot, { recursive: true })
+    const isAudio = accept === 'audio'
     const result = await dialog.showOpenDialog(mainWindow, {
-      title: 'Choisir une image',
+      title: isAudio ? 'Choisir un fichier audio' : 'Choisir une image',
       defaultPath: assetsRoot,
       properties: ['openFile'],
-      filters: [{ name: 'Images', extensions: ['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp'] }],
+      filters: isAudio
+        ? [{ name: 'Audio', extensions: ['mp3', 'wav', 'ogg', 'm4a'] }]
+        : [{ name: 'Images', extensions: ['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp'] }],
     })
     if (result.canceled || !result.filePaths[0]) return null
     const picked = result.filePaths[0]
     const rel = path.relative(assetsRoot, picked)
     if (rel.startsWith('..') || path.isAbsolute(rel)) {
-      throw new Error("L'image choisie doit être à l'intérieur du dossier assets/ du projet.")
+      throw new Error(
+        isAudio
+          ? "Le fichier choisi doit être à l'intérieur du dossier assets/ du projet."
+          : "L'image choisie doit être à l'intérieur du dossier assets/ du projet.",
+      )
     }
     return rel.replace(/\\/g, '/')
   })
@@ -443,10 +450,11 @@ export function registerProjectHandlers(mainWindow) {
   ipcMain.handle('project:importAsset', async (_evt, { rootPath, suggestedFolder, accept }) => {
     // 'images' (default, used by AssetField.vue's typed narrative fields —
     // avatar/post image/etc.) keeps the original single-filter behavior.
-    // 'any' (used by the Assets tab's general import) offers a médias
-    // preset plus an explicit "all files" entry — the OS dialog lets the
-    // user switch between filter entries, so this isn't a hard restriction,
-    // just a convenient default ahead of future asset types (e.g. audio).
+    // 'audio' (sound overrides, a `music` entry's track) restricts to audio
+    // extensions the same way. 'any' (used by the Assets tab's general
+    // import) offers a médias preset plus an explicit "all files" entry —
+    // the OS dialog lets the user switch between filter entries, so this
+    // isn't a hard restriction, just a convenient default.
     const filters =
       accept === 'any'
         ? [
@@ -456,7 +464,9 @@ export function registerProjectHandlers(mainWindow) {
             },
             { name: 'Tous les fichiers', extensions: ['*'] },
           ]
-        : [{ name: 'Images', extensions: ['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp'] }]
+        : accept === 'audio'
+          ? [{ name: 'Audio', extensions: ['mp3', 'wav', 'ogg', 'm4a'] }]
+          : [{ name: 'Images', extensions: ['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp'] }]
     const result = await dialog.showOpenDialog(mainWindow, {
       title: 'Importer un fichier',
       properties: ['openFile'],

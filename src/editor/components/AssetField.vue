@@ -50,6 +50,11 @@ const props = defineProps({
   // both "here's the current default" and "here's your override" instead of
   // GameForm stacking two separate blocks per sound (docs/ui-design-principles.md).
   fallbackAudioSrc: { type: String, default: '' },
+  // Which file-type filter the native picker (browse/import) opens with —
+  // 'images' (default) for the many narrative image fields, 'audio' for
+  // sound overrides and a `music` entry's track. Forwarded as-is to the
+  // main process (project:pickAsset/project:importAsset), see project.js.
+  accept: { type: String, default: 'images' },
 })
 const emit = defineEmits(['update:modelValue'])
 const story = useStoryStore()
@@ -71,7 +76,10 @@ async function browse() {
     return
   }
   try {
-    const rel = await window.storieAPI.pickAsset({ rootPath: story.project.rootPath })
+    const rel = await window.storieAPI.pickAsset({
+      rootPath: story.project.rootPath,
+      accept: props.accept,
+    })
     if (rel) emit('update:modelValue', rel)
   } catch (err) {
     error.value = err.message || String(err)
@@ -88,6 +96,7 @@ async function importFile() {
     const rel = await window.storieAPI.importAsset({
       rootPath: story.project.rootPath,
       suggestedFolder: props.contactId ? `images/${props.contactId}` : '',
+      accept: props.accept,
     })
     if (rel) emit('update:modelValue', rel)
   } catch (err) {

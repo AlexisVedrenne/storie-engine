@@ -83,6 +83,7 @@ export default {
     soundOff: 'Disattivato',
     soundEnabled: 'Suoni attivati',
     soundVolumeHint: 'Volume: {value}%',
+    musicVolumeHint: 'Volume musica: {value}%',
     display: 'Schermo e luminosità',
     brightnessHint: 'Luminosità: {value}%',
     battery: 'Batteria',
@@ -116,10 +117,7 @@ export default {
       journal: 'Diario',
     },
     stepsUnit: 'passi',
-    musicTitle: 'Atmosfera serale',
-    musicArtist: 'Playlist immaginaria',
-    musicPauseAria: 'Pausa',
-    musicPlayAria: 'Riproduci',
+    musicTitle: 'Nessuna musica',
   },
 
   journal: {

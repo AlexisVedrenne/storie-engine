@@ -83,6 +83,7 @@ export default {
     soundOff: 'Désactivé',
     soundEnabled: 'Sons activés',
     soundVolumeHint: 'Volume : {value}%',
+    musicVolumeHint: 'Volume musique : {value}%',
     display: 'Écran et luminosité',
     brightnessHint: 'Luminosité : {value}%',
     battery: 'Batterie',
@@ -116,10 +117,7 @@ export default {
       journal: 'Journal',
     },
     stepsUnit: 'pas',
-    musicTitle: 'Vibes du soir',
-    musicArtist: 'Playlist imaginaire',
-    musicPauseAria: 'Pause',
-    musicPlayAria: 'Lecture',
+    musicTitle: 'Aucune musique',
   },
 
   journal: {

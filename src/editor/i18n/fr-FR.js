@@ -143,6 +143,7 @@ export default {
     linesCount: '{n} répliques',
     vfxStopSummary: 'Arrête l’effet en cours',
     vfxUntilStopped: 'jusqu’à arrêt manuel',
+    musicStopSummary: 'Arrête la musique en cours',
     interactionBlocking: 'bloque la timeline',
     interactionParallel: 'en parallèle',
     types: {
@@ -180,6 +181,10 @@ export default {
       vfx: {
         label: 'Effet visuel (vfx)',
         help: 'Effet visuel plein écran sur le téléphone (glitch, parasites, corruption, secousse, écran fissuré, coupure de courant) — purement cosmétique, ne bloque pas la timeline. Peut se désactiver tout seul après une durée, ou rester actif jusqu’à un autre vfx en mode « Arrêter » plus loin dans la timeline.',
+      },
+      music: {
+        label: 'Musique',
+        help: 'Joue une musique de fond sur le téléphone — démarre une piste (en boucle par défaut) ou arrête celle en cours. Purement cosmétique, ne bloque pas la timeline.',
       },
       timeskip: {
         label: 'Ellipse temporelle (timeskip)',
@@ -327,6 +332,25 @@ export default {
       durationLabel: 'Durée (optionnel)',
       durationHelp:
         'Laisse vide pour que l’effet reste actif jusqu’à un entry « Arrêter » plus loin dans la timeline.',
+    },
+    music: {
+      intro:
+        'Joue une musique de fond sur le téléphone. Purement cosmétique — la timeline continue tout de suite, sans attendre.',
+      modeStart: 'Démarrer',
+      modeStop: 'Arrêter',
+      stopHelp:
+        'Arrête la musique actuellement en cours, quelle qu’elle soit — à placer plus loin dans la timeline pour couper un morceau laissé en boucle.',
+      trackLabel: 'Piste (fichier audio)',
+      titleLabel: 'Titre affiché (optionnel)',
+      titleHelp: 'Montré dans le widget musique de l’écran d’accueil. Vide = déduit du nom de fichier.',
+      loopLabel: 'Reprendre en boucle',
+      volumeLabel: 'Volume de la piste',
+      volumeHelp:
+        'Niveau de mixage propre à cette piste — se combine avec le volume musique du joueur (Réglages), ne le remplace pas.',
+      fadeLabel: 'Fondu (optionnel)',
+      fadeStartHelp:
+        'Durée du fondu à l’entrée. Si une musique jouait déjà, elle disparaît en fondu sur la même durée au lieu de s’arrêter net.',
+      fadeStopHelp: 'Durée du fondu à la sortie avant l’arrêt complet.',
     },
     timeskip: {
       intro: "Verrouille le téléphone et fait avancer l'heure/la date d'un coup.",

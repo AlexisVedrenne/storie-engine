@@ -232,6 +232,7 @@ import ReelEntryForm from '@/editor/components/entries/ReelEntryForm.vue'
 import CallEntryForm from '@/editor/components/entries/CallEntryForm.vue'
 import EffectEntryForm from '@/editor/components/entries/EffectEntryForm.vue'
 import VfxEntryForm from '@/editor/components/entries/VfxEntryForm.vue'
+import MusicEntryForm from '@/editor/components/entries/MusicEntryForm.vue'
 import TimeskipEntryForm from '@/editor/components/entries/TimeskipEntryForm.vue'
 import InteractionEntryForm from '@/editor/components/entries/InteractionEntryForm.vue'
 import HallucinationEntryForm from '@/editor/components/entries/HallucinationEntryForm.vue'
@@ -279,6 +280,7 @@ const FORM_BY_TYPE = {
   call: CallEntryForm,
   effect: EffectEntryForm,
   vfx: VfxEntryForm,
+  music: MusicEntryForm,
   timeskip: TimeskipEntryForm,
   interaction: InteractionEntryForm,
   hallucination: HallucinationEntryForm,
@@ -306,6 +308,7 @@ const ICON_BY_TYPE = {
   call: 'call',
   effect: 'bolt',
   vfx: 'broken_image',
+  music: 'music_note',
   timeskip: 'update',
   interaction: 'sports_esports',
   hallucination: 'blur_on',
@@ -344,6 +347,7 @@ const BUILTIN_TYPES = [
   'call',
   'effect',
   'vfx',
+  'music',
   'timeskip',
   'interaction',
   'hallucination',
@@ -443,6 +447,8 @@ function defaultEntry(type) {
       return { type, effects: {} }
     case 'vfx':
       return { type, mode: 'start', effect: 'glitch', duration: 1200 }
+    case 'music':
+      return { type, mode: 'start', track: '', title: '', loop: true }
     case 'timeskip':
       return { type }
     case 'interaction':
@@ -536,6 +542,9 @@ function summaryFor(entry) {
         t(`entries.vfx.kinds.${entry.effect || 'glitch'}`) +
         (entry.duration ? ` · ${entry.duration}ms` : ` · ${t('timelineEditor.vfxUntilStopped')}`)
       )
+    case 'music':
+      if (entry.mode === 'stop') return t('timelineEditor.musicStopSummary')
+      return entry.title || entry.track || ''
     case 'timeskip':
       return entry.label || `${entry.clock || ''} ${entry.date || ''}`.trim()
     case 'interaction': {

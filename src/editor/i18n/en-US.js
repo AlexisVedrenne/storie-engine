@@ -139,6 +139,7 @@ export default {
     linesCount: '{n} lines',
     vfxStopSummary: 'Stops the current effect',
     vfxUntilStopped: 'until manually stopped',
+    musicStopSummary: 'Stops the current music',
     interactionBlocking: 'blocks the timeline',
     interactionParallel: 'in parallel',
     types: {
@@ -170,6 +171,10 @@ export default {
       vfx: {
         label: 'Visual effect (vfx)',
         help: 'A full-screen visual effect on the phone (glitch, static, corrupted, shake, cracked screen, blackout) — purely cosmetic, never blocks the timeline. Can clear itself after a duration, or stay on until a later vfx in "Stop" mode.',
+      },
+      music: {
+        label: 'Music',
+        help: 'Plays background music on the phone — starts a track (looping by default) or stops whatever is currently playing. Purely cosmetic, never blocks the timeline.',
       },
       timeskip: {
         label: 'Time skip',
@@ -314,6 +319,25 @@ export default {
       },
       durationLabel: 'Duration (optional)',
       durationHelp: 'Leave empty to keep the effect on until a later "Stop" entry.',
+    },
+    music: {
+      intro:
+        'Plays background music on the phone. Purely cosmetic — the timeline keeps going right away, without waiting.',
+      modeStart: 'Start',
+      modeStop: 'Stop',
+      stopHelp:
+        'Stops whichever music is currently playing — place this later in the timeline to clear a track that was left looping.',
+      trackLabel: 'Track (audio file)',
+      titleLabel: 'Displayed title (optional)',
+      titleHelp: "Shown in the home screen's music widget. Empty = derived from the file name.",
+      loopLabel: 'Loop the track',
+      volumeLabel: 'Track volume',
+      volumeHelp:
+        "This track's own mix level — combines with the player's music volume (Settings), doesn't replace it.",
+      fadeLabel: 'Fade (optional)',
+      fadeStartHelp:
+        'Fade-in duration. If music was already playing, it fades out over the same duration instead of cutting abruptly.',
+      fadeStopHelp: 'Fade-out duration before stopping completely.',
     },
     timeskip: {
       intro: 'Locks the phone and jumps the clock/date forward all at once.',

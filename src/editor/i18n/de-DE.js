@@ -143,6 +143,7 @@ export default {
     linesCount: '{n} Zeilen',
     vfxStopSummary: 'Beendet den aktuellen Effekt',
     vfxUntilStopped: 'bis er manuell gestoppt wird',
+    musicStopSummary: 'Beendet die aktuelle Musik',
     interactionBlocking: 'blockiert die Timeline',
     interactionParallel: 'parallel',
     types: {
@@ -174,6 +175,10 @@ export default {
       vfx: {
         label: 'Visueller Effekt (VFX)',
         help: 'Ein Vollbild-Effekt auf dem Handy (Glitch, Rauschen, Bildstörung, Wackeln, Sprung im Display, Blackout) — rein optisch, blockiert die Timeline nie. Kann sich nach einer Dauer selbst beenden oder eingeschaltet bleiben, bis ein späterer VFX im Modus „Stopp" ihn beendet.',
+      },
+      music: {
+        label: 'Musik',
+        help: 'Spielt Hintergrundmusik auf dem Handy ab — startet einen Titel (standardmäßig in Dauerschleife) oder stoppt den gerade laufenden. Rein optisch, blockiert die Timeline nie.',
       },
       timeskip: {
         label: 'Zeitsprung',
@@ -321,6 +326,25 @@ export default {
       durationLabel: 'Dauer (optional)',
       durationHelp:
         'Leer lassen, damit der Effekt bis zu einem späteren „Stopp"-Eintrag aktiv bleibt.',
+    },
+    music: {
+      intro:
+        'Spielt Hintergrundmusik auf dem Handy ab. Rein optisch — die Timeline läuft sofort weiter, ohne zu warten.',
+      modeStart: 'Start',
+      modeStop: 'Stopp',
+      stopHelp:
+        'Stoppt die gerade laufende Musik, egal welche — später in der Timeline platzieren, um einen in Dauerschleife gelassenen Titel zu beenden.',
+      trackLabel: 'Titel (Audiodatei)',
+      titleLabel: 'Angezeigter Titel (optional)',
+      titleHelp: 'Wird im Musik-Widget des Startbildschirms angezeigt. Leer = aus dem Dateinamen abgeleitet.',
+      loopLabel: 'In Dauerschleife wiederholen',
+      volumeLabel: 'Lautstärke des Titels',
+      volumeHelp:
+        'Eigener Mixpegel dieses Titels — kombiniert sich mit der Musiklautstärke des Spielers (Einstellungen), ersetzt sie nicht.',
+      fadeLabel: 'Überblendung (optional)',
+      fadeStartHelp:
+        'Dauer der Einblendung. Lief bereits Musik, wird sie über dieselbe Dauer ausgeblendet, statt abrupt zu stoppen.',
+      fadeStopHelp: 'Dauer der Ausblendung vor dem vollständigen Stopp.',
     },
     timeskip: {
       intro: 'Sperrt das Handy und lässt Uhrzeit/Datum auf einmal vorspringen.',

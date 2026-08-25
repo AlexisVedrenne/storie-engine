@@ -83,6 +83,7 @@ export default {
     soundOff: 'Off',
     soundEnabled: 'Sounds enabled',
     soundVolumeHint: 'Volume: {value}%',
+    musicVolumeHint: 'Music volume: {value}%',
     display: 'Display & brightness',
     brightnessHint: 'Brightness: {value}%',
     battery: 'Battery',
@@ -116,10 +117,7 @@ export default {
       journal: 'Journal',
     },
     stepsUnit: 'steps',
-    musicTitle: 'Evening Vibes',
-    musicArtist: 'Imaginary playlist',
-    musicPauseAria: 'Pause',
-    musicPlayAria: 'Play',
+    musicTitle: 'No music',
   },
 
   journal: {

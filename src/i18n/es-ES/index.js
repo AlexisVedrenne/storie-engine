@@ -83,6 +83,7 @@ export default {
     soundOff: 'Desactivado',
     soundEnabled: 'Sonidos activados',
     soundVolumeHint: 'Volumen: {value}%',
+    musicVolumeHint: 'Volumen de música: {value}%',
     display: 'Pantalla y brillo',
     brightnessHint: 'Brillo: {value}%',
     battery: 'Batería',
@@ -116,10 +117,7 @@ export default {
       journal: 'Diario',
     },
     stepsUnit: 'pasos',
-    musicTitle: 'Vibras nocturnas',
-    musicArtist: 'Playlist imaginaria',
-    musicPauseAria: 'Pausa',
-    musicPlayAria: 'Reproducir',
+    musicTitle: 'Sin música',
   },
 
   journal: {

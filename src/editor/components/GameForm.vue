@@ -236,6 +236,7 @@
           v-model="game.sounds[sound.key]"
           :label="sound.label"
           :fallback-audio-src="SOUND_FILES[sound.key]"
+          accept="audio"
           class="sound-row"
         />
       </div>

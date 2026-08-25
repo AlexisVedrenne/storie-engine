@@ -2,7 +2,15 @@ import { defineStore } from 'pinia'
 import { usePhoneStore } from './phone'
 import { i18n, persistLocale } from '@/engine/i18n/instance'
 import { DEFAULT_LOCALE, SUPPORTED_LOCALES } from '@/engine/i18n/locales'
-import { playSound, startLoop, stopSound } from '@/engine/utils/sound'
+import {
+  playSound,
+  startLoop,
+  stopSound,
+  playMusic,
+  stopMusic as stopMusicPlayback,
+  setMusicMuted,
+  updateMusicVolume,
+} from '@/engine/utils/sound'
 import { ENTRY_TYPE_APP } from '@/engine/apps/appIds'
 import { orderedAppList } from '@/engine/apps/appOrder'
 import { APP_REGISTRY } from '@/engine/apps/registry'
@@ -112,6 +120,7 @@ function defaultState() {
     locale: '', // picked in the same wizard (or later in Settings), empty = fall back to DEFAULT_LOCALE
     soundEnabled: true, // Réglages > Sons et vibrations toggle
     soundVolume: 70, // 0-100, same row's volume slider
+    musicVolume: 70, // 0-100, dedicated slider under the same screen — layered on top of soundVolume (see sound.js's playMusic), not a replacement for it, so a player who wants SFX loud but music quiet (or off) has that as its own control
     flags: {},
     // A "collection" flag — same authoring concept as a regular flag
     // (created/labeled in the Flags panel, referenced by key), but holding
@@ -200,6 +209,7 @@ function defaultState() {
     typingAppDm: null, // { app, thread, contact } currently shown as "typing..." in a custom app's conversation block — transient, not saved
     timeSkipFading: false, // true while the black veil is covering a `timeskip` cut — transient, not saved
     screenEffect: null, // { kind, id } while a `vfx` entry's overlay is showing on the phone screen — transient, not saved; see triggerScreenEffect
+    nowPlaying: null, // { title } while a `music` entry's track is actually playing — transient, not saved; see startMusic. HomeWidgets.vue reads this for the home screen's music widget
 
     // "phone state" widgets — purely decorative on their own, but the story
     // can drive them via `effects` (see applyEffects) for extra immersion:
@@ -263,6 +273,7 @@ const NON_PERSISTED_KEYS = new Set([
   'timeSkipFading',
   'timeSkipToast',
   'screenEffect',
+  'nowPlaying',
   'activeSlotId',
 ])
 
@@ -519,6 +530,7 @@ export const useStoryStore = defineStore('story', {
     // Phase 1 has no real persistence, so this is also the only "reset"
     // mechanism the preview needs.
     loadProject(projectData) {
+      this.stopMusic() // a previous project's track must never bleed into the next one
       Object.assign(this, defaultState())
       this.project = projectData
 
@@ -580,11 +592,22 @@ export const useStoryStore = defineStore('story', {
     setSoundEnabled(enabled) {
       this.soundEnabled = Boolean(enabled)
       if (!this.soundEnabled) stopSound('call-ringtone')
+      // Pauses/resumes rather than stop/restart — nowPlaying is left as-is
+      // either way, muting doesn't change what's conceptually playing, just
+      // whether it's audible (see setMusicMuted's own comment).
+      setMusicMuted(!this.soundEnabled)
       this.save()
     },
 
     setSoundVolume(volume) {
       this.soundVolume = Math.max(0, Math.min(100, Number(volume) || 0))
+      updateMusicVolume() // live, not just on the music's next play() — see that function's own comment
+      this.save()
+    },
+
+    setMusicVolume(volume) {
+      this.musicVolume = Math.max(0, Math.min(100, Number(volume) || 0))
+      updateMusicVolume()
       this.save()
     },
 
@@ -614,6 +637,7 @@ export const useStoryStore = defineStore('story', {
       const bundle = slotsCache || this.loadSlotsSummary()
       const snapshot = bundle?.[slotId] || null
       const project = this.project
+      this.stopMusic() // the slot being left behind must never keep playing into the new one
       Object.assign(this, defaultState())
       this.project = project
       this.activeSlotId = slotId
@@ -1090,6 +1114,41 @@ export const useStoryStore = defineStore('story', {
       this.screenEffect = null
     },
 
+    // a `music` entry — background track, looping by default (unlike a
+    // `vfx` entry's usual one-shot-with-optional-duration shape, music is
+    // meant to keep playing until an explicit `mode: 'stop'` entry or the
+    // author sets `loop: false` for a one-play track). `title` is purely
+    // for HomeWidgets.vue's now-playing card — playMusic() itself resolves
+    // `track` (a project asset path) and handles the actual playback.
+    // `volume` (0-100, author's per-track mix level, default 100) layers
+    // under the player's own musicVolume/soundVolume — see sound.js.
+    // `fade` (ms) ramps the new track in; if something was already
+    // playing, that one fades OUT over the same duration instead of
+    // cutting abruptly (see playMusic's own comment on why).
+    startMusic(track, title, loop, volume, fade) {
+      if (!track) return
+      playMusic(track, { loop: loop !== false, volume, fadeMs: fade || 0 })
+      // Falls back to the asset's own filename (minus extension) rather
+      // than leaving the widget on its old decorative placeholder text —
+      // real music playing under fake "Vibes du soir" copy would read as
+      // broken, not charming.
+      const derivedTitle = track.split('/').pop().replace(/\.[^./]+$/, '')
+      this.nowPlaying = { title: title || derivedTitle }
+    },
+
+    // counterpart to startMusic above, for a `music` entry authored with
+    // `mode: 'stop'` — same "turn off whatever's currently on" shape as
+    // stopScreenEffect. With a `fade`, nowPlaying (and the home widget it
+    // drives) stays as-is until the fade actually finishes — clearing it
+    // immediately would show "nothing playing" while the track is still
+    // audibly winding down. No fade (mute toggle, project/slot reload,
+    // reset) clears it right away, matching the hard-stop it actually is.
+    stopMusic(fade) {
+      stopMusicPlayback(fade || 0, () => {
+        this.nowPlaying = null
+      })
+    },
+
     // plays a `then` list one entry at a time (instead of a synchronous
     // for-loop) so that any message/dm inside it gets the same typing beat
     // and pacing as the main timeline. `resume` is what to call once the
@@ -1325,6 +1384,11 @@ export const useStoryStore = defineStore('story', {
         case 'vfx':
           if (entry.mode === 'stop') this.stopScreenEffect()
           else this.triggerScreenEffect(entry.effect, entry.duration)
+          break
+
+        case 'music':
+          if (entry.mode === 'stop') this.stopMusic(entry.fade)
+          else this.startMusic(entry.track, entry.title, entry.loop, entry.volume, entry.fade)
           break
 
         // Shows the real "..." typing indicator (typingContact/typingDm —
@@ -2108,6 +2172,7 @@ export const useStoryStore = defineStore('story', {
     resetSave() {
       const project = this.project
       const activeSlotId = this.activeSlotId
+      this.stopMusic() // wiping progress shouldn't leave the old track playing under the fresh save
       Object.assign(this, defaultState())
       this.project = project
       this.activeSlotId = activeSlotId

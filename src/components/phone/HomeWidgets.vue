@@ -36,25 +36,29 @@
       </div>
     </div>
 
-    <!-- Music — fake now-playing card, tap toggles a purely visual eq -->
+    <!-- Music — real once a `music` timeline entry is playing (story.nowPlaying,
+         see story.js's startMusic/stopMusic); decorative placeholder text
+         otherwise, same look a project that never uses the feature always had. -->
     <div class="widget wide music">
       <div class="music-art">🎵</div>
       <div class="music-info">
-        <div class="music-title">{{ t('home.musicTitle') }}</div>
-        <div class="music-artist">{{ t('home.musicArtist') }}</div>
+        <div v-if="story.nowPlaying" class="music-title-clip">
+          <div class="music-title-inner">
+            <span class="music-title-track">{{ story.nowPlaying.title }}</span>
+            <span class="music-title-track" aria-hidden="true">{{ story.nowPlaying.title }}</span>
+          </div>
+        </div>
+        <div v-else class="music-title">{{ t('home.musicTitle') }}</div>
       </div>
-      <div class="eq" :class="{ playing }">
+      <div class="eq" :class="{ playing: !!story.nowPlaying }">
         <span></span><span></span><span></span><span></span>
       </div>
-      <button class="music-play" :aria-label="playing ? t('home.musicPauseAria') : t('home.musicPlayAria')" @click="playing = !playing">
-        <q-icon :name="playing ? 'pause' : 'play_arrow'" size="18px" color="white" />
-      </button>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useStoryStore } from '@/engine/stores/story'
 
@@ -78,8 +82,6 @@ const progress = computed(() =>
 const radius = 18
 const circumference = 2 * Math.PI * radius
 const dashOffset = computed(() => circumference * (1 - progress.value / 100))
-
-const playing = ref(false)
 </script>
 
 <style scoped>
@@ -244,12 +246,33 @@ const playing = ref(false)
   text-overflow: ellipsis;
 }
 
-.music-artist {
-  font-size: 11px;
-  opacity: 0.6;
-  white-space: nowrap;
+/* Real track title (story.nowPlaying) — continuous seamless marquee
+   instead of ellipsis-truncating: two identical copies side by side,
+   scrolled left by exactly one copy's width then snapped back, so the
+   loop point is invisible. */
+.music-title-clip {
   overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.music-title-inner {
+  display: inline-flex;
+  animation: music-title-scroll 9s linear infinite;
+}
+
+.music-title-track {
+  font-size: 12.5px;
+  font-weight: 600;
+  padding-right: 28px;
+}
+
+@keyframes music-title-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
 }
 
 .eq {
@@ -296,20 +319,5 @@ const playing = ref(false)
   }
 }
 
-.music-play {
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  border: none;
-  background: rgba(255, 255, 255, 0.12);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  flex-shrink: 0;
-}
 
-.music-play:active {
-  transform: scale(0.9);
-}
 </style>

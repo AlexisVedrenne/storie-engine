@@ -142,6 +142,7 @@ export default {
     linesCount: '{n} righe',
     vfxStopSummary: "Interrompe l'effetto in corso",
     vfxUntilStopped: 'finché non viene interrotto manualmente',
+    musicStopSummary: 'Interrompe la musica in corso',
     interactionBlocking: 'blocca la timeline',
     interactionParallel: 'in parallelo',
     types: {
@@ -176,6 +177,10 @@ export default {
       vfx: {
         label: 'Effetto visivo (vfx)',
         help: 'Un effetto visivo a schermo intero sul telefono (glitch, disturbo, corrotto, tremore, schermo incrinato, blackout) — puramente estetico, non blocca mai la timeline. Può sparire da solo dopo una durata, oppure restare attivo finché un vfx successivo in modalità "Stop" non lo interrompe.',
+      },
+      music: {
+        label: 'Musica',
+        help: 'Riproduce musica di sottofondo sul telefono — avvia una traccia (in loop per impostazione predefinita) o interrompe quella in corso. Puramente estetico, non blocca mai la timeline.',
       },
       timeskip: {
         label: 'Salto temporale',
@@ -323,6 +328,25 @@ export default {
       durationLabel: 'Durata (opzionale)',
       durationHelp:
         'Lascia vuoto per mantenere l\'effetto attivo fino a un elemento "Interrompi" successivo.',
+    },
+    music: {
+      intro:
+        'Riproduce musica di sottofondo sul telefono. Puramente estetico — la timeline prosegue subito, senza attendere.',
+      modeStart: 'Avvia',
+      modeStop: 'Interrompi',
+      stopHelp:
+        'Interrompe la musica attualmente in riproduzione, qualunque essa sia — posizionalo più avanti nella timeline per interrompere una traccia lasciata in loop.',
+      trackLabel: 'Traccia (file audio)',
+      titleLabel: 'Titolo visualizzato (opzionale)',
+      titleHelp: 'Mostrato nel widget musica della schermata home. Vuoto = dedotto dal nome del file.',
+      loopLabel: 'Ripeti in loop',
+      volumeLabel: 'Volume della traccia',
+      volumeHelp:
+        'Livello di mix proprio di questa traccia — si combina con il volume musica del giocatore (Impostazioni), non lo sostituisce.',
+      fadeLabel: 'Dissolvenza (opzionale)',
+      fadeStartHelp:
+        "Durata della dissolvenza in entrata. Se una musica era già in riproduzione, si dissolve nella stessa durata invece di interrompersi bruscamente.",
+      fadeStopHelp: "Durata della dissolvenza in uscita prima dell'arresto completo.",
     },
     timeskip: {
       intro: 'Blocca il telefono e fa saltare in avanti orologio/data in un colpo solo.',
