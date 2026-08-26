@@ -64,6 +64,19 @@ if (!gameShellVendored) {
 
 const pkgPath = path.join(ROOT, 'package.json')
 const originalPkgText = fs.readFileSync(pkgPath, 'utf-8')
+const restorePkg = () => fs.writeFileSync(pkgPath, originalPkgText, 'utf-8')
+
+// try/finally alone only covers a thrown JS error (e.g. the build
+// failing) — a Ctrl+C (SIGINT) or a killed terminal ends the process
+// immediately, skipping the finally below entirely and leaving
+// package.json stuck on the bumped version (confirmed by a real
+// interrupted run before this was added). Explicit handlers cover that.
+for (const sig of ['SIGINT', 'SIGTERM']) {
+  process.on(sig, () => {
+    restorePkg()
+    process.exit(1)
+  })
+}
 
 try {
   const pkg = JSON.parse(originalPkgText)
@@ -75,7 +88,7 @@ try {
   // Restored right after the build, whether it succeeded or not — this
   // script never commits/pushes, so package.json must never end up
   // sitting locally modified for longer than the build actually needs it.
-  fs.writeFileSync(pkgPath, originalPkgText, 'utf-8')
+  restorePkg()
 }
 
 for (const { dir } of TARGETS) {
