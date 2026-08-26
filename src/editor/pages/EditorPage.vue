@@ -1316,16 +1316,31 @@ function previewFrom(chapterId) {
 // CustomAppRenderer.vue reads story.project.customApps reactively, every
 // block edit shows up on the preview immediately, no extra wiring needed
 // beyond having the right app open.
+//
+// ALWAYS resets via story.loadProject() first (same mechanism the topbar's
+// "Relancer l'aperçu" button uses, see restartPreview() above) — not just
+// when playerName is empty. story.startIfNeeded()'s own `if (this.started)
+// return` guard otherwise makes this a no-op once a session has started
+// once, which used to mean entity-schema seed instances (or anything else
+// re-derived at start) added mid-session never showed up in the Apps tab
+// without a manual full restart first — confirmed by a real user hitting
+// exactly this. playerName/locale/color are preserved across the reset
+// (defaulted only the first time) so the identity shown doesn't churn on
+// every app switch.
 function previewCustomApp(appId) {
-  if (!story.playerName) {
-    const osLocale = story.availableLocales.some((l) => l.code === navigator.language)
-      ? navigator.language
-      : DEFAULT_LOCALE
-    story.setLocale(osLocale)
-    story.setPlayerName('DemoName')
-    story.setPlayerColor('#9c27b0')
-    phone.requestReboot()
-  }
+  const prevName = story.playerName
+  const prevLocale = story.locale
+  const prevColor = story.playerColor
+  story.loadProject(story.project)
+  story.setLocale(
+    prevLocale ||
+      (story.availableLocales.some((l) => l.code === navigator.language)
+        ? navigator.language
+        : DEFAULT_LOCALE),
+  )
+  story.setPlayerName(prevName || 'DemoName')
+  story.setPlayerColor(prevColor || '#9c27b0')
+  phone.requestReboot()
   phone.unlock()
   phone.openApp(appId)
 }
