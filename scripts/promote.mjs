@@ -1,21 +1,21 @@
-// Runs the dev -> release -> master promotion this repo's branch-
-// protection rules require: each hop needs a pull request (direct pushes
-// are rejected — see the "GH013: Repository rule violations" errors that
-// motivated this script), merged with admin bypass since `enforce_admins`
-// still applies review requirements to everyone EXCEPT the repo admin
-// bypass actor (see the release PR's own discussion for the full story).
+// Interactive menu for promoting a branch through this repo's protected
+// flow (current branch -> dev -> release -> master). Every hop needs a
+// pull request (direct pushes are rejected — see the "GH013: Repository
+// rule violations" errors that motivated this script), merged with admin
+// bypass since `enforce_admins` still applies review requirements to
+// everyone EXCEPT the repo admin bypass actor (see the release PR's own
+// discussion for the full story).
 //
 // Usage: node scripts/promote.mjs
+// Picks a hop from a menu, runs it, asks again — loops until you choose
+// "Quitter" or Ctrl+C.
 //
 // Requires: GitHub CLI (`gh`) installed and authenticated. Run from
 // inside the repo — every `gh` call here resolves owner/repo from the
 // current directory's git remote, nothing hardcoded.
 import { spawnSync } from 'node:child_process'
-
-const HOPS = [
-  { from: 'dev', to: 'release' },
-  { from: 'release', to: 'master' },
-]
+import readline from 'node:readline/promises'
+import { stdin, stdout } from 'node:process'
 
 // No shell:true — gh.exe is a real executable (not a .cmd/.bat shim like
 // pnpm), so Node's own PATH resolution finds it without a shell, and args
@@ -36,23 +36,29 @@ function gh(args, { capture = false } = {}) {
   return capture ? result.stdout.trim() : undefined
 }
 
-for (const { from, to } of HOPS) {
+function currentBranch() {
+  const result = spawnSync('git', ['rev-parse', '--abbrev-ref', 'HEAD'], { encoding: 'utf-8' })
+  return result.stdout.trim()
+}
+
+function promote(from, to) {
   console.log(`\n=== ${from} -> ${to} ===`)
+
+  if (from === to) {
+    console.log(`Tu es déjà sur ${to}, rien à promouvoir.`)
+    return
+  }
 
   const aheadBy = gh(['api', `repos/{owner}/{repo}/compare/${to}...${from}`, '--jq', '.ahead_by'], {
     capture: true,
   })
   if (aheadBy === '0') {
     console.log(`${from} déjà fusionné dans ${to}, rien à promouvoir.`)
-    continue
+    return
   }
 
-  // Plain '.[0].number' (no '// empty') — that jq fallback syntax has a
-  // space in it, and spawnSync's shell:true quoting for it came apart on
-  // Windows (cmd.exe saw '.[0].number', '//', and 'empty' as three
-  // separate gh args instead of one, confirmed by a real run). jq alone
-  // on an empty PR list just prints the literal string "null" instead,
-  // checked for below.
+  // Plain '.[0].number' — jq on an empty PR list prints the literal
+  // string "null", checked for below.
   let prNumber = gh(['pr', 'list', '--base', to, '--head', from, '--json', 'number', '--jq', '.[0].number'], {
     capture: true,
   })
@@ -82,6 +88,42 @@ for (const { from, to } of HOPS) {
 
   console.log(`Merge de la PR #${prNumber}...`)
   gh(['pr', 'merge', prNumber, '--merge', '--admin'])
+  console.log(`${from} -> ${to} : fait.`)
 }
 
-console.log('\ndev -> release -> master : terminé.')
+const rl = readline.createInterface({ input: stdin, output: stdout })
+
+async function menu() {
+  // Read fresh every loop — after promoting current-branch -> dev, a
+  // later 'git checkout' by the user (outside this script) shouldn't
+  // require restarting it to pick that up.
+  const branch = currentBranch()
+  console.log(`\nBranche actuelle : ${branch}`)
+  console.log(`  1) ${branch} -> dev`)
+  console.log('  2) dev -> release')
+  console.log('  3) release -> master')
+  console.log('  4) Quitter')
+  const answer = (await rl.question('Choix : ')).trim()
+
+  switch (answer) {
+    case '1':
+      promote(branch, 'dev')
+      break
+    case '2':
+      promote('dev', 'release')
+      break
+    case '3':
+      promote('release', 'master')
+      break
+    case '4':
+      rl.close()
+      console.log('À plus.')
+      return
+    default:
+      console.log('Choix invalide, réessaie (1-4).')
+  }
+
+  await menu()
+}
+
+await menu()
