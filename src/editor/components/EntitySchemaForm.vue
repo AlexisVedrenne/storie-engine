@@ -90,8 +90,6 @@ const FIELD_TYPES = computed(() => [
   { label: t('entitySchemaForm.typeText'), value: 'text' },
   { label: t('entitySchemaForm.typeNumber'), value: 'number' },
   { label: t('entitySchemaForm.typeBoolean'), value: 'boolean' },
-  { label: t('entitySchemaForm.typeGeo'), value: 'geo' },
-  { label: t('entitySchemaForm.typeSchedule'), value: 'schedule' },
   { label: t('entitySchemaForm.typeRefContact'), value: 'ref:contact' },
   { label: t('entitySchemaForm.typeRefEntity'), value: 'ref:entity' },
 ])

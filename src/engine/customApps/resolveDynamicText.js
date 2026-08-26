@@ -130,6 +130,20 @@ export function resolveDynamicText(text, story, item) {
   // order as story.js's own fill() (translateStory, then {name}).
   let out = story.translateStory(text, 'common')
   out = out.replace(/\{flag:([a-zA-Z0-9_]+)\}/g, (_, key) => String(story.flags?.[key] ?? 0))
+  // `{entity:<schemaId>:<entityId>:<field>}` — see schemaFieldTokens above.
+  // Independent of `item` (works in ANY text field, not just inside a
+  // list's per-item template): `*` reads the first/only instance of that
+  // schema (story.entityItems, insertion order), a real id reads that exact
+  // one. No matching schema/instance/field silently resolves to '', same
+  // spirit as every other token here.
+  out = out.replace(
+    /\{entity:([a-zA-Z0-9_]+):([a-zA-Z0-9_*]+):([a-zA-Z0-9_]+)\}/g,
+    (_, schemaId, entityId, field) => {
+      const instance =
+        entityId === '*' ? story.entityItems(schemaId)[0] : story.entities?.[schemaId]?.[entityId]
+      return String(instance?.[field] ?? '')
+    },
+  )
   // Field name is an open set for `source: 'entity'` (author-defined schema
   // fields, see entityItemTokens above) — unlike the fixed alternation this
   // used to be, any `[a-zA-Z0-9_]+` is accepted and resolveItemToken's

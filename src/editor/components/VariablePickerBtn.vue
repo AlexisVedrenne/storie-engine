@@ -32,6 +32,25 @@
           </button>
         </template>
 
+        <template v-if="entitySchemas.length">
+          <q-separator class="variable-picker__sep" />
+          <div class="variable-picker__section-label">{{ t('variablePicker.entitiesTitle') }}</div>
+          <p class="variable-picker__hint">{{ t('variablePicker.entitiesHint') }}</p>
+          <template v-for="schema in entitySchemas" :key="schema.id">
+            <div class="variable-picker__schema-label">{{ schema.label || schema.id }}</div>
+            <button
+              v-for="field in schema.fields || []"
+              :key="field.key"
+              type="button"
+              class="variable-picker__row"
+              @click="pick(entityToken(schema, field))"
+            >
+              <span class="variable-picker__token">{{ entityToken(schema, field) }}</span>
+              <span class="variable-picker__desc">{{ field.label || field.key }}</span>
+            </button>
+          </template>
+        </template>
+
         <q-separator class="variable-picker__sep" />
         <div class="variable-picker__section-label">{{ t('variablePicker.flagsTitle') }}</div>
         <template v-if="flagKeys.length">
@@ -95,8 +114,26 @@ const itemTokens = computed(() => {
 // effects), this just lists what already exists, doesn't create any.
 const flagKeys = computed(() => collectFlags(story.project).map((f) => f.key))
 
+// Unlike the `{item:...}` section above (only meaningful inside a `list`
+// block's per-item template), `{entity:...}` tokens are usable in ANY text
+// field — they name their schema+instance explicitly, so there's no
+// "current item" to be inside of. Shown whenever the project has at least
+// one schema with fields, regardless of itemScope. Only schemas with fields
+// are listed — an empty one has nothing to insert.
+const entitySchemas = computed(
+  () => story.project?.gameConfig?.entitySchemas?.filter((s) => (s.fields || []).length) || [],
+)
+
 function flagToken(key) {
   return `{flag:${key}}`
+}
+
+// Plain function rather than inlining the template literal in the
+// template — a literal `}}` produced by that string right next to the
+// mustache's own closing `}}` breaks Vue's (naive, string-scanning)
+// interpolation parser. Wrapping it in a call sidesteps that entirely.
+function entityToken(schema, field) {
+  return `{entity:${schema.id}:*:${field.key}}`
 }
 
 function pick(token) {
@@ -123,6 +160,21 @@ function pick(token) {
 
 .variable-picker__sep {
   margin: var(--space-1) 0;
+}
+
+.variable-picker__schema-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-text);
+  padding: 4px var(--space-1) 2px;
+}
+
+.variable-picker__hint {
+  margin: 0;
+  padding: 0 var(--space-1) 4px;
+  font-size: 10.5px;
+  color: var(--color-text-muted);
+  font-style: italic;
 }
 
 .variable-picker__row {

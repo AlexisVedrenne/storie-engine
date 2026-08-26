@@ -477,8 +477,6 @@ export default {
     typeText: 'Texte',
     typeNumber: 'Nombre',
     typeBoolean: 'Oui / non',
-    typeGeo: 'Lieu (texte libre)',
-    typeSchedule: 'Emploi du temps (texte libre)',
     typeRefContact: 'Référence — contact du projet',
     typeRefEntity: 'Référence — autre schéma',
   },
@@ -677,6 +675,9 @@ export default {
       itemKey: 'Clé de l’élément',
       itemValue: 'Valeur de l’élément',
     },
+    entitiesTitle: 'Entités (schémas)',
+    entitiesHint:
+      '"*" = 1ère/seule instance — remplace par un id précis si le schéma en a plusieurs',
     flagsTitle: 'Flags du projet',
     noFlags: 'Aucun flag dans ce projet pour l’instant.',
     itemTitle: 'Contact (bloc liste)',
