@@ -1,0 +1,67 @@
+name: Release editor
+
+# Builds and publishes the Stories Engine EDITOR itself (stories-engine.exe
+# / .app / AppImage-style folder) for Windows, macOS (Intel + Apple
+# Silicon), and Linux, then attaches them to a GitHub Release.
+#
+# Scope: the editor only — NOT a pipeline for exporting a player's story
+# (that's src-electron/ipc/build.js, triggered from inside a running
+# editor by the story author, never from CI).
+#
+# Trigger: pushing a tag matching v*.*.* on THIS repo. Only accounts with
+# push access here can do that — a fork or PR from an outside contributor
+# runs this workflow (if at all) against their own fork, with a
+# GITHUB_TOKEN scoped to their fork, never this repo. See the "Auto Mode"
+# discussion in the release PR for the full reasoning.
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write # required to create the Release and upload assets
+
+jobs:
+  build-and-release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: '11.9.0'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Vendor game-shell (node runtimes, electron cache, template deps)
+        run: pnpm run vendor:game-shell
+
+      - name: Build editor for all desktop targets
+        run: pnpm run build:electron:all
+
+      - name: Zip packaged builds
+        shell: pwsh
+        run: |
+          $targets = @(
+            @{ Dir = 'dist/electron-win32/Packaged/Stories Engine-win32-x64'; Name = 'stories-engine-windows-x64' },
+            @{ Dir = 'dist/electron-linux/Packaged/Stories Engine-linux-x64'; Name = 'stories-engine-linux-x64' },
+            @{ Dir = 'dist/electron-darwin/Packaged/Stories Engine-darwin-x64'; Name = 'stories-engine-macos-intel' },
+            @{ Dir = 'dist/electron-darwin/Packaged/Stories Engine-darwin-arm64'; Name = 'stories-engine-macos-arm64' }
+          )
+          New-Item -ItemType Directory -Force -Path release-assets | Out-Null
+          foreach ($t in $targets) {
+            $zipPath = "release-assets/$($t.Name)-${{ github.ref_name }}.zip"
+            Compress-Archive -Path "$($t.Dir)/*" -DestinationPath $zipPath
+          }
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release-assets/*.zip
+          generate_release_notes: true
