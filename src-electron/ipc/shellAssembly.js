@@ -72,28 +72,46 @@ export function resolveQuasarCli(tmpDir) {
 }
 
 // A genuine, standalone Node.js binary (`pnpm run vendor:game-shell`
-// downloads it once, straight from nodejs.org — see that script), vendored
-// for the same "zero dependency on the end user's machine" reason as
-// everything else here. build.js/webPreview.js used to run the assembled
-// shell's `quasar` CLI via THIS APP'S OWN electron binary in
-// ELECTRON_RUN_AS_NODE=1 mode instead (via `process.execPath`) — cheaper to
-// vendor, since every Electron build already embeds a real Node.js runtime.
-// That seemed equivalent to plain Node.js from the CLI's own perspective,
-// but isn't: `process.versions.electron` and `process.resourcesPath` stay
-// defined even under ELECTRON_RUN_AS_NODE (confirmed with a real packaged
-// build), and something inside @electron/packager's dependency chain
-// branches on one of those — the packaging step for an EXPORTED game
-// (never the outer editor's own packaging, which genuinely is invoked from
-// a real Electron context and is expected to look "packaged") silently
-// stopped right after extracting the target Electron zip, no error, exit
-// code 0, which is exactly what produced "le dossier packagé est
-// introuvable" with zero further clue. A real node.exe has neither global
-// set, and the exact same pipeline completes normally under it — confirmed
-// end to end against a real assembled shell before this was wired in.
-export const VENDORED_NODE_BINARY = path.join(TEMPLATE_DIR, 'node-runtime', 'node.exe')
+// downloads it once per platform, straight from nodejs.org — see that
+// script), vendored for the same "zero dependency on the end user's
+// machine" reason as everything else here. build.js/webPreview.js used to
+// run the assembled shell's `quasar` CLI via THIS APP'S OWN electron
+// binary in ELECTRON_RUN_AS_NODE=1 mode instead (via `process.execPath`) —
+// cheaper to vendor, since every Electron build already embeds a real
+// Node.js runtime. That seemed equivalent to plain Node.js from the CLI's
+// own perspective, but isn't: `process.versions.electron` and
+// `process.resourcesPath` stay defined even under ELECTRON_RUN_AS_NODE
+// (confirmed with a real packaged build), and something inside
+// @electron/packager's dependency chain branches on one of those — the
+// packaging step for an EXPORTED game (never the outer editor's own
+// packaging, which genuinely is invoked from a real Electron context and
+// is expected to look "packaged") silently stopped right after extracting
+// the target Electron zip, no error, exit code 0, which is exactly what
+// produced "le dossier packagé est introuvable" with zero further clue. A
+// real node binary has neither global set, and the exact same pipeline
+// completes normally under it — confirmed end to end against a real
+// assembled shell before this was wired in.
+//
+// Picked by the HOST platform running the (packaged) editor right now —
+// `vendor:game-shell` downloads one node-runtime/<platform>-<arch>/ per
+// editor packaging target (see scripts/vendor-node-runtime.mjs), but only
+// the one matching process.platform/process.arch is ever read at runtime,
+// same as the platform this code is actually executing on. A mac/linux
+// packaged editor used to ship (and try to spawn) a Windows-only node.exe
+// here — silently broke "export game"/"preview on phone" on every
+// non-Windows copy of the editor.
+const NODE_RUNTIME_DIR = path.join(
+  TEMPLATE_DIR,
+  'node-runtime',
+  `${process.platform}-${process.arch}`,
+)
+export const VENDORED_NODE_BINARY = path.join(
+  NODE_RUNTIME_DIR,
+  process.platform === 'win32' ? 'node.exe' : 'bin/node',
+)
 
 // Same node-runtime download as VENDORED_NODE_BINARY (the full Node.js
-// distribution zip, not just the bare node.exe file) also ships npm
+// distribution archive, not just the bare node binary) also ships npm
 // alongside it — needed on PATH for the spawned build: @quasar/app-vite's
 // own electron-builder step shells out to whichever of pnpm/yarn/npm/bun
 // it finds on PATH to `install --prod` the assembled shell's runtime deps
@@ -102,8 +120,10 @@ export const VENDORED_NODE_BINARY = path.join(TEMPLATE_DIR, 'node-runtime', 'nod
 // if NONE of the four resolve, confirmed against a real build run with a
 // bare-Windows PATH). build.js prepends this to the spawned process's PATH
 // so plain `npm` resolves without requiring ANY of those on the end
-// user's own machine.
-export const VENDORED_NPM_DIR = path.join(TEMPLATE_DIR, 'node-runtime')
+// user's own machine. Windows' dist is flat (npm(.cmd) sits next to
+// node.exe); mac/linux dists nest everything under bin/ instead.
+export const VENDORED_NPM_DIR =
+  process.platform === 'win32' ? NODE_RUNTIME_DIR : path.join(NODE_RUNTIME_DIR, 'bin')
 
 // Pre-downloaded copy of the exact Electron zip the exported game's own
 // electron-packager step needs (`pnpm run vendor:game-shell` populates
@@ -204,10 +224,24 @@ export async function assembleShell(tmpDir, rootPath) {
   }
   if (!fs.existsSync(VENDORED_NODE_BINARY)) {
     throw new Error(
-      'Runtime Node.js introuvable (templates/game-shell/node-runtime/node.exe). ' +
+      `Runtime Node.js introuvable (${VENDORED_NODE_BINARY}). ` +
         'Lance `pnpm run vendor:game-shell` à la racine de stories-engine avant de packager, ' +
         "ou avant d'utiliser Build/Preview web en développement.",
     )
+  }
+  // mac/linux node-runtime archives are extracted on whatever machine ran
+  // `vendor:game-shell` — when that's Windows/NTFS (no Unix execute-bit
+  // concept), the extracted node/npm/npx files land without +x. That bit
+  // never gets fixed by the plain-copy extraResource step either (it just
+  // preserves whatever mode the source file already had) — so a packaged
+  // mac/linux editor could ship node/npm binaries neither vendoring nor
+  // packaging ever made executable, EACCES the first time build.js/
+  // webPreview.js try to spawn them. Cheap to just re-assert +x here,
+  // every assembly, regardless of how the files got here.
+  if (process.platform !== 'win32') {
+    for (const bin of [VENDORED_NODE_BINARY, path.join(VENDORED_NPM_DIR, 'npm')]) {
+      if (fs.existsSync(bin)) fs.chmodSync(bin, 0o755)
+    }
   }
   // VENDORED_ELECTRON_CACHE is NOT checked here — webPreview.js (the other
   // caller of this function) never invokes electron-packager, so it has no
