@@ -22,21 +22,21 @@ saved as part of your project, ready to export like everything else.
 
 ## The block catalog
 
-| Block | What it does |
-|---|---|
-| **Header** | A title + icon + color band at the top of a section. |
-| **Text** | A paragraph or label, with a style (body, heading, etc). |
-| **Image** | A picture, optionally full-bleed. |
-| **Avatar** | A round profile picture/initial, with a color. |
-| **Row** | An icon + label + optional sublabel + optional chevron — a settings-style list row. |
-| **Card** | A container with a visible background, for grouping other blocks. |
-| **Layout** | A plain flex container (row or column) with no background — for arranging other blocks without the visual weight of a card. |
-| **Badge** | A small colored label/pill. |
-| **Divider** | A horizontal rule. |
-| **Button** | See [Buttons](#buttons) below. |
-| **Tabs** | Switches which screen of the app is currently shown. |
-| **List** | Repeats a block template once per item — see [Lists](#lists) below. |
-| **Conversations** | A real chat module — see [Conversations](#conversations) below. |
+| Block             | What it does                                                                                                                |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| **Header**        | A title + icon + color band at the top of a section.                                                                        |
+| **Text**          | A paragraph or label, with a style (body, heading, etc).                                                                    |
+| **Image**         | A picture, optionally full-bleed.                                                                                           |
+| **Avatar**        | A round profile picture/initial, with a color.                                                                              |
+| **Row**           | An icon + label + optional sublabel + optional chevron — a settings-style list row.                                         |
+| **Card**          | A container with a visible background, for grouping other blocks.                                                           |
+| **Layout**        | A plain flex container (row or column) with no background — for arranging other blocks without the visual weight of a card. |
+| **Badge**         | A small colored label/pill.                                                                                                 |
+| **Divider**       | A horizontal rule.                                                                                                          |
+| **Button**        | See [Buttons](#buttons) below.                                                                                              |
+| **Tabs**          | Switches which screen of the app is currently shown.                                                                        |
+| **List**          | Repeats a block template once per item — see [Lists](#lists) below.                                                         |
+| **Conversations** | A real chat module — see [Conversations](#conversations) below.                                                             |
 
 Every block can be **dragged** between containers (not just reordered in place), **duplicated**,
 and given a **condition** — a block whose condition doesn't hold is entirely absent, not just
@@ -46,16 +46,24 @@ block by block.
 
 ### Buttons
 
-A button can do one of three things:
+A button can do one of five things:
 
 1. **Nothing** — purely visual/decorative.
-2. **Apply effects** — the same effects system used everywhere else (flags, phone widgets...).
+2. **Apply effects** — the same effects system used everywhere else (flags, phone widgets,
+   entities...).
 3. **Navigate to a screen** — switch this app's active screen, the same mechanism the Tabs block
    uses.
+4. **Fire an event** — emits the `button.pressed` event (with the app id and an optional button id
+   you set as payload), which you can react to from the **Events** tab exactly like any other
+   trigger — see [Events](conditions-and-flags.md#events). Unlike the other four kinds, this is the
+   _only_ one that also touches the Events system — picking any other action kind doesn't fire
+   `button.pressed` on its own.
+5. **Show a message** — briefly displays a short text on screen, no other effect.
 
-Every button press also fires the `button.pressed` event (with the app id and an optional button
-id as payload), which you can react to from the **Events** tab exactly like any other trigger — see
-[Events](conditions-and-flags.md#events).
+Whichever of the five you pick, an optional **condition** can gate the whole thing — checked at the
+moment the button is tapped, not when the screen renders (that's what a block's own display
+condition already does). If the condition doesn't hold, the action is cancelled; you can optionally
+show a message explaining why (e.g. "Not enough funds.") instead of the tap silently doing nothing.
 
 ### Lists
 
@@ -115,7 +123,7 @@ just custom apps specifically.
 
 A custom app is stored as one file, `apps/<id>.json` — plain JSON, not executable code. This makes
 it easy to export a single app (data + whatever assets it references) as a `.zip` and import it
-into a *different* project — asset paths get renamed to avoid collisions with anything already in
+into a _different_ project — asset paths get renamed to avoid collisions with anything already in
 the target project's `assets/` folder, and the app's own id is de-collided too if needed. Handy for
 reusing a "settings-style app" you built once across multiple stories.
 

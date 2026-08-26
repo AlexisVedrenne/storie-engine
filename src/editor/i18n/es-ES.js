@@ -644,6 +644,15 @@ export default {
       'Dispara el evento "Botón pulsado" — crea una reacción en la pestaña Eventos filtrando por este id para saber qué botón se pulsó.',
     actionEventButtonIdLabel: 'Id del botón (opcional)',
     actionEventButtonIdHint: 'Déjalo vacío si solo existe un botón de este tipo en el proyecto.',
+    actionToast: 'Mensaje',
+    actionToastHelp: 'Muestra brevemente un mensaje en pantalla al tocar — ningún otro efecto.',
+    actionToastTextLabel: 'Texto del mensaje',
+    actionGuardTitle: 'Condición antes de la acción (avanzado)',
+    actionGuardHelp:
+      'Si se define, se comprueba ANTES de que se aplique la acción de arriba — si falla, la acción se cancela (no pasa nada, o se muestra el mensaje de abajo en su lugar).',
+    actionOnFailToastLabel: 'Mensaje si la condición falla (opcional)',
+    actionOnFailToastHint:
+      'Vacío = no se muestra nada, la acción simplemente se cancela en silencio.',
     tabLabelLabel: 'Texto de la pestaña',
     tabScreenLabel: 'Pantalla de destino',
     addTab: 'Añadir una pestaña',

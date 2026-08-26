@@ -638,6 +638,14 @@ export default {
     actionEventButtonIdLabel: 'Schaltflächen-ID (optional)',
     actionEventButtonIdHint:
       'Leer lassen, wenn im Projekt nur eine Schaltfläche dieser Art existiert.',
+    actionToast: 'Meldung',
+    actionToastHelp: 'Zeigt beim Tippen kurz eine Meldung an — kein weiterer Effekt.',
+    actionToastTextLabel: 'Meldungstext',
+    actionGuardTitle: 'Bedingung vor Aktion (erweitert)',
+    actionGuardHelp:
+      'Falls gesetzt, wird sie VOR der obigen Aktion geprüft — schlägt sie fehl, wird die Aktion abgebrochen (nichts passiert, oder die untenstehende Meldung wird stattdessen angezeigt).',
+    actionOnFailToastLabel: 'Meldung, falls die Bedingung fehlschlägt (optional)',
+    actionOnFailToastHint: 'Leer = nichts wird angezeigt, die Aktion wird nur still abgebrochen.',
     tabLabelLabel: 'Tab-Text',
     tabScreenLabel: 'Zielbildschirm',
     addTab: 'Tab hinzufügen',

@@ -639,6 +639,15 @@ export default {
       'Attiva l\'evento "Pulsante premuto" — crea una reazione nella scheda Eventi filtrando su questo id per sapere quale pulsante è stato premuto.',
     actionEventButtonIdLabel: 'Id del pulsante (opzionale)',
     actionEventButtonIdHint: 'Lascia vuoto se nel progetto esiste un solo pulsante di questo tipo.',
+    actionToast: 'Messaggio',
+    actionToastHelp: 'Mostra brevemente un messaggio a schermo al tap — nessun altro effetto.',
+    actionToastTextLabel: 'Testo del messaggio',
+    actionGuardTitle: "Condizione prima dell'azione (avanzato)",
+    actionGuardHelp:
+      "Se impostata, viene verificata PRIMA che l'azione qui sopra si applichi — se fallisce, l'azione viene annullata (non succede nulla, oppure viene mostrato il messaggio qui sotto).",
+    actionOnFailToastLabel: 'Messaggio se la condizione fallisce (opzionale)',
+    actionOnFailToastHint:
+      "Vuoto = non viene mostrato nulla, l'azione viene semplicemente annullata in silenzio.",
     tabLabelLabel: 'Testo della scheda',
     tabScreenLabel: 'Schermata di destinazione',
     addTab: 'Aggiungi una scheda',

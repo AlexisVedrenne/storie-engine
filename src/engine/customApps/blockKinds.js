@@ -52,8 +52,14 @@ export function defaultBlock(type) {
       // `action.type`: 'none' (default, purely visual) | 'effect' (applies
       // flags/effects, same shape/mechanism as a choice option's own
       // `effects`) | 'navigateScreen' (switches this app's active screen,
-      // same mechanism as the `tabs` block). Small fixed catalog, not a
-      // generic action system — see ButtonBlock.vue.
+      // same mechanism as the `tabs` block) | 'event' (fires
+      // `button.pressed`) | 'toast' (shows `action.toastText` briefly, no
+      // other effect). Small fixed catalog, not a generic action system —
+      // see ButtonBlock.vue. Independent of which kind is picked: an
+      // optional `action.requires` gates the whole action (reuses
+      // checkConditions, same shape as a block's own display condition) —
+      // failing it no-ops and, if set, shows `action.onFailToast` instead
+      // (e.g. "Not enough funds.") rather than silently doing nothing.
       return { type, label: '', color: '#4c8bf5', action: { type: 'none' } }
     case 'tabs':
       return { type, tabs: [{ label: '', screenId: '' }] }

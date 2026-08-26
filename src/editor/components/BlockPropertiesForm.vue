@@ -282,6 +282,7 @@
           { label: t('blockProps.actionEffect'), value: 'effect' },
           { label: t('blockProps.actionNavigateScreen'), value: 'navigateScreen' },
           { label: t('blockProps.actionEvent'), value: 'event' },
+          { label: t('blockProps.actionToast'), value: 'toast' },
         ]"
         @update:model-value="setButtonActionType"
       />
@@ -313,7 +314,38 @@
           v-model="block.action.buttonId"
         />
       </template>
+      <template v-else-if="block.action.type === 'toast'">
+        <p class="tab-help">{{ t('blockProps.actionToastHelp') }}</p>
+        <q-input
+          dense
+          outlined
+          :label="t('blockProps.actionToastTextLabel')"
+          v-model="block.action.toastText"
+        />
+      </template>
       <p v-else class="tab-help">{{ t('blockProps.buttonHelp') }}</p>
+
+      <q-expansion-item
+        v-if="block.action.type !== 'none'"
+        dense
+        :label="t('blockProps.actionGuardTitle')"
+        class="spacing-section"
+      >
+        <div class="spacing-body condition-body">
+          <p class="tab-help">{{ t('blockProps.actionGuardHelp') }}</p>
+          <RequiresBuilder
+            :model-value="block.action.requires"
+            @update:model-value="(v) => (block.action.requires = v)"
+          />
+          <q-input
+            dense
+            outlined
+            :label="t('blockProps.actionOnFailToastLabel')"
+            :hint="t('blockProps.actionOnFailToastHint')"
+            v-model="block.action.onFailToast"
+          />
+        </div>
+      </q-expansion-item>
     </template>
 
     <template v-else-if="block.type === 'tabs'">
@@ -554,13 +586,20 @@ function ensureAction() {
 // Switching kind replaces the action object wholesale (not just its
 // `type`) — keeps stale fields from a previous kind (e.g. `effects` while
 // now `navigateScreen`) from lingering unused in the saved block.
+// `requires`/`onFailToast` are orthogonal to which kind is picked (a guard
+// on TOP of whatever the action does), so they're carried over instead of
+// wiped on every switch — except for 'none', which drops them: a purely
+// decorative button has nothing for a condition to guard.
 function setButtonActionType(type) {
-  if (type === 'effect') props.block.action = { type, effects: props.block.action?.effects || {} }
-  else if (type === 'navigateScreen') {
-    props.block.action = { type, screenId: props.block.action?.screenId || '' }
-  } else if (type === 'event') {
-    props.block.action = { type, buttonId: props.block.action?.buttonId || '' }
-  } else props.block.action = { type: 'none' }
+  const prev = props.block.action || {}
+  const base =
+    type === 'none' ? { type } : { type, requires: prev.requires, onFailToast: prev.onFailToast }
+  if (type === 'effect') props.block.action = { ...base, effects: prev.effects || {} }
+  else if (type === 'navigateScreen')
+    props.block.action = { ...base, screenId: prev.screenId || '' }
+  else if (type === 'event') props.block.action = { ...base, buttonId: prev.buttonId || '' }
+  else if (type === 'toast') props.block.action = { ...base, toastText: prev.toastText || '' }
+  else props.block.action = { type: 'none' }
 }
 
 function ensureTabs() {

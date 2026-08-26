@@ -267,6 +267,7 @@ function defaultState() {
     messagesSinceBatteryTick: 0, // counts up to 5 incoming message/dm entries, then drains 2% and resets
     pendingTimeSkipLabel: null, // set by a `timeskip` entry, shown once on the next lock screen
     timeSkipToast: null, // set once by continueAfterTimeSkip() when entry.landApp is set — TimeSkipToast.vue shows+clears it, transient like timeSkipFading
+    actionToast: null, // set by triggerActionToast() (custom-app button toast/guard) — AppToast.vue shows+clears it, same transient shape as timeSkipToast
 
     // Which of the 3 fixed save slots this session is writing into — set by
     // loadSlot() once the player picks one on SlotPickerScreen.vue. Session
@@ -300,6 +301,7 @@ const NON_PERSISTED_KEYS = new Set([
   'typingAppDm',
   'timeSkipFading',
   'timeSkipToast',
+  'actionToast',
   'screenEffect',
   'nowPlaying',
   'activeEnding',
@@ -2012,6 +2014,17 @@ export const useStoryStore = defineStore('story', {
       // here. 'calls' plays nothing — the incoming call gets the looping
       // ringtone instead (see processEntry's 'call' case).
       if (notif.app === 'social' && !notif.thread) playSound('social-new-follower')
+    },
+
+    // Brief on-screen message (AppToast.vue), independent of the lock-screen
+    // notification banner above — used by a custom-app button's own
+    // `action.type: 'toast'` and by its `action.onFailToast` when a guard
+    // condition doesn't hold (see ButtonBlock.vue). Just the latest string;
+    // no queue, matching every other one-shot transient field here
+    // (timeSkipToast, screenEffect...) — a second toast firing before the
+    // first faded out simply replaces it.
+    triggerActionToast(text) {
+      if (text) this.actionToast = text
     },
 
     applyEffects(effects) {
