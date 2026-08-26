@@ -1,129 +1,119 @@
-# UI/UX moderne et optimisée — guide de référence pour Stories Engine
+# Modern, optimized UI/UX — reference guide for Stories Engine
 
-Doc de référence, pas un plan d'implémentation : explique ce qu'est une UI/UX "moderne et optimisée" pour ce type d'outil (éditeur desktop Electron, thème sombre, UI dense — sidebars, formulaires, panneaux redimensionnables), et sert de base commune avant de rebâtir l'interface de l'éditeur.
+Reference doc, not an implementation plan: explains what a "modern and optimized" UI/UX means for this kind of tool (Electron desktop editor, dark theme, dense UI — sidebars, forms, resizable panels), and serves as a common baseline before rebuilding the editor's interface.
 
-## 1. Les principes qui définissent une bonne UI/UX
+## 1. The principles that define good UI/UX
 
-Une interface "moderne" n'est pas une question de mode visuelle (glassmorphism, néons...) — c'est une question de **clarté au service de la tâche**. Cinq principes non négociables :
+A "modern" interface isn't a matter of visual fashion (glassmorphism, neon...) — it's a matter of **clarity in service of the task**. Five non-negotiable principles:
 
-1. **Hiérarchie visuelle claire** — à tout instant, l'œil doit savoir ce qui est le plus important sur l'écran. Se fait par la taille, le poids, le contraste, la position — jamais par la couleur seule (accessibilité).
-2. **Densité au service de la tâche, pas de l'esthétique** — un éditeur de contenu (comme celui-ci) affiche BEAUCOUP de champs. La densité est acceptable et même souhaitable, mais elle doit rester _scannable_ : espacement régulier, alignement strict, groupement logique.
-3. **Cohérence systématique** — un bouton "primaire" a toujours la même couleur/forme partout. Un espacement de 8px est un multiple de 8px partout. Une police pour le code/id, une pour le texte — jamais un mélange ad hoc composant par composant.
-4. **Feedback immédiat** — chaque action (clic, sauvegarde, erreur, chargement) a une réponse visuelle en moins de 300ms. Rien ne doit laisser l'utilisateur se demander "est-ce que ça a marché ?".
-5. **Accessibilité clavier et contraste** — un outil utilisé des heures par jour doit être navigable au clavier (Tab, focus visible) et lisible sans fatigue (contraste texte ≥ 4.5:1 en thème sombre aussi).
+1. **Clear visual hierarchy** — at any moment, the eye should know what matters most on screen. Achieved through size, weight, contrast, position — never through color alone (accessibility).
+2. **Density in service of the task, not aesthetics** — a content editor (like this one) displays A LOT of fields. Density is acceptable and even desirable, but it must stay _scannable_: regular spacing, strict alignment, logical grouping.
+3. **Systematic consistency** — a "primary" button always has the same color/shape everywhere. An 8px spacing is a multiple of 8px everywhere. One font for code/id, one for text — never an ad hoc mix component by component.
+4. **Immediate feedback** — every action (click, save, error, loading) gets a visual response in under 300ms. Nothing should leave the user wondering "did that work?".
+5. **Keyboard accessibility and contrast** — a tool used for hours a day must be keyboard-navigable (Tab, visible focus) and readable without eye strain (text contrast ≥ 4.5:1, dark theme included).
 
-## 2. Système d'espacement — la base de tout
+## 2. Spacing system — the foundation of everything
 
-Le symptôme n°1 d'une UI "pas claire" : chaque composant invente son propre espacement (8px ici, 10px là, 12px ailleurs — déjà visible dans le code actuel de `src/editor/components/*`). La solution : un **système de tokens** basé sur une seule unité de base (8px), partagé partout.
+Symptom #1 of a "not clear" UI: every component invents its own spacing (8px here, 10px there, 12px elsewhere — already visible in the current code of `src/editor/components/*`). The solution: a **token system** based on a single base unit (8px), shared everywhere.
 
 ```css
-/* src/css/design-tokens.scss — à créer, source unique de vérité */
+/* src/css/design-tokens.scss — to be created, single source of truth */
 :root {
-  --space-1: 4px; /* micro-espacement (entre icône et label) */
-  --space-2: 8px; /* espacement de base */
-  --space-3: 12px; /* padding standard d'un champ/carte */
-  --space-4: 16px; /* padding standard d'un panneau */
-  --space-6: 24px; /* séparation entre sections */
-  --space-8: 32px; /* séparation entre blocs majeurs */
+  --space-1: 4px; /* micro-spacing (between icon and label) */
+  --space-2: 8px; /* base spacing */
+  --space-3: 12px; /* standard field/card padding */
+  --space-4: 16px; /* standard panel padding */
+  --space-6: 24px; /* separation between sections */
+  --space-8: 32px; /* separation between major blocks */
 
-  --radius-sm: 4px; /* boutons, badges */
-  --radius-md: 8px; /* cartes, champs */
-  --radius-lg: 12px; /* panneaux, dialogs */
+  --radius-sm: 4px; /* buttons, badges */
+  --radius-md: 8px; /* cards, fields */
+  --radius-lg: 12px; /* panels, dialogs */
 
   --header-height: 48px; /* topbar */
   --sidebar-width: 280px; /* ChapterList */
-  --row-height: 36px; /* une ligne de liste (chapitre, entrée repliée) */
+  --row-height: 36px; /* one list row (chapter, collapsed entry) */
 }
 ```
 
-Règle simple : **toute valeur de marge/padding dans le CSS doit être une de ces variables**, jamais un nombre en dur. C'est ce qui donne l'impression de rigueur "vrai logiciel" plutôt que "bricolage".
+Simple rule: **every margin/padding value in CSS must be one of these variables**, never a hardcoded number. That's what gives the impression of "real software" rigor rather than "tinkering".
 
-## 3. Typographie
+## 3. Typography
 
-Deux polices seulement, chacune avec un rôle fixe :
+Only two fonts, each with a fixed role:
 
-| Rôle                                       | Police                                                                 | Usage                                              |
-| ------------------------------------------ | ---------------------------------------------------------------------- | -------------------------------------------------- |
-| Interface (labels, boutons, texte courant) | **Inter** ou **Fira Sans** (sans-serif, très lisible en petite taille) | Tout le texte UI                                   |
-| Identifiants / code / chemins de fichiers  | **Fira Code** ou **JetBrains Mono** (monospace)                        | `entry.type`, `chapter.id`, chemins d'assets, JSON |
+| Role                                       | Font                                                                   | Usage                                              |
+| ------------------------------------------ | ----------------------------------------------------------------------- | --------------------------------------------------- |
+| Interface (labels, buttons, running text)  | **Inter** or **Fira Sans** (sans-serif, very readable at small sizes)   | All UI text                                        |
+| Identifiers / code / file paths            | **Fira Code** or **JetBrains Mono** (monospace)                        | `entry.type`, `chapter.id`, asset paths, JSON      |
 
-Échelle de tailles (peu de paliers, cohérents partout) :
+Size scale (few steps, consistent everywhere):
 
 ```css
---text-xs: 11px;   /* labels de section, badges, méta-info */
---text-sm: 13px;   /* texte de formulaire standard */
---text-base: 14px; /* texte de contenu principal */
---text-lg: 16px;   /* titres de panneau */
-line-height: 1.4 à 1.5 partout (jamais 1 — trop serré, fatigue l'œil sur une session longue)
+--text-xs: 11px;   /* section labels, badges, meta-info */
+--text-sm: 13px;   /* standard form text */
+--text-base: 14px; /* main content text */
+--text-lg: 16px;   /* panel titles */
+line-height: 1.4 to 1.5 everywhere (never 1 — too tight, tires the eye over a long session)
 ```
 
-## 4. Couleur — palette dark cohérente
+## 4. Color — a consistent dark palette
 
-Une UI sombre "moderne" n'est pas juste `#111` partout — elle a une échelle de gris avec des **rôles précis**, plus un seul accent (jamais deux couleurs "primaires" qui se battent) :
+A "modern" dark UI isn't just `#111` everywhere — it has a gray scale with **precise roles**, plus a single accent (never two "primary" colors competing):
 
-| Rôle              | Valeur                                               | Usage                                                                             |
-| ----------------- | ---------------------------------------------------- | --------------------------------------------------------------------------------- |
-| `--bg`            | `#0F172A`                                            | fond de l'app                                                                     |
-| `--surface`       | `#1E293B`                                            | panneaux, cartes                                                                  |
-| `--surface-hover` | `#334155`                                            | hover sur une ligne/carte                                                         |
-| `--border`        | `rgba(255,255,255,0.10)`                             | séparateurs — jamais plus opaque, jamais moins visible                            |
-| `--text`          | `#F8FAFC`                                            | texte principal                                                                   |
-| `--text-muted`    | `#94A3B8`                                            | labels secondaires, méta-info — **jamais en dessous de ce gris**, sinon illisible |
-| `--accent`        | `#508DF5` (bleu, déjà utilisé pour "chapitre actif") | action principale, sélection, lien                                                |
-| `--success`       | `#22C55E`                                            | sauvegarde réussie                                                                |
-| `--danger`        | `#F55B50`                                            | suppression, erreur                                                               |
-| `--warning`       | `#FFC107`                                            | "modifié non sauvegardé" (déjà utilisé)                                           |
+| Role              | Value                                                | Usage                                                                              |
+| ----------------- | ----------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| `--bg`            | `#0F172A`                                            | app background                                                                     |
+| `--surface`       | `#1E293B`                                            | panels, cards                                                                      |
+| `--surface-hover` | `#334155`                                            | hover on a row/card                                                                |
+| `--border`        | `rgba(255,255,255,0.10)`                             | separators — never more opaque, never less visible                                |
+| `--text`          | `#F8FAFC`                                            | main text                                                                          |
+| `--text-muted`    | `#94A3B8`                                            | secondary labels, meta-info — **never darker than this gray**, or it's unreadable |
+| `--accent`        | `#508DF5` (blue, already used for "active chapter")  | primary action, selection, link                                                   |
+| `--success`       | `#22C55E`                                            | successful save                                                                   |
+| `--danger`        | `#F55B50`                                            | deletion, error                                                                   |
+| `--warning`       | `#FFC107`                                            | "unsaved changes" (already in use)                                                |
 
-Règle de contraste : texte principal sur fond ≥ 4.5:1 (WCAG AA minimum) — se vérifie en 10 secondes avec n'importe quel color-contrast checker. **Mesuré le 2026-08-18** : `--accent`/`--danger` en petit texte (`--text-xs`) sur `--surface` ressortaient à 4.40:1/3.97:1 — sous le seuil AA texte normal (4.5:1), même s'ils passaient déjà le seuil 3:1 (grand texte/composants UI). Éclaircis légèrement (`#4C8BF5`→`#508DF5`, `#F44336`→`#F55B50`) pour repasser au-dessus de 4.5:1 sur `--bg` ET `--surface` — tous les autres rôles (texte, texte-muted, success, warning) étaient déjà largement au-dessus, aucun changement nécessaire.
+Contrast rule: main text on background ≥ 4.5:1 (WCAG AA minimum) — verifiable in 10 seconds with any color-contrast checker. **Measured on 2026-08-18**: `--accent`/`--danger` in small text (`--text-xs`) on `--surface` came out at 4.40:1/3.97:1 — below the AA threshold for normal text (4.5:1), even though they already passed the 3:1 threshold (large text/UI components). Lightened slightly (`#4C8BF5`→`#508DF5`, `#F44336`→`#F55B50`) to get back above 4.5:1 on both `--bg` AND `--surface` — every other role (text, text-muted, success, warning) was already well above, no change needed.
 
-## 5. Hiérarchie & densité de l'information
+## 5. Information hierarchy & density
 
-Pour un outil dense (formulaires empilés, listes d'entrées, builders imbriqués), trois techniques concrètes :
+For a dense tool (stacked forms, entry lists, nested builders), three concrete techniques:
 
-- **Groupement par carte/section avec un fond légèrement différent** (`--surface` sur `--bg`) plutôt que des lignes de séparation partout — l'œil regroupe visuellement sans effort.
-- **Un seul niveau de titre de section par écran-enfant** (ex. "Conditions (flags)" dans `RequiresBuilder`) — en `--text-xs` majuscule discret, jamais plus voyant que le contenu qu'il introduit.
-- **Repli/dépli (déjà en place dans `TimelineEditor`)** — la bonne instinct — mais l'état réduit doit donner un résumé _utile immédiatement_, pas juste le type. C'est déjà fait (`summaryFor()`), à pousser plus loin visuellement (icône par type d'entrée plutôt qu'un badge texte — voir §7).
+- **Group by card/section with a slightly different background** (`--surface` on `--bg`) rather than separator lines everywhere — the eye groups things visually with no effort.
+- **A single section-title level per child screen** (e.g. "Conditions (flags)" in `RequiresBuilder`) — in discreet uppercase `--text-xs`, never more prominent than the content it introduces.
+- **Collapse/expand (already in place in `TimelineEditor`)** — the right instinct — but the collapsed state must give an _immediately useful_ summary, not just the type. Already done (`summaryFor()`), worth pushing further visually (icon per entry type rather than a text badge — see §7).
 
 ## 6. Feedback & affordance
 
-- **Curseur pointeur** sur tout élément cliquable (lignes de chapitre, cartes d'entrée, boutons ▲▼) — actuellement pas garanti partout.
-- **Transition de 150–250ms** sur les hover/focus (`transition: background-color 0.2s ease`) — jamais de changement instantané ni de transition >400ms qui ralentit la manipulation.
-- **États de focus visibles au clavier** (`:focus-visible { outline: 2px solid var(--accent) }`) — indispensable pour un outil utilisé toute la journée, où naviguer au clavier entre champs de formulaire est plus rapide qu'à la souris.
-- **Aucune icône emoji comme icône d'UI** (✨👍 etc. dans le code de l'app, pas dans le contenu narratif édité) — utiliser les icônes Material déjà fournies par Quasar (`q-icon`), cohérentes en taille et en style.
-- **Boutons différenciés par intention** : primaire (Enregistrer, Créer — fond `--accent`), secondaire (Annuler, fermer — contour), destructif (Supprimer — `--danger`, jamais la même couleur qu'un bouton normal).
+- **Pointer cursor** on every clickable element (chapter rows, entry cards, ▲▼ buttons) — currently not guaranteed everywhere.
+- **150–250ms transition** on hover/focus (`transition: background-color 0.2s ease`) — never an instant change nor a >400ms transition that slows down manipulation.
+- **Visible keyboard focus states** (`:focus-visible { outline: 2px solid var(--accent) }`) — essential for a tool used all day, where navigating between form fields by keyboard is faster than by mouse.
+- **No emoji icons as UI icons** (✨👍 etc. in the app's own code, not in the authored narrative content) — use the Material icons already provided by Quasar (`q-icon`), consistent in size and style.
+- **Buttons differentiated by intent**: primary (Save, Create — `--accent` background), secondary (Cancel, close — outline), destructive (Delete — `--danger`, never the same color as a normal button).
 
-## 7. Application concrète à Stories Engine — ce qui manque aujourd'hui
+## 7. Concrete application to Stories Engine — what's missing today
 
-Constat direct sur le code actuel (`src/editor/**`) :
+Direct observation of the current code (`src/editor/**`):
 
-- **Pas de tokens partagés** — chaque `.vue` définit ses propres couleurs/tailles/paddings en dur (`#16161f`, `#e8e8f0`, `rgba(255,255,255,0.1)` répétés partout, jamais les mêmes valeurs deux fois). C'est la cause n°1 du sentiment "pas clair" — rien ne se répond visuellement entre composants.
-- **Densité non hiérarchisée** — dans `TimelineEditor`/`RequiresBuilder`/`EffectsBuilder`, tous les champs ont le même poids visuel (même taille, même gris) — impossible de scanner rapidement "qu'est-ce qui est rempli, qu'est-ce qui ne l'est pas".
-- **Boutons non différenciés** — tous les `q-btn dense flat` se ressemblent (Enregistrer, Supprimer, Ajouter, ▲▼) — aucune hiérarchie d'action.
-- **Pas d'icône par type d'entrée** — le badge texte (`message`, `choice`...) dans `TimelineEditor` oblige à lire au lieu de reconnaître visuellement — une icône dédiée par type (💬 message, ❓ choice, 📷 photo...) accélère énormément le scan d'une timeline de 30 entrées.
-- **Formulaires "à plat"** — `EffectsBuilder`/`RequiresBuilder` empilent beaucoup de champs sans respiration visuelle claire entre sections (les `q-expansion-item` aident mais le contenu déplié reste dense sans espacement structuré).
+- **No shared tokens** — every `.vue` defines its own colors/sizes/paddings in hardcoded values (`#16161f`, `#e8e8f0`, `rgba(255,255,255,0.1)` repeated everywhere, never the same value twice). This is cause #1 of the "not clear" feeling — nothing visually echoes between components.
+- **Unhierarchized density** — in `TimelineEditor`/`RequiresBuilder`/`EffectsBuilder`, every field has the same visual weight (same size, same gray) — impossible to quickly scan "what's filled in, what isn't".
+- **Undifferentiated buttons** — every `q-btn dense flat` looks alike (Save, Delete, Add, ▲▼) — no action hierarchy.
+- **No icon per entry type** — the text badge (`message`, `choice`...) in `TimelineEditor` forces reading instead of visual recognition — a dedicated icon per type (💬 message, ❓ choice, 📷 photo...) massively speeds up scanning a 30-entry timeline.
+- **"Flat" forms** — `EffectsBuilder`/`RequiresBuilder` stack a lot of fields with no clear visual breathing room between sections (the `q-expansion-item`s help, but the expanded content stays dense with no structured spacing).
 
-## 8. Checklist avant de considérer une passe UI "terminée"
+## 8. Checklist before considering a UI pass "done"
 
-État réel vérifié le 2026-07-28 (voir `docs/ui-ux-audit.md` pour le détail
-et les captures) — cette checklist était encore à l'état de vœux quand ce
-doc a été écrit initialement, elle reflète maintenant ce qui est vraiment
-en place :
+Actual state verified on 2026-07-28 (see `docs/ui-ux-audit.md` for details
+and screenshots) — this checklist was still a wish list when this doc was
+first written, it now reflects what's actually in place:
 
-- [x] Un seul fichier de tokens (couleur/espacement/rayon/typo), tout le reste les référence — `src/css/design-tokens.scss`, adopté à 30/31 fichiers de `src/editor`.
-- [x] Palette dark à rôles fixes (§4), un seul accent — vérifié aussi sur les dialogues Quasar génériques (corrigé le 2026-07-28, voir audit point 5).
-- [x] Deux polices max, échelle de tailles limitée à 4-5 paliers — Inter/Fira Code réellement chargées depuis le 2026-07-28 (`@fontsource/*`), auparavant juste des noms dans le CSS jamais servis (voir audit point 1).
-- [x] Chaque bouton a une intention visuelle claire (primaire/secondaire/destructif)
-- [x] Chaque type d'entrée a une icône reconnaissable, pas juste un badge texte
-- [x] `cursor: pointer` + hover visible sur tout élément cliquable
-- [x] Focus clavier visible sur tous les champs/boutons (`:focus-visible` global, `src/css/app.scss`)
-- [x] Contraste texte vérifié (4.5:1 minimum) sur fond sombre — mesuré le 2026-08-18 pour tous les rôles de la palette (§4) sur `--bg` ET `--surface` ; `--accent`/`--danger` ajustés, le reste passait déjà.
-- [x] Aucune valeur de spacing/couleur en dur dans un nouveau composant — toujours une variable
-
-## Prochaine étape
-
-Ce doc décrit le système de référence (stable, pas de changement prévu).
-Le suivi de ce qui est fait/reste à faire vit maintenant dans
-`docs/ui-ux-audit.md` — c'est lui qu'il faut consulter pour l'état courant
-et la suite (chantier moyen : `AudioPreview.vue` maison, bloc Condition
-condensé, vrai agrandissement du mode Aperçu seul ; chantier large : fil
-d'Ariane de profondeur, recherche sur les traductions inutilisées).
+- [x] A single token file (color/spacing/radius/type), everything else references it — `src/css/design-tokens.scss`, adopted in 30/31 files of `src/editor`.
+- [x] Fixed-role dark palette (§4), a single accent — also verified on generic Quasar dialogs (fixed 2026-07-28, see audit point 5).
+- [x] Two fonts max, size scale limited to 4-5 steps — Inter/Fira Code actually loaded since 2026-07-28 (`@fontsource/*`), previously just names in CSS never actually served (see audit point 1).
+- [x] Every button has a clear visual intent (primary/secondary/destructive)
+- [x] Every entry type has a recognizable icon, not just a text badge
+- [x] `cursor: pointer` + visible hover on every clickable element
+- [x] Visible keyboard focus on all fields/buttons (`:focus-visible` global, `src/css/app.scss`)
+- [x] Text contrast verified (4.5:1 minimum) on dark background — measured 2026-08-18 for every palette role (§4) on both `--bg` AND `--surface`; `--accent`/`--danger` adjusted, the rest already passed.
+- [x] No hardcoded spacing/color value in a new component — always a variable
