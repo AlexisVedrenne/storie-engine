@@ -17,8 +17,7 @@ control, back up, or move between machines like any other.
 Open the **Chapters** tab and zoom out (or press whatever collapses the currently-open chapter) to
 see the graph: every chapter in your project as a card on a canvas, connected by arrows.
 
-> 📸 SCREENSHOT NEEDED: the chapter graph with 3-4 connected chapters, showing at least one arrow
-> with a condition label on it.
+![The chapter graph, with a conditional arrow between chapters](../images/chapter-graph.png)
 
 - **Arrows are drawn by you** — drag from the right edge of one chapter to the left edge of
   another. Nothing is inferred automatically; if two chapters aren't connected by an arrow, the
@@ -51,8 +50,7 @@ Entries can be **reordered** by drag-and-drop or the up/down buttons, and **grou
 several adjacent entries and collapse them into a labeled, foldable section, purely for your own
 readability on a long timeline. Grouping has no effect on how the story plays.
 
-> 📸 SCREENSHOT NEEDED: a timeline with a mix of message/choice/photo entries, one collapsed group
-> visible.
+![A chapter's timeline with a few different entry types](../images/timeline-mixed.png)
 
 Here's every entry type:
 

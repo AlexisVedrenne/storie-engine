@@ -1046,7 +1046,7 @@ export default {
   webPreviewDialog: {
     loading: "Caricamento dell'anteprima...",
     readyTitle: 'Anteprima pronta',
-    readyHint: 'Apri questo link sul tuo telefono (stessa rete Wi-Fi):',
+    readyHint: 'Scansiona questo codice con il telefono (stessa rete Wi-Fi), oppure apri questo link:',
     firewallHint:
       "Se Windows chiede di consentire l'accesso alla rete, clicca su Consenti (reti private).",
     errorTitle: 'Anteprima non riuscita',
@@ -1066,6 +1066,17 @@ export default {
       'Queste chiavi esistono nel dizionario ma non corrispondono più a nessuna frase nel contenuto attuale — probabilmente testo modificato o rimosso nel frattempo.',
     searchOrphansPlaceholder: 'Cerca traduzioni inutilizzate…',
     deleteUnusedTooltip: 'Elimina questa voce inutilizzata',
+    groupContactNames: 'Nomi dei contatti',
+    groupContactBios: 'Bio dei contatti',
+    groupGroupNames: 'Nomi dei gruppi',
+    groupApp: 'App: {name}',
+    groupSeedMessages: 'Messaggi (contenuto iniziale)',
+    groupSeedDms: 'DM (contenuto iniziale)',
+    groupSeedPosts: 'Post (contenuto iniziale)',
+    groupSeedReels: 'Reel (contenuto iniziale)',
+    groupSeedPhotos: 'Foto (contenuto iniziale)',
+    groupChapterTitles: 'Titoli dei capitoli',
+    groupFlagLabels: 'Etichette dei flag',
   },
 
   seedBucketList: {

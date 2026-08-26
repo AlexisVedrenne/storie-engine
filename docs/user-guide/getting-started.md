@@ -30,8 +30,7 @@ The editor opens to a project picker. From here you can:
   storage (see [cloud sync](building-and-exporting.md#cloud-sync)), you can pull a copy down here
   without opening anything locally first.
 
-> 📸 SCREENSHOT NEEDED: the "open project" landing screen, showing the open/create/cloud-load
-> options.
+![The landing screen: open, create, or load a project from the cloud](../images/getting-started-landing.png)
 
 ## The editor's layout
 
@@ -39,8 +38,7 @@ Once a project is open, you're looking at two halves side by side: the **authori
 side (tabs across the top) and a **live phone preview** on the other, which updates instantly as
 you edit — no save button to remember, no "refresh preview" step for most changes.
 
-> 📸 SCREENSHOT NEEDED: the full editor window, authoring panel + live phone preview visible
-> together, ideally with a chapter open showing a few timeline entries.
+![The editor window: authoring panel and live phone preview together](../images/editor-overview.png)
 
 The tabs across the top of the authoring panel:
 
@@ -67,8 +65,7 @@ choice appears, a photo shows up in the gallery...). Use "Add entry" to add your
 Every entry you add appears instantly in the phone preview on the other side of the screen. Try
 adding a couple of `message` entries and watch them show up as SMS bubbles as you type.
 
-> 📸 SCREENSHOT NEEDED: a chapter's timeline panel with 3-4 entries of different types (e.g.
-> message, choice, post), and the phone preview showing the result.
+![A chapter's timeline with a few different entry types](../images/timeline-mixed.png)
 
 For the full list of entry types and what each one does, see
 [The timeline and its entry types](writing-chapters.md#the-timeline-and-its-entry-types).

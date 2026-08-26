@@ -16,8 +16,7 @@ The **Assets** tab shows this folder as a browsable tree/grid, file-explorer sty
   Only orphaned files can be deleted from here, and deletion always asks for confirmation first —
   it's not reversible.
 
-> 📸 SCREENSHOT NEEDED: the Assets tab, folder tree on one side, grid of thumbnails on the other,
-> at least one asset badged "orphaned."
+![The Assets tab: folder tree and thumbnail grid](../images/assets-tab.png)
 
 ### Sound
 
@@ -68,8 +67,7 @@ The i18n tab's editor per language/bucket gives you:
   source text (usually because you edited the original line since translating it).
 - The same emoji picker button found on every text field elsewhere in the editor.
 
-> 📸 SCREENSHOT NEEDED: the i18n tab, one locale's bucket open, showing source text next to its
-> translation field, with a couple of entries marked as untranslated.
+![The i18n tab, a locale's bucket open with source text next to its translation](../images/i18n-tab.png)
 
 A player can switch language **at any time** from Settings, mid-playthrough, with no reset — and
 any line you haven't translated yet just falls back to your original source text rather than
@@ -89,8 +87,7 @@ wizard. It auto-detects the player's device language for its own text (this happ
 setup wizard would otherwise ask). Declining blocks the current session outright with no way
 around it; closing and relaunching the game gives the player a fresh chance to accept.
 
-> 📸 SCREENSHOT NEEDED: the mature-content warning screen (18+ badge, warning text, Yes/No
-> buttons).
+![The 18+ mature-content warning screen](../images/age-gate.png)
 
 ## Next steps
 

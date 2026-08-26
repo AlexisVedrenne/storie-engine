@@ -28,12 +28,19 @@ The build assistant walks through three steps:
 
 1. **Version** — bump your project's version number (none / patch / minor / major), written
    immediately to your project's manifest.
+
+   ![Build assistant: the version step](../images/build-version.png)
+
 2. **Distribution targets** — check off which platforms to build for: desktop (Windows/macOS/Linux)
    and/or Android.
+
+   ![Build assistant: distribution targets, desktop and Android checked](../images/build-distribution.png)
+
 3. **Build** — progress, then the finished output copied to a folder you choose.
 
-> 📸 SCREENSHOT NEEDED: the build assistant's distribution-targets step, with desktop and Android
-> both checked.
+   ![Build in progress](../images/build-in-progress.png)
+
+   ![Build finished](../images/build-finish.png)
 
 Under the hood, every target builds from the same assembled copy of your project and the engine —
 there's no separate pipeline to keep in sync between desktop and Android; see
@@ -72,8 +79,7 @@ not the most honest test of a touch interface. The **web preview** feature serve
 open project as a real webpage on your local network: start it, and any phone on the same Wi-Fi can
 open the given address in its own browser and play your story with real touch input.
 
-> 📸 SCREENSHOT NEEDED: the web-preview dialog showing the LAN URL/QR code, and (if possible) a
-> phone browser screenshot showing the game running.
+![The web-preview dialog, showing the LAN URL/QR code](../images/web-preview.png)
 
 Only one preview session runs at a time — starting a new one stops whatever was already running,
 and closing the preview dialog always stops the server. No separate install or account needed on

@@ -159,6 +159,24 @@ async function copyIfExists(src, dest) {
   if (fs.existsSync(src)) await cpAsarSafe(src, dest, { recursive: true })
 }
 
+// A seed bucket file only exists on disk once its editor tab has actually
+// been saved at least once (project.js's saveSeedBucket writes it lazily) —
+// loadProjectFromDisk tolerates that via loadDefaultOr's fallback, but
+// GamePage.vue statically imports all 5 files unconditionally, so a project
+// that never touched (say) the reels/photos tab breaks the build with an
+// UNRESOLVED_IMPORT the moment copyIfExists above skips those two files.
+// Backfills the same empty defaults project.js already treats as "unset"
+// ({} for messages/dms, [] for posts/reels/photos) so the generated shell
+// always has all 5 files regardless of what the project ever saved.
+const SEED_BUCKET_DEFAULTS = { messages: '{}', dms: '{}', posts: '[]', reels: '[]', photos: '[]' }
+function ensureSeedBucketFiles(seedDir) {
+  fs.mkdirSync(seedDir, { recursive: true })
+  for (const [bucket, empty] of Object.entries(SEED_BUCKET_DEFAULTS)) {
+    const dest = path.join(seedDir, `${bucket}.js`)
+    if (!fs.existsSync(dest)) fs.writeFileSync(dest, `export default ${empty}\n`, 'utf-8')
+  }
+}
+
 // Cache-busted dynamic import, same pattern as project.js's loadDefaultOr —
 // this pipeline doesn't otherwise ever load game.js's actual content (only
 // project.json's manifest, for the productName/output-folder slug).
@@ -268,6 +286,7 @@ export async function assembleShell(tmpDir, rootPath) {
   }
   await copyIfExists(path.join(rootPath, 'chapters'), path.join(projectDataDir, 'chapters'))
   await copyIfExists(path.join(rootPath, 'seed'), path.join(projectDataDir, 'seed'))
+  ensureSeedBucketFiles(path.join(projectDataDir, 'seed'))
   await copyIfExists(path.join(rootPath, 'i18n'), path.join(projectDataDir, 'i18n'))
   await copyIfExists(path.join(rootPath, 'apps'), path.join(projectDataDir, 'apps'))
   await copyIfExists(path.join(rootPath, 'assets'), path.join(tmpDir, 'public', 'story-assets'))

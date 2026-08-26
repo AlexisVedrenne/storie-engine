@@ -10,6 +10,7 @@
         <q-icon name="smartphone" size="34px" color="primary" />
         <div class="state-title">{{ t('webPreviewDialog.readyTitle') }}</div>
         <div class="state-hint">{{ t('webPreviewDialog.readyHint') }}</div>
+        <img v-if="qrDataUrl" :src="qrDataUrl" alt="" class="qr-code" />
         <div class="url-box">{{ url }}</div>
         <div class="firewall-hint">
           <q-icon name="info" size="14px" />
@@ -32,6 +33,7 @@
 
 <script setup>
 import { ref } from 'vue'
+import QRCode from 'qrcode'
 import { useEditorI18n } from '@/editor/i18n'
 
 const { t } = useEditorI18n()
@@ -40,6 +42,7 @@ const props = defineProps({ rootPath: { type: String, required: true } })
 const isOpen = ref(false)
 const state = ref('loading') // 'loading' | 'ready' | 'error'
 const url = ref('')
+const qrDataUrl = ref('')
 const errorMessage = ref('')
 
 // Only entry point — EditorPage.vue's toolbar button calls this. Every
@@ -50,6 +53,7 @@ async function open() {
   isOpen.value = true
   state.value = 'loading'
   url.value = ''
+  qrDataUrl.value = ''
   errorMessage.value = ''
   try {
     const result = await window.storieAPI.startWebPreview({ rootPath: props.rootPath })
@@ -57,6 +61,10 @@ async function open() {
     // by the time this resolves — don't resurrect it as "ready".
     if (!isOpen.value) return
     url.value = result.url
+    // Generated client-side (no network call) — the phone scanning this
+    // must already be on the same LAN as the printed URL, so there's
+    // nothing to fetch from anywhere else.
+    qrDataUrl.value = await QRCode.toDataURL(result.url, { margin: 1, width: 180 })
     state.value = 'ready'
   } catch (err) {
     if (!isOpen.value) return
@@ -102,6 +110,15 @@ defineExpose({ open })
 .state-hint {
   font-size: var(--text-sm);
   color: var(--color-text-muted);
+}
+
+.qr-code {
+  margin-top: var(--space-2);
+  width: 180px;
+  height: 180px;
+  border-radius: var(--radius-md);
+  background: #fff;
+  padding: var(--space-2);
 }
 
 .url-box {

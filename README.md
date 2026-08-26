@@ -9,14 +9,11 @@ for the player, no account, no internet connection needed to play. It's aimed at
 to tell an interactive story in the "found phone" / epistolary format without becoming a
 programmer to do it.
 
-> 📸 SCREENSHOT NEEDED: hero shot — the editor window (authoring panel + live phone preview side
-> by side), ideally with an interesting chapter open.
+![The editor: authoring panel and live phone preview side by side](docs/images/editor-overview.png)
 
-> 📸 SCREENSHOT NEEDED: the phone UI on its own, full-screen preview mode, showing a chat
-> conversation or the Pixly social feed.
+![The phone UI in full-screen preview mode](docs/images/phone-preview.png)
 
-> 📸 SCREENSHOT NEEDED: the chapter graph with several connected chapters and at least one
-> conditional arrow — gives a sense of the branching-story authoring experience.
+![The chapter graph, with a conditional arrow between chapters](docs/images/chapter-graph.png)
 
 ## Who this is for
 

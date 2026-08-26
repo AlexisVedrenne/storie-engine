@@ -1027,7 +1027,7 @@ export default {
   webPreviewDialog: {
     loading: 'Loading the preview...',
     readyTitle: 'Preview ready',
-    readyHint: 'Open this link on your phone (same Wi-Fi network):',
+    readyHint: 'Scan this code with your phone (same Wi-Fi network), or open this link:',
     firewallHint: 'If Windows asks to allow network access, click Allow (private networks).',
     errorTitle: 'Preview failed',
     stop: 'Stop preview',
@@ -1046,6 +1046,17 @@ export default {
       "These keys exist in the dictionary but no longer match any phrase in the current content — probably text that's since been changed or removed.",
     searchOrphansPlaceholder: 'Search unused translations…',
     deleteUnusedTooltip: 'Delete this unused entry',
+    groupContactNames: 'Contact names',
+    groupContactBios: 'Contact bios',
+    groupGroupNames: 'Group names',
+    groupApp: 'App: {name}',
+    groupSeedMessages: 'Messages (initial content)',
+    groupSeedDms: 'DMs (initial content)',
+    groupSeedPosts: 'Posts (initial content)',
+    groupSeedReels: 'Reels (initial content)',
+    groupSeedPhotos: 'Photos (initial content)',
+    groupChapterTitles: 'Chapter titles',
+    groupFlagLabels: 'Flag labels',
   },
 
   seedBucketList: {

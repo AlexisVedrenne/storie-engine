@@ -1047,7 +1047,7 @@ export default {
   webPreviewDialog: {
     loading: 'Vorschau wird geladen...',
     readyTitle: 'Vorschau bereit',
-    readyHint: 'Öffne diesen Link auf deinem Handy (im selben WLAN):',
+    readyHint: 'Scanne diesen Code mit deinem Handy (im selben WLAN), oder öffne diesen Link:',
     firewallHint:
       'Falls Windows nach Netzwerkzugriff fragt, klicke auf Zulassen (private Netzwerke).',
     errorTitle: 'Vorschau fehlgeschlagen',
@@ -1067,6 +1067,17 @@ export default {
       'Diese Schlüssel existieren im Wörterbuch, entsprechen aber keiner Phrase mehr im aktuellen Inhalt — wahrscheinlich Text, der inzwischen geändert oder entfernt wurde.',
     searchOrphansPlaceholder: 'Ungenutzte Übersetzungen suchen…',
     deleteUnusedTooltip: 'Diesen ungenutzten Eintrag löschen',
+    groupContactNames: 'Kontaktnamen',
+    groupContactBios: 'Kontakt-Bios',
+    groupGroupNames: 'Gruppennamen',
+    groupApp: 'App: {name}',
+    groupSeedMessages: 'Nachrichten (Anfangsinhalt)',
+    groupSeedDms: 'DMs (Anfangsinhalt)',
+    groupSeedPosts: 'Beiträge (Anfangsinhalt)',
+    groupSeedReels: 'Reels (Anfangsinhalt)',
+    groupSeedPhotos: 'Fotos (Anfangsinhalt)',
+    groupChapterTitles: 'Kapiteltitel',
+    groupFlagLabels: 'Flag-Bezeichnungen',
   },
 
   seedBucketList: {

@@ -5,8 +5,7 @@ your own phone app entirely inside the editor — no coding involved — from th
 a banking app, a note-taking app, a fictional forum, a fake dating app — anything that fits the
 "screen made of stacked components" shape.
 
-> 📸 SCREENSHOT NEEDED: the Apps tab's block builder, mid-edit, with the live phone preview
-> showing the same screen next to it.
+![The Apps tab's block builder, with the live phone preview](../images/custom-app-builder.png)
 
 If you're a developer looking to add a genuinely new native app written in Vue instead (like
 Messages or Journal), see [Building a native app in code](../creating-custom-apps.md) — that's a

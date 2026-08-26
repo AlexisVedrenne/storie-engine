@@ -1051,7 +1051,7 @@ export default {
   webPreviewDialog: {
     loading: 'Cargando la vista previa...',
     readyTitle: 'Vista previa lista',
-    readyHint: 'Abre este enlace en tu teléfono (misma red Wi-Fi):',
+    readyHint: 'Escanea este código con tu teléfono (misma red Wi-Fi), o abre este enlace:',
     firewallHint:
       'Si Windows pide permitir el acceso a la red, haz clic en Permitir (redes privadas).',
     errorTitle: 'Error en la vista previa',
@@ -1071,6 +1071,17 @@ export default {
       'Estas claves existen en el diccionario pero ya no coinciden con ninguna frase del contenido actual — probablemente texto que se ha modificado o eliminado desde entonces.',
     searchOrphansPlaceholder: 'Buscar traducciones sin usar…',
     deleteUnusedTooltip: 'Eliminar esta entrada sin usar',
+    groupContactNames: 'Nombres de contactos',
+    groupContactBios: 'Biografías de contactos',
+    groupGroupNames: 'Nombres de grupos',
+    groupApp: 'App: {name}',
+    groupSeedMessages: 'Mensajes (contenido inicial)',
+    groupSeedDms: 'DM (contenido inicial)',
+    groupSeedPosts: 'Publicaciones (contenido inicial)',
+    groupSeedReels: 'Reels (contenido inicial)',
+    groupSeedPhotos: 'Fotos (contenido inicial)',
+    groupChapterTitles: 'Títulos de capítulos',
+    groupFlagLabels: 'Etiquetas de flags',
   },
 
   seedBucketList: {

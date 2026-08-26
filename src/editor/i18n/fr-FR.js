@@ -1045,7 +1045,7 @@ export default {
   webPreviewDialog: {
     loading: 'Chargement de la preview...',
     readyTitle: 'Preview prête',
-    readyHint: 'Rends-toi sur ce lien depuis ton téléphone (même réseau Wi-Fi) :',
+    readyHint: 'Scanne ce code depuis ton téléphone (même réseau Wi-Fi), ou rends-toi sur ce lien :',
     firewallHint:
       "Si Windows demande d'autoriser l'accès réseau, clique sur Autoriser (réseaux privés).",
     errorTitle: 'Échec de la preview',
@@ -1065,6 +1065,17 @@ export default {
       'Ces clés existent dans le dictionnaire mais ne correspondent plus à aucune phrase du contenu actuel — probablement du texte modifié ou supprimé depuis.',
     searchOrphansPlaceholder: 'Rechercher parmi les traductions inutilisées…',
     deleteUnusedTooltip: 'Supprimer cette entrée inutilisée',
+    groupContactNames: 'Noms des contacts',
+    groupContactBios: 'Bios des contacts',
+    groupGroupNames: 'Noms de groupes',
+    groupApp: 'App : {name}',
+    groupSeedMessages: 'Messages (contenu initial)',
+    groupSeedDms: 'DM (contenu initial)',
+    groupSeedPosts: 'Posts (contenu initial)',
+    groupSeedReels: 'Reels (contenu initial)',
+    groupSeedPhotos: 'Photos (contenu initial)',
+    groupChapterTitles: 'Titres de chapitres',
+    groupFlagLabels: 'Libellés de flags',
   },
 
   seedBucketList: {

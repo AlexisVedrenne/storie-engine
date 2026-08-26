@@ -46,8 +46,8 @@
         <q-list v-else bordered class="common-group-list">
           <q-expansion-item
             v-for="group in commonGroups"
-            :key="group.label"
-            :label="`${group.label} (${group.items.length})`"
+            :key="group.key + JSON.stringify(group.params || '')"
+            :label="`${groupLabel(group)} (${group.items.length})`"
             dense-toggle
           >
             <div class="rows common-group-rows">
@@ -224,9 +224,18 @@ const filteredStrings = computed(() => strings.value.filter(matchesFilters))
 const commonGroups = computed(() => {
   if (props.bucket !== 'common') return []
   return extractCommonCategories(story.project)
-    .map((g) => ({ label: g.label, items: g.items.filter(matchesFilters) }))
+    .map((g) => ({ key: g.key, params: g.params, items: g.items.filter(matchesFilters) }))
     .filter((g) => g.items.length)
 })
+
+// `app` groups interpolate the real app name; every other key is a plain
+// editor i18n lookup (see i18nBucketEditor.group* keys) — kept out of
+// extractTranslatableStrings.js since that module stays pure/store-free and
+// must not depend on the editor's own i18n.
+function groupLabel(group) {
+  if (group.key === 'app') return t('i18nBucketEditor.groupApp', group.params)
+  return t(`i18nBucketEditor.group${group.key[0].toUpperCase()}${group.key.slice(1)}`)
+}
 
 const orphanKeys = computed(() => Object.keys(dict.value).filter((k) => !strings.value.includes(k)).sort())
 

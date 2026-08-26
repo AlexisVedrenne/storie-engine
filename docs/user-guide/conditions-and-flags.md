@@ -32,8 +32,7 @@ any flag a human-readable label here too — the **Journal** app's "Flags" tab s
 have a label, so this doubles as a simple way to expose selected stats to the player without any
 extra work.
 
-> 📸 SCREENSHOT NEEDED: the flags catalog dialog, showing a few flags with their type/usage count/
-> min-max range.
+![The flags catalog, showing each flag's type, usage count, and reachable range](../images/flags-catalog.png)
 
 ## Conditions (requires)
 
@@ -87,8 +86,7 @@ choice option) to one of these **triggers** instead of to a timeline position:
 You can combine several match filters on one event (all ANDed together) and give it a title just
 to keep the Events list readable as it grows.
 
-> 📸 SCREENSHOT NEEDED: the Events tab with a couple of authored events, one expanded showing its
-> trigger + condition + effects.
+![The Events tab, with an authored event expanded](../images/events-tab.png)
 
 A known limitation worth knowing: an event's reaction and the main timeline's own choice/call can
 both be "waiting" at once without clobbering each other, but it's best to keep event reactions to
@@ -114,8 +112,7 @@ as you like — reusable across your whole story. Each usage decides independent
 (won/lost) only surfacing through its own `onWin`/`onLose` branches — each carrying the same
 effects/follow-up options as a choice option.
 
-> 📸 SCREENSHOT NEEDED: the Interactions tab, one interaction's steps list, and the phone preview
-> showing a step (e.g. the swipe zone grid) mid-interaction.
+![The Interactions tab, with a gesture's steps list and the phone preview](../images/interactions-tab.png)
 
 ## Next steps
 

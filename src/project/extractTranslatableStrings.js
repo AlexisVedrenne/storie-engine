@@ -176,26 +176,32 @@ function addCommonStrings(project, set) {
 // list — the "commun" bucket mixes contact names/bios, group thread names,
 // and every seed sub-type, which becomes unreadable past a few dozen
 // entries with no origin marker at all.
+// Pure module (see file header) — returns a `key` per group instead of a
+// display label, so I18nBucketEditor.vue can run it through the EDITOR's
+// own i18n (useEditorI18n) and the group header follows the software's UI
+// language, not always French. `app` groups also carry `params` (the real
+// app name) for the label's {name} interpolation.
 // @param project - story.project: {contacts, threads, seed}
-// @returns {{label: string, items: string[]}[]} only non-empty groups, in a
-// fixed reading order (contacts first, then seed content types)
+// @returns {{key: string, params?: object, items: string[]}[]} only
+// non-empty groups, in a fixed reading order (contacts first, then seed
+// content types)
 export function extractCommonCategories(project) {
   const groups = []
-  function push(label, items) {
+  function push(key, items, params) {
     const list = [...new Set(items.filter(Boolean))].sort()
-    if (list.length) groups.push({ label, items: list })
+    if (list.length) groups.push({ key, params, items: list })
   }
 
   push(
-    'Noms des contacts',
+    'contactNames',
     (project.contacts || []).map((c) => c.name),
   )
   push(
-    'Bios des contacts',
+    'contactBios',
     (project.contacts || []).map((c) => c.bio),
   )
   push(
-    'Noms de groupes',
+    'groupNames',
     (project.threads || []).filter((t) => t.group).map((t) => t.name),
   )
 
@@ -205,40 +211,40 @@ export function extractCommonCategories(project) {
   for (const app of project.customApps || []) {
     const texts = new Set()
     for (const screen of app.screens || []) addBlockStrings(screen.blocks, texts)
-    push(`App : ${app.label || app.id}`, [...texts])
+    push('app', [...texts], { name: app.label || app.id })
   }
 
   const seed = project.seed || {}
   const seedTexts = (bucketName) =>
     Object.values(seed[bucketName] || {}).flatMap((entries) => (entries || []).map((m) => m.text))
-  push('Messages (contenu initial)', seedTexts('messages'))
-  push('DM (contenu initial)', seedTexts('dms'))
+  push('seedMessages', seedTexts('messages'))
+  push('seedDms', seedTexts('dms'))
 
   const postTexts = []
   for (const post of seed.posts || []) {
     if (post.content) postTexts.push(post.content)
     for (const c of post.comments || []) if (c.text) postTexts.push(c.text)
   }
-  push('Posts (contenu initial)', postTexts)
+  push('seedPosts', postTexts)
 
   const reelTexts = []
   for (const reel of seed.reels || []) {
     if (reel.caption) reelTexts.push(reel.caption)
     for (const c of reel.comments || []) if (c.text) reelTexts.push(c.text)
   }
-  push('Reels (contenu initial)', reelTexts)
+  push('seedReels', reelTexts)
 
   push(
-    'Photos (contenu initial)',
+    'seedPhotos',
     (seed.photos || []).map((p) => p.caption),
   )
 
   push(
-    'Titres de chapitres',
+    'chapterTitles',
     (project.chapters || []).map((c) => c.title),
   )
   push(
-    'Libellés de flags',
+    'flagLabels',
     Object.values(project.gameConfig?.flags || {}).map((f) => f?.label),
   )
 
