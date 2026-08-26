@@ -42,14 +42,8 @@
           <q-tab name="apps" icon="widgets">
             <q-tooltip>{{ t('editorPage.tabApps') }}</q-tooltip>
           </q-tab>
-          <q-tab name="schemas" icon="dataset">
-            <q-tooltip>{{ t('editorPage.tabSchemas') }}</q-tooltip>
-          </q-tab>
-          <q-tab name="contacts" icon="contacts">
-            <q-tooltip>{{ t('editorPage.tabContacts') }}</q-tooltip>
-          </q-tab>
-          <q-tab name="threads" icon="groups">
-            <q-tooltip>{{ t('editorPage.tabThreads') }}</q-tooltip>
+          <q-tab name="data" icon="storage">
+            <q-tooltip>{{ t('editorPage.tabData') }}</q-tooltip>
           </q-tab>
           <q-tab name="game" icon="sports_esports">
             <q-tooltip>{{ t('editorPage.tabGame') }}</q-tooltip>
@@ -460,15 +454,35 @@
               <q-tab-panel name="apps">
                 <CustomAppList v-model="selectedCustomAppIndex" />
               </q-tab-panel>
-              <q-tab-panel name="schemas">
-                <EntitySchemaList v-model="selectedSchemaIndex" />
+              <q-tab-panel name="data" class="data-panel">
+                <q-tabs
+                  dense
+                  no-caps
+                  v-model="dataSubTab"
+                  class="data-subtabs"
+                  active-color="primary"
+                  indicator-color="primary"
+                  align="left"
+                >
+                  <q-tab name="flags" :label="t('editorPage.dataSubFlags')" />
+                  <q-tab name="schemas" :label="t('editorPage.dataSubSchemas')" />
+                  <q-tab name="contacts" :label="t('editorPage.dataSubContacts')" />
+                  <q-tab name="threads" :label="t('editorPage.dataSubThreads')" />
+                </q-tabs>
+                <q-separator />
+                <div class="data-subpanel">
+                  <EntitySchemaList v-if="dataSubTab === 'schemas'" v-model="selectedSchemaIndex" />
+                  <ContactList
+                    v-else-if="dataSubTab === 'contacts'"
+                    v-model="selectedContactIndex"
+                  />
+                  <ThreadList v-else-if="dataSubTab === 'threads'" v-model="selectedThreadIndex" />
+                  <div v-else class="empty-state">
+                    <q-icon name="flag" size="40px" />
+                    {{ t('editorPage.flagsSubtabHint') }}
+                  </div>
+                </div>
               </q-tab-panel>
-              <q-tab-panel name="contacts">
-                <ContactList v-model="selectedContactIndex"
-              /></q-tab-panel>
-              <q-tab-panel name="threads">
-                <ThreadList v-model="selectedThreadIndex"
-              /></q-tab-panel>
               <q-tab-panel name="game">
                 <div class="empty-state">
                   <q-icon name="sports_esports" size="40px" />
@@ -522,28 +536,29 @@
                     </div>
                   </q-tab-panel>
 
-                  <q-tab-panel name="schemas">
-                    <EntitySchemaForm v-if="selectedSchemaDef" :def="selectedSchemaDef" />
-                    <div v-else class="empty-state">
-                      <q-icon name="dataset" size="40px" />
-                      {{ t('editorPage.schemasEmptyState') }}
-                    </div>
-                  </q-tab-panel>
-
-                  <q-tab-panel name="contacts">
-                    <ContactForm v-if="selectedContact" :contact="selectedContact" />
-                    <div v-else class="empty-state">
-                      <q-icon name="contacts" size="40px" />
-                      {{ t('editorPage.contactsEmptyState') }}
-                    </div>
-                  </q-tab-panel>
-
-                  <q-tab-panel name="threads">
-                    <ThreadForm v-if="selectedThread" :thread="selectedThread" />
-                    <div v-else class="empty-state">
-                      <q-icon name="groups" size="40px" />
-                      {{ t('editorPage.threadsEmptyState') }}
-                    </div>
+                  <q-tab-panel name="data">
+                    <FlagsPanel v-if="dataSubTab === 'flags'" :game="story.project.gameConfig" />
+                    <template v-else-if="dataSubTab === 'schemas'">
+                      <EntitySchemaForm v-if="selectedSchemaDef" :def="selectedSchemaDef" />
+                      <div v-else class="empty-state">
+                        <q-icon name="dataset" size="40px" />
+                        {{ t('editorPage.schemasEmptyState') }}
+                      </div>
+                    </template>
+                    <template v-else-if="dataSubTab === 'contacts'">
+                      <ContactForm v-if="selectedContact" :contact="selectedContact" />
+                      <div v-else class="empty-state">
+                        <q-icon name="contacts" size="40px" />
+                        {{ t('editorPage.contactsEmptyState') }}
+                      </div>
+                    </template>
+                    <template v-else-if="dataSubTab === 'threads'">
+                      <ThreadForm v-if="selectedThread" :thread="selectedThread" />
+                      <div v-else class="empty-state">
+                        <q-icon name="groups" size="40px" />
+                        {{ t('editorPage.threadsEmptyState') }}
+                      </div>
+                    </template>
                   </q-tab-panel>
 
                   <q-tab-panel name="game">
@@ -745,9 +760,7 @@ const NAV_TABS = [
   { name: 'events', icon: 'sensors', labelKey: 'editorPage.navLabelEvents' },
   { name: 'interactions', icon: 'touch_app', labelKey: 'editorPage.navLabelInteractions' },
   { name: 'apps', icon: 'widgets', labelKey: 'editorPage.navLabelApps' },
-  { name: 'schemas', icon: 'dataset', labelKey: 'editorPage.navLabelSchemas' },
-  { name: 'contacts', icon: 'contacts', labelKey: 'editorPage.tabContacts' },
-  { name: 'threads', icon: 'groups', labelKey: 'editorPage.tabThreads' },
+  { name: 'data', icon: 'storage', labelKey: 'editorPage.navLabelData' },
   { name: 'game', icon: 'sports_esports', labelKey: 'editorPage.tabGame' },
   { name: 'assets', icon: 'folder', labelKey: 'editorPage.tabAssets' },
   { name: 'i18n', icon: 'translate', labelKey: 'editorPage.tabI18n' },
@@ -825,6 +838,12 @@ const selectedSchemaIndex = ref(0)
 const selectedSchemaDef = computed(
   () => story.project?.gameConfig?.entitySchemas?.[selectedSchemaIndex.value] || null,
 )
+// The 'Données' tab groups 4 catalogs that used to each have their own
+// top-level tab (Flags was a dialog, not even a tab) — one topbar slot
+// instead of four, with this picking which of the four shows. 'flags' has
+// no per-item selection (FlagsPanel lists everything at once), so it's the
+// only one of the four with nothing analogous to selectedContactIndex.
+const dataSubTab = ref('flags')
 // Selected folder path within assets/ ('' = root) — same lift-state-up
 // pattern as the selection refs above, shared between AssetTree (left pane)
 // and AssetsPanel (middle pane, filters its grid to this folder).
@@ -844,14 +863,15 @@ function currentDescriptor() {
   switch (viewMode.value) {
     case 'chapters':
       return selectedChapter.value ? { kind: 'chapter', id: selectedChapter.value.id } : null
-    case 'contacts':
-      return { kind: 'contacts' }
-    case 'threads':
-      return { kind: 'threads' }
+    case 'data':
+      if (dataSubTab.value === 'contacts') return { kind: 'contacts' }
+      if (dataSubTab.value === 'threads') return { kind: 'threads' }
+      // 'flags' and 'schemas' both live in gameConfig, same file as
+      // events/interactions below.
+      return { kind: 'game' }
     case 'game':
     case 'events':
     case 'interactions':
-    case 'schemas':
       return { kind: 'game' }
     case 'apps':
       return selectedCustomApp.value ? { kind: 'app', id: selectedCustomApp.value.id } : null
@@ -929,25 +949,35 @@ function navigateToResource(descriptor, hint) {
       return true
     }
     case 'contacts':
-      viewMode.value = 'contacts'
+      viewMode.value = 'data'
+      dataSubTab.value = 'contacts'
       return true
     case 'threads':
-      viewMode.value = 'threads'
+      viewMode.value = 'data'
+      dataSubTab.value = 'threads'
       return true
     case 'game':
-      // navHint picks the right sub-tab/row (Jeu/Events/Interactions all
-      // share one descriptor, see currentDescriptor's comment) — without
-      // it, an edit made in Events would land on Jeu, which shows neither
-      // the event list nor its form: correctly undone, invisibly so.
-      viewMode.value = hint?.viewMode || 'game'
-      if (hint?.viewMode === 'events' && hint.eventIndex != null) {
-        selectedEventIndex.value = hint.eventIndex
-      }
-      if (hint?.viewMode === 'interactions' && hint.interactionIndex != null) {
-        selectedInteractionIndex.value = hint.interactionIndex
-      }
-      if (hint?.viewMode === 'schemas' && hint.schemaIndex != null) {
-        selectedSchemaIndex.value = hint.schemaIndex
+      // navHint picks the right sub-tab/row (Jeu/Events/Interactions/
+      // Données all share one descriptor, see currentDescriptor's comment)
+      // — without it, an edit made in Events would land on Jeu, which shows
+      // neither the event list nor its form: correctly undone, invisibly so.
+      // 'schemas'/'flags' route through the merged Données tab rather than
+      // being top-level viewModes themselves.
+      if (hint?.viewMode === 'schemas') {
+        viewMode.value = 'data'
+        dataSubTab.value = 'schemas'
+        if (hint.schemaIndex != null) selectedSchemaIndex.value = hint.schemaIndex
+      } else if (hint?.viewMode === 'flags') {
+        viewMode.value = 'data'
+        dataSubTab.value = 'flags'
+      } else {
+        viewMode.value = hint?.viewMode || 'game'
+        if (hint?.viewMode === 'events' && hint.eventIndex != null) {
+          selectedEventIndex.value = hint.eventIndex
+        }
+        if (hint?.viewMode === 'interactions' && hint.interactionIndex != null) {
+          selectedInteractionIndex.value = hint.interactionIndex
+        }
       }
       return true
     case 'app': {
@@ -973,7 +1003,11 @@ function navigateToResource(descriptor, hint) {
 
 // Non-identity context captured alongside a history entry — see
 // navigateToResource's 'game' case for why this exists (Jeu/Events/
-// Interactions share one descriptor but need different sub-tab navigation).
+// Interactions/Données-schémas-et-flags share one descriptor but need
+// different sub-tab navigation). Données' 'contacts'/'threads' sub-tabs
+// don't need an entry here — they resolve to their OWN descriptor kind
+// ('contacts'/'threads', not 'game'), which navigateToResource already
+// routes straight back to the Données tab on its own.
 function currentNavHint() {
   if (viewMode.value === 'events') {
     return { viewMode: 'events', eventIndex: selectedEventIndex.value }
@@ -981,8 +1015,11 @@ function currentNavHint() {
   if (viewMode.value === 'interactions') {
     return { viewMode: 'interactions', interactionIndex: selectedInteractionIndex.value }
   }
-  if (viewMode.value === 'schemas') {
+  if (viewMode.value === 'data' && dataSubTab.value === 'schemas') {
     return { viewMode: 'schemas', schemaIndex: selectedSchemaIndex.value }
+  }
+  if (viewMode.value === 'data' && dataSubTab.value === 'flags') {
+    return { viewMode: 'flags' }
   }
   return null
 }
@@ -1054,6 +1091,7 @@ watch(
     viewMode,
     selectedIndex,
     selectedCustomAppIndex,
+    dataSubTab,
     selectedLocale,
     selectedBucket,
     selectedSeedBucket,
@@ -1162,12 +1200,12 @@ async function save() {
         sourceFile: chapter.__sourceFile,
         source: serializeChapter(chapter),
       })
-    } else if (viewMode.value === 'contacts') {
+    } else if (viewMode.value === 'data' && dataSubTab.value === 'contacts') {
       await window.storieAPI.saveContacts({
         rootPath: story.project.rootPath,
         source: serializeContacts(story.project.contacts),
       })
-    } else if (viewMode.value === 'threads') {
+    } else if (viewMode.value === 'data' && dataSubTab.value === 'threads') {
       await window.storieAPI.saveThreads({
         rootPath: story.project.rootPath,
         source: serializeThreads(story.project.threads),
@@ -1176,7 +1214,7 @@ async function save() {
       viewMode.value === 'game' ||
       viewMode.value === 'events' ||
       viewMode.value === 'interactions' ||
-      viewMode.value === 'schemas'
+      (viewMode.value === 'data' && ['flags', 'schemas'].includes(dataSubTab.value))
     ) {
       await window.storieAPI.saveGame({
         rootPath: story.project.rootPath,
@@ -1579,6 +1617,27 @@ async function openBuildStepper() {
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
+}
+
+/* Données tab (Flags/Schémas/Contacts/Groupes merged into one topbar slot) —
+   the list pane gets its own small nested tab strip instead of a 4th level
+   of topbar tabs; the form pane just switches on `dataSubTab` directly (see
+   template), no CSS of its own needed there. */
+.data-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 0;
+}
+
+.data-subtabs {
+  padding: 0 var(--space-2);
+  flex-shrink: 0;
+}
+
+.data-subpanel {
+  flex: 1;
+  overflow-y: auto;
 }
 
 .panel {

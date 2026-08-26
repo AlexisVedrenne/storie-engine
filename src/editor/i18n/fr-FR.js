@@ -21,10 +21,16 @@ export default {
     tabInteractions:
       'Interactions — gestes téléphone construits par toi, appelables depuis la timeline',
     tabApps: 'Apps — applications téléphone construites par blocs visuels',
+    tabData: 'Données — Flags, Schémas, Contacts, Groupes',
     tabSchemas:
       'Schémas — catalogue de données structurées (plusieurs champs par instance) utilisables dans les apps',
     tabContacts: 'Contacts',
     tabThreads: 'Groupes',
+    dataSubFlags: 'Flags',
+    dataSubSchemas: 'Schémas',
+    dataSubContacts: 'Contacts',
+    dataSubThreads: 'Groupes',
+    flagsSubtabHint: 'Les flags n’ont pas de sélection — vue complète à droite.',
     tabGame: 'Jeu',
     tabAssets: 'Ressources',
     tabI18n: 'Traductions',
@@ -94,7 +100,7 @@ export default {
     navLabelEvents: 'Events',
     navLabelInteractions: 'Interactions',
     navLabelApps: 'Apps',
-    navLabelSchemas: 'Schémas',
+    navLabelData: 'Données',
   },
 
   buildStepper: {
