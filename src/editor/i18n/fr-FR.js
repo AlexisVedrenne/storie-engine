@@ -479,6 +479,14 @@ export default {
     typeBoolean: 'Oui / non',
     typeRefContact: 'Référence — contact du projet',
     typeRefEntity: 'Référence — autre schéma',
+    seedTitle: 'Instances de départ',
+    seedHelp:
+      'Présentes dès le début d’une partie neuve, sans qu’un Effet n’ait besoin de tourner — comme le contenu de l’onglet "Contenu initial", mais pour ce schéma.',
+    seedNeedsFields: 'Ajoute d’abord au moins un champ ci-dessus.',
+    seedEmpty: 'Aucune instance de départ — le schéma démarre vide.',
+    seedIdLabel: 'Identifiant (optionnel)',
+    seedIdAutoHint: 'Vide = identifiant généré automatiquement',
+    addSeedRow: 'Ajouter une instance de départ',
   },
 
   stepsEditor: {

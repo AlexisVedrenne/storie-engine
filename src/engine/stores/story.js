@@ -791,6 +791,25 @@ export const useStoryStore = defineStore('story', {
           caption: seedFill(p.caption) || '',
         })
       }
+
+      // Entity schemas keep their own seed instances (`schema.seed`, edited
+      // right in the Schémas tab — EntitySchemaForm.vue) instead of a bucket
+      // here, since the field list an author needs to fill them in already
+      // lives on the schema itself. Same "present before the timeline plays
+      // its first entry" semantics as every seed above, applied via the
+      // exact op effects.entities' 'set' mode already uses (merge fields
+      // onto whatever's there, auto-generate an id if left blank).
+      for (const schema of this.project?.gameConfig?.entitySchemas || []) {
+        if (!schema.seed?.length) continue
+        if (!this.entities[schema.id]) this.entities[schema.id] = {}
+        const bucket = this.entities[schema.id]
+        for (const inst of schema.seed) {
+          const id =
+            inst.entityId ||
+            `entity-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`
+          bucket[id] = { ...bucket[id], ...inst.fields }
+        }
+      }
     },
 
     // called by LockScreen right after every unlock (see PhoneShell/

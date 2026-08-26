@@ -191,37 +191,18 @@
         />
       </div>
       <div v-if="row.mode === 'set' && schemaFields(row.schemaId).length" class="row-fields">
-        <template v-for="field in schemaFields(row.schemaId)" :key="field.key">
-          <q-toggle
-            v-if="field.type === 'boolean'"
-            dense
-            :label="field.label || field.key"
-            v-model="row.fields[field.key]"
-            @update:model-value="sync"
-          />
-          <q-select
-            v-else-if="field.type === 'ref:contact'"
-            dense
-            outlined
-            class="key-input"
-            :label="field.label || field.key"
-            v-model="row.fields[field.key]"
-            :options="contactOptions"
-            emit-value
-            map-options
-            @update:model-value="sync"
-          />
-          <q-input
-            v-else
-            dense
-            outlined
-            :type="field.type === 'number' ? 'number' : 'text'"
-            class="key-input"
-            :label="field.label || field.key"
-            v-model="row.fields[field.key]"
-            @update:model-value="sync"
-          />
-        </template>
+        <EntityFieldInput
+          v-for="field in schemaFields(row.schemaId)"
+          :key="field.key"
+          :field="field"
+          :model-value="row.fields[field.key]"
+          @update:model-value="
+            (v) => {
+              row.fields[field.key] = v
+              sync()
+            }
+          "
+        />
       </div>
     </div>
     <q-btn
@@ -504,6 +485,7 @@ import { useStoryStore } from '@/engine/stores/story'
 import { useContactOptions } from '@/components/shared/useContactOptions'
 import FieldHelp from '@/editor/components/FieldHelp.vue'
 import FlagNameField from '@/editor/components/FlagNameField.vue'
+import EntityFieldInput from '@/editor/components/EntityFieldInput.vue'
 import { useEditorI18n } from '@/editor/i18n'
 
 const { t } = useEditorI18n()

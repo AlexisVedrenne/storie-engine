@@ -73,6 +73,58 @@
         @click="addField"
       />
     </div>
+
+    <div class="panel">
+      <div class="section-label">
+        {{ t('entitySchemaForm.seedTitle') }}
+        <FieldHelp :text="t('entitySchemaForm.seedHelp')" />
+      </div>
+
+      <div v-if="!fields.length" class="empty-hint">
+        {{ t('entitySchemaForm.seedNeedsFields') }}
+      </div>
+      <template v-else>
+        <div v-if="!seed.length" class="empty-hint">{{ t('entitySchemaForm.seedEmpty') }}</div>
+
+        <div v-for="(row, i) in seed" :key="i" class="seed-row">
+          <q-btn
+            dense
+            flat
+            round
+            icon="close"
+            size="sm"
+            class="field-remove"
+            @click="removeSeedRow(i)"
+          >
+            <q-tooltip>{{ t('common.delete') }}</q-tooltip>
+          </q-btn>
+          <q-input
+            dense
+            outlined
+            :label="t('entitySchemaForm.seedIdLabel')"
+            :hint="t('entitySchemaForm.seedIdAutoHint')"
+            v-model="row.entityId"
+            class="key-input"
+          />
+          <EntityFieldInput
+            v-for="field in fields"
+            :key="field.key"
+            :field="field"
+            v-model="row.fields[field.key]"
+          />
+        </div>
+
+        <q-btn
+          dense
+          flat
+          no-caps
+          icon="add"
+          :label="t('entitySchemaForm.addSeedRow')"
+          class="btn-ghost"
+          @click="addSeedRow"
+        />
+      </template>
+    </div>
   </div>
 </template>
 
@@ -80,6 +132,7 @@
 import { computed } from 'vue'
 import { useStoryStore } from '@/engine/stores/story'
 import FieldHelp from '@/editor/components/FieldHelp.vue'
+import EntityFieldInput from '@/editor/components/EntityFieldInput.vue'
 import { useEditorI18n } from '@/editor/i18n'
 
 const { t } = useEditorI18n()
@@ -112,6 +165,27 @@ function addField() {
 }
 function removeField(i) {
   ensureFields().splice(i, 1)
+}
+
+// `def.seed` — instances present from the very start of a fresh game (see
+// story.js's seedInitialContent), same "author pre-populates it, no need to
+// play through an effect to see it" precedent as project.seed.messages/
+// .dms/.posts (the Contenu initial tab) — kept on the schema itself rather
+// than in that generic tab since the field list an author needs right next
+// to it already lives here. Array of `{ entityId, fields }`, same shape as
+// `effects.entities`' own ops — entityId left blank auto-generates one at
+// load time (see story.js), matching every other auto-id convention here.
+function ensureSeed() {
+  if (!props.def.seed) props.def.seed = []
+  return props.def.seed
+}
+const seed = computed(() => ensureSeed())
+
+function addSeedRow() {
+  ensureSeed().push({ entityId: '', fields: {} })
+}
+function removeSeedRow(i) {
+  ensureSeed().splice(i, 1)
 }
 </script>
 
@@ -182,5 +256,16 @@ function removeField(i) {
 
 .field-remove {
   flex-shrink: 0;
+}
+
+.seed-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
 }
 </style>
