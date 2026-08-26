@@ -1,6 +1,7 @@
 // Configuration for your app
 // https://v2.quasar.dev/quasar-cli-vite/quasar-config-file
 
+import fs from 'node:fs'
 import path from 'node:path'
 import { defineConfig } from '#q-app'
 
@@ -287,7 +288,69 @@ export default defineConfig((ctx) => {
         // reads this app's own copy of android/build or .gradle — so
         // excluding them here is never a functional loss, only smaller +
         // safer packages.
+        //
         ignore: [/[\\/]src-capacitor[\\/]android[\\/](.*[\\/])?(build|\.gradle)([\\/]|$)/],
+
+        // templates/game-shell/node-runtime/<platform>-<arch>/ (see
+        // scripts/vendor-node-runtime.mjs) ships one subfolder per editor
+        // packaging target, but shellAssembly.js's VENDORED_NODE_BINARY
+        // only ever reads the ONE matching the HOST machine actually
+        // running the packaged editor — a Windows build never opens the
+        // darwin/linux copies, and vice versa. Bundling all 4 into every
+        // single target regardless — 2.2GB for the win32 package alone,
+        // confirmed on a real build — is pure dead weight.
+        //
+        // NOT handled via the `ignore` option above — confirmed by
+        // reading @electron/packager's own source (platform.js's
+        // copyExtraResources): extraResource entries are copied with a
+        // plain `fs.promises.cp(source, dest, {recursive:true})`, `ignore`
+        // is never consulted for them at all, only for the main app
+        // source tree. A regex here would silently do nothing (tried
+        // first, confirmed by a real build that still shipped all 4
+        // platforms). afterCopyExtraResources is a real documented
+        // electron-packager hook that runs right after that copy, so this
+        // deletes the unwanted subfolders from the STAGING copy instead
+        // (per-target disposable tmpdir, never the live repo checkout) —
+        // darwin builds both x64+arm64 in one invocation (`-A all`, see
+        // package.json's build:electron:mac), so both stay for that
+        // target. ctx.targetName undefined/'all' (a plain `quasar build
+        // -m electron` with no -T) keeps everything — safest fallback
+        // when it's unclear which single platform is being built.
+        afterCopyExtraResources: [
+          (hookArgs) => {
+            const KEEP_BY_TARGET = {
+              win32: ['win32-x64'],
+              linux: ['linux-x64'],
+              darwin: ['darwin-x64', 'darwin-arm64'],
+            }
+            const ALL_RUNTIMES = Object.values(KEEP_BY_TARGET).flat()
+            const keep = KEEP_BY_TARGET[ctx.targetName] || ALL_RUNTIMES
+            const exclude = ALL_RUNTIMES.filter((p) => !keep.includes(p))
+            if (exclude.length === 0) return
+
+            // darwin's resources dir is nested inside the generated
+            // <Name>.app bundle — found by its extension rather than
+            // reconstructing electron-packager's own app-name sanitizing
+            // logic, since that's an internal implementation detail this
+            // config shouldn't have to stay in sync with.
+            const resourcesDir =
+              ctx.targetName === 'darwin'
+                ? path.join(
+                    hookArgs.buildPath,
+                    fs.readdirSync(hookArgs.buildPath).find((e) => e.endsWith('.app')),
+                    'Contents',
+                    'Resources',
+                  )
+                : path.join(hookArgs.buildPath, 'resources')
+
+            for (const platformArch of exclude) {
+              fs.rmSync(path.join(resourcesDir, 'templates', 'game-shell', 'node-runtime', platformArch), {
+                recursive: true,
+                force: true,
+              })
+            }
+          },
+        ],
       },
 
       builder: {
