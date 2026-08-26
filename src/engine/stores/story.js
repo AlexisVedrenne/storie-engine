@@ -140,6 +140,19 @@ function defaultState() {
     // on itself), remove deletes one. See applyEffects()'s `effects.
     // collections` and checkConditions()'s `requires.collections` below.
     flagCollections: {},
+    // Typed instances of an author-defined entity SCHEMA (see
+    // `game.entitySchemas`, edited in the Schémas tab — EntitySchemaList.vue/
+    // EntitySchemaForm.vue) — `story.entities[schemaId][entityId] = { field:
+    // value, ... }`. Sits one level above flagCollections: a collection is a
+    // flat key->value map (assumed a single scalar per entry everywhere it's
+    // read); an entity has several NAMED, typed fields per instance (a
+    // character with a location and a routine, an item with a price and a
+    // quantity) — nothing else in the engine models "more than one field per
+    // record", so this is deliberately its own bucket rather than overloading
+    // flagCollections' value with an object. See applyEffects()'s
+    // `effects.entities` below and entityItems getter (used by `list`
+    // blocks with `source: 'entity'`, see ListBlock.vue).
+    entities: {},
     currentChapterId: null,
     timelineIndex: 0,
     // Ordered, deduped chapter ids reached this playthrough (first-visit
@@ -303,6 +316,13 @@ export const useStoryStore = defineStore('story', {
     // always iterate in insertion order), oldest item first.
     collectionItems: (state) => (flagKey) =>
       Object.entries(state.flagCollections[flagKey] || {}).map(([key, value]) => ({ key, value })),
+    // Flattened for a `list` block's `source: 'entity'` (see ListBlock.vue) —
+    // each item is `{ id, ...fields }` so `{item:<fieldKey>}` tokens
+    // (resolveDynamicText.js) read straight off it, same shape a contact or
+    // a collection item already has. Insertion order, oldest first, same as
+    // collectionItems above.
+    entityItems: (state) => (schemaId) =>
+      Object.entries(state.entities[schemaId] || {}).map(([id, fields]) => ({ id, ...fields })),
     totalUnread: (state) => Object.values(state.unreadCounts).reduce((a, b) => a + b, 0),
     currentChapter: (state) =>
       (state.project?.chapters ?? []).find((c) => c.id === state.currentChapterId) || null,
@@ -1152,7 +1172,10 @@ export const useStoryStore = defineStore('story', {
       // than leaving the widget on its old decorative placeholder text —
       // real music playing under fake "Vibes du soir" copy would read as
       // broken, not charming.
-      const derivedTitle = track.split('/').pop().replace(/\.[^./]+$/, '')
+      const derivedTitle = track
+        .split('/')
+        .pop()
+        .replace(/\.[^./]+$/, '')
       this.nowPlaying = { title: title || derivedTitle }
     },
 
@@ -1811,9 +1834,7 @@ export const useStoryStore = defineStore('story', {
     // to the block instance, see its own comment), not derived here.
     isViewingAppThread(appId, threadId) {
       const phone = usePhoneStore()
-      return (
-        phone.activeAppThread?.appId === appId && phone.activeAppThread?.threadId === threadId
-      )
+      return phone.activeAppThread?.appId === appId && phone.activeAppThread?.threadId === threadId
     },
 
     pushMessage(contactId, { from, text, image, deleteAfter }) {
@@ -2013,12 +2034,39 @@ export const useStoryStore = defineStore('story', {
           if (op.mode === 'remove') {
             if (op.itemKey) delete map[op.itemKey]
           } else if (op.mode === 'increment') {
-            if (op.itemKey) map[op.itemKey] = (Number(map[op.itemKey]) || 0) + (Number(op.value) || 0)
+            if (op.itemKey)
+              map[op.itemKey] = (Number(map[op.itemKey]) || 0) + (Number(op.value) || 0)
           } else {
             const key =
               op.itemKey ||
               `item-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`
             map[key] = op.value
+          }
+        }
+      }
+
+      // effects.entities = [{ schemaId, entityId, mode: 'set'|'remove',
+      // fields }] — same "list of ops, not object-keyed" shape as
+      // effects.collections above, for the same reason (one effect can touch
+      // more than one entity, or the same one twice). 'set' MERGES `fields`
+      // onto whatever's already at that id (Object.assign, not overwrite) so
+      // an author can update a single field — e.g. just `humeur` — without
+      // re-specifying every other field of that instance; entityId left
+      // blank auto-generates one, same id-gen shape as the collections
+      // 'add' case just above. 'remove' with no matching entityId is a
+      // silent no-op, same "nothing to do" spirit as collections' 'remove'.
+      if (effects.entities) {
+        for (const op of effects.entities) {
+          if (!op.schemaId) continue
+          if (!this.entities[op.schemaId]) this.entities[op.schemaId] = {}
+          const bucket = this.entities[op.schemaId]
+          if (op.mode === 'remove') {
+            if (op.entityId) delete bucket[op.entityId]
+          } else {
+            const id =
+              op.entityId ||
+              `entity-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`
+            bucket[id] = { ...bucket[id], ...op.fields }
           }
         }
       }

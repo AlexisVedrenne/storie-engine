@@ -26,7 +26,9 @@
             @click="pick(tok.token)"
           >
             <span class="variable-picker__token">{{ tok.token }}</span>
-            <span class="variable-picker__desc">{{ t(`variablePicker.tokens.${tok.id}`) }}</span>
+            <span class="variable-picker__desc">{{
+              tok.label ?? t(`variablePicker.tokens.${tok.id}`)
+            }}</span>
           </button>
         </template>
 
@@ -61,6 +63,7 @@ import {
   FIXED_TOKENS,
   CONTACT_ITEM_TOKENS,
   COLLECTION_ITEM_TOKENS,
+  entityItemTokens,
 } from '@/engine/customApps/resolveDynamicText'
 import { useEditorI18n } from '@/editor/i18n'
 
@@ -69,15 +72,23 @@ const story = useStoryStore()
 const emit = defineEmits(['pick'])
 const menuRef = ref(null)
 
-// `false`, `'contacts'`, or `'flagCollection'` — set when this field is
-// inside a `list` block's per-item template (forwarded from
-// BlockBuilder.vue/BlockPropertiesForm.vue), and which item shape applies.
-// The `{item:...}` tokens are meaningless anywhere else, so hidden by
-// default (false).
+// `false`, `'contacts'`, `'flagCollection'`, or `'entity:<schemaId>'` — set
+// when this field is inside a `list` block's per-item template (forwarded
+// from BlockBuilder.vue/BlockPropertiesForm.vue), and which item shape
+// applies. The `{item:...}` tokens are meaningless anywhere else, so hidden
+// by default (false). The entity case carries its schema id inline (rather
+// than a separate prop) since it's the only one whose token SET isn't fixed
+// — it has to look up that schema's own field list.
 const props = defineProps({ itemScope: { type: [Boolean, String], default: false } })
-const itemTokens = computed(() =>
-  props.itemScope === 'flagCollection' ? COLLECTION_ITEM_TOKENS : CONTACT_ITEM_TOKENS,
-)
+const itemTokens = computed(() => {
+  if (props.itemScope === 'flagCollection') return COLLECTION_ITEM_TOKENS
+  if (typeof props.itemScope === 'string' && props.itemScope.startsWith('entity:')) {
+    const schemaId = props.itemScope.slice('entity:'.length)
+    const schema = story.project?.gameConfig?.entitySchemas?.find((s) => s.id === schemaId)
+    return entityItemTokens(schema)
+  }
+  return CONTACT_ITEM_TOKENS
+})
 
 // Same project-wide flag catalog already shown in the Flags dialog
 // (FlagsPanel.vue) — flags are authored elsewhere (chapter/event

@@ -21,6 +21,8 @@ export default {
     tabInteractions:
       'Interactions — gestes téléphone construits par toi, appelables depuis la timeline',
     tabApps: 'Apps — applications téléphone construites par blocs visuels',
+    tabSchemas:
+      'Schémas — catalogue de données structurées (plusieurs champs par instance) utilisables dans les apps',
     tabContacts: 'Contacts',
     tabThreads: 'Groupes',
     tabGame: 'Jeu',
@@ -50,6 +52,7 @@ export default {
     eventsEmptyState: 'Sélectionne ou crée un event à gauche.',
     interactionsEmptyState: 'Sélectionne ou crée une interaction à gauche.',
     appsEmptyState: 'Sélectionne ou crée une application à gauche.',
+    schemasEmptyState: 'Sélectionne ou crée un schéma à gauche.',
     contactsEmptyState: 'Sélectionne un contact à gauche.',
     threadsEmptyState: 'Sélectionne un thread à gauche.',
     i18nEmptyState: 'Sélectionne une langue à gauche.',
@@ -91,6 +94,7 @@ export default {
     navLabelEvents: 'Events',
     navLabelInteractions: 'Interactions',
     navLabelApps: 'Apps',
+    navLabelSchemas: 'Schémas',
   },
 
   buildStepper: {
@@ -350,7 +354,8 @@ export default {
         'Arrête la musique actuellement en cours, quelle qu’elle soit — à placer plus loin dans la timeline pour couper un morceau laissé en boucle.',
       trackLabel: 'Piste (fichier audio)',
       titleLabel: 'Titre affiché (optionnel)',
-      titleHelp: 'Montré dans le widget musique de l’écran d’accueil. Vide = déduit du nom de fichier.',
+      titleHelp:
+        'Montré dans le widget musique de l’écran d’accueil. Vide = déduit du nom de fichier.',
       loopLabel: 'Reprendre en boucle',
       volumeLabel: 'Volume de la piste',
       volumeHelp:
@@ -446,6 +451,36 @@ export default {
     stepsTitle: 'Étapes',
     stepsHelp:
       'Le joueur doit réussir chaque étape dans l’ordre pour que l’interaction soit gagnée — le dépassement du délai d’une étape la fait échouer.',
+  },
+
+  entitySchemaList: {
+    empty: 'Aucun schéma créé.',
+    fieldsCount: '{n} champs',
+    newSchema: 'Nouveau schéma',
+    idLabel: 'Identifiant (id)',
+    labelLabel: 'Nom affiché',
+    idTaken: 'Cet identifiant est déjà utilisé.',
+  },
+
+  entitySchemaForm: {
+    identityTitle: 'Identité',
+    labelLabel: 'Nom affiché',
+    fieldsTitle: 'Champs',
+    fieldsHelp:
+      'Chaque instance de ce schéma (créée/modifiée via les effets d’une entrée timeline, d’un bouton...) aura ces champs. Utilisable dans un bloc liste (source "Entités") d’une app custom — {item:<clé du champ>} dans son contenu répété.',
+    fieldsEmpty: 'Aucun champ — ajoute-en au moins un.',
+    addField: 'Ajouter un champ',
+    fieldKeyLabel: 'Clé',
+    fieldLabelLabel: 'Nom affiché',
+    fieldTypeLabel: 'Type',
+    refSchemaLabel: 'Schéma visé',
+    typeText: 'Texte',
+    typeNumber: 'Nombre',
+    typeBoolean: 'Oui / non',
+    typeGeo: 'Lieu (texte libre)',
+    typeSchedule: 'Emploi du temps (texte libre)',
+    typeRefContact: 'Référence — contact du projet',
+    typeRefEntity: 'Référence — autre schéma',
   },
 
   stepsEditor: {
@@ -605,10 +640,14 @@ export default {
     onlyFollowedLabel: 'Seulement les contacts suivis',
     listSourceContacts: 'Contacts',
     listSourceCollection: 'Collection (flag)',
+    listSourceEntity: 'Entités (schéma)',
     listHelp:
       'Le contenu ci-dessous est répété une fois par contact — utilise le bouton variable pour insérer {item:name} dans un champ texte, ou la case ci-dessus sur un bloc avatar.',
     listCollectionHelp:
       'Le contenu ci-dessous est répété une fois par élément de la collection choisie (remplie via les effets d’une entrée timeline, d’un bouton...) — utilise le bouton variable pour insérer {item:key}/{item:value}.',
+    listSchemaLabel: 'Schéma',
+    listEntityHelp:
+      'Le contenu ci-dessous est répété une fois par instance du schéma choisi (créées/modifiées via les effets d’une entrée timeline, d’un bouton...) — utilise le bouton variable pour insérer {item:<nom du champ>}.',
     conversationsHelp:
       'Un vrai module de conversation (comme Messages/Pixly) — liste de discussions, ouverture d’un fil, réponses par choix. Les messages sont envoyés depuis la timeline. Les groupes viennent de l’onglet Threads du projet (même contacts/groupes que les DM natifs) — rien à configurer ici pour ça.',
     showAvatarLabel: 'Afficher l’avatar du contact',
@@ -701,6 +740,16 @@ export default {
     valueTypeText: 'Texte',
     valueTypeNumber: 'Nombre',
     addCollectionChange: 'Ajouter un changement de collection',
+    entitiesTitle: 'Entités',
+    entitiesHelp:
+      'Crée/modifie/supprime une instance d’un schéma (défini dans l’onglet Schémas) — plusieurs champs typés par instance, contrairement à une collection. Affichable via un bloc Liste (source "Entités").',
+    noEntityChange: 'Aucune entité modifiée.',
+    schemaLabel: 'Schéma',
+    entityIdLabel: 'Identifiant (optionnel)',
+    entityIdAutoHint: 'Vide = identifiant généré automatiquement',
+    modeSet: 'créer / modifier',
+    modeRemoveEntity: 'supprimer',
+    addEntityChange: 'Ajouter un changement d’entité',
     widgetsTitle: 'Widgets du téléphone',
     weatherLabel: 'Météo',
     weatherCaption: "Change le widget météo de l'écran d'accueil",
@@ -845,7 +894,7 @@ export default {
     titleFieldLabel: "Titre (affiché sur l'écran verrouillé)",
     creditsTitle: 'Crédits',
     creditsHelp:
-      "Texte libre affiché sur bouton depuis l'écran de fin (\"Voir les crédits\") — un seul bloc de crédits pour tout le jeu, quelle que soit la fin obtenue.",
+      'Texte libre affiché sur bouton depuis l\'écran de fin ("Voir les crédits") — un seul bloc de crédits pour tout le jeu, quelle que soit la fin obtenue.',
     creditsLabel: 'Crédits (texte libre, multi-lignes)',
     entryChapterTitle: 'Chapitre de départ',
     entryChapterHelp:
@@ -1045,7 +1094,8 @@ export default {
   webPreviewDialog: {
     loading: 'Chargement de la preview...',
     readyTitle: 'Preview prête',
-    readyHint: 'Scanne ce code depuis ton téléphone (même réseau Wi-Fi), ou rends-toi sur ce lien :',
+    readyHint:
+      'Scanne ce code depuis ton téléphone (même réseau Wi-Fi), ou rends-toi sur ce lien :',
     firewallHint:
       "Si Windows demande d'autoriser l'accès réseau, clique sur Autoriser (réseaux privés).",
     errorTitle: 'Échec de la preview',

@@ -53,6 +53,20 @@ export const COLLECTION_ITEM_TOKENS = [
   { id: 'itemValue', token: '{item:value}' },
 ]
 
+// `source: 'entity'` items are `{ id, ...fields }` (story.entityItems), one
+// field per the AUTHOR'S OWN schema (see the Schémas tab) — unlike the two
+// fixed token sets above, there's no closed list to declare here. Builds one
+// token per schema field instead; VariablePickerBtn calls this directly
+// (given the schema def, looked up from `game.entitySchemas` by id) rather
+// than importing a static export.
+export function entityItemTokens(schema) {
+  return (schema?.fields || []).map((f) => ({
+    id: `itemField:${f.key}`,
+    token: `{item:${f.key}}`,
+    label: f.label || f.key,
+  }))
+}
+
 function resolveFixedToken(id, story) {
   switch (id) {
     case 'playerName':
@@ -94,8 +108,13 @@ function resolveItemToken(field, item, story) {
       return item?.key ?? ''
     case 'value':
       return item?.value ?? ''
+    // `source: 'entity'` items — any other field name is looked up straight
+    // off the item (story.entityItems returns `{ id, ...fields }`), since
+    // the field catalog is author-defined per schema, not a fixed set this
+    // file can enumerate. Silently '' for a field that doesn't exist on the
+    // current item, same "absent = blank" spirit as every other token here.
     default:
-      return ''
+      return item?.[field] ?? ''
   }
 }
 
@@ -111,9 +130,12 @@ export function resolveDynamicText(text, story, item) {
   // order as story.js's own fill() (translateStory, then {name}).
   let out = story.translateStory(text, 'common')
   out = out.replace(/\{flag:([a-zA-Z0-9_]+)\}/g, (_, key) => String(story.flags?.[key] ?? 0))
-  out = out.replace(
-    /\{item:(name|handle|pseudo|followers|following|color|key|value)\}/g,
-    (_, field) => String(resolveItemToken(field, item, story)),
+  // Field name is an open set for `source: 'entity'` (author-defined schema
+  // fields, see entityItemTokens above) — unlike the fixed alternation this
+  // used to be, any `[a-zA-Z0-9_]+` is accepted and resolveItemToken's
+  // `default` case falls back to reading it straight off `item`.
+  out = out.replace(/\{item:([a-zA-Z0-9_]+)\}/g, (_, field) =>
+    String(resolveItemToken(field, item, story)),
   )
   for (const { id, token } of FIXED_TOKENS) {
     if (out.includes(token)) out = out.split(token).join(resolveFixedToken(id, story))

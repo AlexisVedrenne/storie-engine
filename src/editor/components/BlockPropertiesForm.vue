@@ -373,6 +373,7 @@
         :options="[
           { label: t('blockProps.listSourceContacts'), value: 'contacts' },
           { label: t('blockProps.listSourceCollection'), value: 'flagCollection' },
+          { label: t('blockProps.listSourceEntity'), value: 'entity' },
         ]"
         @update:model-value="(v) => (block.source = v)"
       />
@@ -380,11 +381,27 @@
         <q-toggle dense :label="t('blockProps.onlyFollowedLabel')" v-model="block.onlyFollowed" />
         <p class="tab-help">{{ t('blockProps.listHelp') }}</p>
       </template>
-      <template v-else>
+      <template v-else-if="ensureSource() === 'flagCollection'">
         <FlagNameField v-model="block.flagKey" />
         <p class="tab-help">{{ t('blockProps.listCollectionHelp') }}</p>
       </template>
-      <BlockBuilder :blocks="ensureTemplate()" :screens="screens" :item-scope="ensureSource()" />
+      <template v-else>
+        <q-select
+          dense
+          outlined
+          :label="t('blockProps.listSchemaLabel')"
+          v-model="block.schemaId"
+          :options="schemaOptions"
+          emit-value
+          map-options
+        />
+        <p class="tab-help">{{ t('blockProps.listEntityHelp') }}</p>
+      </template>
+      <BlockBuilder
+        :blocks="ensureTemplate()"
+        :screens="screens"
+        :item-scope="templateItemScope()"
+      />
     </template>
 
     <template v-else-if="block.type === 'conversations'">
@@ -448,6 +465,7 @@
 
 <script setup>
 import { computed, ref } from 'vue'
+import { useStoryStore } from '@/engine/stores/story'
 import AssetField from '@/editor/components/AssetField.vue'
 import ColorField from '@/editor/components/ColorField.vue'
 import RequiresBuilder from '@/editor/components/RequiresBuilder.vue'
@@ -463,6 +481,7 @@ import BlockBuilder from '@/editor/components/BlockBuilder.vue'
 import { useEditorI18n } from '@/editor/i18n'
 
 const { t } = useEditorI18n()
+const story = useStoryStore()
 
 const props = defineProps({
   block: { type: Object, required: true },
@@ -506,6 +525,26 @@ function ensureTemplate() {
 function ensureSource() {
   if (!props.block.source) props.block.source = 'contacts'
   return props.block.source
+}
+
+// Schema catalog for the `entity` source's picker — authored in the Schémas
+// tab (EntitySchemaList.vue), same "read what already exists, don't create
+// it here" spirit as FlagNameField reading the flags catalog.
+const schemaOptions = computed(
+  () =>
+    story.project?.gameConfig?.entitySchemas?.map((s) => ({
+      label: s.label || s.id,
+      value: s.id,
+    })) || [],
+)
+
+// What to forward as the nested BlockBuilder's `itemScope` — plain source
+// name for contacts/flagCollection (their token sets are fixed), but
+// `entity:<schemaId>` for the entity source, since ITS token set depends on
+// which schema was picked (see VariablePickerBtn.vue's own comment).
+function templateItemScope() {
+  const source = ensureSource()
+  return source === 'entity' ? `entity:${props.block.schemaId || ''}` : source
 }
 
 function ensureAction() {

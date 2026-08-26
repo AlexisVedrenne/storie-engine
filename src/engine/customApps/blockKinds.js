@@ -65,12 +65,23 @@ export function defaultBlock(type) {
       // iterates a collection flag's key->value map (story.flagCollections,
       // `flagKey` picks which one) — a growing history/log/inventory an
       // author builds via `effects.collections` (see EffectsBuilder.vue),
-      // not fixed project data. `template` is a block subtree (same shape
-      // as card/layout's own `blocks[]`) authored ONCE and repeated per
-      // item; its text fields can use the `{item:...}` tokens (see
-      // resolveDynamicText.js — CONTACT_ITEM_TOKENS or
-      // COLLECTION_ITEM_TOKENS depending on `source`).
-      return { type, source: 'contacts', onlyFollowed: false, flagKey: '', template: [] }
+      // not fixed project data. `source: 'entity'` iterates instances of an
+      // author-defined entity schema (story.entities, `schemaId` picks
+      // which one — see the Schémas tab / EntitySchemaForm.vue), for
+      // structured multi-field records a flat collection can't hold.
+      // `template` is a block subtree (same shape as card/layout's own
+      // `blocks[]`) authored ONCE and repeated per item; its text fields can
+      // use the `{item:...}` tokens (see resolveDynamicText.js —
+      // CONTACT_ITEM_TOKENS/COLLECTION_ITEM_TOKENS, or one token per field
+      // of the chosen schema for `source: 'entity'`).
+      return {
+        type,
+        source: 'contacts',
+        onlyFollowed: false,
+        flagKey: '',
+        schemaId: '',
+        template: [],
+      }
     case 'conversations':
       // The "conversation module" — real interactive chat, not just visual
       // (see docs — this is the first custom-app block that reads/writes

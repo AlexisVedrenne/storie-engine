@@ -146,6 +146,94 @@
       @click="addCollectionRow"
     />
 
+    <div class="section-title top-gap">
+      {{ t('effectsBuilder.entitiesTitle') }}
+      <FieldHelp :text="t('effectsBuilder.entitiesHelp')" />
+    </div>
+    <div v-if="!entityRows.length" class="empty-hint">
+      {{ t('effectsBuilder.noEntityChange') }}
+    </div>
+    <div v-for="(row, i) in entityRows" :key="i" class="row-card">
+      <q-btn dense flat round icon="close" size="sm" class="row-remove" @click="removeEntityRow(i)">
+        <q-tooltip>{{ t('common.delete') }}</q-tooltip>
+      </q-btn>
+      <div class="row-fields">
+        <q-select
+          dense
+          outlined
+          class="mode-select"
+          :label="t('effectsBuilder.schemaLabel')"
+          v-model="row.schemaId"
+          :options="schemaOptions"
+          emit-value
+          map-options
+          @update:model-value="sync"
+        />
+        <q-select
+          dense
+          outlined
+          class="mode-select"
+          :label="t('effectsBuilder.actionLabel')"
+          v-model="row.mode"
+          :options="ENTITY_MODES"
+          emit-value
+          map-options
+          @update:model-value="sync"
+        />
+        <q-input
+          dense
+          outlined
+          class="key-input"
+          :label="t('effectsBuilder.entityIdLabel')"
+          :hint="row.mode === 'set' ? t('effectsBuilder.entityIdAutoHint') : ''"
+          v-model="row.entityId"
+          @update:model-value="sync"
+        />
+      </div>
+      <div v-if="row.mode === 'set' && schemaFields(row.schemaId).length" class="row-fields">
+        <template v-for="field in schemaFields(row.schemaId)" :key="field.key">
+          <q-toggle
+            v-if="field.type === 'boolean'"
+            dense
+            :label="field.label || field.key"
+            v-model="row.fields[field.key]"
+            @update:model-value="sync"
+          />
+          <q-select
+            v-else-if="field.type === 'ref:contact'"
+            dense
+            outlined
+            class="key-input"
+            :label="field.label || field.key"
+            v-model="row.fields[field.key]"
+            :options="contactOptions"
+            emit-value
+            map-options
+            @update:model-value="sync"
+          />
+          <q-input
+            v-else
+            dense
+            outlined
+            :type="field.type === 'number' ? 'number' : 'text'"
+            class="key-input"
+            :label="field.label || field.key"
+            v-model="row.fields[field.key]"
+            @update:model-value="sync"
+          />
+        </template>
+      </div>
+    </div>
+    <q-btn
+      dense
+      flat
+      no-caps
+      icon="add"
+      :label="t('effectsBuilder.addEntityChange')"
+      class="btn-ghost"
+      @click="addEntityRow"
+    />
+
     <div class="section-title top-gap">{{ t('effectsBuilder.widgetsTitle') }}</div>
 
     <q-expansion-item
@@ -412,12 +500,14 @@
 
 <script setup>
 import { computed, reactive, ref } from 'vue'
+import { useStoryStore } from '@/engine/stores/story'
 import { useContactOptions } from '@/components/shared/useContactOptions'
 import FieldHelp from '@/editor/components/FieldHelp.vue'
 import FlagNameField from '@/editor/components/FlagNameField.vue'
 import { useEditorI18n } from '@/editor/i18n'
 
 const { t } = useEditorI18n()
+const story = useStoryStore()
 
 // `effects: { flags?, weather?, steps?, stepsGoal?, battery?, network?,
 // clock?, date?, social?, newFollower? }` — see NTR docs/story-engine.md
@@ -445,6 +535,20 @@ const VALUE_TYPES = computed(() => [
   { label: t('effectsBuilder.valueTypeText'), value: 'text' },
   { label: t('effectsBuilder.valueTypeNumber'), value: 'number' },
 ])
+const ENTITY_MODES = computed(() => [
+  { label: t('effectsBuilder.modeSet'), value: 'set' },
+  { label: t('effectsBuilder.modeRemoveEntity'), value: 'remove' },
+])
+const schemaOptions = computed(
+  () =>
+    story.project?.gameConfig?.entitySchemas?.map((s) => ({
+      label: s.label || s.id,
+      value: s.id,
+    })) || [],
+)
+function schemaFields(schemaId) {
+  return story.project?.gameConfig?.entitySchemas?.find((s) => s.id === schemaId)?.fields || []
+}
 
 const { contactOptions, contactColor, contactLabel } = useContactOptions()
 const initial = props.modelValue || {}
@@ -470,6 +574,19 @@ const collectionRows = reactive(
       itemKey: op.itemKey || '',
       valueType: typeof op.value === 'number' ? 'number' : 'text',
       value: op.value ?? '',
+    }),
+  ),
+)
+
+// `effects.entities` is a LIST of ops too (see story.js's applyEffects),
+// same "one effect can touch more than one entity" reasoning as collections.
+const entityRows = reactive(
+  (initial.entities || []).map((op) =>
+    reactive({
+      schemaId: op.schemaId || '',
+      mode: op.mode || 'set',
+      entityId: op.entityId || '',
+      fields: reactive({ ...op.fields }),
     }),
   ),
 )
@@ -525,6 +642,20 @@ function removeCollectionRow(i) {
   collectionRows.splice(i, 1)
   sync()
 }
+function addEntityRow() {
+  entityRows.push(
+    reactive({
+      schemaId: schemaOptions.value[0]?.value || '',
+      mode: 'set',
+      entityId: '',
+      fields: reactive({}),
+    }),
+  )
+}
+function removeEntityRow(i) {
+  entityRows.splice(i, 1)
+  sync()
+}
 function addSocialRow() {
   socialRows.push(
     reactive({ contactId: contactOptions.value[0]?.value || '', followers: 0, following: 0 }),
@@ -571,6 +702,29 @@ function sync() {
     }
   }
   if (collections.length) effects.collections = collections
+
+  const entities = []
+  for (const row of entityRows) {
+    if (!row.schemaId) continue
+    if (row.mode === 'remove') {
+      if (!row.entityId) continue // nothing to target without an id
+      entities.push({ schemaId: row.schemaId, mode: 'remove', entityId: row.entityId })
+    } else {
+      const fields = {}
+      for (const field of schemaFields(row.schemaId)) {
+        const v = row.fields[field.key]
+        if (v === undefined || v === '') continue
+        fields[field.key] = field.type === 'number' ? Number(v) || 0 : v
+      }
+      entities.push({
+        schemaId: row.schemaId,
+        mode: 'set',
+        entityId: row.entityId || undefined,
+        fields,
+      })
+    }
+  }
+  if (entities.length) effects.entities = entities
 
   if (sections.weather) {
     const w = {}

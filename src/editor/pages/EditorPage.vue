@@ -42,6 +42,9 @@
           <q-tab name="apps" icon="widgets">
             <q-tooltip>{{ t('editorPage.tabApps') }}</q-tooltip>
           </q-tab>
+          <q-tab name="schemas" icon="dataset">
+            <q-tooltip>{{ t('editorPage.tabSchemas') }}</q-tooltip>
+          </q-tab>
           <q-tab name="contacts" icon="contacts">
             <q-tooltip>{{ t('editorPage.tabContacts') }}</q-tooltip>
           </q-tab>
@@ -101,7 +104,14 @@
              replient dans un seul bouton "more_vert" (voir plus bas) — le
              markup ci-dessous reste identique à avant, juste conditionné. -->
         <template v-if="!topbarCompact">
-          <q-btn dense flat round icon="search" class="btn-ghost" @click="globalSearchDialogRef?.open()">
+          <q-btn
+            dense
+            flat
+            round
+            icon="search"
+            class="btn-ghost"
+            @click="globalSearchDialogRef?.open()"
+          >
             <q-tooltip>{{ t('editorPage.globalSearchTooltip') }}</q-tooltip>
           </q-btn>
           <q-btn
@@ -265,7 +275,14 @@
              EditorSettingsDialog.vue). Tout à droite, après Enregistrer —
              dernier item de la barre, un seul bouton, pas de variante
              compacte nécessaire. -->
-        <q-btn dense flat round icon="settings" class="btn-ghost" @click="editorSettingsDialogRef?.open()">
+        <q-btn
+          dense
+          flat
+          round
+          icon="settings"
+          class="btn-ghost"
+          @click="editorSettingsDialogRef?.open()"
+        >
           <q-tooltip>{{ t('editorSettings.title') }}</q-tooltip>
         </q-btn>
         <EditorSettingsDialog
@@ -443,6 +460,9 @@
               <q-tab-panel name="apps">
                 <CustomAppList v-model="selectedCustomAppIndex" />
               </q-tab-panel>
+              <q-tab-panel name="schemas">
+                <EntitySchemaList v-model="selectedSchemaIndex" />
+              </q-tab-panel>
               <q-tab-panel name="contacts">
                 <ContactList v-model="selectedContactIndex"
               /></q-tab-panel>
@@ -499,6 +519,14 @@
                     <div v-else class="empty-state">
                       <q-icon name="widgets" size="40px" />
                       {{ t('editorPage.appsEmptyState') }}
+                    </div>
+                  </q-tab-panel>
+
+                  <q-tab-panel name="schemas">
+                    <EntitySchemaForm v-if="selectedSchemaDef" :def="selectedSchemaDef" />
+                    <div v-else class="empty-state">
+                      <q-icon name="dataset" size="40px" />
+                      {{ t('editorPage.schemasEmptyState') }}
                     </div>
                   </q-tab-panel>
 
@@ -657,6 +685,8 @@ import InteractionDefList from '@/editor/components/InteractionDefList.vue'
 import InteractionDefForm from '@/editor/components/InteractionDefForm.vue'
 import CustomAppList from '@/editor/components/CustomAppList.vue'
 import CustomAppEditor from '@/editor/components/CustomAppEditor.vue'
+import EntitySchemaList from '@/editor/components/EntitySchemaList.vue'
+import EntitySchemaForm from '@/editor/components/EntitySchemaForm.vue'
 import AssetsPanel from '@/editor/components/AssetsPanel.vue'
 import AssetTree from '@/editor/components/AssetTree.vue'
 import LocaleList from '@/editor/components/LocaleList.vue'
@@ -715,6 +745,7 @@ const NAV_TABS = [
   { name: 'events', icon: 'sensors', labelKey: 'editorPage.navLabelEvents' },
   { name: 'interactions', icon: 'touch_app', labelKey: 'editorPage.navLabelInteractions' },
   { name: 'apps', icon: 'widgets', labelKey: 'editorPage.navLabelApps' },
+  { name: 'schemas', icon: 'dataset', labelKey: 'editorPage.navLabelSchemas' },
   { name: 'contacts', icon: 'contacts', labelKey: 'editorPage.tabContacts' },
   { name: 'threads', icon: 'groups', labelKey: 'editorPage.tabThreads' },
   { name: 'game', icon: 'sports_esports', labelKey: 'editorPage.tabGame' },
@@ -790,6 +821,10 @@ const selectedCustomAppIndex = ref(0)
 const selectedCustomApp = computed(
   () => story.project?.customApps?.[selectedCustomAppIndex.value] || null,
 )
+const selectedSchemaIndex = ref(0)
+const selectedSchemaDef = computed(
+  () => story.project?.gameConfig?.entitySchemas?.[selectedSchemaIndex.value] || null,
+)
 // Selected folder path within assets/ ('' = root) — same lift-state-up
 // pattern as the selection refs above, shared between AssetTree (left pane)
 // and AssetsPanel (middle pane, filters its grid to this folder).
@@ -816,6 +851,7 @@ function currentDescriptor() {
     case 'game':
     case 'events':
     case 'interactions':
+    case 'schemas':
       return { kind: 'game' }
     case 'apps':
       return selectedCustomApp.value ? { kind: 'app', id: selectedCustomApp.value.id } : null
@@ -910,6 +946,9 @@ function navigateToResource(descriptor, hint) {
       if (hint?.viewMode === 'interactions' && hint.interactionIndex != null) {
         selectedInteractionIndex.value = hint.interactionIndex
       }
+      if (hint?.viewMode === 'schemas' && hint.schemaIndex != null) {
+        selectedSchemaIndex.value = hint.schemaIndex
+      }
       return true
     case 'app': {
       const idx = story.project?.customApps?.findIndex((a) => a.id === descriptor.id)
@@ -941,6 +980,9 @@ function currentNavHint() {
   }
   if (viewMode.value === 'interactions') {
     return { viewMode: 'interactions', interactionIndex: selectedInteractionIndex.value }
+  }
+  if (viewMode.value === 'schemas') {
+    return { viewMode: 'schemas', schemaIndex: selectedSchemaIndex.value }
   }
   return null
 }
@@ -1133,7 +1175,8 @@ async function save() {
     } else if (
       viewMode.value === 'game' ||
       viewMode.value === 'events' ||
-      viewMode.value === 'interactions'
+      viewMode.value === 'interactions' ||
+      viewMode.value === 'schemas'
     ) {
       await window.storieAPI.saveGame({
         rootPath: story.project.rootPath,
