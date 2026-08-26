@@ -21,8 +21,16 @@ export default {
     tabInteractions:
       'Interazioni — gesti sullo smartphone creati da te, richiamabili dalla timeline',
     tabApps: 'App — applicazioni per smartphone create con blocchi visivi',
+    tabData: 'Dati — Flag, Schemi, Contatti, Gruppi',
+    tabSchemas:
+      'Schemi — catalogo di dati strutturati (più campi per istanza) utilizzabili nelle app',
     tabContacts: 'Contatti',
     tabThreads: 'Gruppi',
+    dataSubFlags: 'Flag',
+    dataSubSchemas: 'Schemi',
+    dataSubContacts: 'Contatti',
+    dataSubThreads: 'Gruppi',
+    flagsSubtabHint: 'I flag non hanno selezione — vista completa a destra.',
     tabGame: 'Gioco',
     tabAssets: 'Risorse',
     tabI18n: 'Traduzioni',
@@ -50,6 +58,7 @@ export default {
     eventsEmptyState: 'Seleziona o crea un evento a sinistra.',
     interactionsEmptyState: "Seleziona o crea un'interazione a sinistra.",
     appsEmptyState: "Seleziona o crea un'app a sinistra.",
+    schemasEmptyState: 'Seleziona o crea uno schema a sinistra.',
     contactsEmptyState: 'Seleziona un contatto a sinistra.',
     threadsEmptyState: 'Seleziona un gruppo a sinistra.',
     i18nEmptyState: 'Seleziona una lingua a sinistra.',
@@ -90,6 +99,7 @@ export default {
     navLabelEvents: 'Eventi',
     navLabelInteractions: 'Interazioni',
     navLabelApps: 'App',
+    navLabelData: 'Dati',
   },
 
   buildStepper: {
@@ -346,14 +356,15 @@ export default {
         'Interrompe la musica attualmente in riproduzione, qualunque essa sia — posizionalo più avanti nella timeline per interrompere una traccia lasciata in loop.',
       trackLabel: 'Traccia (file audio)',
       titleLabel: 'Titolo visualizzato (opzionale)',
-      titleHelp: 'Mostrato nel widget musica della schermata home. Vuoto = dedotto dal nome del file.',
+      titleHelp:
+        'Mostrato nel widget musica della schermata home. Vuoto = dedotto dal nome del file.',
       loopLabel: 'Ripeti in loop',
       volumeLabel: 'Volume della traccia',
       volumeHelp:
         'Livello di mix proprio di questa traccia — si combina con il volume musica del giocatore (Impostazioni), non lo sostituisce.',
       fadeLabel: 'Dissolvenza (opzionale)',
       fadeStartHelp:
-        "Durata della dissolvenza in entrata. Se una musica era già in riproduzione, si dissolve nella stessa durata invece di interrompersi bruscamente.",
+        'Durata della dissolvenza in entrata. Se una musica era già in riproduzione, si dissolve nella stessa durata invece di interrompersi bruscamente.',
       fadeStopHelp: "Durata della dissolvenza in uscita prima dell'arresto completo.",
     },
     timeskip: {
@@ -443,6 +454,42 @@ export default {
     stepsTitle: 'Passaggi',
     stepsHelp:
       "Il giocatore deve completare ogni passaggio in ordine perché l'interazione sia vinta — lo scadere del limite di tempo di un passaggio lo fa fallire.",
+  },
+
+  entitySchemaList: {
+    empty: 'Nessuno schema ancora creato.',
+    fieldsCount: '{n} campi',
+    newSchema: 'Nuovo schema',
+    idLabel: 'Id',
+    labelLabel: 'Nome visualizzato',
+    idTaken: 'Questo id è già in uso.',
+  },
+
+  entitySchemaForm: {
+    identityTitle: 'Identità',
+    labelLabel: 'Nome visualizzato',
+    fieldsTitle: 'Campi',
+    fieldsHelp:
+      'Ogni istanza di questo schema (creata/modificata tramite gli effetti di una voce della timeline, di un pulsante...) avrà questi campi. Utilizzabile in un blocco lista (fonte "Entità") di un\'app personalizzata — {item:<chiave del campo>} nel suo contenuto ripetuto.',
+    fieldsEmpty: 'Nessun campo ancora — aggiungine almeno uno.',
+    addField: 'Aggiungi un campo',
+    fieldKeyLabel: 'Chiave',
+    fieldLabelLabel: 'Nome visualizzato',
+    fieldTypeLabel: 'Tipo',
+    refSchemaLabel: 'Schema di riferimento',
+    typeText: 'Testo',
+    typeNumber: 'Numero',
+    typeBoolean: 'Sì / no',
+    typeRefContact: 'Riferimento — contatto del progetto',
+    typeRefEntity: 'Riferimento — altro schema',
+    seedTitle: 'Istanze iniziali',
+    seedHelp:
+      'Presenti fin dall\'inizio di una nuova partita, senza che un Effetto debba essere eseguito — come la scheda "Contenuto iniziale", ma per questo schema.',
+    seedNeedsFields: 'Aggiungi prima almeno un campo qui sopra.',
+    seedEmpty: 'Nessuna istanza iniziale — lo schema parte vuoto.',
+    seedIdLabel: 'Id (opzionale)',
+    seedIdAutoHint: 'Vuoto = id generato automaticamente',
+    addSeedRow: "Aggiungi un'istanza iniziale",
   },
 
   stepsEditor: {
@@ -602,10 +649,14 @@ export default {
     onlyFollowedLabel: 'Solo contatti seguiti',
     listSourceContacts: 'Contatti',
     listSourceCollection: 'Raccolta (flag)',
+    listSourceEntity: 'Entità (schema)',
     listHelp:
       'Il contenuto qui sotto si ripete una volta per contatto — usa il pulsante variabile per inserire {item:name} in un campo di testo, oppure la casella qui sopra su un blocco avatar.',
     listCollectionHelp:
       'Il contenuto qui sotto si ripete una volta per ogni elemento della raccolta scelta (popolata tramite un elemento della timeline/effetto di un pulsante...) — usa il pulsante variabile per inserire {item:key}/{item:value}.',
+    listSchemaLabel: 'Schema',
+    listEntityHelp:
+      'Il contenuto qui sotto si ripete una volta per ogni istanza dello schema scelto (create/modificate tramite un elemento della timeline/effetto di un pulsante...) — usa il pulsante variabile per inserire {item:<nome del campo>}.',
     conversationsHelp:
       'Un vero modulo di conversazione (come Messaggi/Pixly) — elenco conversazioni, apertura di una conversazione, risposte guidate da scelte. I messaggi vengono inviati dalla timeline. I gruppi provengono dalla scheda Gruppi del progetto (stessi contatti/gruppi del DM nativo) — nulla da configurare qui per questo.',
     showAvatarLabel: "Mostra l'avatar del contatto",
@@ -635,6 +686,9 @@ export default {
       itemKey: "Chiave dell'elemento",
       itemValue: "Valore dell'elemento",
     },
+    entitiesTitle: 'Entità (schemi)',
+    entitiesHint:
+      '"*" = 1ª/unica istanza — sostituiscilo con un id preciso se lo schema ne ha più di una',
     flagsTitle: 'Flag del progetto',
     noFlags: 'Nessun flag ancora in questo progetto.',
     itemTitle: 'Contatto (blocco elenco)',
@@ -698,6 +752,16 @@ export default {
     valueTypeText: 'Testo',
     valueTypeNumber: 'Numero',
     addCollectionChange: 'Aggiungi una modifica alla raccolta',
+    entitiesTitle: 'Entità',
+    entitiesHelp:
+      'Crea/modifica/rimuove un\'istanza di uno schema (definito nella scheda Schemi) — più campi tipizzati per istanza, a differenza di una raccolta. Visualizzabile tramite un blocco Lista (fonte "Entità").',
+    noEntityChange: 'Nessuna entità modificata.',
+    schemaLabel: 'Schema',
+    entityIdLabel: 'Id (opzionale)',
+    entityIdAutoHint: 'Vuoto = id generato automaticamente',
+    modeSet: 'crea / modifica',
+    modeRemoveEntity: 'rimuovi',
+    addEntityChange: 'Aggiungi una modifica di entità',
     widgetsTitle: 'Widget del telefono',
     weatherLabel: 'Meteo',
     weatherCaption: 'Modifica il widget meteo della schermata home',
@@ -1046,7 +1110,8 @@ export default {
   webPreviewDialog: {
     loading: "Caricamento dell'anteprima...",
     readyTitle: 'Anteprima pronta',
-    readyHint: 'Scansiona questo codice con il telefono (stessa rete Wi-Fi), oppure apri questo link:',
+    readyHint:
+      'Scansiona questo codice con il telefono (stessa rete Wi-Fi), oppure apri questo link:',
     firewallHint:
       "Se Windows chiede di consentire l'accesso alla rete, clicca su Consenti (reti private).",
     errorTitle: 'Anteprima non riuscita',

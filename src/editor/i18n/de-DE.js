@@ -20,8 +20,16 @@ export default {
     tabEvents: 'Ereignisse — Reaktionen auf Spieleraktionen (außerhalb der Timeline)',
     tabInteractions: 'Interaktionen — selbst erstellte Handy-Gesten, aus der Timeline aufrufbar',
     tabApps: 'Apps — Handy-Anwendungen aus visuellen Blöcken',
+    tabData: 'Daten — Flags, Schemas, Kontakte, Gruppen',
+    tabSchemas:
+      'Schemas — Katalog strukturierter Daten (mehrere Felder pro Instanz), nutzbar in Apps',
     tabContacts: 'Kontakte',
     tabThreads: 'Gruppen',
+    dataSubFlags: 'Flags',
+    dataSubSchemas: 'Schemas',
+    dataSubContacts: 'Kontakte',
+    dataSubThreads: 'Gruppen',
+    flagsSubtabHint: 'Flags haben keine Auswahl — vollständige Ansicht rechts.',
     tabGame: 'Spiel',
     tabAssets: 'Assets',
     tabI18n: 'Übersetzungen',
@@ -50,6 +58,7 @@ export default {
     eventsEmptyState: 'Wähle links ein Ereignis aus oder erstelle eines.',
     interactionsEmptyState: 'Wähle links eine Interaktion aus oder erstelle eine.',
     appsEmptyState: 'Wähle links eine App aus oder erstelle eine.',
+    schemasEmptyState: 'Wähle links ein Schema aus oder erstelle eines.',
     contactsEmptyState: 'Wähle links einen Kontakt aus.',
     threadsEmptyState: 'Wähle links einen Thread aus.',
     i18nEmptyState: 'Wähle links eine Sprache aus.',
@@ -90,6 +99,7 @@ export default {
     navLabelEvents: 'Ereignisse',
     navLabelInteractions: 'Interaktionen',
     navLabelApps: 'Apps',
+    navLabelData: 'Daten',
   },
 
   buildStepper: {
@@ -344,7 +354,8 @@ export default {
         'Stoppt die gerade laufende Musik, egal welche — später in der Timeline platzieren, um einen in Dauerschleife gelassenen Titel zu beenden.',
       trackLabel: 'Titel (Audiodatei)',
       titleLabel: 'Angezeigter Titel (optional)',
-      titleHelp: 'Wird im Musik-Widget des Startbildschirms angezeigt. Leer = aus dem Dateinamen abgeleitet.',
+      titleHelp:
+        'Wird im Musik-Widget des Startbildschirms angezeigt. Leer = aus dem Dateinamen abgeleitet.',
       loopLabel: 'In Dauerschleife wiederholen',
       volumeLabel: 'Lautstärke des Titels',
       volumeHelp:
@@ -440,6 +451,42 @@ export default {
     stepsTitle: 'Schritte',
     stepsHelp:
       'Der Spieler muss jeden Schritt der Reihe nach abschließen, damit die Interaktion gewonnen wird — läuft das Zeitlimit eines Schritts ab, schlägt er fehl.',
+  },
+
+  entitySchemaList: {
+    empty: 'Noch kein Schema erstellt.',
+    fieldsCount: '{n} Felder',
+    newSchema: 'Neues Schema',
+    idLabel: 'ID',
+    labelLabel: 'Anzeigename',
+    idTaken: 'Diese ID wird bereits verwendet.',
+  },
+
+  entitySchemaForm: {
+    identityTitle: 'Identität',
+    labelLabel: 'Anzeigename',
+    fieldsTitle: 'Felder',
+    fieldsHelp:
+      'Jede Instanz dieses Schemas (erstellt/geändert über die Effekte eines Timeline-Eintrags, eines Buttons...) erhält diese Felder. Nutzbar in einem Listen-Block (Quelle „Entitäten") einer Custom-App — {item:<Feldschlüssel>} in dessen wiederholtem Inhalt.',
+    fieldsEmpty: 'Noch keine Felder — füge mindestens eines hinzu.',
+    addField: 'Feld hinzufügen',
+    fieldKeyLabel: 'Schlüssel',
+    fieldLabelLabel: 'Anzeigename',
+    fieldTypeLabel: 'Typ',
+    refSchemaLabel: 'Zielschema',
+    typeText: 'Text',
+    typeNumber: 'Zahl',
+    typeBoolean: 'Ja / Nein',
+    typeRefContact: 'Referenz — Projektkontakt',
+    typeRefEntity: 'Referenz — anderes Schema',
+    seedTitle: 'Startinstanzen',
+    seedHelp:
+      'Von Anfang an in einem neuen Spiel vorhanden, ohne dass ein Effekt laufen muss — wie der Tab „Startinhalt", nur für dieses Schema.',
+    seedNeedsFields: 'Füge zuerst mindestens ein Feld oben hinzu.',
+    seedEmpty: 'Keine Startinstanzen — das Schema startet leer.',
+    seedIdLabel: 'ID (optional)',
+    seedIdAutoHint: 'Leer = automatisch generierte ID',
+    addSeedRow: 'Startinstanz hinzufügen',
   },
 
   stepsEditor: {
@@ -601,10 +648,14 @@ export default {
     onlyFollowedLabel: 'Nur gefolgte Kontakte',
     listSourceContacts: 'Kontakte',
     listSourceCollection: 'Sammlung (Flag)',
+    listSourceEntity: 'Entitäten (Schema)',
     listHelp:
       'Der untenstehende Inhalt wiederholt sich für jeden Kontakt — nutze die Variablenschaltfläche, um {item:name} in ein Textfeld einzufügen, oder die Checkbox oben bei einem Avatar-Block.',
     listCollectionHelp:
       'Der untenstehende Inhalt wiederholt sich für jedes Element der gewählten Sammlung (befüllt über einen Timeline-Eintrag/Schaltflächeneffekt...) — nutze die Variablenschaltfläche, um {item:key}/{item:value} einzufügen.',
+    listSchemaLabel: 'Schema',
+    listEntityHelp:
+      'Der untenstehende Inhalt wiederholt sich für jede Instanz des gewählten Schemas (erstellt/geändert über einen Timeline-Eintrag/Schaltflächeneffekt...) — nutze die Variablenschaltfläche, um {item:<Feldname>} einzufügen.',
     conversationsHelp:
       'Ein echtes Unterhaltungsmodul (wie Nachrichten/Pixly) — Thread-Liste, Öffnen eines Threads, auswahlgesteuerte Antworten. Nachrichten werden über die Timeline gesendet. Gruppen stammen aus dem Tab „Gruppen" des Projekts (dieselben Kontakte/Gruppen wie native DMs) — hierfür ist nichts weiter zu konfigurieren.',
     showAvatarLabel: 'Avatar des Kontakts anzeigen',
@@ -634,6 +685,9 @@ export default {
       itemKey: 'Element-Schlüssel',
       itemValue: 'Element-Wert',
     },
+    entitiesTitle: 'Entitäten (Schemas)',
+    entitiesHint:
+      '„*" = 1. / einzige Instanz — durch eine konkrete ID ersetzen, wenn das Schema mehrere hat',
     flagsTitle: 'Projekt-Flags',
     noFlags: 'In diesem Projekt gibt es noch keine Flags.',
     itemTitle: 'Kontakt (Listenblock)',
@@ -697,6 +751,16 @@ export default {
     valueTypeText: 'Text',
     valueTypeNumber: 'Zahl',
     addCollectionChange: 'Sammlungsänderung hinzufügen',
+    entitiesTitle: 'Entitäten',
+    entitiesHelp:
+      'Erstellt/ändert/entfernt eine Instanz eines Schemas (definiert im Tab „Schemas") — mehrere typisierte Felder pro Instanz, im Gegensatz zu einer Sammlung. Anzeigbar über einen Listen-Block (Quelle „Entitäten").',
+    noEntityChange: 'Keine Entität geändert.',
+    schemaLabel: 'Schema',
+    entityIdLabel: 'ID (optional)',
+    entityIdAutoHint: 'Leer = automatisch generierte ID',
+    modeSet: 'erstellen / ändern',
+    modeRemoveEntity: 'entfernen',
+    addEntityChange: 'Entitätsänderung hinzufügen',
     widgetsTitle: 'Handy-Widgets',
     weatherLabel: 'Wetter',
     weatherCaption: 'Ändert das Wetter-Widget auf dem Homescreen',

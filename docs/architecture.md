@@ -117,7 +117,7 @@ my-project/
 ├── contacts.js            # export default [{ id, name, color, pseudo, avatar, ... }]
 ├── threads.js              # export default [...] — only GROUP DM threads need an entry
 ├── game.js                # gameConfig: title, flags catalog, events, interactions, appOrder,
-│                           #   disabledApps, matureContent, sounds, icon...
+│                           #   disabledApps, matureContent, sounds, icon, entitySchemas...
 ├── chapters/
 │   ├── chapter1.js         # export default { id, title, timeline: [...], next: [...], position }
 │   └── ...                 # one file per chapter, freely nested in subfolders
@@ -296,7 +296,9 @@ tree of visual blocks (`header`, `text`, `image`, `row`, `card`, `layout`, `badg
 `button`, `tabs`, `list`, `conversations` — see `src/engine/customApps/blockKinds.js`), stored as
 plain JSON at `apps/<id>.json` in the project, and rendered by one generic interpreter,
 `CustomAppRenderer.vue` (the same component instance for every custom app — same "one generic
-player driven by data" precedent as `InteractionPlayer.vue` for interactions).
+player driven by data" precedent as `InteractionPlayer.vue` for interactions). A `list` block's
+`source` is one of `contacts`/`flagCollection`/`entity` — the last iterates instances of an
+author-defined entity schema, see [Entity schemas](#conditions-effects-flags-events) below.
 
 **Merged registry**: `story.mergedAppRegistry` (a getter on the `story` store) concatenates
 `APP_REGISTRY` (native, code-defined) with `project.customApps` (author-built, JSON-defined),
@@ -325,6 +327,33 @@ is assumed numeric-or-boolean *everywhere* it's read:
   key — the only op that reads-before-writing).
 - **`following`** — not a flag at all, a *live* signal (`story.isFollowing(contactId)`), since it
   can change between when a condition is authored and when it's actually evaluated.
+
+**Entity schemas** (`game.entitySchemas[]`, edited in the Données tab's Schémas sub-tab) sit one
+level above flags: a flag collection is a flat `{ itemKey: value }` map (one scalar per entry,
+assumed everywhere it's read), but some data genuinely needs several *named, typed* fields per
+record — a character with a location and a mood, an item with a price and a quantity. A schema
+declares `{ id, label, fields: [{ key, label, type }] }` (`type` ∈ `text`/`number`/`boolean`/
+`ref:contact`/`ref:entity`); instances live in `story.entities[schemaId][entityId] = { field: value
+}`, a bucket of its own (not persisted-key-excluded, so it round-trips through save/load like
+`flagCollections`). Two ways instances come to exist:
+
+- **`schema.seed`** — `[{ entityId, fields }]` authored right on the schema, merged into
+  `story.entities` once by `seedInitialContent()` at a fresh game's very first start — same
+  "present before the timeline plays its first entry" precedent as `project.seed.messages`/`.dms`/
+  `.posts` (see [Project data on disk](#project-data-on-disk)), just kept on the schema itself
+  rather than in a generic bucket, since the field list an author needs is already right there.
+- **`effects.entities`** — `[{ schemaId, entityId, mode: 'set'|'remove', fields }]`, the same
+  "list of ops" shape `effects.collections` uses and for the same reason (one effect can touch more
+  than one entity, or the same one twice). `'set'` merges `fields` onto whatever's already at that
+  id (`Object.assign`, not overwrite) so an author can update a single field without
+  re-specifying the rest; a blank `entityId` auto-generates one.
+
+A schema has no visual representation on its own — it's consumed by a custom-app `list` block
+(`source: 'entity'`, see [The apps system](#the-apps-system)) or by the
+`{entity:<schemaId>:<entityId>:<field>}` token (`resolveDynamicText.js`), usable in any custom-app
+text field, not just inside a list's per-item template — `entityId: '*'` reads the first/only
+instance of that schema (`story.entityItems`, insertion order), useful for a singleton record (a
+wallet, a settings object) with no id to type.
 
 **Conditions** (`requires`) and **effects** — the same two builder components
 (`RequiresBuilder.vue`/`EffectsBuilder.vue`) are reused everywhere a condition/effect can be
@@ -443,6 +472,7 @@ itself, for every target platform:
 | **Entry** | One item in a chapter's `timeline[]` — a message, a choice, a VFX cue, etc. Has a `type` and an optional `requires`. |
 | **Flag** | A named variable (`story.flags[key]`), numeric or boolean, read by `requires` and written by `effects`. |
 | **Flag collection** | A named `{key: value}` map (`story.flagCollections[key]`) for ledger/history-shaped data — the third flag kind. |
+| **Entity schema** | An author-defined record type (`game.entitySchemas[]`) — id/label + typed fields. Instances live in `story.entities[schemaId][entityId]`. |
 | **Requires** | A condition object (`{ flags, following, collections }`) gating an entry, an edge, a choice option, a block, etc. |
 | **Effects** | A mutation object applied when an entry/option/event fires — flags, phone widgets, social deltas. |
 | **Entry-app** | The native/custom app a timeline entry type is scoped to (`ENTRY_TYPE_APP`) — drives hiding it when that app is disabled. |

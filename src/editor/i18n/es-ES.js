@@ -21,8 +21,16 @@ export default {
     tabInteractions:
       'Interacciones — gestos del teléfono que creas tú, invocables desde la línea temporal',
     tabApps: 'Aplicaciones — apps del teléfono creadas con bloques visuales',
+    tabData: 'Datos — Indicadores, Esquemas, Contactos, Grupos',
+    tabSchemas:
+      'Esquemas — catálogo de datos estructurados (varios campos por instancia) usables en las apps',
     tabContacts: 'Contactos',
     tabThreads: 'Grupos',
+    dataSubFlags: 'Indicadores',
+    dataSubSchemas: 'Esquemas',
+    dataSubContacts: 'Contactos',
+    dataSubThreads: 'Grupos',
+    flagsSubtabHint: 'Los indicadores no tienen selección — vista completa a la derecha.',
     tabGame: 'Juego',
     tabAssets: 'Recursos',
     tabI18n: 'Traducciones',
@@ -51,6 +59,7 @@ export default {
     eventsEmptyState: 'Selecciona o crea un evento a la izquierda.',
     interactionsEmptyState: 'Selecciona o crea una interacción a la izquierda.',
     appsEmptyState: 'Selecciona o crea una aplicación a la izquierda.',
+    schemasEmptyState: 'Selecciona o crea un esquema a la izquierda.',
     contactsEmptyState: 'Selecciona un contacto a la izquierda.',
     threadsEmptyState: 'Selecciona un hilo a la izquierda.',
     i18nEmptyState: 'Selecciona un idioma a la izquierda.',
@@ -91,6 +100,7 @@ export default {
     navLabelEvents: 'Eventos',
     navLabelInteractions: 'Interacciones',
     navLabelApps: 'Aplicaciones',
+    navLabelData: 'Datos',
   },
 
   buildStepper: {
@@ -452,6 +462,42 @@ export default {
       'El jugador debe completar cada paso en orden para ganar la interacción — que el límite de tiempo de un paso expire lo hace fallar.',
   },
 
+  entitySchemaList: {
+    empty: 'Aún no se ha creado ningún esquema.',
+    fieldsCount: '{n} campos',
+    newSchema: 'Nuevo esquema',
+    idLabel: 'Id',
+    labelLabel: 'Nombre mostrado',
+    idTaken: 'Este id ya está en uso.',
+  },
+
+  entitySchemaForm: {
+    identityTitle: 'Identidad',
+    labelLabel: 'Nombre mostrado',
+    fieldsTitle: 'Campos',
+    fieldsHelp:
+      'Cada instancia de este esquema (creada/modificada mediante los efectos de una entrada de la línea temporal, un botón...) tendrá estos campos. Usable en un bloque lista (fuente "Entidades") de una app personalizada — {item:<clave del campo>} en su contenido repetido.',
+    fieldsEmpty: 'Aún no hay campos — añade al menos uno.',
+    addField: 'Añadir un campo',
+    fieldKeyLabel: 'Clave',
+    fieldLabelLabel: 'Nombre mostrado',
+    fieldTypeLabel: 'Tipo',
+    refSchemaLabel: 'Esquema referenciado',
+    typeText: 'Texto',
+    typeNumber: 'Número',
+    typeBoolean: 'Sí / no',
+    typeRefContact: 'Referencia — contacto del proyecto',
+    typeRefEntity: 'Referencia — otro esquema',
+    seedTitle: 'Instancias iniciales',
+    seedHelp:
+      'Presentes desde el mismo inicio de una partida nueva, sin que un Efecto necesite ejecutarse — como la pestaña "Contenido inicial", pero para este esquema.',
+    seedNeedsFields: 'Añade primero al menos un campo arriba.',
+    seedEmpty: 'Sin instancias iniciales — el esquema empieza vacío.',
+    seedIdLabel: 'Id (opcional)',
+    seedIdAutoHint: 'Vacío = id generado automáticamente',
+    addSeedRow: 'Añadir una instancia inicial',
+  },
+
   stepsEditor: {
     empty: 'Aún no hay pasos — añade al menos uno.',
     stepHeader: 'Paso {n} — {kind}',
@@ -608,10 +654,14 @@ export default {
     onlyFollowedLabel: 'Solo contactos seguidos',
     listSourceContacts: 'Contactos',
     listSourceCollection: 'Colección (indicador)',
+    listSourceEntity: 'Entidades (esquema)',
     listHelp:
       'El contenido de abajo se repite una vez por contacto — usa el botón de variable para insertar {item:name} en un campo de texto, o la casilla de arriba en un bloque de avatar.',
     listCollectionHelp:
       'El contenido de abajo se repite una vez por elemento de la colección elegida (rellenada mediante un efecto de entrada de línea temporal/botón...) — usa el botón de variable para insertar {item:key}/{item:value}.',
+    listSchemaLabel: 'Esquema',
+    listEntityHelp:
+      'El contenido de abajo se repite una vez por instancia del esquema elegido (creadas/modificadas mediante un efecto de entrada de línea temporal/botón...) — usa el botón de variable para insertar {item:<nombre del campo>}.',
     conversationsHelp:
       'Un módulo de conversación real (como Mensajes/Pixly) — lista de hilos, apertura de un hilo, respuestas guiadas por elecciones. Los mensajes se envían desde la línea temporal. Los grupos provienen de la pestaña Hilos del proyecto (los mismos contactos/grupos que en DM nativo) — nada que configurar aquí para eso.',
     showAvatarLabel: 'Mostrar el avatar del contacto',
@@ -641,6 +691,9 @@ export default {
       itemKey: 'Clave del elemento',
       itemValue: 'Valor del elemento',
     },
+    entitiesTitle: 'Entidades (esquemas)',
+    entitiesHint:
+      '"*" = 1ª/única instancia — sustitúyelo por un id concreto si el esquema tiene varias',
     flagsTitle: 'Indicadores del proyecto',
     noFlags: 'Aún no hay indicadores en este proyecto.',
     itemTitle: 'Contacto (bloque de lista)',
@@ -704,6 +757,16 @@ export default {
     valueTypeText: 'Texto',
     valueTypeNumber: 'Número',
     addCollectionChange: 'Añadir un cambio de colección',
+    entitiesTitle: 'Entidades',
+    entitiesHelp:
+      'Crea/modifica/elimina una instancia de un esquema (definido en la pestaña Esquemas) — varios campos tipados por instancia, a diferencia de una colección. Se puede mostrar mediante un bloque Lista (fuente "Entidades").',
+    noEntityChange: 'Ninguna entidad modificada.',
+    schemaLabel: 'Esquema',
+    entityIdLabel: 'Id (opcional)',
+    entityIdAutoHint: 'Vacío = id generado automáticamente',
+    modeSet: 'crear / modificar',
+    modeRemoveEntity: 'eliminar',
+    addEntityChange: 'Añadir un cambio de entidad',
     widgetsTitle: 'Widgets del teléfono',
     weatherLabel: 'Clima',
     weatherCaption: 'Cambia el widget del clima de la pantalla de inicio',

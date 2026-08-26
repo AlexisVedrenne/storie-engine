@@ -60,15 +60,23 @@ id as payload), which you can react to from the **Events** tab exactly like any 
 ### Lists
 
 A `list` block repeats a block **template** — a small subtree you design once — once per item from
-one of two sources:
+one of three sources:
 
 - **Contacts** — every project contact (optionally filtered to only the ones the player follows).
 - **A flag collection** — one of your [flag collections](conditions-and-flags.md#flags), so a list
   can display a growing history/ledger/inventory the story has been building up via effects.
+- **Entities** — instances of an [entity schema](conditions-and-flags.md#entity-schemas) you've
+  defined in the Données tab, for records with more than one field each (a character, an item, a
+  transaction...).
 
 Inside the template, text fields can reference the current item with `{item:...}` tokens (a
-contact's name, pseudo, follower count, color — or a collection item's key/value, depending on the
-source).
+contact's name, pseudo, follower count, color; a collection item's key/value; or, for an entity
+list, one token per field of that schema — `{item:<fieldKey>}`).
+
+For an entity specifically, you're not limited to inside a list template: `{entity:<schemaId>:<entityId>:<field>}`
+works in **any** text field anywhere in the app builder, no list needed — use `*` as the entity id
+to mean "the first/only instance of that schema" (the common case for a singleton record like a
+wallet or a settings object), or a specific id to address one instance among several.
 
 ### Conversations
 

@@ -23,16 +23,38 @@ declare flags anywhere up front — you just start using a name (like `trustLeve
 
 ### The flags catalog
 
-The Game tab has a dedicated **flags catalog** dialog listing every flag used anywhere in your
-project — its type, how many places reference it, and (for a numeric flag) the actual minimum and
-maximum value it can reach, computed by really walking your chapter graph and choice branches, not
-just eyeballing the numbers you typed. It also flags anything read by a condition but never
-actually set by any effect anywhere — almost always an authoring mistake worth fixing. You can give
-any flag a human-readable label here too — the **Journal** app's "Flags" tab shows only flags that
-have a label, so this doubles as a simple way to expose selected stats to the player without any
-extra work.
+The **Données** tab's Flags sub-tab (also reachable as a quick dialog from any chapter, for editing
+a condition/effect without losing your place) lists every flag used anywhere in your project — its
+type, how many places reference it, and (for a numeric flag) the actual minimum and maximum value it
+can reach, computed by really walking your chapter graph and choice branches, not just eyeballing
+the numbers you typed. It also flags anything read by a condition but never actually set by any
+effect anywhere — almost always an authoring mistake worth fixing. You can give any flag a
+human-readable label here too — the **Journal** app's "Flags" tab shows only flags that have a
+label, so this doubles as a simple way to expose selected stats to the player without any extra
+work.
 
 ![The flags catalog, showing each flag's type, usage count, and reachable range](../images/flags-catalog.png)
+
+## Entity schemas
+
+Flags and flag collections cover a single value, or a flat key→value bucket. Some data genuinely
+needs *several named fields per record* — a character with a location and a mood, an item with a
+price and a quantity. That's what an **entity schema** is for, authored in the **Données** tab's
+Schémas sub-tab:
+
+- Give the schema an id/label, then add fields — each with its own key, label, and **type**: text,
+  number, boolean, or a reference to a project contact or to another schema.
+- **Instances** of a schema (the actual records) come from two places: **seed instances**, authored
+  right on the schema itself so they're present from the very start of a fresh game — no effect
+  needs to run first — and **effects**, which can create, update, or remove an instance while the
+  story plays (see [Effects](#effects) below).
+- Every instance gets an id — leave it blank on a seed row or an effect to auto-generate one, or
+  set your own if you need to reference that exact instance elsewhere later.
+
+A schema by itself doesn't show anything to the player — it's consumed from a **custom app's**
+`list` block (source "Entities") or from the `{entity:<schemaId>:<entityId>:<field>}` token, usable
+in any text field across the app builder. See
+[Custom apps — Lists](custom-apps-nocode.md#lists).
 
 ## Conditions (requires)
 
@@ -59,6 +81,8 @@ The other half of the same builder — what actually *changes* when an entry/opt
 
 - **Flags** — add/subtract a number, or set a boolean.
 - **Flag collections** — add, remove, or increment an item.
+- **Entities** — create/update an instance of a schema (only the fields you set are touched, the
+  rest of that instance is left alone) or remove one. See [Entity schemas](#entity-schemas).
 - **Phone widgets** — weather (city, temperature, condition, icon, caption), step count + goal,
   battery level, network bars/Wi-Fi, and the clock/date itself (pin it to a specific value, or
   release it back to real time). All purely decorative on their own — for bringing the home screen
