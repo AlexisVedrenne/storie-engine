@@ -87,31 +87,27 @@
         <div v-if="!seed.length" class="empty-hint">{{ t('entitySchemaForm.seedEmpty') }}</div>
 
         <div v-for="(row, i) in seed" :key="i" class="seed-row">
-          <q-btn
-            dense
-            flat
-            round
-            icon="close"
-            size="sm"
-            class="field-remove"
-            @click="removeSeedRow(i)"
-          >
-            <q-tooltip>{{ t('common.delete') }}</q-tooltip>
-          </q-btn>
-          <q-input
-            dense
-            outlined
-            :label="t('entitySchemaForm.seedIdLabel')"
-            :hint="t('entitySchemaForm.seedIdAutoHint')"
-            v-model="row.entityId"
-            class="key-input"
-          />
-          <EntityFieldInput
-            v-for="field in fields"
-            :key="field.key"
-            :field="field"
-            v-model="row.fields[field.key]"
-          />
+          <div class="seed-row-header">
+            <q-input
+              dense
+              outlined
+              :label="t('entitySchemaForm.seedIdLabel')"
+              :hint="t('entitySchemaForm.seedIdAutoHint')"
+              v-model="row.entityId"
+              class="seed-id-input"
+            />
+            <q-btn dense flat round icon="close" size="sm" @click="removeSeedRow(i)">
+              <q-tooltip>{{ t('common.delete') }}</q-tooltip>
+            </q-btn>
+          </div>
+          <div class="seed-fields">
+            <EntityFieldInput
+              v-for="field in fields"
+              :key="field.key"
+              :field="field"
+              v-model="row.fields[field.key]"
+            />
+          </div>
         </div>
 
         <q-btn
@@ -260,12 +256,33 @@ function removeSeedRow(i) {
 
 .seed-row {
   display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-  padding: var(--space-2);
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-3);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   background: var(--color-surface);
+}
+
+.seed-row-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.seed-id-input {
+  flex: 1;
+  max-width: 260px;
+}
+
+/* `auto-fill` + a `minmax` floor gives every field a fair, predictable
+   share instead of a flex-wrap row where widths fight each other — a
+   `text` field opts into spanning the full row via `.entity-field--wide`
+   (see EntityFieldInput.vue) instead of being squeezed next to a number
+   field the same way a short one would be. */
+.seed-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: var(--space-3);
 }
 </style>

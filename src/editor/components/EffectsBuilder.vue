@@ -190,7 +190,7 @@
           @update:model-value="sync"
         />
       </div>
-      <div v-if="row.mode === 'set' && schemaFields(row.schemaId).length" class="row-fields">
+      <div v-if="row.mode === 'set' && schemaFields(row.schemaId).length" class="entity-fields">
         <EntityFieldInput
           v-for="field in schemaFields(row.schemaId)"
           :key="field.key"
@@ -794,6 +794,7 @@ function sync() {
   position: relative;
   display: flex;
   align-items: flex-start;
+  flex-wrap: wrap;
   gap: var(--space-2);
   padding: var(--space-3);
   padding-right: var(--space-6);
@@ -808,6 +809,22 @@ function sync() {
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-2);
+}
+
+/* Grid, not flex-wrap, for the schema's OWN dynamic field list — an
+   unknown number of fields of unknown width needs would otherwise fight
+   each other for space in a wrapping flex row (a text field stuck at the
+   same cramped width as a number field next to it). `auto-fill` gives
+   each field a fair floor width; a `text` field opts into spanning the
+   full row via `.entity-field--wide` (see EntityFieldInput.vue). */
+.entity-fields {
+  flex-basis: 100%;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+  padding-top: var(--space-2);
+  border-top: 1px dashed var(--color-border);
 }
 
 .row-remove {
