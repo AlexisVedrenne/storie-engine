@@ -87,7 +87,7 @@ const baselineY = computed(() => CHART_H - PAD)
   display: flex;
   flex-direction: column;
   gap: 10px;
-  color: #fff;
+  color: var(--app-text);
 }
 
 .ledger-current {
@@ -108,20 +108,20 @@ const baselineY = computed(() => CHART_H - PAD)
 }
 
 .ledger-area {
-  fill: rgba(255, 255, 255, 0.12);
+  fill: rgba(var(--app-accent-rgb), 0.18);
   stroke: none;
 }
 
 .ledger-line {
   fill: none;
-  stroke: #fff;
+  stroke: var(--app-accent);
   stroke-width: 2;
   stroke-linejoin: round;
   stroke-linecap: round;
 }
 
 .ledger-dot {
-  fill: #fff;
+  fill: var(--app-accent);
 }
 
 .ledger-empty {

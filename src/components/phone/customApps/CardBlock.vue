@@ -18,8 +18,8 @@ defineProps({ block: { type: Object, required: true } })
 
 <style scoped>
 .card-block {
-  background: rgba(255, 255, 255, 0.06);
-  border-radius: 14px;
+  background: var(--app-surface);
+  border-radius: var(--app-radius);
   padding: 4px 14px;
 }
 </style>

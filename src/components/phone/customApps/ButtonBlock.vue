@@ -3,9 +3,9 @@
     type="button"
     class="button-block"
     :style="{
-      background: block.color || '#4c8bf5',
+      background: block.color || 'var(--app-accent)',
       color: block.textColor || undefined,
-      borderRadius: `${block.radius ?? 12}px`,
+      borderRadius: block.radius != null ? `${block.radius}px` : 'var(--app-radius)',
     }"
     @click="onClick"
   >

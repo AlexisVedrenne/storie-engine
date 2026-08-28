@@ -1,12 +1,12 @@
 <template>
-  <div class="app-screen">
+  <div class="app-screen" :style="themeVars">
     <img
       v-if="currentScreen?.background"
       :src="resolveAssetUrl(currentScreen.background)"
       class="screen-background"
       alt=""
     />
-    <BlockList v-if="currentScreen" :blocks="currentScreen.blocks || []" />
+    <BlockList v-if="currentScreen" :blocks="currentScreen.blocks || []" :gap="gapPx" />
   </div>
 </template>
 
@@ -59,6 +59,56 @@ provide('customAppNavigate', (screenId) => {
   activeScreenId.value = screenId
 })
 provide('customAppActiveScreenId', activeScreenId)
+
+// App theme (`def.theme`, authored in CustomAppEditor.vue's "Thème" panel)
+// — a small fixed set of design tokens (5-role palette, a font stack, a
+// radius scale, a spacing scale), resolved here into CSS custom properties
+// on the screen's own root so every block underneath picks them up through
+// normal CSS cascade/inheritance, with ZERO wiring needed in each block
+// component beyond swapping a hardcoded literal for `var(--app-*)` — no
+// provide()/inject() needed the way `customAppNavigate` needs one, since
+// this is purely a styling concern. `theme` is entirely optional — an app
+// that never opens its Thème panel gets exactly the literal defaults this
+// engine always shipped (accent #4c8bf5, text white, transparent
+// background), byte-for-byte, so no existing project's look changes.
+const FONT_STACKS = {
+  sans: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
+  serif: 'Georgia, "Times New Roman", serif',
+  mono: '"Courier New", Consolas, monospace',
+  rounded: '"Segoe UI Rounded", ui-rounded, system-ui, sans-serif',
+}
+// Deliberately NOT live Google Fonts — a packaged, exported game has no
+// guaranteed internet access (see docs/architecture.md's Vendoring
+// section), so a `<link>`-loaded web font would silently fail to load for
+// a player offline. These 4 stacks are made entirely of fonts already
+// installed with the OS/browser.
+const RADIUS_SCALE = { sharp: 6, normal: 12, round: 20 }
+const SPACING_SCALE = { tight: 6, normal: 10, loose: 16 }
+
+function hexToRgbTriplet(hex) {
+  const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex || '')
+  return m ? `${parseInt(m[1], 16)}, ${parseInt(m[2], 16)}, ${parseInt(m[3], 16)}` : '76, 139, 245'
+}
+
+const themeVars = computed(() => {
+  const theme = appDef.value?.theme || {}
+  const palette = theme.palette || {}
+  const accent = palette.accent || '#4c8bf5'
+  return {
+    '--app-bg': palette.background || 'transparent',
+    '--app-surface': palette.surface || 'rgba(255, 255, 255, 0.06)',
+    '--app-text': palette.text || '#ffffff',
+    '--app-accent': accent,
+    '--app-accent-rgb': hexToRgbTriplet(accent),
+    '--app-danger': palette.danger || '#e05252',
+    '--app-font': FONT_STACKS[theme.fontStack] || FONT_STACKS.sans,
+    '--app-radius': `${RADIUS_SCALE[theme.radius] ?? RADIUS_SCALE.normal}px`,
+  }
+})
+const gapPx = computed(() => {
+  const spacing = appDef.value?.theme?.spacing
+  return SPACING_SCALE[spacing] ?? SPACING_SCALE.normal
+})
 </script>
 
 <style scoped>
@@ -68,6 +118,9 @@ provide('customAppActiveScreenId', activeScreenId)
   overflow-y: auto;
   overflow-x: hidden;
   padding: 8px 16px 24px;
+  background: var(--app-bg);
+  color: var(--app-text);
+  font-family: var(--app-font);
 }
 
 /* No z-index needed — placed first in the template, default stacking order

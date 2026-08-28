@@ -3,7 +3,7 @@
     <AppTitleBar
       :title="title"
       :icon="block.icon || 'apps'"
-      :color="block.color || '#4c8bf5'"
+      :color="block.color || 'var(--app-accent)'"
       @back="phone.goHome()"
     />
   </div>

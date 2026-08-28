@@ -20,6 +20,21 @@ preview next to the editor, exactly like editing a chapter's timeline.
 An app can have multiple **screens** (switchable via a `tabs` block), and everything you build is
 saved as part of your project, ready to export like everything else.
 
+## App theme
+
+Every app has its own **Theme** panel (top of the editor, above Screens) — a 5-color palette
+(background, surface, text, accent, danger), a font (sans-serif, serif, monospace, or rounded), a
+corner-radius scale (sharp/normal/round), and a spacing density (tight/normal/loose). This is what
+gives two apps in the same project genuinely different identities — a clean sans-serif wallet next
+to a glitchy monospace black-market — without touching CSS.
+
+The theme only fills in what a block doesn't already set itself: a button whose own color you
+picked keeps that color regardless of the app's accent; a button with no color set uses the app's
+accent instead of the engine's generic default blue. Change the theme any time and every block that
+hasn't been individually overridden updates with it. Fonts are limited to families already
+installed on the player's device (no live Google Fonts) — a packaged, exported game can't rely on
+having internet access to fetch one.
+
 ## The block catalog
 
 | Block             | What it does                                                                                                                |

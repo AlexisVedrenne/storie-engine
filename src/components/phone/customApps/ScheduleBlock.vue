@@ -80,13 +80,13 @@ const currentPlace = computed(() => slots.value[activeIndex.value]?.place || '')
   display: flex;
   flex-direction: column;
   gap: 10px;
-  color: #fff;
+  color: var(--app-text);
 }
 
 .schedule-now {
   padding: 12px 14px;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.06);
+  border-radius: var(--app-radius);
+  background: var(--app-surface);
 }
 
 .schedule-now-label {

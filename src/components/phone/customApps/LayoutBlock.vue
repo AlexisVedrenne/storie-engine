@@ -23,7 +23,7 @@ import BlockList from './BlockList.vue'
 const props = defineProps({ block: { type: Object, required: true } })
 const wrapperStyle = computed(() =>
   props.block.bgColor
-    ? { background: props.block.bgColor, borderRadius: '14px', padding: '4px 14px' }
+    ? { background: props.block.bgColor, borderRadius: 'var(--app-radius)', padding: '4px 14px' }
     : {},
 )
 </script>

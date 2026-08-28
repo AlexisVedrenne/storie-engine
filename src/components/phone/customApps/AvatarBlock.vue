@@ -57,7 +57,7 @@ const src = computed(() =>
 }
 
 .avatar-label {
-  color: #fff;
+  color: var(--app-text);
   font-size: 13px;
   font-weight: 600;
 }

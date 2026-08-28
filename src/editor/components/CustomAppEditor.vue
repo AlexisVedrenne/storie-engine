@@ -30,6 +30,89 @@
     </div>
 
     <div class="panel">
+      <div class="section-label">
+        {{ t('customAppEditor.themeTitle') }}
+        <FieldHelp :text="t('customAppEditor.themeHelp')" />
+      </div>
+      <div class="theme-palette">
+        <ColorField
+          v-model="theme.palette.background"
+          :label="t('customAppEditor.themeBackground')"
+          default-value="transparent"
+          clearable
+        />
+        <ColorField
+          v-model="theme.palette.surface"
+          :label="t('customAppEditor.themeSurface')"
+          default-value="#2b2f36"
+          clearable
+        />
+        <ColorField
+          v-model="theme.palette.text"
+          :label="t('customAppEditor.themeText')"
+          default-value="#ffffff"
+          clearable
+        />
+        <ColorField
+          v-model="theme.palette.accent"
+          :label="t('customAppEditor.themeAccent')"
+          default-value="#4c8bf5"
+          clearable
+        />
+        <ColorField
+          v-model="theme.palette.danger"
+          :label="t('customAppEditor.themeDanger')"
+          default-value="#e05252"
+          clearable
+        />
+      </div>
+      <div class="row">
+        <div class="theme-scale-field">
+          <div class="theme-scale-label">{{ t('customAppEditor.themeFontLabel') }}</div>
+          <q-btn-toggle
+            dense
+            no-caps
+            v-model="theme.fontStack"
+            :options="[
+              { label: t('customAppEditor.themeFontSans'), value: 'sans' },
+              { label: t('customAppEditor.themeFontSerif'), value: 'serif' },
+              { label: t('customAppEditor.themeFontMono'), value: 'mono' },
+              { label: t('customAppEditor.themeFontRounded'), value: 'rounded' },
+            ]"
+          />
+        </div>
+      </div>
+      <div class="row">
+        <div class="theme-scale-field">
+          <div class="theme-scale-label">{{ t('customAppEditor.themeRadiusLabel') }}</div>
+          <q-btn-toggle
+            dense
+            no-caps
+            v-model="theme.radius"
+            :options="[
+              { label: t('customAppEditor.themeRadiusSharp'), value: 'sharp' },
+              { label: t('customAppEditor.themeRadiusNormal'), value: 'normal' },
+              { label: t('customAppEditor.themeRadiusRound'), value: 'round' },
+            ]"
+          />
+        </div>
+        <div class="theme-scale-field">
+          <div class="theme-scale-label">{{ t('customAppEditor.themeSpacingLabel') }}</div>
+          <q-btn-toggle
+            dense
+            no-caps
+            v-model="theme.spacing"
+            :options="[
+              { label: t('customAppEditor.themeSpacingTight'), value: 'tight' },
+              { label: t('customAppEditor.themeSpacingNormal'), value: 'normal' },
+              { label: t('customAppEditor.themeSpacingLoose'), value: 'loose' },
+            ]"
+          />
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
       <div class="section-label">{{ t('customAppEditor.screensTitle') }}</div>
       <q-tabs dense no-caps align="left" v-model="activeScreenId" class="screen-tabs">
         <q-tab
@@ -91,6 +174,7 @@ import { computed, provide, reactive, ref, watch } from 'vue'
 import BlockBuilder from '@/editor/components/BlockBuilder.vue'
 import AssetField from '@/editor/components/AssetField.vue'
 import ColorField from '@/editor/components/ColorField.vue'
+import FieldHelp from '@/editor/components/FieldHelp.vue'
 import IconPickerBtn from '@/components/shared/IconPickerBtn.vue'
 import { useEditorI18n } from '@/editor/i18n'
 
@@ -121,6 +205,26 @@ watch(
   },
   { immediate: true },
 )
+
+// Design tokens for this app — resolved into CSS custom properties by
+// CustomAppRenderer.vue, read by every customApps/* block component (see
+// its own comment for why no provide()/inject() is needed for this). Every
+// sub-field defaults eagerly the moment this panel is opened (same
+// "ensureX()" pattern as ensureFields()/ensureSeed() elsewhere in this
+// file's siblings, e.g. EntitySchemaForm.vue) — harmless since the written
+// default ('sans'/'normal'/'normal') is byte-identical to what an entirely
+// absent `theme` already falls back to at runtime, it just gives the
+// q-btn-toggle controls below a real selection to show instead of none.
+function ensureTheme() {
+  if (!props.def.theme) props.def.theme = {}
+  const theme = props.def.theme
+  if (!theme.palette) theme.palette = {}
+  if (!theme.fontStack) theme.fontStack = 'sans'
+  if (!theme.radius) theme.radius = 'normal'
+  if (!theme.spacing) theme.spacing = 'normal'
+  return theme
+}
+const theme = computed(() => ensureTheme())
 
 const screens = computed(() => props.def.screens || [])
 
@@ -191,6 +295,23 @@ const screenOptions = computed(() =>
 
 .grow {
   flex: 1 1 160px;
+}
+
+.theme-palette {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: var(--space-3);
+}
+
+.theme-scale-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.theme-scale-label {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
 }
 
 .screen-tabs {

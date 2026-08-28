@@ -310,6 +310,21 @@ numeric `story.flagCollections[flagKey]` (`LedgerBlock.vue`, plain inline SVG, n
 the same collection a `list` block's `flagCollection` source already reads, just rendered as a
 mini area-chart plus the entry list, coercing non-numeric entries to 0 for the chart only.
 
+**Per-app theme** (`customApp.theme`, edited in CustomAppEditor.vue's "Thème" panel): a small fixed
+set of design tokens — a 5-role palette (background/surface/text/accent/danger), a font stack
+(sans/serif/mono/rounded — real installed-font families, not live Google Fonts, since a packaged
+export has no guaranteed internet access, see [Vendoring](#vendoring-why-no-internet-access-is-needed)),
+a radius scale (sharp/normal/round), and a spacing scale (tight/normal/loose, applied to the root
+screen's block gap only, not nested containers). `CustomAppRenderer.vue` resolves `theme` (entirely
+optional — absent falls back to the engine's original literal defaults, byte-for-byte, so no
+existing app's look changes) into CSS custom properties (`--app-accent`, `--app-surface`,
+`--app-radius`...) set once on the screen's own root element; every `customApps/*` block component
+just swaps a hardcoded literal for `var(--app-*)`, picking the value up through normal CSS
+cascade/inheritance — no `provide()`/`inject()` plumbing needed the way `customAppNavigate` needs
+one, since this is a pure styling concern. A block's own explicit color/radius (when the author set
+one) still wins over the theme, which itself still loses to the engine's hard-coded fallback for
+anything genuinely fixed by design (a badge's pill shape, an avatar's circle) rather than themed.
+
 **Merged registry**: `story.mergedAppRegistry` (a getter on the `story` store) concatenates
 `APP_REGISTRY` (native, code-defined) with `project.customApps` (author-built, JSON-defined),
 normalized to the same `{ id, label, icon, color, badge, component }` shape so every consumer
