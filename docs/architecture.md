@@ -466,6 +466,44 @@ directly, same "props edited in place" convention every other editor form here a
 offered from two different blocks — same shape as `RequiresBuilder.vue` being reused everywhere a
 condition can be authored.
 
+**Actions that check, chain, and inform** (pilier 04, remaining sub-features — guard/toast/
+`openApp` shipped earlier): four new action kinds, all reusing existing infrastructure rather than
+inventing new mechanisms.
+
+- **`sequence`**: `steps[]`, each element itself an action-shaped object (the SAME fixed catalog,
+  including nesting another `sequence`) — `useBlockAction.js`'s `runAction()` is now `async` and
+  awaits each step strictly in order, so a `wait` or a blocking `triggerEntry` step genuinely holds
+  up whatever comes after it. Each step gets its own `requires`/`onFailToast` guard for free, since
+  every step re-enters the exact same `runAction()` recursively.
+- **`wait`**: `{ ms }`, resolves a `Promise` via `setTimeout` — only meaningful as a sequence step.
+- **`requestInput`**: opens a small centered prompt for ONE value, without the author building a
+  `sheet` + `form` combo by hand — scoped with the user as a shortcut rather than a dedicated new
+  widget. The action's own config carries the exact fields a `form` block does (`target`,
+  `flagKey`/`inputType` or `schemaId`/`entityId`/`fieldKey`) — `CustomAppRenderer.vue` turns it into
+  a SYNTHETIC `form` block at runtime (never part of the authored tree, never saved) with
+  `commitMode` forced to `'button'`, rendered in the same sheet-backdrop/panel shell as a real
+  `sheet`, at the `'center'` position. `FormBlock.vue` gained one new `submit` emit (fired from its
+  existing `submitDraft()`, additive — nothing else listens) so the prompt can close itself once the
+  value actually commits. The target-picking fields (`target`/flag-vs-entity sub-fields) were
+  extracted out of `form`'s own properties form into `FormTargetFields.vue` so this action's UI
+  doesn't duplicate them.
+- **`triggerEntry`**: `{ then: [] }`, run via `story.runThen()` — the SAME mechanism `game.events[]`
+  reactions already use (see `handleEngineEvent()`), just triggered by a tap instead of an engine
+  trigger, with the same documented limitation (a blocking step here can clobber `timelineResume` if
+  the main timeline is ALSO mid-choice/call at that exact moment). Authored with the full
+  `TimelineEditor.vue`, same reuse precedent as `EventForm.vue`'s own `then` tab — not a smaller
+  purpose-built editor for what's structurally the identical concept. Scoped with the user as an
+  inline authored mini-scene rather than a reference to an existing entry elsewhere, since entries
+  have no stable cross-referenceable id today and building one was judged not worth it without a
+  real need.
+
+`BlockActionEditor.vue` (the shared action-editing UI, see the Lookup entry above) generalized its
+`target.action` assumption into `target[actionKey]` (default `'action'`) specifically so a
+`sequence`'s own steps — a plain array, not an `{action: ...}` wrapper — can reuse the exact same
+component recursively: `:target="action.steps" :action-key="i"` reads/writes `action.steps[i]`
+directly. Vue's built-in SFC self-reference (a component can reference itself by its own filename in
+`<script setup>`, no explicit import) makes the recursion work with no extra wiring.
+
 **Merged registry**: `story.mergedAppRegistry` (a getter on the `story` store) concatenates
 `APP_REGISTRY` (native, code-defined) with `project.customApps` (author-built, JSON-defined),
 normalized to the same `{ id, label, icon, color, badge, component }` shape so every consumer

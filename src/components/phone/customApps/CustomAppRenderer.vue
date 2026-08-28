@@ -39,6 +39,22 @@
         </div>
       </div>
     </Transition>
+
+    <!-- `requestInput` action (pilier 04) — a quick modal prompt, NOT an
+         authored `sheet` block: reuses the exact same backdrop/panel CSS at
+         the 'center' position, with a synthesized `form` block as its only
+         content instead of BlockList. See `syntheticFormBlock` below. -->
+    <Transition name="sheet-center">
+      <div
+        v-if="syntheticFormBlock"
+        class="sheet-backdrop sheet-backdrop--center"
+        @click.self="requestInputConfig = null"
+      >
+        <div class="sheet-panel sheet-panel--center">
+          <FormBlock :block="syntheticFormBlock" @submit="requestInputConfig = null" />
+        </div>
+      </div>
+    </Transition>
   </div>
 </template>
 
@@ -56,6 +72,7 @@ import { useStoryStore } from '@/engine/stores/story'
 import { resolveAssetUrl } from '@/engine/assets'
 import { collectBlocksOfType } from '@/engine/customApps/appHasModule'
 import BlockList from './BlockList.vue'
+import FormBlock from './FormBlock.vue'
 
 const phone = usePhoneStore()
 const story = useStoryStore()
@@ -130,6 +147,31 @@ provide('customAppOpenSheet', (sheetId) => {
 provide('customAppCloseSheet', () => {
   openSheetId.value = null
 })
+
+// `requestInput` action (pilier 04) — a quick modal prompt for a single
+// value, WITHOUT the author having to build a `sheet` + `form` block combo
+// by hand for the common case. `requestInputConfig` is the action's own
+// config object ({ label, target, flagKey/inputType or schemaId/entityId/
+// fieldKey } — same shape `form` block authoring already uses), turned into
+// a real (if synthetic — never part of the authored block tree, never
+// saved) `form` block here. Always `commitMode: 'button'` regardless of
+// what the config carries: a modal prompt needs an explicit "submit" the
+// same way a real dialog does, not a live-writing field that closes on its
+// own. Closes on its own FormBlock's `submit` event, or on backdrop tap
+// (which just abandons the input, same as closing a `sheet` without
+// pressing anything inside it).
+const requestInputConfig = ref(null)
+watch(activeScreenId, () => {
+  requestInputConfig.value = null
+})
+provide('customAppRequestInput', (config) => {
+  requestInputConfig.value = config
+})
+const syntheticFormBlock = computed(() =>
+  requestInputConfig.value
+    ? { ...requestInputConfig.value, type: 'form', commitMode: 'button', readonly: false }
+    : null,
+)
 
 // App theme (`def.theme`, authored in CustomAppEditor.vue's "Thème" panel)
 // — a small fixed set of design tokens (5-role palette, a font stack, a

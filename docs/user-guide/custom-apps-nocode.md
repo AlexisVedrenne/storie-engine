@@ -76,7 +76,7 @@ block by block.
 
 ### Buttons
 
-A button can do one of eight things:
+A button (or a [search result](#search)) can do one of twelve things:
 
 1. **Nothing** — purely visual/decorative.
 2. **Apply effects** — the same effects system used everywhere else (flags, phone widgets,
@@ -94,9 +94,20 @@ A button can do one of eight things:
 8. **Open an app** — jumps straight to another app on the phone, native (Messages, Pixly, Journal...)
    or one you built, leaving the current app entirely. Optionally picks one of the target app's own
    screens (if it's a custom app) instead of its default one.
+9. **Request input** — opens a small centered prompt with one field (text, number, yes/no, or an
+   entity field) — writes straight into a flag or entity field, without you having to build a
+   [Sheet](#sheet) + [Input field](#input-field) combo by hand for the common case.
+10. **Trigger a scene** — runs a small scripted sequence (a message, a choice, a call...) authored
+    right on the action, using the exact same timeline editor as a chapter. Good for a purchase, a
+    correct guess, or any tap that should cause something to actually HAPPEN in the story, not just
+    flip a flag.
+11. **Wait** — pauses before the next step of a **Sequence** runs. Only useful inside one.
+12. **Sequence** — chains several of the above, in order: apply an effect, THEN wait a moment, THEN
+    show a confirmation message — one tap, several consequences. Each step can have its own
+    condition too.
 
-Whichever of the eight you pick, an optional **condition** can gate the whole thing — checked at the
-moment the button is tapped, not when the screen renders (that's what a block's own display
+Whichever of the twelve you pick, an optional **condition** can gate the whole thing — checked at
+the moment the button is tapped, not when the screen renders (that's what a block's own display
 condition already does). If the condition doesn't hold, the action is cancelled; you can optionally
 show a message explaining why (e.g. "Not enough funds.") instead of the tap silently doing nothing.
 
@@ -238,9 +249,9 @@ engine, not a browsable list with a filter on top. Every word they type has to a
 a result's title, excerpt, or source for it to show up (searching "red key" only matches a result
 that mentions both "red" and "key" somewhere).
 
-Each result can also have its own **action on tap** — the exact same eight kinds a
-[button](#buttons) offers (apply effects, open a sheet, jump to another app...). Nothing happens by
-default; a result is just text to read until you give it one.
+Each result can also have its own **action on tap** — the exact same kinds a [button](#buttons)
+offers (apply effects, open a sheet, jump to another app, trigger a whole scene...). Nothing
+happens by default; a result is just text to read until you give it one.
 
 ## Variables and translation
 

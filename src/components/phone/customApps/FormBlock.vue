@@ -68,6 +68,12 @@ import { useContactOptions } from '@/components/shared/useContactOptions'
 import { resolveDynamicText } from '@/engine/customApps/resolveDynamicText'
 
 const props = defineProps({ block: { type: Object, required: true } })
+// Fires once the 'button' commit mode actually writes the value — nothing
+// listened to this until pilier 04's `requestInput` action (CustomAppRenderer.vue
+// renders a synthetic `form` block inside a prompt sheet, listens for this
+// to auto-close it), so it's additive: existing usage with no listener is
+// unaffected.
+const emit = defineEmits(['submit'])
 const story = useStoryStore()
 const { contactOptions } = useContactOptions()
 const { t } = useI18n()
@@ -152,6 +158,7 @@ function onRawInput(value) {
 
 function submitDraft() {
   onChange(draft.value)
+  emit('submit')
 }
 
 function onChange(value) {

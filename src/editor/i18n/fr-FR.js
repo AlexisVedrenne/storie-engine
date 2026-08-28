@@ -725,6 +725,20 @@ export default {
     actionOpenAppLabel: 'App à ouvrir',
     actionOpenAppScreenLabel: 'Écran (optionnel)',
     actionOpenAppScreenHint: 'Laisse vide pour l’écran par défaut de cette app.',
+    actionRequestInput: 'Demander une saisie',
+    actionRequestInputHelp:
+      'Ouvre une petite invite centrée avec un seul champ — écrit direct dans un flag ou un champ d’entité, sans avoir à construire une feuille toi-même.',
+    actionTriggerEntry: 'Déclencher une scène',
+    actionTriggerEntryHelp:
+      'Lance une mini-séquence scriptée (message, choix, appel...) — comme les réactions de la page Événements, mais depuis un tap au lieu d’un déclencheur.',
+    actionWait: 'Attendre',
+    actionWaitHelp: 'Marque une pause avant l’action suivante d’une séquence.',
+    actionWaitMsLabel: 'Durée',
+    actionSequence: 'Séquence',
+    actionSequenceHelp:
+      'Enchaîne plusieurs actions à la suite, dans l’ordre — un tap, plusieurs conséquences.',
+    actionSequenceStepN: 'Étape {n}',
+    actionSequenceAddStep: 'Ajouter une étape',
     actionGuardTitle: 'Condition avant action (avancé)',
     actionGuardHelp:
       'Si posée, vérifiée AVANT que l’action ci-dessus s’applique — si elle échoue, l’action est annulée (rien ne se passe, ou le message ci-dessous s’affiche à la place).',
