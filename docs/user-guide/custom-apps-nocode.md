@@ -43,6 +43,25 @@ hasn't been individually overridden updates with it. Fonts are limited to famili
 installed on the player's device (no live Google Fonts) — a packaged, exported game can't rely on
 having internet access to fetch one.
 
+**Export**/**Import** (next to the panel's title) save or load a theme as a standalone `.json`
+file — a look you like can be reused across apps or shared with someone else, the same way a whole
+app can, without dragging the app itself along. Importing REPLACES the current app's entire theme.
+
+## Author tools
+
+Two things make building against invisible state (a flag, an entity field) less of a guessing game:
+
+- **Variable inspector** — the small panel next to the phone preview (click the arrow to
+  show/hide it) lists every flag and entity field the CURRENTLY OPEN screen's blocks actually
+  reference — in a display condition, an action's guard, a `{flag:...}`/`{entity:...}` token, a
+  Schedule/Ledger/Input field's own target — each with its live current value, updating as you
+  click around the preview.
+- **Test as player** (button next to the screen's own toolbar) — generates fake data (3 instances
+  per entity schema, 5 entries per collection) for everything the app references, so a `List`/
+  `Schedule`/`Ledger` block shows something realistic without you first playing through the chapter
+  that would normally fill it, or hand-authoring seed rows just to check a layout. Click it again to
+  clear the fake data and restart a clean preview.
+
 ## The block catalog
 
 | Block             | What it does                                                                                                                           |

@@ -57,6 +57,19 @@ export const usePhoneStore = defineStore('phone', {
     // spirit as editorSelectedBlock — nothing in the editor's own UI ever
     // sets it from outside a block row, so this never fires for a player.
     hoveredEditorBlock: null,
+
+    // Which screen (the full `{id,label,blocks,...}` def, not just an id)
+    // the Apps tab's own builder currently has selected — set by
+    // CustomAppEditor.vue whenever its `currentScreen` changes, read by
+    // VariableInspectorPanel.vue (pilier 07) to know which block tree to
+    // scan for referenced flags/entity fields. Deliberately the BUILDER's
+    // own selection, not whichever screen the live phone preview happens to
+    // be showing right now (that's local state inside CustomAppRenderer.vue,
+    // not reachable from EditorPage.vue, an ANCESTOR of it in the tree) —
+    // an approximation, but the one that needs no new cross-component
+    // plumbing beyond the same "phone store as the editor<->preview
+    // channel" precedent editorSelectedBlock/hoveredEditorBlock already are.
+    editorActiveScreen: null,
   }),
 
   actions: {

@@ -504,6 +504,37 @@ component recursively: `:target="action.steps" :action-key="i"` reads/writes `ac
 directly. Vue's built-in SFC self-reference (a component can reference itself by its own filename in
 `<script setup>`, no explicit import) makes the recursion work with no extra wiring.
 
+**Author tooling** (pilier 07, final pilier of the roadmap — the visual schema designer itself,
+`EntitySchemaForm.vue`, already shipped earlier): three sub-features, all scoped with the user
+before building.
+
+- **Live variable inspector** (`VariableInspectorPanel.vue`, docked next to the phone preview in
+  `EditorPage.vue`'s Apps-tab pane, `v-if="viewMode === 'apps'"`): lists every flag/collection/
+  entity-field the CURRENTLY-SELECTED-IN-THE-BUILDER screen's blocks reference, with its live
+  value. `collectScreenVariables.js` walks the screen's block tree — the same recursive `.blocks`/
+  `.template` shape every other walk here uses — picking up STRUCTURED references (a `schedule`
+  block's own `schemaId`/`fieldKey`, a `ledger`'s `flagKey`, any `requires`/`effects` object) and
+  free-typed `{flag:x}`/`{entity:s:e:f}` tokens found via regex across every other own string field.
+  Deliberately does NOT descend into a `triggerEntry` action's own `then[]` (timeline entries are a
+  different shape entirely) — out of scope for a first cut. Reads `phone.editorActiveScreen`, a new
+  small piece of state on the SAME "phone store as the editor↔preview channel" precedent
+  `editorSelectedBlock`/`hoveredEditorBlock` already are — the BUILDER's own screen selection
+  (`CustomAppEditor.vue`'s `currentScreen`), not whichever screen the live phone preview happens to
+  be showing (that's local `ref` state inside `CustomAppRenderer.vue`, unreachable from
+  `EditorPage.vue`, an ANCESTOR of it — provide/inject only flows downward).
+- **Test as player** (`generateTestData.js`, a button in `CustomAppEditor.vue`'s screen toolbar):
+  reuses `collectScreenVariables()`'s own output (filtered to `entity`/`collection` kinds) to know
+  which schemas/collections the app touches, then fabricates 3 entity instances / 5 collection
+  entries per one referenced, merged directly into the live `story.entities`/`story.flagCollections`
+  state. Turning it back OFF is just another `previewCustomApp()` call — the SAME clean reset
+  "Relancer l'aperçu" already does — rather than tracking and undoing exactly what was injected;
+  `testModeOn` also resets automatically when `selectedCustomApp` changes, so it can never carry
+  fake data into a different app silently.
+- **Theme presets**: `project:exportTheme`/`project:importTheme` (`src-electron/ipc/customApps.js`)
+  save/load `customApp.theme` as a plain `.json` file — NOT the app export/import `.zip` pipeline,
+  scoped with the user: a theme (palette/font-stack enum/radius/spacing) never references an asset,
+  so a zip would carry nothing beyond the same JSON anyway.
+
 **Merged registry**: `story.mergedAppRegistry` (a getter on the `story` store) concatenates
 `APP_REGISTRY` (native, code-defined) with `project.customApps` (author-built, JSON-defined),
 normalized to the same `{ id, label, icon, color, badge, component }` shape so every consumer

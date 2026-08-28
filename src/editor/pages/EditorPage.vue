@@ -529,7 +529,12 @@
                   </q-tab-panel>
 
                   <q-tab-panel name="apps">
-                    <CustomAppEditor v-if="selectedCustomApp" :def="selectedCustomApp" />
+                    <CustomAppEditor
+                      v-if="selectedCustomApp"
+                      :def="selectedCustomApp"
+                      :test-mode-on="testModeOn"
+                      @toggle-test-mode="toggleTestMode"
+                    />
                     <div v-else class="empty-state">
                       <q-icon name="widgets" size="40px" />
                       {{ t('editorPage.appsEmptyState') }}
@@ -590,6 +595,7 @@
               <template #after>
                 <div class="pane preview-pane">
                   <div id="phone-slot-docked"></div>
+                  <VariableInspectorPanel v-if="viewMode === 'apps'" />
                 </div>
               </template>
             </q-splitter>
@@ -700,6 +706,8 @@ import InteractionDefList from '@/editor/components/InteractionDefList.vue'
 import InteractionDefForm from '@/editor/components/InteractionDefForm.vue'
 import CustomAppList from '@/editor/components/CustomAppList.vue'
 import CustomAppEditor from '@/editor/components/CustomAppEditor.vue'
+import VariableInspectorPanel from '@/editor/components/VariableInspectorPanel.vue'
+import { generateTestData } from '@/editor/utils/generateTestData'
 import EntitySchemaList from '@/editor/components/EntitySchemaList.vue'
 import EntitySchemaForm from '@/editor/components/EntitySchemaForm.vue'
 import AssetsPanel from '@/editor/components/AssetsPanel.vue'
@@ -1327,6 +1335,28 @@ function previewFrom(chapterId) {
 // exactly this. playerName/locale/color are preserved across the reset
 // (defaulted only the first time) so the identity shown doesn't churn on
 // every app switch.
+// "Test as player" mode (pilier 07) — a per-open-app-session toggle, reset
+// whenever `selectedCustomApp` changes (see the watch just below) so it
+// never silently carries fake data into a DIFFERENT app. Turning it OFF
+// just calls previewCustomApp() again — the exact same clean reset
+// "Relancer l'aperçu" already does — rather than tracking/undoing exactly
+// what was injected.
+const testModeOn = ref(false)
+function toggleTestMode() {
+  if (!selectedCustomApp.value) return
+  testModeOn.value = !testModeOn.value
+  previewCustomApp(selectedCustomApp.value.id)
+  if (testModeOn.value) {
+    const { entities, flagCollections } = generateTestData(
+      selectedCustomApp.value,
+      story.project?.gameConfig,
+      story.project?.contacts,
+    )
+    Object.assign(story.entities, entities)
+    Object.assign(story.flagCollections, flagCollections)
+  }
+}
+
 function previewCustomApp(appId) {
   const prevName = story.playerName
   const prevLocale = story.locale
@@ -1352,7 +1382,10 @@ function previewCustomApp(appId) {
 watch(
   () => (viewMode.value === 'apps' ? selectedCustomApp.value : null),
   (app) => {
-    if (app) previewCustomApp(app.id)
+    if (app) {
+      testModeOn.value = false
+      previewCustomApp(app.id)
+    }
   },
 )
 

@@ -583,6 +583,9 @@ export default {
     screensTitle: 'Pantallas',
     screenLabelLabel: 'Nombre de la pantalla',
     addScreen: 'Añadir una pantalla',
+    testModeToggle: 'Probar como jugador',
+    testModeHelp:
+      'Genera instancias/entradas ficticias para todo lo que esta app referencia (esquemas de entidad, colecciones) — útil para ver un resultado sin tener que jugar el capítulo que normalmente los rellenaría. Vuelve a pulsar para reiniciar una vista previa limpia.',
     screenBackgroundLabel: 'Fondo (opcional)',
     screenBackgroundHelp:
       'Una imagen o un breve vídeo en bucle detrás de todos los bloques de esta pantalla, con opacidad ajustable.',
@@ -591,6 +594,12 @@ export default {
     backgroundOpacityLabel: 'Opacidad',
     sheetUnnamed: 'Hoja sin nombre',
     themeTitle: 'Tema',
+    themeExport: 'Exportar',
+    themeExportTooltip: 'Guarda este tema en un archivo .json, compartible como una app.',
+    themeExported: 'Tema exportado.',
+    themeImport: 'Importar',
+    themeImportTooltip: 'Reemplaza el tema de esta app por el de un archivo .json.',
+    themeImported: 'Tema importado.',
     themeHelp:
       'Colores/fuente/radio por defecto de esta app — cualquier bloque puede seguir anulándolos individualmente (el color de un botón, etc.), esto solo define lo que no está ya fijado bloque por bloque.',
     themeBackground: 'Fondo',
@@ -650,6 +659,16 @@ export default {
     ledger: { label: 'Registro (gráfico)' },
     form: { label: 'Campo de entrada' },
     lookup: { label: 'Búsqueda' },
+  },
+
+  variableInspector: {
+    title: 'Variables',
+    help: 'Valor actual de cada flag/campo de entidad que referencian los bloques de esta pantalla.',
+    toggle: 'Mostrar/ocultar el inspector',
+    empty: 'Ninguna variable referenciada en esta pantalla.',
+    unset: '(sin definir)',
+    collectionCount: '{n} entrada(s)',
+    noInstance: '(sin instancia)',
   },
 
   blockProps: {

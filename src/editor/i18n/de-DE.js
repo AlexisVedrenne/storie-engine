@@ -575,6 +575,9 @@ export default {
     screensTitle: 'Bildschirme',
     screenLabelLabel: 'Bildschirmname',
     addScreen: 'Bildschirm hinzufügen',
+    testModeToggle: 'Als Spieler testen',
+    testModeHelp:
+      'Erzeugt Fake-Instanzen/Einträge für alles, was diese App referenziert (Entitätsschemas, Sammlungen) — praktisch, um eine echte Darstellung zu sehen, ohne das Kapitel zu spielen, das sie normalerweise füllen würde. Erneut klicken startet eine saubere Vorschau neu.',
     screenBackgroundLabel: 'Hintergrund (optional)',
     screenBackgroundHelp:
       'Ein Bild oder ein kurzes Video in Endlosschleife hinter allen Blöcken dieses Bildschirms, mit einstellbarer Deckkraft.',
@@ -583,6 +586,12 @@ export default {
     backgroundOpacityLabel: 'Deckkraft',
     sheetUnnamed: 'Unbenanntes Blatt',
     themeTitle: 'Design',
+    themeExport: 'Exportieren',
+    themeExportTooltip: 'Speichert dieses Design in einer .json-Datei, teilbar wie eine App.',
+    themeExported: 'Design exportiert.',
+    themeImport: 'Importieren',
+    themeImportTooltip: 'Ersetzt das Design dieser App durch eines aus einer .json-Datei.',
+    themeImported: 'Design importiert.',
     themeHelp:
       'Standardfarben/-schrift/-radius dieser App — jeder Block kann sie weiterhin einzeln überschreiben (z. B. die Farbe eines Buttons); dies legt nur fest, was nicht schon Block für Block gesetzt ist.',
     themeBackground: 'Hintergrund',
@@ -642,6 +651,16 @@ export default {
     ledger: { label: 'Verlauf (Diagramm)' },
     form: { label: 'Eingabefeld' },
     lookup: { label: 'Suche' },
+  },
+
+  variableInspector: {
+    title: 'Variablen',
+    help: 'Aktueller Wert jedes Flags/Entitätsfelds, auf das die Blöcke dieses Bildschirms verweisen.',
+    toggle: 'Inspektor ein-/ausblenden',
+    empty: 'Keine Variable auf diesem Bildschirm referenziert.',
+    unset: '(nicht gesetzt)',
+    collectionCount: '{n} Eintrag/Einträge',
+    noInstance: '(keine Instanz)',
   },
 
   blockProps: {

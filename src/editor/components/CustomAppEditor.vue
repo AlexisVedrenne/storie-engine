@@ -33,6 +33,27 @@
       <div class="section-label">
         {{ t('customAppEditor.themeTitle') }}
         <FieldHelp :text="t('customAppEditor.themeHelp')" />
+        <q-space />
+        <q-btn
+          dense
+          flat
+          no-caps
+          icon="download"
+          :label="t('customAppEditor.themeExport')"
+          @click="exportTheme"
+        >
+          <q-tooltip>{{ t('customAppEditor.themeExportTooltip') }}</q-tooltip>
+        </q-btn>
+        <q-btn
+          dense
+          flat
+          no-caps
+          icon="upload"
+          :label="t('customAppEditor.themeImport')"
+          @click="importTheme"
+        >
+          <q-tooltip>{{ t('customAppEditor.themeImportTooltip') }}</q-tooltip>
+        </q-btn>
       </div>
       <div class="theme-palette">
         <ColorField
@@ -152,6 +173,17 @@
         >
           <q-tooltip>{{ t('common.delete') }}</q-tooltip>
         </q-btn>
+        <q-btn
+          dense
+          flat
+          no-caps
+          icon="smart_toy"
+          :label="t('customAppEditor.testModeToggle')"
+          :class="testModeOn ? 'btn-ghost test-mode-active' : 'btn-ghost'"
+          @click="$emit('toggle-test-mode')"
+        >
+          <q-tooltip>{{ t('customAppEditor.testModeHelp') }}</q-tooltip>
+        </q-btn>
       </div>
 
       <template v-if="currentScreen">
@@ -199,7 +231,9 @@
 </template>
 
 <script setup>
-import { computed, provide, reactive, ref, watch } from 'vue'
+import { computed, onUnmounted, provide, reactive, ref, watch } from 'vue'
+import { Notify } from 'quasar'
+import { usePhoneStore } from '@/engine/stores/phone'
 import BlockBuilder from '@/editor/components/BlockBuilder.vue'
 import { collectBlocksOfType } from '@/engine/customApps/appHasModule'
 import AssetField from '@/editor/components/AssetField.vue'
@@ -209,7 +243,16 @@ import IconPickerBtn from '@/components/shared/IconPickerBtn.vue'
 import { useEditorI18n } from '@/editor/i18n'
 
 const { t } = useEditorI18n()
-const props = defineProps({ def: { type: Object, required: true } })
+const phone = usePhoneStore()
+const props = defineProps({
+  def: { type: Object, required: true },
+  // Owned by EditorPage.vue (needs previewCustomApp()/story access this
+  // component doesn't have) — this component only reflects the toggle's
+  // state and asks for it to flip, see `toggleTestMode()`'s own comment
+  // there for why turning it off is just another preview reset.
+  testModeOn: { type: Boolean, default: false },
+})
+defineEmits(['toggle-test-mode'])
 
 // Shared by every BlockBuilder instance on screen (the top-level one plus
 // one per nested card/layout) so a block can be dragged INTO or OUT OF a
@@ -256,11 +299,46 @@ function ensureTheme() {
 }
 const theme = computed(() => ensureTheme())
 
+// Theme presets (pilier 07) — export writes the CURRENT app's own theme to
+// a plain `.json` file (no assets to bundle, see the IPC handler's own
+// comment for why this isn't the app export/import .zip pipeline); import
+// REPLACES this app's theme wholesale with whatever the picked file
+// contains, same "wholesale replace, not a field-by-field merge" precedent
+// as switching a button's action kind.
+async function exportTheme() {
+  try {
+    const ok = await window.storieAPI.exportTheme({ theme: theme.value })
+    if (ok) Notify.create({ type: 'positive', message: t('customAppEditor.themeExported') })
+  } catch (err) {
+    Notify.create({ type: 'negative', message: err.message || String(err) })
+  }
+}
+async function importTheme() {
+  try {
+    const imported = await window.storieAPI.importTheme()
+    if (!imported) return
+    props.def.theme = imported
+    Notify.create({ type: 'positive', message: t('customAppEditor.themeImported') })
+  } catch (err) {
+    Notify.create({ type: 'negative', message: err.message || String(err) })
+  }
+}
+
 const screens = computed(() => props.def.screens || [])
 
 const currentScreen = computed(
   () => screens.value.find((s) => s.id === activeScreenId.value) || screens.value[0],
 )
+
+// See phone.js's own comment on `editorActiveScreen` — keeps the live
+// variable inspector (pilier 07) pointed at whichever screen this builder
+// currently has open. Cleared on unmount so leaving the Apps tab doesn't
+// leave a stale screen's variables lingering for whatever shows up in that
+// same phone-preview slot next (a chapter, another app).
+watch(currentScreen, (s) => (phone.editorActiveScreen = s || null), { immediate: true })
+onUnmounted(() => {
+  phone.editorActiveScreen = null
+})
 
 function ensureBlocks(screen) {
   if (!screen.blocks) screen.blocks = []
@@ -308,6 +386,12 @@ const sheetOptions = computed(() =>
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
+}
+
+.test-mode-active {
+  color: var(--color-primary, #4c8bf5);
+  background: rgba(76, 139, 245, 0.12);
+  border-radius: var(--radius-sm);
 }
 
 .panel {

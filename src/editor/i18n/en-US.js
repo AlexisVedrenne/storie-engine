@@ -564,6 +564,9 @@ export default {
     screensTitle: 'Screens',
     screenLabelLabel: 'Screen name',
     addScreen: 'Add a screen',
+    testModeToggle: 'Test as player',
+    testModeHelp:
+      'Generates fake instances/entries for everything this app references (entity schemas, collections) — handy to see a real-looking render without playing through the chapter that would normally fill them. Click again to restart a clean preview.',
     screenBackgroundLabel: 'Background (optional)',
     screenBackgroundHelp:
       'An image or a short looping video behind every block on this screen, with adjustable opacity.',
@@ -572,6 +575,12 @@ export default {
     backgroundOpacityLabel: 'Opacity',
     sheetUnnamed: 'Unnamed sheet',
     themeTitle: 'Theme',
+    themeExport: 'Export',
+    themeExportTooltip: 'Saves this theme to a .json file, shareable like an app.',
+    themeExported: 'Theme exported.',
+    themeImport: 'Import',
+    themeImportTooltip: "Replaces this app's theme with one from a .json file.",
+    themeImported: 'Theme imported.',
     themeHelp:
       "This app's default colors/font/radius — any block can still override them individually (a button's own color, etc.), this only sets what isn't already set block by block.",
     themeBackground: 'Background',
@@ -631,6 +640,16 @@ export default {
     ledger: { label: 'Ledger (chart)' },
     form: { label: 'Input field' },
     lookup: { label: 'Search' },
+  },
+
+  variableInspector: {
+    title: 'Variables',
+    help: 'Current value of every flag/entity field this screen’s blocks reference.',
+    toggle: 'Show/hide the inspector',
+    empty: 'No variable referenced on this screen.',
+    unset: '(unset)',
+    collectionCount: '{n} entrie(s)',
+    noInstance: '(no instance)',
   },
 
   blockProps: {

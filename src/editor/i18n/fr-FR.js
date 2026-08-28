@@ -580,6 +580,9 @@ export default {
     screensTitle: 'Écrans',
     screenLabelLabel: 'Nom de l’écran',
     addScreen: 'Ajouter un écran',
+    testModeToggle: 'Tester comme joueur',
+    testModeHelp:
+      'Génère des instances/entrées factices pour tout ce que cette app référence (schémas d’entité, collections) — pratique pour voir un rendu sans avoir à jouer le chapitre qui les remplirait normalement. Recliquer relance un aperçu propre.',
     screenBackgroundLabel: 'Fond d’écran (optionnel)',
     screenBackgroundHelp:
       'Une image ou une courte vidéo en boucle derrière tous les blocs de cet écran, avec une opacité réglable.',
@@ -588,6 +591,12 @@ export default {
     backgroundOpacityLabel: 'Opacité',
     sheetUnnamed: 'Feuille sans nom',
     themeTitle: 'Thème',
+    themeExport: 'Exporter',
+    themeExportTooltip: 'Enregistre ce thème dans un fichier .json, partageable comme une app.',
+    themeExported: 'Thème exporté.',
+    themeImport: 'Importer',
+    themeImportTooltip: 'Remplace le thème de cette app par celui d’un fichier .json.',
+    themeImported: 'Thème importé.',
     themeHelp:
       'Couleurs, police et rayons par défaut de cette app — chaque bloc peut toujours les remplacer individuellement (couleur d’un bouton, etc.), ceci ne fixe que ce qui n’est pas déjà réglé bloc par bloc.',
     themeBackground: 'Fond',
@@ -647,6 +656,16 @@ export default {
     ledger: { label: 'Registre (graphe)' },
     form: { label: 'Champ de saisie' },
     lookup: { label: 'Recherche' },
+  },
+
+  variableInspector: {
+    title: 'Variables',
+    help: 'Valeur actuelle de chaque flag/champ d’entité référencé par les blocs de cet écran.',
+    toggle: 'Afficher/masquer l’inspecteur',
+    empty: 'Aucune variable référencée sur cet écran.',
+    unset: '(non défini)',
+    collectionCount: '{n} entrée(s)',
+    noInstance: '(aucune instance)',
   },
 
   blockProps: {

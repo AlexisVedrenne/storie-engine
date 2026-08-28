@@ -577,6 +577,9 @@ export default {
     screensTitle: 'Schermate',
     screenLabelLabel: 'Nome della schermata',
     addScreen: 'Aggiungi una schermata',
+    testModeToggle: 'Testa come giocatore',
+    testModeHelp:
+      'Genera istanze/voci fittizie per tutto ciò che questa app referenzia (schemi di entità, collezioni) — utile per vedere un risultato realistico senza dover giocare il capitolo che normalmente le riempirebbe. Clicca di nuovo per riavviare un’anteprima pulita.',
     screenBackgroundLabel: 'Sfondo (opzionale)',
     screenBackgroundHelp:
       'Un’immagine o un breve video in loop dietro tutti i blocchi di questa schermata, con opacità regolabile.',
@@ -585,6 +588,12 @@ export default {
     backgroundOpacityLabel: 'Opacità',
     sheetUnnamed: 'Foglio senza nome',
     themeTitle: 'Tema',
+    themeExport: 'Esporta',
+    themeExportTooltip: 'Salva questo tema in un file .json, condivisibile come un’app.',
+    themeExported: 'Tema esportato.',
+    themeImport: 'Importa',
+    themeImportTooltip: 'Sostituisce il tema di questa app con quello di un file .json.',
+    themeImported: 'Tema importato.',
     themeHelp:
       "Colori/font/raggio predefiniti di quest'app — ogni blocco può comunque sovrascriverli singolarmente (il colore di un pulsante, ecc.), questo imposta solo ciò che non è già fissato blocco per blocco.",
     themeBackground: 'Sfondo',
@@ -644,6 +653,16 @@ export default {
     ledger: { label: 'Registro (grafico)' },
     form: { label: 'Campo di inserimento' },
     lookup: { label: 'Ricerca' },
+  },
+
+  variableInspector: {
+    title: 'Variabili',
+    help: 'Valore attuale di ogni flag/campo di entità a cui fanno riferimento i blocchi di questa schermata.',
+    toggle: 'Mostra/nascondi l’ispettore',
+    empty: 'Nessuna variabile referenziata in questa schermata.',
+    unset: '(non impostato)',
+    collectionCount: '{n} voce/voci',
+    noInstance: '(nessuna istanza)',
   },
 
   blockProps: {
