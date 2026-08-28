@@ -633,6 +633,7 @@ export default {
     conversations: { label: 'Conversazione' },
     schedule: { label: 'Orario' },
     ledger: { label: 'Registro (grafico)' },
+    form: { label: 'Campo di inserimento' },
   },
 
   blockProps: {
@@ -715,6 +716,13 @@ export default {
     scheduleEntityIdHint: '"*" = 1ª/unica istanza — sostituiscilo con un id preciso se serve.',
     ledgerHelp:
       'Mostra una raccolta numerica (saldo, punteggio...) come mini-grafico + elenco — la stessa raccolta letta dalla fonte "Raccolta" del blocco Elenco, solo con un grafico sopra.',
+    formHelp:
+      "Un campo che il GIOCATORE compila da solo (non l'autore) — scrive direttamente in un flag o in un campo di entità, senza effetto né pulsante.",
+    formTargetFlag: 'Flag',
+    formTargetEntity: 'Campo di entità',
+    formFieldLabel: 'Campo',
+    formFieldHint:
+      'Testo, numero, sì/no o riferimento a un contatto — qui non sono proposti altri tipi.',
     showAvatarLabel: "Mostra l'avatar del contatto",
     nameFieldName: 'Nome',
     nameFieldPseudo: 'Pseudonimo (@...)',

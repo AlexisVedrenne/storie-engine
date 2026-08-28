@@ -57,6 +57,7 @@ having internet access to fetch one.
 | **Conversations** | A real chat module — see [Conversations](#conversations) below.                                                             |
 | **Schedule**      | A character's routine + current location — see [Schedule](#schedule) below.                                                 |
 | **Ledger**        | A numeric collection as a mini-chart + list — see [Ledger](#ledger) below.                                                  |
+| **Input field**   | A field the _player_ fills in — see [Input field](#input-field) below.                                                      |
 
 Every block can be **dragged** between containers (not just reordered in place), **duplicated**,
 and given a **condition** — a block whose condition doesn't hold is entirely absent, not just
@@ -145,6 +146,22 @@ author: any collection you already build via effects (`add`/`increment` — a wa
 reputation score, a running total) becomes a real chart the moment you point a `ledger` block at
 it, no separate chart data to maintain. A non-numeric collection still lists its entries, just
 without the chart on top.
+
+### Input field
+
+Every other block shows something _you_ authored. `form` is the one that lets the **player** type
+or pick a value themselves — a name, a code, a guess — writing it straight into a flag or an entity
+field, no button or effect needed on top.
+
+- **Target a flag**: pick which one and an input kind (text, number, or yes/no) — a flag has no
+  type of its own, so you choose one here.
+- **Target an entity field**: pick a schema, then one of its fields — the input automatically
+  matches that field's own type (text, number, yes/no, or a contact picker). Schedule and
+  reference-to-another-schema fields aren't offered here; they're structured data, not a fit for a
+  single field.
+
+Like [Schedule](#schedule), an entity target uses `*` for "the first/only instance" or a specific
+id to address one among several.
 
 ## Variables and translation
 

@@ -60,6 +60,7 @@ import ListBlock from './ListBlock.vue'
 import ConversationsBlock from './ConversationsBlock.vue'
 import ScheduleBlock from './ScheduleBlock.vue'
 import LedgerBlock from './LedgerBlock.vue'
+import FormBlock from './FormBlock.vue'
 
 const phone = usePhoneStore()
 const story = useStoryStore()
@@ -92,6 +93,7 @@ const BLOCK_COMPONENTS = {
   conversations: ConversationsBlock,
   schedule: ScheduleBlock,
   ledger: LedgerBlock,
+  form: FormBlock,
 }
 function blockComponent(type) {
   return BLOCK_COMPONENTS[type] || null

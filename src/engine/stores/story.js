@@ -2027,6 +2027,16 @@ export const useStoryStore = defineStore('story', {
       if (text) this.actionToast = text
     },
 
+    // Direct overwrite, unlike applyEffects()'s own `effects.flags` (which
+    // ACCUMULATES a numeric delta rather than setting it — right for an
+    // authored "+1 trust", wrong for "the player just typed 42"). Used by a
+    // `form` block (see FormBlock.vue) — no other engine path needs a flag
+    // *set* outright, so this stays its own small action rather than a new
+    // effects op.
+    setFlag(key, value) {
+      if (key) this.flags[key] = value
+    },
+
     applyEffects(effects) {
       if (!effects) return
 

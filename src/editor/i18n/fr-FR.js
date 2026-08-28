@@ -636,6 +636,7 @@ export default {
     conversations: { label: 'Conversation' },
     schedule: { label: 'Emploi du temps' },
     ledger: { label: 'Registre (graphe)' },
+    form: { label: 'Champ de saisie' },
   },
 
   blockProps: {
@@ -717,6 +718,13 @@ export default {
     scheduleEntityIdHint: '"*" = 1ère/seule instance — remplace par un id précis si besoin.',
     ledgerHelp:
       'Affiche une collection numérique (solde, score...) en mini-graphe + liste — la même collection que le bloc Liste (source "Collection"), juste avec un rendu graphique.',
+    formHelp:
+      'Un champ que le JOUEUR remplit lui-même (pas l’auteur) — écrit direct dans un flag ou un champ d’entité, sans effet ni bouton.',
+    formTargetFlag: 'Flag',
+    formTargetEntity: 'Champ d’entité',
+    formFieldLabel: 'Champ',
+    formFieldHint:
+      'Texte, nombre, oui/non ou référence à un contact — les autres types ne sont pas proposés ici.',
     showAvatarLabel: 'Afficher l’avatar du contact',
     nameFieldName: 'Nom',
     nameFieldPseudo: 'Pseudo (@...)',

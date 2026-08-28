@@ -639,6 +639,7 @@ export default {
     conversations: { label: 'Conversación' },
     schedule: { label: 'Horario' },
     ledger: { label: 'Registro (gráfico)' },
+    form: { label: 'Campo de entrada' },
   },
 
   blockProps: {
@@ -721,6 +722,13 @@ export default {
       '"*" = 1ª/única instancia — sustitúyelo por un id concreto si hace falta.',
     ledgerHelp:
       'Muestra una colección numérica (saldo, puntuación...) como mini-gráfico + lista — la misma colección que lee la fuente "Colección" del bloque Lista, solo que con un gráfico encima.',
+    formHelp:
+      'Un campo que rellena el JUGADOR (no el autor) — escribe directamente en un indicador o en un campo de entidad, sin efecto ni botón.',
+    formTargetFlag: 'Indicador',
+    formTargetEntity: 'Campo de entidad',
+    formFieldLabel: 'Campo',
+    formFieldHint:
+      'Texto, número, sí/no o referencia a un contacto — no se ofrecen otros tipos aquí.',
     showAvatarLabel: 'Mostrar el avatar del contacto',
     nameFieldName: 'Nombre',
     nameFieldPseudo: 'Pseudónimo (@...)',

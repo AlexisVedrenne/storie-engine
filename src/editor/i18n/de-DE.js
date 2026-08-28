@@ -631,6 +631,7 @@ export default {
     conversations: { label: 'Unterhaltung' },
     schedule: { label: 'Zeitplan' },
     ledger: { label: 'Verlauf (Diagramm)' },
+    form: { label: 'Eingabefeld' },
   },
 
   blockProps: {
@@ -714,6 +715,13 @@ export default {
       '„*" = 1. / einzige Instanz — bei Bedarf durch eine konkrete ID ersetzen.',
     ledgerHelp:
       'Zeigt eine numerische Sammlung (Guthaben, Punktestand...) als Mini-Diagramm + Liste — dieselbe Sammlung, die die Quelle „Sammlung" des Listen-Blocks liest, nur mit Diagramm obendrauf.',
+    formHelp:
+      'Ein Feld, das der SPIELER selbst ausfüllt (nicht der Autor) — schreibt direkt in ein Flag oder ein Entitätsfeld, ohne Effekt oder Schaltfläche.',
+    formTargetFlag: 'Flag',
+    formTargetEntity: 'Entitätsfeld',
+    formFieldLabel: 'Feld',
+    formFieldHint:
+      'Text, Zahl, Ja/Nein oder ein Kontaktverweis — andere Typen werden hier nicht angeboten.',
     showAvatarLabel: 'Avatar des Kontakts anzeigen',
     nameFieldName: 'Name',
     nameFieldPseudo: 'Pseudonym (@...)',

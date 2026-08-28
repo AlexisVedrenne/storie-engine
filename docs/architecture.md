@@ -295,7 +295,7 @@ is enough to register a working app, no other file needs editing. A manifest wit
 
 **Custom apps** are the no-code equivalent: authored entirely inside the editor's "Apps" tab as a
 tree of visual blocks (`header`, `text`, `image`, `row`, `card`, `layout`, `badge`, `divider`,
-`button`, `tabs`, `list`, `conversations`, `schedule`, `ledger` — see
+`button`, `tabs`, `list`, `conversations`, `schedule`, `ledger`, `form` — see
 `src/engine/customApps/blockKinds.js`), stored as plain JSON at `apps/<id>.json` in the project, and
 rendered by one generic interpreter, `CustomAppRenderer.vue` (the same component instance for every
 custom app — same "one generic player driven by data" precedent as `InteractionPlayer.vue` for
@@ -308,7 +308,16 @@ iterates instances of an author-defined entity schema, see
 instance of the schema, same sentinel the `{entity:...}` token uses. A `ledger` block reads a
 numeric `story.flagCollections[flagKey]` (`LedgerBlock.vue`, plain inline SVG, no chart library) —
 the same collection a `list` block's `flagCollection` source already reads, just rendered as a
-mini area-chart plus the entry list, coercing non-numeric entries to 0 for the chart only.
+mini area-chart plus the entry list, coercing non-numeric entries to 0 for the chart only. A `form`
+block is the first one the _player_ writes through instead of just reading — `target: 'flag'`
+calls the new `story.setFlag(key, value)` (a real overwrite; `effects.flags` itself accumulates a
+numeric delta, wrong semantics for "the player just typed 42"), `target: 'entity'` reuses
+`effects.entities`'s existing `'set'` op unchanged. Its input widget is a plain native
+`<input>`/`<select>`/switch button (`FormBlock.vue`) — same convention every other player-facing
+field on the phone uses (`SetupWizard.vue`'s `.name-input`, Settings' `.switch`), not a Quasar form
+component, which this phone UI never uses for player input. For an entity target the widget type is
+read straight off the field's own declared schema type rather than asked again (schedule/
+`ref:entity` fields are excluded — structured data, not a fit for one input).
 
 **Per-app theme** (`customApp.theme`, edited in CustomAppEditor.vue's "Thème" panel): a small fixed
 set of design tokens — a 5-role palette (background/surface/text/accent/danger), a font stack

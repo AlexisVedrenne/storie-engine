@@ -620,6 +620,7 @@ export default {
     conversations: { label: 'Conversation' },
     schedule: { label: 'Schedule' },
     ledger: { label: 'Ledger (chart)' },
+    form: { label: 'Input field' },
   },
 
   blockProps: {
@@ -700,6 +701,13 @@ export default {
     scheduleEntityIdHint: '"*" = 1st/only instance — replace with a specific id if needed.',
     ledgerHelp:
       'Shows a numeric collection (balance, score...) as a mini-chart + list — the same collection the List block\'s "Collection" source reads, just with a chart on top.',
+    formHelp:
+      'A field the PLAYER fills in themselves (not the author) — writes straight into a flag or an entity field, no effect or button needed.',
+    formTargetFlag: 'Flag',
+    formTargetEntity: 'Entity field',
+    formFieldLabel: 'Field',
+    formFieldHint:
+      "Text, number, yes/no, or a contact reference — other types aren't offered here.",
     showAvatarLabel: "Show the contact's avatar",
     nameFieldName: 'Name',
     nameFieldPseudo: 'Pseudo (@...)',

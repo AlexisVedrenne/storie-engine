@@ -520,6 +520,74 @@
       <FlagNameField v-model="block.flagKey" />
     </template>
 
+    <template v-else-if="block.type === 'form'">
+      <p class="tab-help">{{ t('blockProps.formHelp') }}</p>
+      <q-input
+        dense
+        outlined
+        ref="formLabelInputRef"
+        :label="t('blockProps.labelLabel')"
+        v-model="block.label"
+      >
+        <template #append>
+          <VariablePickerBtn
+            :item-scope="itemScope"
+            @pick="(v) => (block.label = insertEmojiAtCaret(formLabelInputRef, block.label, v))"
+          />
+        </template>
+      </q-input>
+      <q-btn-toggle
+        dense
+        no-caps
+        v-model="block.target"
+        :options="[
+          { label: t('blockProps.formTargetFlag'), value: 'flag' },
+          { label: t('blockProps.formTargetEntity'), value: 'entity' },
+        ]"
+      />
+      <template v-if="block.target === 'entity'">
+        <q-select
+          dense
+          outlined
+          :label="t('blockProps.listSchemaLabel')"
+          v-model="block.schemaId"
+          :options="schemaOptions"
+          emit-value
+          map-options
+        />
+        <q-select
+          dense
+          outlined
+          :label="t('blockProps.formFieldLabel')"
+          :hint="t('blockProps.formFieldHint')"
+          v-model="block.fieldKey"
+          :options="formFieldOptions(block.schemaId)"
+          emit-value
+          map-options
+        />
+        <q-input
+          dense
+          outlined
+          :label="t('blockProps.scheduleEntityIdLabel')"
+          :hint="t('blockProps.scheduleEntityIdHint')"
+          v-model="block.entityId"
+        />
+      </template>
+      <template v-else>
+        <FlagNameField v-model="block.flagKey" />
+        <q-btn-toggle
+          dense
+          no-caps
+          v-model="block.inputType"
+          :options="[
+            { label: t('entitySchemaForm.typeText'), value: 'text' },
+            { label: t('entitySchemaForm.typeNumber'), value: 'number' },
+            { label: t('entitySchemaForm.typeBoolean'), value: 'boolean' },
+          ]"
+        />
+      </template>
+    </template>
+
     <q-expansion-item
       dense
       :label="t('timelineEntryCard.displayCondition')"
@@ -613,6 +681,7 @@ const rowLabelInputRef = ref(null)
 const rowSublabelInputRef = ref(null)
 const badgeLabelInputRef = ref(null)
 const buttonLabelInputRef = ref(null)
+const formLabelInputRef = ref(null)
 const tabLabelRefs = {}
 
 function ensureChildren() {
@@ -651,6 +720,16 @@ function scheduleFieldOptions(schemaId) {
   const schema = story.project?.gameConfig?.entitySchemas?.find((s) => s.id === schemaId)
   return (schema?.fields || [])
     .filter((f) => f.type === 'schedule')
+    .map((f) => ({ label: f.label || f.key, value: f.key }))
+}
+
+// Field picker for a `form` block's entity target — schedule/ref:entity
+// fields are structured data, not a fit for a single input widget (see
+// FormBlock.vue), so only the 4 "simple" types are offered here.
+function formFieldOptions(schemaId) {
+  const schema = story.project?.gameConfig?.entitySchemas?.find((s) => s.id === schemaId)
+  return (schema?.fields || [])
+    .filter((f) => ['text', 'number', 'boolean', 'ref:contact'].includes(f.type))
     .map((f) => ({ label: f.label || f.key, value: f.key }))
 }
 

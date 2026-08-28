@@ -20,6 +20,7 @@ export const BLOCK_KINDS = [
   { type: 'conversations', icon: 'forum' },
   { type: 'schedule', icon: 'schedule' },
   { type: 'ledger', icon: 'show_chart' },
+  { type: 'form', icon: 'edit_note' },
 ]
 
 export function paletteIcon(type) {
@@ -126,6 +127,32 @@ export function defaultBlock(type) {
       // Non-numeric entries are ignored by the chart (coerced to 0) but
       // still shown in the list.
       return { type, flagKey: '' }
+    case 'form':
+      // The first block that lets the PLAYER write a value instead of just
+      // triggering an author-authored one. `target: 'flag'` writes
+      // `story.flags[flagKey]` directly (story.setFlag() — a real
+      // overwrite, not applyEffects()'s accumulate-by-default) with
+      // `inputType` (text/number/boolean) picked by the author, since a
+      // flag has no declared type of its own to read at runtime.
+      // `target: 'entity'` writes one field of an entity instance
+      // (`effects.entities`'s own 'set' op) — its input widget is inferred
+      // from that field's OWN declared schema type instead of asking the
+      // author to pick one again; only text/number/boolean/ref:contact
+      // fields are supported here (schedule/ref:entity are structured data,
+      // not a fit for a single form input). `entityId: '*'` is the usual
+      // first/only-instance sentinel — a form with no matching instance to
+      // write into silently does nothing, same "absent = no-op" spirit as
+      // every other block here.
+      return {
+        type,
+        label: '',
+        target: 'flag',
+        flagKey: '',
+        inputType: 'text',
+        schemaId: '',
+        entityId: '*',
+        fieldKey: '',
+      }
     default:
       return { type }
   }
