@@ -778,6 +778,8 @@ export default {
     lookupResultRequiresHelp:
       'Questo risultato compare nelle ricerche solo se questa condizione è vera.',
     lookupAddResult: 'Aggiungi un risultato',
+    lookupResultActionTitle: 'Azione al tocco (opzionale)',
+    lookupResultActionHelp: 'Non succede nulla toccando questo risultato.',
     showAvatarLabel: "Mostra l'avatar del contatto",
     nameFieldName: 'Nome',
     nameFieldPseudo: 'Pseudonimo (@...)',

@@ -202,15 +202,20 @@ export function defaultBlock(type) {
       }
     case 'lookup':
       // A fake search/browser (pilier 05) — `results[]` is author-authored
-      // ({ title, excerpt, source, requires }), each individually gated by
-      // its OWN `requires` (same RequiresBuilder every other condition in
-      // this project uses) so a result only becomes findable once the
-      // player has actually discovered whatever it's gated on. Filtering is
-      // plain client-side text matching (LookupBlock.vue) against the
-      // player's typed query — no results shown at all until they type
-      // something, same "search, don't browse" spirit as a real search
-      // engine. Generic to any "consult authored content" mechanic:
+      // ({ title, excerpt, source, requires, action }), each individually
+      // gated by its OWN `requires` (same RequiresBuilder every other
+      // condition in this project uses) so a result only becomes findable
+      // once the player has actually discovered whatever it's gated on.
+      // Filtering is plain client-side text matching (LookupBlock.vue)
+      // against the player's typed query — no results shown at all until
+      // they type something, same "search, don't browse" spirit as a real
+      // search engine. Generic to any "consult authored content" mechanic:
       // archives, a forum, an internal database — not fixed to one theme.
+      // `action` (added right after shipping, per user feedback) is the
+      // SAME fixed catalog a button offers — authored via the shared
+      // BlockActionEditor.vue, run via the shared useBlockAction.js — a
+      // tapped result can apply an effect, open a sheet, jump to another
+      // app, etc., not just display text.
       return { type, placeholder: '', results: [] }
     default:
       return { type }

@@ -238,6 +238,10 @@ engine, not a browsable list with a filter on top. Every word they type has to a
 a result's title, excerpt, or source for it to show up (searching "red key" only matches a result
 that mentions both "red" and "key" somewhere).
 
+Each result can also have its own **action on tap** — the exact same eight kinds a
+[button](#buttons) offers (apply effects, open a sheet, jump to another app...). Nothing happens by
+default; a result is just text to read until you give it one.
+
 ## Variables and translation
 
 Any text field on a block can interpolate live values with `{...}` tokens — `{flag:someKey}` for a

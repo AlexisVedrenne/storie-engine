@@ -780,6 +780,8 @@ export default {
     lookupResultRequiresHelp:
       'Ce résultat n’apparaît dans les recherches que si cette condition est vraie.',
     lookupAddResult: 'Ajouter un résultat',
+    lookupResultActionTitle: 'Action au tap (optionnel)',
+    lookupResultActionHelp: 'Rien ne se passe au tap sur ce résultat.',
     showAvatarLabel: 'Afficher l’avatar du contact',
     nameFieldName: 'Nom',
     nameFieldPseudo: 'Pseudo (@...)',

@@ -395,122 +395,12 @@
         @update:model-value="(v) => (block.radius = v === null || v === '' ? 12 : Number(v))"
       />
 
-      <div class="prop-group-label">{{ t('blockProps.groupAction') }}</div>
-      <q-btn-toggle
-        dense
-        no-caps
-        :model-value="ensureAction().type"
-        :options="[
-          { label: t('blockProps.actionNone'), value: 'none' },
-          { label: t('blockProps.actionEffect'), value: 'effect' },
-          { label: t('blockProps.actionNavigateScreen'), value: 'navigateScreen' },
-          { label: t('blockProps.actionEvent'), value: 'event' },
-          { label: t('blockProps.actionToast'), value: 'toast' },
-          { label: t('blockProps.actionOpenSheet'), value: 'openSheet' },
-          { label: t('blockProps.actionCloseSheet'), value: 'closeSheet' },
-          { label: t('blockProps.actionOpenApp'), value: 'openApp' },
-        ]"
-        @update:model-value="setButtonActionType"
+      <BlockActionEditor
+        :target="block"
+        :screens="screens"
+        :sheets="sheets"
+        :help-text="t('blockProps.buttonHelp')"
       />
-      <template v-if="block.action.type === 'effect'">
-        <p class="tab-help">{{ t('blockProps.actionEffectHelp') }}</p>
-        <EffectsBuilder
-          :model-value="block.action.effects"
-          @update:model-value="(v) => (block.action.effects = v)"
-        />
-      </template>
-      <template v-else-if="block.action.type === 'navigateScreen'">
-        <q-select
-          dense
-          outlined
-          emit-value
-          map-options
-          :label="t('blockProps.actionNavigateScreenLabel')"
-          :options="screenOptions"
-          v-model="block.action.screenId"
-        />
-      </template>
-      <template v-else-if="block.action.type === 'event'">
-        <p class="tab-help">{{ t('blockProps.actionEventHelp') }}</p>
-        <q-input
-          dense
-          outlined
-          :label="t('blockProps.actionEventButtonIdLabel')"
-          :hint="t('blockProps.actionEventButtonIdHint')"
-          v-model="block.action.buttonId"
-        />
-      </template>
-      <template v-else-if="block.action.type === 'toast'">
-        <p class="tab-help">{{ t('blockProps.actionToastHelp') }}</p>
-        <q-input
-          dense
-          outlined
-          :label="t('blockProps.actionToastTextLabel')"
-          v-model="block.action.toastText"
-        />
-      </template>
-      <template v-else-if="block.action.type === 'openSheet'">
-        <p class="tab-help">{{ t('blockProps.actionOpenSheetHelp') }}</p>
-        <q-select
-          dense
-          outlined
-          emit-value
-          map-options
-          :label="t('blockProps.actionOpenSheetLabel')"
-          :options="sheetOptions"
-          v-model="block.action.sheetId"
-        />
-      </template>
-      <p v-else-if="block.action.type === 'closeSheet'" class="tab-help">
-        {{ t('blockProps.actionCloseSheetHelp') }}
-      </p>
-      <template v-else-if="block.action.type === 'openApp'">
-        <p class="tab-help">{{ t('blockProps.actionOpenAppHelp') }}</p>
-        <q-select
-          dense
-          outlined
-          emit-value
-          map-options
-          :label="t('blockProps.actionOpenAppLabel')"
-          :options="appOptions"
-          v-model="block.action.appId"
-        />
-        <q-select
-          v-if="openAppScreenOptions.length"
-          dense
-          outlined
-          emit-value
-          map-options
-          clearable
-          :label="t('blockProps.actionOpenAppScreenLabel')"
-          :hint="t('blockProps.actionOpenAppScreenHint')"
-          :options="openAppScreenOptions"
-          v-model="block.action.screenId"
-        />
-      </template>
-      <p v-else class="tab-help">{{ t('blockProps.buttonHelp') }}</p>
-
-      <q-expansion-item
-        v-if="block.action.type !== 'none'"
-        dense
-        :label="t('blockProps.actionGuardTitle')"
-        class="spacing-section"
-      >
-        <div class="spacing-body condition-body">
-          <p class="tab-help">{{ t('blockProps.actionGuardHelp') }}</p>
-          <RequiresBuilder
-            :model-value="block.action.requires"
-            @update:model-value="(v) => (block.action.requires = v)"
-          />
-          <q-input
-            dense
-            outlined
-            :label="t('blockProps.actionOnFailToastLabel')"
-            :hint="t('blockProps.actionOnFailToastHint')"
-            v-model="block.action.onFailToast"
-          />
-        </div>
-      </q-expansion-item>
     </template>
 
     <template v-else-if="block.type === 'tabs'">
@@ -804,6 +694,20 @@
             />
           </div>
         </q-expansion-item>
+        <q-expansion-item
+          dense
+          :label="t('blockProps.lookupResultActionTitle')"
+          class="spacing-section"
+        >
+          <div class="spacing-body condition-body">
+            <BlockActionEditor
+              :target="result"
+              :screens="screens"
+              :sheets="sheets"
+              :help-text="t('blockProps.lookupResultActionHelp')"
+            />
+          </div>
+        </q-expansion-item>
       </div>
       <q-btn
         dense
@@ -863,12 +767,10 @@
 
 <script setup>
 import { computed, ref } from 'vue'
-import { useI18n } from 'vue-i18n'
 import { useStoryStore } from '@/engine/stores/story'
 import AssetField from '@/editor/components/AssetField.vue'
 import ColorField from '@/editor/components/ColorField.vue'
 import RequiresBuilder from '@/editor/components/RequiresBuilder.vue'
-import EffectsBuilder from '@/editor/components/EffectsBuilder.vue'
 import VariablePickerBtn from '@/editor/components/VariablePickerBtn.vue'
 import IconPickerBtn from '@/components/shared/IconPickerBtn.vue'
 import FlagNameField from '@/editor/components/FlagNameField.vue'
@@ -877,14 +779,10 @@ import { insertEmojiAtCaret } from '@/components/shared/emojiInsert'
 // nested builder) — safe: Vue components only reference each other at
 // render time, never during module top-level evaluation.
 import BlockBuilder from '@/editor/components/BlockBuilder.vue'
+import BlockActionEditor from '@/editor/components/BlockActionEditor.vue'
 import { useEditorI18n } from '@/editor/i18n'
 
 const { t } = useEditorI18n()
-// The runtime vue-i18n instance (not useEditorI18n's editor-chrome tree) —
-// resolves a native app's player-facing `labelKey` for the openApp target
-// picker, same "show the name a player actually sees" precedent as
-// GameForm.vue's own `storyT`/`appLabel` for its Applications panel.
-const { t: storyT } = useI18n()
 const story = useStoryStore()
 
 const props = defineProps({
@@ -943,7 +841,13 @@ function ensureResults() {
   return props.block.results
 }
 function addResult() {
-  ensureResults().push({ title: '', excerpt: '', source: '', requires: null })
+  ensureResults().push({
+    title: '',
+    excerpt: '',
+    source: '',
+    requires: null,
+    action: { type: 'none' },
+  })
 }
 function removeResult(i) {
   props.block.results.splice(i, 1)
@@ -997,33 +901,6 @@ function templateItemScope() {
   return source === 'entity' ? `entity:${props.block.schemaId || ''}` : source
 }
 
-function ensureAction() {
-  if (!props.block.action) props.block.action = { type: 'none' }
-  return props.block.action
-}
-// Switching kind replaces the action object wholesale (not just its
-// `type`) — keeps stale fields from a previous kind (e.g. `effects` while
-// now `navigateScreen`) from lingering unused in the saved block.
-// `requires`/`onFailToast` are orthogonal to which kind is picked (a guard
-// on TOP of whatever the action does), so they're carried over instead of
-// wiped on every switch — except for 'none', which drops them: a purely
-// decorative button has nothing for a condition to guard.
-function setButtonActionType(type) {
-  const prev = props.block.action || {}
-  const base =
-    type === 'none' ? { type } : { type, requires: prev.requires, onFailToast: prev.onFailToast }
-  if (type === 'effect') props.block.action = { ...base, effects: prev.effects || {} }
-  else if (type === 'navigateScreen')
-    props.block.action = { ...base, screenId: prev.screenId || '' }
-  else if (type === 'event') props.block.action = { ...base, buttonId: prev.buttonId || '' }
-  else if (type === 'toast') props.block.action = { ...base, toastText: prev.toastText || '' }
-  else if (type === 'openSheet') props.block.action = { ...base, sheetId: prev.sheetId || '' }
-  else if (type === 'closeSheet') props.block.action = { ...base }
-  else if (type === 'openApp')
-    props.block.action = { ...base, appId: prev.appId || '', screenId: prev.screenId || '' }
-  else props.block.action = { type: 'none' }
-}
-
 function ensureTabs() {
   if (!props.block.tabs?.length) props.block.tabs = [{ label: '', screenId: '' }]
   return props.block.tabs
@@ -1039,30 +916,6 @@ function removeTab(i) {
 const screenOptions = computed(() =>
   props.screens.map((s) => ({ label: s.label || s.id, value: s.id })),
 )
-
-const sheetOptions = computed(() =>
-  props.sheets.map((s) => ({ label: s.label || s.id, value: s.id })),
-)
-
-// pilier 06 — `openApp`'s target picker lists EVERY app (native or custom),
-// same merged list HomeScreen.vue's own icons come from — `phone.openApp()`
-// itself is already fully generic across both (see phone.js), there's
-// nothing custom-app-specific about it.
-const appOptions = computed(() =>
-  (story.mergedAppRegistry || []).map((app) => ({
-    label: app.labelKey ? storyT(app.labelKey) : app.label,
-    value: app.id,
-  })),
-)
-
-// A native app has no `screens` concept — only a target that resolves to a
-// project's OWN custom app (looked up fresh, not from mergedAppRegistry,
-// which strips `screens` down to the shared `{id,label,icon,color,badge,
-// component}` shape) offers one, and only once picked.
-const openAppScreenOptions = computed(() => {
-  const target = story.project?.customApps?.find((a) => a.id === props.block.action?.appId)
-  return (target?.screens || []).map((s) => ({ label: s.label || s.id, value: s.id }))
-})
 </script>
 
 <style scoped>

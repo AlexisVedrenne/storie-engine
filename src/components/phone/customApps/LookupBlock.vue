@@ -7,7 +7,13 @@
       {{ t('customApps.lookup.noResults') }}
     </div>
     <div v-else class="lookup-results">
-      <div v-for="(result, i) in visibleResults" :key="i" class="lookup-result">
+      <div
+        v-for="(result, i) in visibleResults"
+        :key="i"
+        class="lookup-result"
+        :class="{ clickable: hasAction(result) }"
+        @click="runAction(result.action)"
+      >
         <div class="lookup-result-title">{{ resolveDynamicText(result.title, story) }}</div>
         <div class="lookup-result-excerpt">{{ resolveDynamicText(result.excerpt, story) }}</div>
         <div class="lookup-result-source">{{ resolveDynamicText(result.source, story) }}</div>
@@ -34,10 +40,19 @@ import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useStoryStore } from '@/engine/stores/story'
 import { resolveDynamicText } from '@/engine/customApps/resolveDynamicText'
+import { useBlockAction } from '@/engine/customApps/useBlockAction'
 
 const props = defineProps({ block: { type: Object, required: true } })
 const story = useStoryStore()
 const { t } = useI18n()
+const { runAction } = useBlockAction()
+
+// Same fixed action catalog a button offers, authored via the same
+// BlockActionEditor.vue — a result with no action set (or 'none') is inert,
+// same "silently absent" fallback as everywhere else in this engine.
+function hasAction(result) {
+  return Boolean(result.action && result.action.type !== 'none')
+}
 
 const query = ref('')
 
@@ -111,6 +126,10 @@ const visibleResults = computed(() => {
   padding: 10px 12px;
   border-radius: var(--app-radius);
   background: var(--app-surface);
+}
+
+.lookup-result.clickable {
+  cursor: pointer;
 }
 
 .lookup-result-title {

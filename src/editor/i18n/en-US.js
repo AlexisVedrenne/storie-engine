@@ -762,6 +762,8 @@ export default {
     lookupResultSourceLabel: 'Source',
     lookupResultRequiresHelp: 'This result only shows up in searches once this condition is true.',
     lookupAddResult: 'Add a result',
+    lookupResultActionTitle: 'Action on tap (optional)',
+    lookupResultActionHelp: 'Nothing happens when this result is tapped.',
     showAvatarLabel: "Show the contact's avatar",
     nameFieldName: 'Name',
     nameFieldPseudo: 'Pseudo (@...)',

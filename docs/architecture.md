@@ -445,8 +445,8 @@ only shows once a CUSTOM app is picked (looked up fresh from `story.project.cust
 component}` shape) — meaningless for a native target, which has no such concept.
 
 **Lookup** (pilier 05, remaining sub-feature): `lookup` is a fake search/browser —
-`block.results[]` is entirely author-authored (`{title, excerpt, source, requires}`), each result
-individually gated by its own `requires` (`RequiresBuilder.vue`, same component every other
+`block.results[]` is entirely author-authored (`{title, excerpt, source, requires, action}`), each
+result individually gated by its own `requires` (`RequiresBuilder.vue`, same component every other
 condition in this project uses) rather than the whole block sharing one condition, since results
 are individually distinct content, not repetitions of one template the way a `list` block's items
 are. `LookupBlock.vue` keeps the search query as local component state (not story state — a
@@ -455,6 +455,16 @@ the player types something (scoped with the user: "search", not "browse a list w
 Matching is plain client-side text search: every whitespace-separated word in the query must
 appear SOMEWHERE across a result's title+excerpt+source (AND across words, scoped with the user
 over the looser "any word matches" alternative) — no real search index, no fuzzy matching.
+
+**Shared action editor, added right after shipping Lookup**: the user asked for a result to be
+able to do something on tap, "les mêmes [actions] que via le bouton" — rather than duplicating
+`ButtonBlock`'s ~130-line action-editing form per result, it was extracted into
+`BlockActionEditor.vue` (`target` prop — the object whose `.action` field it edits, mutated
+directly, same "props edited in place" convention every other editor form here already uses) and
+`useBlockAction.js` (the runtime dispatch, `inject()`-based like the original, called from
+`ButtonBlock.vue` and `LookupBlock.vue` alike). One fixed action catalog, one implementation,
+offered from two different blocks — same shape as `RequiresBuilder.vue` being reused everywhere a
+condition can be authored.
 
 **Merged registry**: `story.mergedAppRegistry` (a getter on the `story` store) concatenates
 `APP_REGISTRY` (native, code-defined) with `project.customApps` (author-built, JSON-defined),

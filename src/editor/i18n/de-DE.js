@@ -778,6 +778,8 @@ export default {
     lookupResultRequiresHelp:
       'Dieses Ergebnis erscheint erst in Suchen, wenn diese Bedingung erfüllt ist.',
     lookupAddResult: 'Ergebnis hinzufügen',
+    lookupResultActionTitle: 'Aktion beim Antippen (optional)',
+    lookupResultActionHelp: 'Beim Antippen dieses Ergebnisses passiert nichts.',
     showAvatarLabel: 'Avatar des Kontakts anzeigen',
     nameFieldName: 'Name',
     nameFieldPseudo: 'Pseudonym (@...)',
