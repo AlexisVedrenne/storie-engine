@@ -649,6 +649,7 @@ export default {
     schedule: { label: 'Horario' },
     ledger: { label: 'Registro (gráfico)' },
     form: { label: 'Campo de entrada' },
+    lookup: { label: 'Búsqueda' },
   },
 
   blockProps: {
@@ -773,6 +774,16 @@ export default {
     formCommitLive: 'En directo',
     formCommitBlur: 'Al salir del campo',
     formCommitButton: 'Botón "Validar"',
+    lookupHelp:
+      'Una barra de búsqueda + resultados que escribes de antemano — cada uno puede estar condicionado por su propia condición, para que el jugador "descubra" resultados a medida que avanza la historia.',
+    lookupPlaceholderLabel: 'Texto del campo de búsqueda (opcional)',
+    lookupResultN: 'Resultado {n}',
+    lookupResultTitleLabel: 'Título',
+    lookupResultExcerptLabel: 'Extracto',
+    lookupResultSourceLabel: 'Fuente',
+    lookupResultRequiresHelp:
+      'Este resultado solo aparece en las búsquedas si esta condición es verdadera.',
+    lookupAddResult: 'Añadir un resultado',
     showAvatarLabel: 'Mostrar el avatar del contacto',
     nameFieldName: 'Nombre',
     nameFieldPseudo: 'Pseudónimo (@...)',

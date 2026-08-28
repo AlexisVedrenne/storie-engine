@@ -24,6 +24,7 @@ export const BLOCK_KINDS = [
   { type: 'schedule', icon: 'schedule' },
   { type: 'ledger', icon: 'show_chart' },
   { type: 'form', icon: 'edit_note' },
+  { type: 'lookup', icon: 'search' },
 ]
 
 export function paletteIcon(type) {
@@ -199,6 +200,18 @@ export function defaultBlock(type) {
         commitMode: 'live',
         readonly: false,
       }
+    case 'lookup':
+      // A fake search/browser (pilier 05) — `results[]` is author-authored
+      // ({ title, excerpt, source, requires }), each individually gated by
+      // its OWN `requires` (same RequiresBuilder every other condition in
+      // this project uses) so a result only becomes findable once the
+      // player has actually discovered whatever it's gated on. Filtering is
+      // plain client-side text matching (LookupBlock.vue) against the
+      // player's typed query — no results shown at all until they type
+      // something, same "search, don't browse" spirit as a real search
+      // engine. Generic to any "consult authored content" mechanic:
+      // archives, a forum, an internal database — not fixed to one theme.
+      return { type, placeholder: '', results: [] }
     default:
       return { type }
   }

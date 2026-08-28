@@ -641,6 +641,7 @@ export default {
     schedule: { label: 'Zeitplan' },
     ledger: { label: 'Verlauf (Diagramm)' },
     form: { label: 'Eingabefeld' },
+    lookup: { label: 'Suche' },
   },
 
   blockProps: {
@@ -767,6 +768,16 @@ export default {
     formCommitLive: 'Live',
     formCommitBlur: 'Beim Verlassen des Felds',
     formCommitButton: '"Bestätigen"-Schaltfläche',
+    lookupHelp:
+      'Eine Suchleiste + im Voraus geschriebene Ergebnisse — jedes kann durch eine eigene Bedingung freigeschaltet werden, sodass der Spieler Ergebnisse im Verlauf der Geschichte "entdeckt".',
+    lookupPlaceholderLabel: 'Platzhaltertext des Suchfelds (optional)',
+    lookupResultN: 'Ergebnis {n}',
+    lookupResultTitleLabel: 'Titel',
+    lookupResultExcerptLabel: 'Auszug',
+    lookupResultSourceLabel: 'Quelle',
+    lookupResultRequiresHelp:
+      'Dieses Ergebnis erscheint erst in Suchen, wenn diese Bedingung erfüllt ist.',
+    lookupAddResult: 'Ergebnis hinzufügen',
     showAvatarLabel: 'Avatar des Kontakts anzeigen',
     nameFieldName: 'Name',
     nameFieldPseudo: 'Pseudonym (@...)',

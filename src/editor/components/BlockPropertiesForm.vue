@@ -734,6 +734,88 @@
       </template>
     </template>
 
+    <template v-else-if="block.type === 'lookup'">
+      <p class="tab-help">{{ t('blockProps.lookupHelp') }}</p>
+      <q-input
+        dense
+        outlined
+        :label="t('blockProps.lookupPlaceholderLabel')"
+        v-model="block.placeholder"
+      />
+
+      <div v-for="(result, i) in ensureResults()" :key="i" class="lookup-result-row">
+        <div class="lookup-result-header">
+          <span class="prop-group-label">{{ t('blockProps.lookupResultN', { n: i + 1 }) }}</span>
+          <q-btn dense flat round icon="close" size="sm" @click="removeResult(i)">
+            <q-tooltip>{{ t('common.delete') }}</q-tooltip>
+          </q-btn>
+        </div>
+        <q-input
+          dense
+          outlined
+          :ref="(el) => (lookupTitleRefs[i] = el)"
+          :label="t('blockProps.lookupResultTitleLabel')"
+          v-model="result.title"
+        >
+          <template #append>
+            <VariablePickerBtn
+              :item-scope="itemScope"
+              @pick="
+                (v) => (result.title = insertEmojiAtCaret(lookupTitleRefs[i], result.title, v))
+              "
+            />
+          </template>
+        </q-input>
+        <q-input
+          dense
+          outlined
+          type="textarea"
+          autogrow
+          :ref="(el) => (lookupExcerptRefs[i] = el)"
+          :label="t('blockProps.lookupResultExcerptLabel')"
+          v-model="result.excerpt"
+        >
+          <template #append>
+            <VariablePickerBtn
+              :item-scope="itemScope"
+              @pick="
+                (v) =>
+                  (result.excerpt = insertEmojiAtCaret(lookupExcerptRefs[i], result.excerpt, v))
+              "
+            />
+          </template>
+        </q-input>
+        <q-input
+          dense
+          outlined
+          :label="t('blockProps.lookupResultSourceLabel')"
+          v-model="result.source"
+        />
+        <q-expansion-item
+          dense
+          :label="t('timelineEntryCard.displayCondition')"
+          class="spacing-section"
+        >
+          <div class="spacing-body condition-body">
+            <p class="tab-help">{{ t('blockProps.lookupResultRequiresHelp') }}</p>
+            <RequiresBuilder
+              :model-value="result.requires"
+              @update:model-value="(v) => (result.requires = v)"
+            />
+          </div>
+        </q-expansion-item>
+      </div>
+      <q-btn
+        dense
+        flat
+        no-caps
+        icon="add"
+        :label="t('blockProps.lookupAddResult')"
+        class="btn-ghost"
+        @click="addResult"
+      />
+    </template>
+
     <q-expansion-item
       dense
       :label="t('timelineEntryCard.displayCondition')"
@@ -839,6 +921,8 @@ const badgeLabelInputRef = ref(null)
 const buttonLabelInputRef = ref(null)
 const formLabelInputRef = ref(null)
 const tabLabelRefs = {}
+const lookupTitleRefs = {}
+const lookupExcerptRefs = {}
 
 function ensureChildren() {
   if (!props.block.blocks) props.block.blocks = []
@@ -848,6 +932,21 @@ function ensureChildren() {
 function ensureTemplate() {
   if (!props.block.template) props.block.template = []
   return props.block.template
+}
+
+// `lookup` block (pilier 05) — author-authored search results, each
+// individually gated by its own `requires` (RequiresBuilder, same component
+// every other condition in this project uses), matched against the
+// player's search query at runtime — see LookupBlock.vue.
+function ensureResults() {
+  if (!props.block.results) props.block.results = []
+  return props.block.results
+}
+function addResult() {
+  ensureResults().push({ title: '', excerpt: '', source: '', requires: null })
+}
+function removeResult(i) {
+  props.block.results.splice(i, 1)
 }
 
 // Lazy-inits `source` for a `list` block saved before this field existed —
@@ -994,6 +1093,22 @@ const openAppScreenOptions = computed(() => {
   display: flex;
   align-items: center;
   gap: var(--space-2);
+}
+
+.lookup-result-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.lookup-result-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .row {

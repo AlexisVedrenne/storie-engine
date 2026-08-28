@@ -66,6 +66,7 @@ having internet access to fetch one.
 | **Schedule**      | A character's routine + current location — see [Schedule](#schedule) below.                                                            |
 | **Ledger**        | A numeric collection as a mini-chart + list — see [Ledger](#ledger) below.                                                             |
 | **Input field**   | A field the _player_ fills in — see [Input field](#input-field) below.                                                                 |
+| **Search**        | A fake search bar over content you write ahead of time — see [Search](#search) below.                                                  |
 
 Every block can be **dragged** between containers (not just reordered in place), **duplicated**,
 and given a **condition** — a block whose condition doesn't hold is entirely absent, not just
@@ -224,6 +225,18 @@ knows which one to open, and pick where it docks:
 The player can dismiss it by tapping outside it, or you can add a button inside it with the
 **Close the sheet** action. Only one sheet is ever open at a time, and switching screens always
 closes it — a sheet belongs to the screen it's authored on.
+
+### Search
+
+A `search` block is a search bar over **results you write ahead of time** — each result is a
+title, an excerpt, and a source, and can be gated by its own condition (`requires`), so a result
+only becomes findable once the player has actually discovered whatever it's gated on. Good for
+archives, a fake forum, a search engine, or any internal database the player consults.
+
+The player has to actually type something — nothing shows until they do, same as a real search
+engine, not a browsable list with a filter on top. Every word they type has to appear somewhere in
+a result's title, excerpt, or source for it to show up (searching "red key" only matches a result
+that mentions both "red" and "key" somewhere).
 
 ## Variables and translation
 

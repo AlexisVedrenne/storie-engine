@@ -630,6 +630,7 @@ export default {
     schedule: { label: 'Schedule' },
     ledger: { label: 'Ledger (chart)' },
     form: { label: 'Input field' },
+    lookup: { label: 'Search' },
   },
 
   blockProps: {
@@ -752,6 +753,15 @@ export default {
     formCommitLive: 'Live',
     formCommitBlur: 'On leaving the field',
     formCommitButton: '"Submit" button',
+    lookupHelp:
+      'A search bar + results you write ahead of time — each can be gated by its own condition, so the player "discovers" results as the story progresses.',
+    lookupPlaceholderLabel: 'Search field placeholder (optional)',
+    lookupResultN: 'Result {n}',
+    lookupResultTitleLabel: 'Title',
+    lookupResultExcerptLabel: 'Excerpt',
+    lookupResultSourceLabel: 'Source',
+    lookupResultRequiresHelp: 'This result only shows up in searches once this condition is true.',
+    lookupAddResult: 'Add a result',
     showAvatarLabel: "Show the contact's avatar",
     nameFieldName: 'Name',
     nameFieldPseudo: 'Pseudo (@...)',

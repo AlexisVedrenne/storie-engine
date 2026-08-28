@@ -253,5 +253,10 @@ export default {
     form: {
       submit: 'Submit',
     },
+    lookup: {
+      placeholderDefault: 'Search…',
+      prompt: 'Type something to search.',
+      noResults: 'No results.',
+    },
   },
 }

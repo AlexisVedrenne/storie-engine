@@ -255,5 +255,10 @@ export default {
     form: {
       submit: 'Valider',
     },
+    lookup: {
+      placeholderDefault: 'Rechercher…',
+      prompt: 'Tape quelque chose pour chercher.',
+      noResults: 'Aucun résultat.',
+    },
   },
 }

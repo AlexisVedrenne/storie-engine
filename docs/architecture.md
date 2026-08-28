@@ -294,8 +294,9 @@ is enough to register a working app, no other file needs editing. A manifest wit
 `App.vue` is skipped with a console warning rather than crashing.
 
 **Custom apps** are the no-code equivalent: authored entirely inside the editor's "Apps" tab as a
-tree of visual blocks (`header`, `text`, `image`, `row`, `card`, `layout`, `badge`, `divider`,
-`button`, `tabs`, `list`, `conversations`, `schedule`, `ledger`, `form` — see
+tree of visual blocks (`header`, `footer`, `text`, `image`, `row`, `card`, `overlay`, `sheet`,
+`layout`, `badge`, `divider`, `button`, `tabs`, `list`, `conversations`, `schedule`, `ledger`,
+`form`, `lookup` — see
 `src/engine/customApps/blockKinds.js`), stored as plain JSON at `apps/<id>.json` in the project, and
 rendered by one generic interpreter, `CustomAppRenderer.vue` (the same component instance for every
 custom app — same "one generic player driven by data" precedent as `InteractionPlayer.vue` for
@@ -442,6 +443,18 @@ tree, same precedent `GameForm.vue`'s own `appLabel()` already established. An o
 only shows once a CUSTOM app is picked (looked up fresh from `story.project.customApps`, since
 `mergedAppRegistry` itself strips `screens` down to the shared `{id,label,icon,color,badge,
 component}` shape) — meaningless for a native target, which has no such concept.
+
+**Lookup** (pilier 05, remaining sub-feature): `lookup` is a fake search/browser —
+`block.results[]` is entirely author-authored (`{title, excerpt, source, requires}`), each result
+individually gated by its own `requires` (`RequiresBuilder.vue`, same component every other
+condition in this project uses) rather than the whole block sharing one condition, since results
+are individually distinct content, not repetitions of one template the way a `list` block's items
+are. `LookupBlock.vue` keeps the search query as local component state (not story state — a
+search box's current text isn't a game variable worth persisting), and shows nothing at all until
+the player types something (scoped with the user: "search", not "browse a list with a filter").
+Matching is plain client-side text search: every whitespace-separated word in the query must
+appear SOMEWHERE across a result's title+excerpt+source (AND across words, scoped with the user
+over the looser "any word matches" alternative) — no real search index, no fuzzy matching.
 
 **Merged registry**: `story.mergedAppRegistry` (a getter on the `story` store) concatenates
 `APP_REGISTRY` (native, code-defined) with `project.customApps` (author-built, JSON-defined),

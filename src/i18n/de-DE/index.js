@@ -256,5 +256,10 @@ export default {
     form: {
       submit: 'Bestätigen',
     },
+    lookup: {
+      placeholderDefault: 'Suchen…',
+      prompt: 'Tippe etwas ein, um zu suchen.',
+      noResults: 'Keine Ergebnisse.',
+    },
   },
 }

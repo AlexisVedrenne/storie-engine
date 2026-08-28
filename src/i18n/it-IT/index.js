@@ -255,5 +255,10 @@ export default {
     form: {
       submit: 'Conferma',
     },
+    lookup: {
+      placeholderDefault: 'Cerca…',
+      prompt: 'Digita qualcosa per cercare.',
+      noResults: 'Nessun risultato.',
+    },
   },
 }

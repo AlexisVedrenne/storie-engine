@@ -646,6 +646,7 @@ export default {
     schedule: { label: 'Emploi du temps' },
     ledger: { label: 'Registre (graphe)' },
     form: { label: 'Champ de saisie' },
+    lookup: { label: 'Recherche' },
   },
 
   blockProps: {
@@ -769,6 +770,16 @@ export default {
     formCommitLive: 'En direct',
     formCommitBlur: 'En quittant le champ',
     formCommitButton: 'Bouton "Valider"',
+    lookupHelp:
+      'Une barre de recherche + des résultats que tu écris à l’avance — chacun peut être gardé par sa propre condition, pour que le joueur "découvre" des résultats au fur et à mesure de l’histoire.',
+    lookupPlaceholderLabel: 'Texte du champ de recherche (optionnel)',
+    lookupResultN: 'Résultat {n}',
+    lookupResultTitleLabel: 'Titre',
+    lookupResultExcerptLabel: 'Extrait',
+    lookupResultSourceLabel: 'Source',
+    lookupResultRequiresHelp:
+      'Ce résultat n’apparaît dans les recherches que si cette condition est vraie.',
+    lookupAddResult: 'Ajouter un résultat',
     showAvatarLabel: 'Afficher l’avatar du contact',
     nameFieldName: 'Nom',
     nameFieldPseudo: 'Pseudo (@...)',
