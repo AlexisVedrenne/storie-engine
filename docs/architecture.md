@@ -325,6 +325,14 @@ commit a half-typed or momentarily-empty value while the player was still editin
 event or an explicit submit tap fires. `block.readonly` shows the current value with editing
 disabled, for mixing an editable field with a computed one in the same visual style.
 
+`EntityFieldInput.vue`'s `schedule` slot editor (from/to/place rows) lives inside whatever column
+width its caller has — `EntitySchemaForm.vue`'s resizable splitter pane, or a dialog in
+`EffectsBuilder.vue` — both ancestors set `overflow-x: hidden` (`.pane` in `EditorPage.vue`). The
+slot row originally had no `flex-wrap`, so on a narrow column its two fixed-width time inputs
+(`flex-shrink: 0`) plus the delete button overflowed and were silently clipped by that
+`overflow-x: hidden` instead of reflowing — fixed by wrapping the row (`.schedule-slot`) and letting
+the place field shrink (`flex: 1 1 140px; min-width: 0`).
+
 **Per-app theme** (`customApp.theme`, edited in CustomAppEditor.vue's "Thème" panel): a small fixed
 set of design tokens — a 5-role palette (background/surface/text/accent/danger), a font stack
 (sans/serif/mono/rounded — real installed-font families, not live Google Fonts, since a packaged

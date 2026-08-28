@@ -174,8 +174,14 @@ function removeSlot(i) {
   font-style: italic;
 }
 
+/* `flex-wrap` matters here: this row lives inside whatever column width the
+   caller happens to have (a resizable splitter pane in EntitySchemaForm.vue,
+   a dialog in EffectsBuilder.vue) — without wrap, the two fixed-width time
+   inputs + the delete button never shrink (flex-shrink: 0) and overflow a
+   narrow column instead of reflowing, clipped by the pane's own edge. */
 .schedule-slot {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--space-2);
 }
@@ -186,6 +192,7 @@ function removeSlot(i) {
 }
 
 .schedule-place {
-  flex: 1;
+  flex: 1 1 140px;
+  min-width: 0;
 }
 </style>
