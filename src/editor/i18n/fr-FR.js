@@ -610,6 +610,7 @@ export default {
     list: { label: 'Liste (contacts)' },
     conversations: { label: 'Conversation' },
     schedule: { label: 'Emploi du temps' },
+    ledger: { label: 'Registre (graphe)' },
   },
 
   blockProps: {
@@ -686,6 +687,8 @@ export default {
     scheduleFieldHint: 'Doit être un champ de type "Emploi du temps" du schéma choisi.',
     scheduleEntityIdLabel: 'Identifiant de l’instance',
     scheduleEntityIdHint: '"*" = 1ère/seule instance — remplace par un id précis si besoin.',
+    ledgerHelp:
+      'Affiche une collection numérique (solde, score...) en mini-graphe + liste — la même collection que le bloc Liste (source "Collection"), juste avec un rendu graphique.',
     showAvatarLabel: 'Afficher l’avatar du contact',
     nameFieldName: 'Nom',
     nameFieldPseudo: 'Pseudo (@...)',

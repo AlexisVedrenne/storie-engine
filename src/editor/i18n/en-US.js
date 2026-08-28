@@ -594,6 +594,7 @@ export default {
     list: { label: 'List (contacts)' },
     conversations: { label: 'Conversation' },
     schedule: { label: 'Schedule' },
+    ledger: { label: 'Ledger (chart)' },
   },
 
   blockProps: {
@@ -669,6 +670,8 @@ export default {
     scheduleFieldHint: 'Must be a "Schedule"-type field on the chosen schema.',
     scheduleEntityIdLabel: 'Instance id',
     scheduleEntityIdHint: '"*" = 1st/only instance — replace with a specific id if needed.',
+    ledgerHelp:
+      'Shows a numeric collection (balance, score...) as a mini-chart + list — the same collection the List block\'s "Collection" source reads, just with a chart on top.',
     showAvatarLabel: "Show the contact's avatar",
     nameFieldName: 'Name',
     nameFieldPseudo: 'Pseudo (@...)',

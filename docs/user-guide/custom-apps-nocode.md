@@ -38,6 +38,7 @@ saved as part of your project, ready to export like everything else.
 | **List**          | Repeats a block template once per item — see [Lists](#lists) below.                                                         |
 | **Conversations** | A real chat module — see [Conversations](#conversations) below.                                                             |
 | **Schedule**      | A character's routine + current location — see [Schedule](#schedule) below.                                                 |
+| **Ledger**        | A numeric collection as a mini-chart + list — see [Ledger](#ledger) below.                                                  |
 
 Every block can be **dragged** between containers (not just reordered in place), **duplicated**,
 and given a **condition** — a block whose condition doesn't hold is entirely absent, not just
@@ -116,6 +117,16 @@ is what makes a tracking-style app possible: define a schema for a character wit
 author their day (seed instances, so it's there from the start — see
 [Entity schemas](conditions-and-flags.md#entity-schemas)), and a `schedule` block anywhere shows
 where they are right now, recalculated live as the story's clock moves.
+
+### Ledger
+
+The `ledger` block picks a [flag collection](conditions-and-flags.md#flags) — the same one the
+`list` block's "Collection" source reads — and renders it as a mini area-chart (most recent value
+front and center, a line tracing every entry) plus the entry list underneath. Nothing new to
+author: any collection you already build via effects (`add`/`increment` — a wallet balance, a
+reputation score, a running total) becomes a real chart the moment you point a `ledger` block at
+it, no separate chart data to maintain. A non-numeric collection still lists its entries, just
+without the chart on top.
 
 ## Variables and translation
 

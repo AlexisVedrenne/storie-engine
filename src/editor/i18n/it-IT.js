@@ -607,6 +607,7 @@ export default {
     list: { label: 'Elenco (contatti)' },
     conversations: { label: 'Conversazione' },
     schedule: { label: 'Orario' },
+    ledger: { label: 'Registro (grafico)' },
   },
 
   blockProps: {
@@ -684,6 +685,8 @@ export default {
     scheduleFieldHint: 'Deve essere un campo di tipo "Orario" dello schema scelto.',
     scheduleEntityIdLabel: "Id dell'istanza",
     scheduleEntityIdHint: '"*" = 1ª/unica istanza — sostituiscilo con un id preciso se serve.',
+    ledgerHelp:
+      'Mostra una raccolta numerica (saldo, punteggio...) come mini-grafico + elenco — la stessa raccolta letta dalla fonte "Raccolta" del blocco Elenco, solo con un grafico sopra.',
     showAvatarLabel: "Mostra l'avatar del contatto",
     nameFieldName: 'Nome',
     nameFieldPseudo: 'Pseudonimo (@...)',

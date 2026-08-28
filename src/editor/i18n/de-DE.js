@@ -605,6 +605,7 @@ export default {
     list: { label: 'Liste (Kontakte)' },
     conversations: { label: 'Unterhaltung' },
     schedule: { label: 'Zeitplan' },
+    ledger: { label: 'Verlauf (Diagramm)' },
   },
 
   blockProps: {
@@ -683,6 +684,8 @@ export default {
     scheduleEntityIdLabel: 'Instanz-ID',
     scheduleEntityIdHint:
       '„*" = 1. / einzige Instanz — bei Bedarf durch eine konkrete ID ersetzen.',
+    ledgerHelp:
+      'Zeigt eine numerische Sammlung (Guthaben, Punktestand...) als Mini-Diagramm + Liste — dieselbe Sammlung, die die Quelle „Sammlung" des Listen-Blocks liest, nur mit Diagramm obendrauf.',
     showAvatarLabel: 'Avatar des Kontakts anzeigen',
     nameFieldName: 'Name',
     nameFieldPseudo: 'Pseudonym (@...)',

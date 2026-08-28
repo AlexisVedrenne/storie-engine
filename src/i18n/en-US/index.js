@@ -247,5 +247,8 @@ export default {
       unknown: 'Unknown location',
       empty: 'No time slots set yet.',
     },
+    ledger: {
+      empty: 'No entries yet.',
+    },
   },
 }

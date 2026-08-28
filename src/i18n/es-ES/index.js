@@ -250,5 +250,8 @@ export default {
       unknown: 'Ubicación desconocida',
       empty: 'Ningún horario definido todavía.',
     },
+    ledger: {
+      empty: 'Aún no hay entradas.',
+    },
   },
 }

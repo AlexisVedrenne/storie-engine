@@ -19,6 +19,7 @@ export const BLOCK_KINDS = [
   { type: 'list', icon: 'repeat' },
   { type: 'conversations', icon: 'forum' },
   { type: 'schedule', icon: 'schedule' },
+  { type: 'ledger', icon: 'show_chart' },
 ]
 
 export function paletteIcon(type) {
@@ -113,6 +114,18 @@ export function defaultBlock(type) {
       // variant — a list repeats a template once PER ITEM, this renders ONE
       // item's own structured field.
       return { type, schemaId: '', entityId: '*', fieldKey: '' }
+    case 'ledger':
+      // A numeric flag COLLECTION (story.flagCollections[flagKey], the same
+      // one `list` block's `source: 'flagCollection'` already reads —
+      // `story.collectionItems`) rendered as a mini area-chart + the entry
+      // list below it, for any value that varies over time: a currency
+      // balance, a reputation/trust score, anything an author already
+      // builds via `effects.collections`. Not its own data source — deliberately
+      // reuses collections rather than inventing a "ledger" concept, same
+      // spirit as `schedule` reusing entity fields instead of a new bucket.
+      // Non-numeric entries are ignored by the chart (coerced to 0) but
+      // still shown in the list.
+      return { type, flagKey: '' }
     default:
       return { type }
   }

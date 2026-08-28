@@ -480,6 +480,11 @@
       />
     </template>
 
+    <template v-else-if="block.type === 'ledger'">
+      <p class="tab-help">{{ t('blockProps.ledgerHelp') }}</p>
+      <FlagNameField v-model="block.flagKey" />
+    </template>
+
     <q-expansion-item
       dense
       :label="t('timelineEntryCard.displayCondition')"

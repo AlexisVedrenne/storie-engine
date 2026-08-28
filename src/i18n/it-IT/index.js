@@ -249,5 +249,8 @@ export default {
       unknown: 'Posizione sconosciuta',
       empty: 'Nessuna fascia oraria ancora impostata.',
     },
+    ledger: {
+      empty: 'Nessuna voce ancora.',
+    },
   },
 }

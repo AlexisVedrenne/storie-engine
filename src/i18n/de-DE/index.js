@@ -250,5 +250,8 @@ export default {
       unknown: 'Unbekannter Ort',
       empty: 'Noch keine Zeitfenster festgelegt.',
     },
+    ledger: {
+      empty: 'Noch keine Einträge.',
+    },
   },
 }

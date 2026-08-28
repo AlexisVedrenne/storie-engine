@@ -613,6 +613,7 @@ export default {
     list: { label: 'Lista (contactos)' },
     conversations: { label: 'Conversación' },
     schedule: { label: 'Horario' },
+    ledger: { label: 'Registro (gráfico)' },
   },
 
   blockProps: {
@@ -690,6 +691,8 @@ export default {
     scheduleEntityIdLabel: 'Id de la instancia',
     scheduleEntityIdHint:
       '"*" = 1ª/única instancia — sustitúyelo por un id concreto si hace falta.',
+    ledgerHelp:
+      'Muestra una colección numérica (saldo, puntuación...) como mini-gráfico + lista — la misma colección que lee la fuente "Colección" del bloque Lista, solo que con un gráfico encima.',
     showAvatarLabel: 'Mostrar el avatar del contacto',
     nameFieldName: 'Nombre',
     nameFieldPseudo: 'Pseudónimo (@...)',

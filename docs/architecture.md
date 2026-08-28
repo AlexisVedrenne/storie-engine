@@ -295,16 +295,20 @@ is enough to register a working app, no other file needs editing. A manifest wit
 
 **Custom apps** are the no-code equivalent: authored entirely inside the editor's "Apps" tab as a
 tree of visual blocks (`header`, `text`, `image`, `row`, `card`, `layout`, `badge`, `divider`,
-`button`, `tabs`, `list`, `conversations`, `schedule` — see `src/engine/customApps/blockKinds.js`),
-stored as plain JSON at `apps/<id>.json` in the project, and rendered by one generic interpreter,
-`CustomAppRenderer.vue` (the same component instance for every custom app — same "one generic
-player driven by data" precedent as `InteractionPlayer.vue` for interactions). A `list` block's
-`source` is one of `contacts`/`flagCollection`/`entity` — the last iterates instances of an
-author-defined entity schema, see [Entity schemas](#conditions-effects-flags-events) below. A
-`schedule` block reads ONE entity's own `type: 'schedule'` field — an array of `{ from, to, place }`
-slots authored on the schema (`EntityFieldInput.vue`) — and renders a day timeline, highlighting
-whichever slot covers `story.resolvedClock()`'s current time (`ScheduleBlock.vue`); `entityId: '*'`
-picks the first/only instance of the schema, same sentinel the `{entity:...}` token uses.
+`button`, `tabs`, `list`, `conversations`, `schedule`, `ledger` — see
+`src/engine/customApps/blockKinds.js`), stored as plain JSON at `apps/<id>.json` in the project, and
+rendered by one generic interpreter, `CustomAppRenderer.vue` (the same component instance for every
+custom app — same "one generic player driven by data" precedent as `InteractionPlayer.vue` for
+interactions). A `list` block's `source` is one of `contacts`/`flagCollection`/`entity` — the last
+iterates instances of an author-defined entity schema, see
+[Entity schemas](#conditions-effects-flags-events) below. A `schedule` block reads ONE entity's own
+`type: 'schedule'` field — an array of `{ from, to, place }` slots authored on the schema
+(`EntityFieldInput.vue`) — and renders a day timeline, highlighting whichever slot covers
+`story.resolvedClock()`'s current time (`ScheduleBlock.vue`); `entityId: '*'` picks the first/only
+instance of the schema, same sentinel the `{entity:...}` token uses. A `ledger` block reads a
+numeric `story.flagCollections[flagKey]` (`LedgerBlock.vue`, plain inline SVG, no chart library) —
+the same collection a `list` block's `flagCollection` source already reads, just rendered as a
+mini area-chart plus the entry list, coercing non-numeric entries to 0 for the chart only.
 
 **Merged registry**: `story.mergedAppRegistry` (a getter on the `story` store) concatenates
 `APP_REGISTRY` (native, code-defined) with `project.customApps` (author-built, JSON-defined),

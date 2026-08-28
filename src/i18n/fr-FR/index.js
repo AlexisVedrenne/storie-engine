@@ -249,5 +249,8 @@ export default {
       unknown: 'Position inconnue',
       empty: 'Aucun créneau renseigné.',
     },
+    ledger: {
+      empty: 'Aucune entrée pour l’instant.',
+    },
   },
 }
