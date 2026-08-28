@@ -379,6 +379,19 @@ existed (asset collection, zip export/import, translation extraction, the drag/d
 machinery) — no block-type-specific list anywhere needed a new entry, by design (see
 `BLOCK_KINDS`/`BLOCK_COMPONENTS`, the only two places a block type is ever named explicitly).
 
+**Overlay** (pilier 03, third sub-feature): `overlay` is a recursive container (own `blocks[]`, like
+`card`) rendered `position: absolute` at one of 5 fixed presets (`block.anchor`:
+`top-left`/`top-right`/`bottom-left`/`bottom-right`/`center` — `OverlayBlock.vue`'s
+`ANCHOR_STYLES`). CSS `position: absolute` resolves against the nearest ancestor with
+`position: relative` — `CustomAppRenderer.vue`'s `.app-screen` already is one (so an overlay at a
+screen's own root level pins to a corner/center of the WHOLE screen), and `CardBlock.vue`/
+`LayoutBlock.vue` now set it too (so an overlay nested inside either one pins to THAT container's
+own corner/center instead — `LayoutBlock.vue` needed a `<style>` block for the first time, being
+otherwise chrome-free by design). Deliberately not a free x/y coordinate or an anchor-to-any-block-
+by-id system — nesting IS the anchor mechanism, the same "small bounded primitive over a more
+powerful but far more complex alternative" trade this project keeps making (flags as the only
+variable mechanism, blocks instead of a free canvas).
+
 **Merged registry**: `story.mergedAppRegistry` (a getter on the `story` store) concatenates
 `APP_REGISTRY` (native, code-defined) with `project.customApps` (author-built, JSON-defined),
 normalized to the same `{ id, label, icon, color, badge, component }` shape so every consumer

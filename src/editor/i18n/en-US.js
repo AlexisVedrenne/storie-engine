@@ -611,11 +611,13 @@ export default {
 
   blockKinds: {
     header: { label: 'Header' },
+    footer: { label: 'Footer' },
     text: { label: 'Text' },
     image: { label: 'Image' },
     avatar: { label: 'Avatar' },
     row: { label: 'Row' },
     card: { label: 'Card' },
+    overlay: { label: 'Floating layer' },
     layout: { label: 'Layout (row/column)' },
     badge: { label: 'Badge' },
     divider: { label: 'Divider' },
@@ -652,6 +654,14 @@ export default {
     iconColorLabel: 'Icon color',
     bgColorLabel: 'Background color (optional)',
     radiusLabel: 'Corner radius',
+    overlayHelp:
+      'A layer positioned over the normal content (floating badge, bubble, tooltip) — anchors to a corner/center of the screen, or of the Card/Layout containing it if you place it inside one.',
+    overlayAnchorLabel: 'Position',
+    anchorTopLeft: 'Top left',
+    anchorTopRight: 'Top right',
+    anchorBottomLeft: 'Bottom left',
+    anchorBottomRight: 'Bottom right',
+    anchorCenter: 'Center',
     cardHelp: 'A card visually groups other blocks inside it.',
     layoutHelp:
       'Arranges other blocks in a row or column, no background by default — unlike a card, unless you pick a background color below.',

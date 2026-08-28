@@ -54,6 +54,7 @@ having internet access to fetch one.
 | **Avatar**        | A round profile picture/initial, with a color.                                                                                         |
 | **Row**           | An icon + label + optional sublabel + optional chevron — a settings-style list row.                                                    |
 | **Card**          | A container with a visible background, for grouping other blocks.                                                                      |
+| **Overlay**       | A layer positioned over the normal content — see [Overlay](#overlay) below.                                                            |
 | **Layout**        | A plain flex container (row or column) with no background — for arranging other blocks without the visual weight of a card.            |
 | **Badge**         | A small colored label/pill.                                                                                                            |
 | **Divider**       | A horizontal rule.                                                                                                                     |
@@ -192,6 +193,17 @@ of the content. Off by default, so every existing header keeps behaving exactly 
 a container (row or column, like Layout) that holds its own blocks, with **Pinned to the bottom**
 on by default — turn it off if you want the footer's visual style without actually fixing it in
 place.
+
+### Overlay
+
+An `overlay` block holds its own blocks and positions them over the normal content — a floating
+badge, a small bubble, a tooltip — instead of taking up space in the row/column flow like every
+other block. Pick where it sits: top-left, top-right, bottom-left, bottom-right, or center.
+
+It anchors to whichever **Card** or **Layout** it's nested inside — placed at a screen's root
+level, it anchors to the whole screen; placed inside a Card, it anchors to just that card's own
+corner/center instead. There's no way to anchor it to an arbitrary block by name — nesting is how
+you pick what it's positioned against.
 
 ## Variables and translation
 

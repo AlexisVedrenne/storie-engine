@@ -630,11 +630,13 @@ export default {
 
   blockKinds: {
     header: { label: 'Cabecera' },
+    footer: { label: 'Pie de página' },
     text: { label: 'Texto' },
     image: { label: 'Imagen' },
     avatar: { label: 'Avatar' },
     row: { label: 'Fila' },
     card: { label: 'Tarjeta' },
+    overlay: { label: 'Capa flotante' },
     layout: { label: 'Disposición (fila/columna)' },
     badge: { label: 'Insignia' },
     divider: { label: 'Separador' },
@@ -671,6 +673,14 @@ export default {
     iconColorLabel: 'Color del icono',
     bgColorLabel: 'Color de fondo (opcional)',
     radiusLabel: 'Radio de las esquinas',
+    overlayHelp:
+      'Una capa posicionada sobre el contenido normal (badge flotante, burbuja, tooltip) — se ancla a una esquina/centro de la pantalla, o de la Tarjeta/Disposición que la contiene si la colocas dentro de una.',
+    overlayAnchorLabel: 'Posición',
+    anchorTopLeft: 'Arriba izquierda',
+    anchorTopRight: 'Arriba derecha',
+    anchorBottomLeft: 'Abajo izquierda',
+    anchorBottomRight: 'Abajo derecha',
+    anchorCenter: 'Centro',
     cardHelp: 'Una tarjeta agrupa visualmente otros bloques en su interior.',
     layoutHelp:
       'Organiza otros bloques en fila o columna, sin fondo por defecto — a diferencia de una tarjeta, a menos que elijas un color de fondo abajo.',

@@ -18,6 +18,9 @@ defineProps({ block: { type: Object, required: true } })
 
 <style scoped>
 .card-block {
+  /* Lets a nested `overlay` block (pilier 03) position itself against THIS
+     card specifically instead of bubbling up to the screen root. */
+  position: relative;
   background: var(--app-surface);
   border-radius: var(--app-radius);
   padding: 4px 14px;

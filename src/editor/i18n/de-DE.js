@@ -622,11 +622,13 @@ export default {
 
   blockKinds: {
     header: { label: 'Kopfbereich' },
+    footer: { label: 'Fußzeile' },
     text: { label: 'Text' },
     image: { label: 'Bild' },
     avatar: { label: 'Avatar' },
     row: { label: 'Zeile' },
     card: { label: 'Karte' },
+    overlay: { label: 'Schwebende Ebene' },
     layout: { label: 'Layout (Zeile/Spalte)' },
     badge: { label: 'Abzeichen' },
     divider: { label: 'Trennlinie' },
@@ -664,6 +666,14 @@ export default {
     iconColorLabel: 'Symbolfarbe',
     bgColorLabel: 'Hintergrundfarbe (optional)',
     radiusLabel: 'Eckenradius',
+    overlayHelp:
+      'Eine Ebene über dem normalen Inhalt (schwebendes Badge, Sprechblase, Tooltip) — verankert an einer Ecke/Mitte des Bildschirms, oder der Karte/Anordnung, in der sie liegt, falls du sie dort hinein platzierst.',
+    overlayAnchorLabel: 'Position',
+    anchorTopLeft: 'Oben links',
+    anchorTopRight: 'Oben rechts',
+    anchorBottomLeft: 'Unten links',
+    anchorBottomRight: 'Unten rechts',
+    anchorCenter: 'Mitte',
     cardHelp: 'Eine Karte fasst andere Blöcke visuell zusammen.',
     layoutHelp:
       'Ordnet andere Blöcke in einer Zeile oder Spalte an, standardmäßig ohne Hintergrund — im Gegensatz zu einer Karte, außer du wählst unten eine Hintergrundfarbe.',

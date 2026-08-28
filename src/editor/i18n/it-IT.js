@@ -624,11 +624,13 @@ export default {
 
   blockKinds: {
     header: { label: 'Intestazione' },
+    footer: { label: 'Piè di pagina' },
     text: { label: 'Testo' },
     image: { label: 'Immagine' },
     avatar: { label: 'Avatar' },
     row: { label: 'Riga' },
     card: { label: 'Scheda' },
+    overlay: { label: 'Livello flottante' },
     layout: { label: 'Layout (riga/colonna)' },
     badge: { label: 'Badge' },
     divider: { label: 'Separatore' },
@@ -666,6 +668,14 @@ export default {
     iconColorLabel: "Colore dell'icona",
     bgColorLabel: 'Colore di sfondo (opzionale)',
     radiusLabel: 'Raggio degli angoli',
+    overlayHelp:
+      'Un livello posizionato sopra il contenuto normale (badge flottante, bolla, tooltip) — si ancora a un angolo/centro dello schermo, o della Scheda/Disposizione che lo contiene se lo metti al suo interno.',
+    overlayAnchorLabel: 'Posizione',
+    anchorTopLeft: 'Alto sinistra',
+    anchorTopRight: 'Alto destra',
+    anchorBottomLeft: 'Basso sinistra',
+    anchorBottomRight: 'Basso destra',
+    anchorCenter: 'Centro',
     cardHelp: 'Una scheda raggruppa visivamente altri blocchi al suo interno.',
     layoutHelp:
       'Dispone altri blocchi in riga o colonna, senza sfondo per default — a differenza di una scheda, a meno che tu non scelga un colore di sfondo qui sotto.',

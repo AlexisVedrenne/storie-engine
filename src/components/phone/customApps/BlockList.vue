@@ -52,6 +52,7 @@ import ImageBlock from './ImageBlock.vue'
 import AvatarBlock from './AvatarBlock.vue'
 import RowBlock from './RowBlock.vue'
 import CardBlock from './CardBlock.vue'
+import OverlayBlock from './OverlayBlock.vue'
 import LayoutBlock from './LayoutBlock.vue'
 import BadgeBlock from './BadgeBlock.vue'
 import DividerBlock from './DividerBlock.vue'
@@ -86,6 +87,7 @@ const BLOCK_COMPONENTS = {
   avatar: AvatarBlock,
   row: RowBlock,
   card: CardBlock,
+  overlay: OverlayBlock,
   layout: LayoutBlock,
   badge: BadgeBlock,
   divider: DividerBlock,

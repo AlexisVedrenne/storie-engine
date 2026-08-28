@@ -228,6 +228,31 @@
       />
     </template>
 
+    <template v-else-if="block.type === 'overlay'">
+      <p class="tab-help">{{ t('blockProps.overlayHelp') }}</p>
+      <q-select
+        dense
+        outlined
+        :label="t('blockProps.overlayAnchorLabel')"
+        v-model="block.anchor"
+        :options="[
+          { label: t('blockProps.anchorTopLeft'), value: 'top-left' },
+          { label: t('blockProps.anchorTopRight'), value: 'top-right' },
+          { label: t('blockProps.anchorBottomLeft'), value: 'bottom-left' },
+          { label: t('blockProps.anchorBottomRight'), value: 'bottom-right' },
+          { label: t('blockProps.anchorCenter'), value: 'center' },
+        ]"
+        emit-value
+        map-options
+      />
+      <BlockBuilder
+        :blocks="ensureChildren()"
+        :screens="screens"
+        :item-scope="itemScope"
+        :depth="depth + 1"
+      />
+    </template>
+
     <template v-else-if="block.type === 'layout'">
       <p class="tab-help">{{ t('blockProps.layoutHelp') }}</p>
       <q-btn-toggle

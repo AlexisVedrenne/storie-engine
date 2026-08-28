@@ -12,6 +12,7 @@ export const BLOCK_KINDS = [
   { type: 'avatar', icon: 'account_circle' },
   { type: 'row', icon: 'list' },
   { type: 'card', icon: 'crop_square' },
+  { type: 'overlay', icon: 'layers' },
   { type: 'layout', icon: 'view_column' },
   { type: 'badge', icon: 'label' },
   { type: 'divider', icon: 'horizontal_rule' },
@@ -56,6 +57,15 @@ export function defaultBlock(type) {
       return { type, icon: '', label: '', sublabel: '', chevron: false }
     case 'card':
       return { type, blocks: [] }
+    case 'overlay':
+      // A positioned layer above the normal flow (pilier 03) — `anchor`
+      // picks one of 5 fixed corner/center presets, resolved against
+      // whichever ancestor sets `position: relative` (the screen root by
+      // default, or the nearest Card/Layout it's nested inside — see
+      // OverlayBlock.vue). Deliberately not a free x/y coordinate or an
+      // arbitrary-block anchor id — same bounded-catalog trade as every
+      // other block here.
+      return { type, anchor: 'top-right', blocks: [] }
     case 'layout':
       // Pure flex arranger — no background/padding chrome of its own,
       // unlike `card` (which is really "layout, column direction, + a

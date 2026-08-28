@@ -627,11 +627,13 @@ export default {
 
   blockKinds: {
     header: { label: 'En-tête' },
+    footer: { label: 'Pied de page' },
     text: { label: 'Texte' },
     image: { label: 'Image' },
     avatar: { label: 'Avatar' },
     row: { label: 'Ligne' },
     card: { label: 'Carte' },
+    overlay: { label: 'Calque flottant' },
     layout: { label: 'Disposition (rangée/colonne)' },
     badge: { label: 'Badge' },
     divider: { label: 'Séparateur' },
@@ -670,6 +672,14 @@ export default {
     bgColorLabel: 'Couleur de fond (optionnel)',
     radiusLabel: 'Arrondi',
     cardHelp: 'Une carte regroupe visuellement d’autres blocs à l’intérieur.',
+    overlayHelp:
+      'Un calque positionné par-dessus le contenu normal (badge flottant, bulle, tooltip) — s’ancre au coin/centre de l’écran, ou de la Carte/Disposition qui le contient si tu le places dedans.',
+    overlayAnchorLabel: 'Position',
+    anchorTopLeft: 'Haut gauche',
+    anchorTopRight: 'Haut droite',
+    anchorBottomLeft: 'Bas gauche',
+    anchorBottomRight: 'Bas droite',
+    anchorCenter: 'Centre',
     layoutHelp:
       'Arrange d’autres blocs en rangée ou en colonne, sans fond visuel par défaut — contrairement à la carte, sauf si tu choisis une couleur de fond ci-dessous.',
     stickyHeaderLabel: 'Fixé en haut (reste visible au défilement)',
