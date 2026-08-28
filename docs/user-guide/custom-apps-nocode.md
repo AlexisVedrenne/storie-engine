@@ -23,6 +23,11 @@ it, same idea as a folder tree.
 An app can have multiple **screens** (switchable via a `tabs` block), and everything you build is
 saved as part of your project, ready to export like everything else.
 
+Each screen can also have its own **background** — an image, or a short muted video that loops —
+shown behind every block on that screen, with an adjustable opacity so it can sit subtly behind the
+content instead of fighting with it. Good for the ambiance of a place or the background noise of a
+scene rather than a decorative wallpaper.
+
 ## App theme
 
 Every app has its own **Theme** panel (top of the editor, above Screens) — a 5-color palette

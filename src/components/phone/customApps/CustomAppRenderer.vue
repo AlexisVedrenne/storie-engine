@@ -1,9 +1,20 @@
 <template>
   <div class="app-screen" :style="themeVars">
-    <img
-      v-if="currentScreen?.background"
+    <video
+      v-if="currentScreen?.background && currentScreen.backgroundType === 'video'"
       :src="resolveAssetUrl(currentScreen.background)"
       class="screen-background"
+      :style="{ opacity: backgroundOpacity }"
+      autoplay
+      muted
+      loop
+      playsinline
+    />
+    <img
+      v-else-if="currentScreen?.background"
+      :src="resolveAssetUrl(currentScreen.background)"
+      class="screen-background"
+      :style="{ opacity: backgroundOpacity }"
       alt=""
     />
     <BlockList v-if="currentScreen" :blocks="currentScreen.blocks || []" :gap="gapPx" />
@@ -109,6 +120,13 @@ const gapPx = computed(() => {
   const spacing = appDef.value?.theme?.spacing
   return SPACING_SCALE[spacing] ?? SPACING_SCALE.normal
 })
+
+// Screen background (pilier 03) — a plain image (original v1) or a short
+// muted/looping video, author's choice of `currentScreen.backgroundType`.
+// `backgroundOpacity` (0-100, default 100 = fully opaque, matching the
+// original always-opaque image) lets an author fade it into the app's own
+// `--app-bg` instead of always painting it at full strength.
+const backgroundOpacity = computed(() => (currentScreen.value?.backgroundOpacity ?? 100) / 100)
 </script>
 
 <style scoped>

@@ -353,6 +353,17 @@ one, since this is a pure styling concern. A block's own explicit color/radius (
 one) still wins over the theme, which itself still loses to the engine's hard-coded fallback for
 anything genuinely fixed by design (a badge's pill shape, an avatar's circle) rather than themed.
 
+**Screen background** (pilier 03, first sub-feature): `screen.background` (an asset path, pre-
+existing) now pairs with `screen.backgroundType` (`'image'`/`'video'`, default `'image'` for zero
+migration) and `screen.backgroundOpacity` (0-100, default 100 — fully opaque, matching the original
+always-opaque image). `CustomAppRenderer.vue` renders either an `<img>` or a muted/looping/autoplay
+`<video>` absolutely positioned behind `BlockList`, with `opacity` applied via inline style. Video is
+a genuinely new asset category for this engine (nothing else — reels, photos — uses real video
+files, those are all authored as static images) — `categorizeAsset()` gained a `video` bucket
+(`mp4`/`webm`/`mov`), and `project:pickAsset`/`project:importAsset` (`src-electron/ipc/project.js`)
+gained a matching file-dialog filter, mirroring the existing `audio` branch. `AssetField.vue` shows
+a muted looping `<video>` preview the same way it already shows an `<img>` for images.
+
 **Merged registry**: `story.mergedAppRegistry` (a getter on the `story` store) concatenates
 `APP_REGISTRY` (native, code-defined) with `project.customApps` (author-built, JSON-defined),
 normalized to the same `{ id, label, icon, color, badge, component }` shape so every consumer

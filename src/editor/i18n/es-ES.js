@@ -584,6 +584,11 @@ export default {
     screenLabelLabel: 'Nombre de la pantalla',
     addScreen: 'Añadir una pantalla',
     screenBackgroundLabel: 'Fondo (opcional)',
+    screenBackgroundHelp:
+      'Una imagen o un breve vídeo en bucle detrás de todos los bloques de esta pantalla, con opacidad ajustable.',
+    backgroundTypeImage: 'Imagen',
+    backgroundTypeVideo: 'Vídeo',
+    backgroundOpacityLabel: 'Opacidad',
     themeTitle: 'Tema',
     themeHelp:
       'Colores/fuente/radio por defecto de esta app — cualquier bloque puede seguir anulándolos individualmente (el color de un botón, etc.), esto solo define lo que no está ya fijado bloque por bloque.',

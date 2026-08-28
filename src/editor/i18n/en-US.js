@@ -565,6 +565,11 @@ export default {
     screenLabelLabel: 'Screen name',
     addScreen: 'Add a screen',
     screenBackgroundLabel: 'Background (optional)',
+    screenBackgroundHelp:
+      'An image or a short looping video behind every block on this screen, with adjustable opacity.',
+    backgroundTypeImage: 'Image',
+    backgroundTypeVideo: 'Video',
+    backgroundOpacityLabel: 'Opacity',
     themeTitle: 'Theme',
     themeHelp:
       "This app's default colors/font/radius — any block can still override them individually (a button's own color, etc.), this only sets what isn't already set block by block.",

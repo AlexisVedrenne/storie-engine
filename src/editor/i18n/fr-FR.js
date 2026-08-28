@@ -581,6 +581,11 @@ export default {
     screenLabelLabel: 'Nom de l’écran',
     addScreen: 'Ajouter un écran',
     screenBackgroundLabel: 'Fond d’écran (optionnel)',
+    screenBackgroundHelp:
+      'Une image ou une courte vidéo en boucle derrière tous les blocs de cet écran, avec une opacité réglable.',
+    backgroundTypeImage: 'Image',
+    backgroundTypeVideo: 'Vidéo',
+    backgroundOpacityLabel: 'Opacité',
     themeTitle: 'Thème',
     themeHelp:
       'Couleurs, police et rayons par défaut de cette app — chaque bloc peut toujours les remplacer individuellement (couleur d’un bouton, etc.), ceci ne fixe que ce qui n’est pas déjà réglé bloc par bloc.',

@@ -576,6 +576,11 @@ export default {
     screenLabelLabel: 'Bildschirmname',
     addScreen: 'Bildschirm hinzufügen',
     screenBackgroundLabel: 'Hintergrund (optional)',
+    screenBackgroundHelp:
+      'Ein Bild oder ein kurzes Video in Endlosschleife hinter allen Blöcken dieses Bildschirms, mit einstellbarer Deckkraft.',
+    backgroundTypeImage: 'Bild',
+    backgroundTypeVideo: 'Video',
+    backgroundOpacityLabel: 'Deckkraft',
     themeTitle: 'Design',
     themeHelp:
       'Standardfarben/-schrift/-radius dieser App — jeder Block kann sie weiterhin einzeln überschreiben (z. B. die Farbe eines Buttons); dies legt nur fest, was nicht schon Block für Block gesetzt ist.',

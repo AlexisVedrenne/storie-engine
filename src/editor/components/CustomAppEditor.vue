@@ -154,11 +154,39 @@
         </q-btn>
       </div>
 
-      <AssetField
-        v-if="currentScreen"
-        v-model="currentScreen.background"
-        :label="t('customAppEditor.screenBackgroundLabel')"
-      />
+      <template v-if="currentScreen">
+        <div class="section-label">
+          {{ t('customAppEditor.screenBackgroundLabel') }}
+          <FieldHelp :text="t('customAppEditor.screenBackgroundHelp')" />
+        </div>
+        <q-btn-toggle
+          dense
+          no-caps
+          :model-value="currentScreen.backgroundType || 'image'"
+          @update:model-value="(v) => (currentScreen.backgroundType = v)"
+          :options="[
+            { label: t('customAppEditor.backgroundTypeImage'), value: 'image' },
+            { label: t('customAppEditor.backgroundTypeVideo'), value: 'video' },
+          ]"
+        />
+        <AssetField
+          v-model="currentScreen.background"
+          :accept="currentScreen.backgroundType === 'video' ? 'video' : 'images'"
+        />
+        <q-input
+          dense
+          outlined
+          type="number"
+          :label="t('customAppEditor.backgroundOpacityLabel')"
+          suffix="%"
+          :model-value="currentScreen.backgroundOpacity ?? 100"
+          @update:model-value="
+            (v) =>
+              (currentScreen.backgroundOpacity =
+                v === null || v === '' ? 100 : Math.max(0, Math.min(100, Number(v))))
+          "
+        />
+      </template>
 
       <BlockBuilder
         v-if="currentScreen"

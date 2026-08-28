@@ -578,6 +578,11 @@ export default {
     screenLabelLabel: 'Nome della schermata',
     addScreen: 'Aggiungi una schermata',
     screenBackgroundLabel: 'Sfondo (opzionale)',
+    screenBackgroundHelp:
+      'Un’immagine o un breve video in loop dietro tutti i blocchi di questa schermata, con opacità regolabile.',
+    backgroundTypeImage: 'Immagine',
+    backgroundTypeVideo: 'Video',
+    backgroundOpacityLabel: 'Opacità',
     themeTitle: 'Tema',
     themeHelp:
       "Colori/font/raggio predefiniti di quest'app — ogni blocco può comunque sovrascriverli singolarmente (il colore di un pulsante, ecc.), questo imposta solo ciò che non è già fissato blocco per blocco.",
