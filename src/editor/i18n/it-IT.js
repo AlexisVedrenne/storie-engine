@@ -733,6 +733,7 @@ export default {
     actionSequenceHelp: 'Concatena più azioni in ordine — un tocco, più conseguenze.',
     actionSequenceStepN: 'Passo {n}',
     actionSequenceAddStep: 'Aggiungi un passo',
+    actionTypeLabel: 'Tipo di azione',
     actionToastHelp: 'Mostra brevemente un messaggio a schermo al tap — nessun altro effetto.',
     actionToastTextLabel: 'Testo del messaggio',
     actionGuardTitle: "Condizione prima dell'azione (avanzato)",

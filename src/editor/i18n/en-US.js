@@ -719,6 +719,7 @@ export default {
     actionSequenceHelp: 'Chains several actions in order — one tap, several consequences.',
     actionSequenceStepN: 'Step {n}',
     actionSequenceAddStep: 'Add a step',
+    actionTypeLabel: 'Action type',
     actionToastHelp: 'Briefly shows a message on screen on tap — no other effect.',
     actionToastTextLabel: 'Message text',
     actionGuardTitle: 'Condition before action (advanced)',

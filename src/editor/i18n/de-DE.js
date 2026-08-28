@@ -733,6 +733,7 @@ export default {
     actionSequenceHelp: 'Reiht mehrere Aktionen nacheinander auf — ein Antippen, mehrere Folgen.',
     actionSequenceStepN: 'Schritt {n}',
     actionSequenceAddStep: 'Schritt hinzufügen',
+    actionTypeLabel: 'Aktionstyp',
     actionToastHelp: 'Zeigt beim Tippen kurz eine Meldung an — kein weiterer Effekt.',
     actionToastTextLabel: 'Meldungstext',
     actionGuardTitle: 'Bedingung vor Aktion (erweitert)',

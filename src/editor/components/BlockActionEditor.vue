@@ -1,8 +1,11 @@
 <template>
   <div class="prop-group-label">{{ t('blockProps.groupAction') }}</div>
-  <q-btn-toggle
+  <q-select
     dense
-    no-caps
+    outlined
+    emit-value
+    map-options
+    :label="t('blockProps.actionTypeLabel')"
     :model-value="action.type"
     :options="[
       { label: t('blockProps.actionNone'), value: 'none' },

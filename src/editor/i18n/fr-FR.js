@@ -739,6 +739,7 @@ export default {
       'Enchaîne plusieurs actions à la suite, dans l’ordre — un tap, plusieurs conséquences.',
     actionSequenceStepN: 'Étape {n}',
     actionSequenceAddStep: 'Ajouter une étape',
+    actionTypeLabel: 'Type d’action',
     actionGuardTitle: 'Condition avant action (avancé)',
     actionGuardHelp:
       'Si posée, vérifiée AVANT que l’action ci-dessus s’applique — si elle échoue, l’action est annulée (rien ne se passe, ou le message ci-dessous s’affiche à la place).',

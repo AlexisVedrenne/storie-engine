@@ -738,6 +738,7 @@ export default {
     actionSequenceHelp: 'Encadena varias acciones en orden — un toque, varias consecuencias.',
     actionSequenceStepN: 'Paso {n}',
     actionSequenceAddStep: 'Añadir un paso',
+    actionTypeLabel: 'Tipo de acción',
     actionToastHelp: 'Muestra brevemente un mensaje en pantalla al tocar — ningún otro efecto.',
     actionToastTextLabel: 'Texto del mensaje',
     actionGuardTitle: 'Condición antes de la acción (avanzado)',
