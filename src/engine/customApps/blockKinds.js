@@ -6,6 +6,7 @@
 // per-block field.
 export const BLOCK_KINDS = [
   { type: 'header', icon: 'view_headline' },
+  { type: 'footer', icon: 'vertical_align_bottom' },
   { type: 'text', icon: 'notes' },
   { type: 'image', icon: 'image' },
   { type: 'avatar', icon: 'account_circle' },
@@ -30,7 +31,21 @@ export function paletteIcon(type) {
 export function defaultBlock(type) {
   switch (type) {
     case 'header':
-      return { type, title: '', icon: 'apps', color: '#4c8bf5' }
+      // `sticky` (pilier 03) pins the header to the top of the screen's own
+      // scroll area instead of scrolling away with the rest of the content
+      // — defaults false so every existing saved header renders unchanged.
+      return { type, title: '', icon: 'apps', color: '#4c8bf5', sticky: false }
+    case 'footer':
+      // The symmetric counterpart to header.sticky (pilier 03) — a row of
+      // action buttons pinned to the BOTTOM of the screen ("barre d'action
+      // fixe en bas d'un formulaire"). Same recursive-container shape as
+      // `layout` (row/column, its own `blocks[]`), not `card`'s padded-panel
+      // look. `sticky` defaults true here (unlike header) since a
+      // non-sticky footer is indistinguishable from just placing a `layout`
+      // block last — the toggle exists for the rarer "footer-styled but not
+      // pinned" case, matching the doc's own `header.sticky`/`footer.sticky`
+      // pairing.
+      return { type, direction: 'row', gap: 8, bgColor: '', sticky: true, blocks: [] }
     case 'text':
       return { type, style: 'body', content: '' }
     case 'image':

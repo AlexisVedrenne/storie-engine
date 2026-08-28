@@ -364,6 +364,21 @@ files, those are all authored as static images) — `categorizeAsset()` gained a
 gained a matching file-dialog filter, mirroring the existing `audio` branch. `AssetField.vue` shows
 a muted looping `<video>` preview the same way it already shows an `<img>` for images.
 
+**Sticky header/footer** (pilier 03, second sub-feature): `header` gains `block.sticky` (default
+`false`, zero migration); a brand-new `footer` block type is `layout`'s exact shape (row/column,
+its own `blocks[]`, optional `bgColor`) with `block.sticky` defaulting `true` instead — a non-sticky
+footer would be indistinguishable from just placing a `layout` block last, so the toggle exists for
+the rarer "footer-styled but not pinned" case. Both rely on plain CSS `position: sticky`, which
+resolves against the nearest SCROLLING ancestor — `CustomAppRenderer.vue`'s `.app-screen`
+(`overflow-y: auto`) already is one, so no new scroll-container plumbing was needed. Each needs an
+opaque background so scrolled-past content doesn't show through underneath it while stuck — falls
+back to the app's own `--app-bg` (same "absent = engine default" precedent as everywhere else) when
+no explicit color is set. `footer` reuses the exact same `.blocks[]`/recursive-BlockList shape every
+other container here does, so it's picked up for free by every generic block-tree walk that already
+existed (asset collection, zip export/import, translation extraction, the drag/duplicate/condition
+machinery) — no block-type-specific list anywhere needed a new entry, by design (see
+`BLOCK_KINDS`/`BLOCK_COMPONENTS`, the only two places a block type is ever named explicitly).
+
 **Merged registry**: `story.mergedAppRegistry` (a getter on the `story` store) concatenates
 `APP_REGISTRY` (native, code-defined) with `project.customApps` (author-built, JSON-defined),
 normalized to the same `{ id, label, icon, color, badge, component }` shape so every consumer

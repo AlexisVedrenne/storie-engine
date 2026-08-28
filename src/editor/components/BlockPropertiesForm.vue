@@ -24,6 +24,37 @@
         </template>
       </q-input>
       <ColorField v-model="block.color" />
+      <q-toggle dense :label="t('blockProps.stickyHeaderLabel')" v-model="block.sticky" />
+    </template>
+
+    <template v-else-if="block.type === 'footer'">
+      <p class="tab-help">{{ t('blockProps.footerHelp') }}</p>
+      <q-toggle dense :label="t('blockProps.stickyFooterLabel')" v-model="block.sticky" />
+      <q-btn-toggle
+        dense
+        no-caps
+        v-model="block.direction"
+        :options="[
+          { label: t('blockProps.directionRow'), value: 'row' },
+          { label: t('blockProps.directionColumn'), value: 'column' },
+        ]"
+      />
+      <q-input
+        dense
+        outlined
+        type="number"
+        :label="t('blockProps.gapLabel')"
+        suffix="px"
+        :model-value="block.gap ?? 8"
+        @update:model-value="(v) => (block.gap = v === null || v === '' ? 8 : Number(v))"
+      />
+      <ColorField v-model="block.bgColor" :label="t('blockProps.bgColorLabel')" clearable />
+      <BlockBuilder
+        :blocks="ensureChildren()"
+        :screens="screens"
+        :item-scope="itemScope"
+        :depth="depth + 1"
+      />
     </template>
 
     <template v-else-if="block.type === 'text'">

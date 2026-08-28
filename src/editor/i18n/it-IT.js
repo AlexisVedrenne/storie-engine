@@ -669,6 +669,10 @@ export default {
     cardHelp: 'Una scheda raggruppa visivamente altri blocchi al suo interno.',
     layoutHelp:
       'Dispone altri blocchi in riga o colonna, senza sfondo per default — a differenza di una scheda, a meno che tu non scelga un colore di sfondo qui sotto.',
+    stickyHeaderLabel: 'Fissato in alto (resta visibile scorrendo)',
+    footerHelp:
+      'Una barra azioni fissata in fondo allo schermo (es: un pulsante "Conferma" sempre visibile in un modulo) — raggruppa altri blocchi, come Riga.',
+    stickyFooterLabel: 'Fissato in basso (resta visibile scorrendo)',
     directionRow: 'Riga (orizzontale)',
     directionColumn: 'Colonna (verticale)',
     gapLabel: 'Spazio tra i blocchi',

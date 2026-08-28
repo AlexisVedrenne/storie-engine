@@ -45,24 +45,25 @@ having internet access to fetch one.
 
 ## The block catalog
 
-| Block             | What it does                                                                                                                |
-| ----------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| **Header**        | A title + icon + color band at the top of a section.                                                                        |
-| **Text**          | A paragraph or label, with a style (body, heading, etc).                                                                    |
-| **Image**         | A picture, optionally full-bleed.                                                                                           |
-| **Avatar**        | A round profile picture/initial, with a color.                                                                              |
-| **Row**           | An icon + label + optional sublabel + optional chevron — a settings-style list row.                                         |
-| **Card**          | A container with a visible background, for grouping other blocks.                                                           |
-| **Layout**        | A plain flex container (row or column) with no background — for arranging other blocks without the visual weight of a card. |
-| **Badge**         | A small colored label/pill.                                                                                                 |
-| **Divider**       | A horizontal rule.                                                                                                          |
-| **Button**        | See [Buttons](#buttons) below.                                                                                              |
-| **Tabs**          | Switches which screen of the app is currently shown.                                                                        |
-| **List**          | Repeats a block template once per item — see [Lists](#lists) below.                                                         |
-| **Conversations** | A real chat module — see [Conversations](#conversations) below.                                                             |
-| **Schedule**      | A character's routine + current location — see [Schedule](#schedule) below.                                                 |
-| **Ledger**        | A numeric collection as a mini-chart + list — see [Ledger](#ledger) below.                                                  |
-| **Input field**   | A field the _player_ fills in — see [Input field](#input-field) below.                                                      |
+| Block             | What it does                                                                                                                           |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| **Header**        | A title + icon + color band at the top of a section — can be pinned so it stays visible while scrolling.                               |
+| **Footer**        | An action bar (like Row, but built to be pinned to the bottom of the screen) — see [Sticky header/footer](#sticky-headerfooter) below. |
+| **Text**          | A paragraph or label, with a style (body, heading, etc).                                                                               |
+| **Image**         | A picture, optionally full-bleed.                                                                                                      |
+| **Avatar**        | A round profile picture/initial, with a color.                                                                                         |
+| **Row**           | An icon + label + optional sublabel + optional chevron — a settings-style list row.                                                    |
+| **Card**          | A container with a visible background, for grouping other blocks.                                                                      |
+| **Layout**        | A plain flex container (row or column) with no background — for arranging other blocks without the visual weight of a card.            |
+| **Badge**         | A small colored label/pill.                                                                                                            |
+| **Divider**       | A horizontal rule.                                                                                                                     |
+| **Button**        | See [Buttons](#buttons) below.                                                                                                         |
+| **Tabs**          | Switches which screen of the app is currently shown.                                                                                   |
+| **List**          | Repeats a block template once per item — see [Lists](#lists) below.                                                                    |
+| **Conversations** | A real chat module — see [Conversations](#conversations) below.                                                                        |
+| **Schedule**      | A character's routine + current location — see [Schedule](#schedule) below.                                                            |
+| **Ledger**        | A numeric collection as a mini-chart + list — see [Ledger](#ledger) below.                                                             |
+| **Input field**   | A field the _player_ fills in — see [Input field](#input-field) below.                                                                 |
 
 Every block can be **dragged** between containers (not just reordered in place), **duplicated**,
 and given a **condition** — a block whose condition doesn't hold is entirely absent, not just
@@ -179,6 +180,18 @@ Below the target, choose **when the typed value is actually written**:
 
 **Read-only** shows the current value without letting the player edit it at all — useful for mixing
 a genuinely editable field with a computed one displayed the same way.
+
+### Sticky header/footer
+
+**Header** has a **Pinned to the top** toggle — enable it and the header stays visible at the top
+of the screen while everything below it scrolls underneath, instead of scrolling away with the rest
+of the content. Off by default, so every existing header keeps behaving exactly as before.
+
+**Footer** is a new block for the opposite case — an action bar (buttons, usually) pinned to the
+**bottom** of the screen, like a "Submit" bar that should always stay reachable in a long form. It's
+a container (row or column, like Layout) that holds its own blocks, with **Pinned to the bottom**
+on by default — turn it off if you want the footer's visual style without actually fixing it in
+place.
 
 ## Variables and translation
 

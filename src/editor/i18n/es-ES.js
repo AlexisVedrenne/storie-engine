@@ -674,6 +674,10 @@ export default {
     cardHelp: 'Una tarjeta agrupa visualmente otros bloques en su interior.',
     layoutHelp:
       'Organiza otros bloques en fila o columna, sin fondo por defecto — a diferencia de una tarjeta, a menos que elijas un color de fondo abajo.',
+    stickyHeaderLabel: 'Fijado arriba (permanece visible al desplazar)',
+    footerHelp:
+      'Una barra de acción fijada en la parte inferior de la pantalla (ej: un botón "Validar" siempre visible en un formulario) — agrupa otros bloques, como Fila.',
+    stickyFooterLabel: 'Fijado abajo (permanece visible al desplazar)',
     directionRow: 'Fila (horizontal)',
     directionColumn: 'Columna (vertical)',
     gapLabel: 'Espacio entre bloques',

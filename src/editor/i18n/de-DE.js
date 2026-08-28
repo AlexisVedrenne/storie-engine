@@ -667,6 +667,10 @@ export default {
     cardHelp: 'Eine Karte fasst andere Blöcke visuell zusammen.',
     layoutHelp:
       'Ordnet andere Blöcke in einer Zeile oder Spalte an, standardmäßig ohne Hintergrund — im Gegensatz zu einer Karte, außer du wählst unten eine Hintergrundfarbe.',
+    stickyHeaderLabel: 'Oben fixiert (bleibt beim Scrollen sichtbar)',
+    footerHelp:
+      'Eine Aktionsleiste am unteren Bildschirmrand (z. B. ein immer sichtbarer "Bestätigen"-Button in einem Formular) — gruppiert andere Blöcke, wie Zeile.',
+    stickyFooterLabel: 'Unten fixiert (bleibt beim Scrollen sichtbar)',
     directionRow: 'Zeile (horizontal)',
     directionColumn: 'Spalte (vertikal)',
     gapLabel: 'Abstand zwischen den Blöcken',

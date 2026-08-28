@@ -46,6 +46,7 @@ import { computed } from 'vue'
 import { usePhoneStore } from '@/engine/stores/phone'
 import { useStoryStore } from '@/engine/stores/story'
 import HeaderBlock from './HeaderBlock.vue'
+import FooterBlock from './FooterBlock.vue'
 import TextBlock from './TextBlock.vue'
 import ImageBlock from './ImageBlock.vue'
 import AvatarBlock from './AvatarBlock.vue'
@@ -79,6 +80,7 @@ const visibleBlocks = computed(() => props.blocks.filter((b) => story.checkCondi
 
 const BLOCK_COMPONENTS = {
   header: HeaderBlock,
+  footer: FooterBlock,
   text: TextBlock,
   image: ImageBlock,
   avatar: AvatarBlock,

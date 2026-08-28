@@ -672,6 +672,10 @@ export default {
     cardHelp: 'Une carte regroupe visuellement d’autres blocs à l’intérieur.',
     layoutHelp:
       'Arrange d’autres blocs en rangée ou en colonne, sans fond visuel par défaut — contrairement à la carte, sauf si tu choisis une couleur de fond ci-dessous.',
+    stickyHeaderLabel: 'Fixé en haut (reste visible au défilement)',
+    footerHelp:
+      'Une barre d’action fixée en bas de l’écran (ex: bouton "Valider" toujours visible dans un formulaire) — regroupe d’autres blocs, comme la Rangée.',
+    stickyFooterLabel: 'Fixé en bas (reste visible au défilement)',
     directionRow: 'Rangée (horizontal)',
     directionColumn: 'Colonne (vertical)',
     gapLabel: 'Écart entre les blocs',

@@ -655,6 +655,10 @@ export default {
     cardHelp: 'A card visually groups other blocks inside it.',
     layoutHelp:
       'Arranges other blocks in a row or column, no background by default — unlike a card, unless you pick a background color below.',
+    stickyHeaderLabel: 'Pinned to the top (stays visible while scrolling)',
+    footerHelp:
+      'An action bar pinned to the bottom of the screen (e.g. a "Submit" button always visible in a form) — groups other blocks, like Row.',
+    stickyFooterLabel: 'Pinned to the bottom (stays visible while scrolling)',
     directionRow: 'Row (horizontal)',
     directionColumn: 'Column (vertical)',
     gapLabel: 'Gap between blocks',
