@@ -668,6 +668,9 @@ export default {
       'A modal sheet that slides up from the bottom when a button opens it (the "Open a sheet" action) — invisible until something opens it.',
     sheetIdLabel: 'Sheet id',
     sheetIdHint: 'Pick a unique name — this is what buttons use to open it.',
+    sheetPositionBottom: 'Bottom',
+    sheetPositionCenter: 'Center',
+    sheetPositionTop: 'Top',
     cardHelp: 'A card visually groups other blocks inside it.',
     layoutHelp:
       'Arranges other blocks in a row or column, no background by default — unlike a card, unless you pick a background color below.',

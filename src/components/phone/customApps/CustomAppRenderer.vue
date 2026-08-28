@@ -26,11 +26,16 @@
          full screen regardless of the content's current scroll position
          (see the comment on `.app-screen-scroll` below for why the split
          exists at all). -->
-    <Transition name="sheet-fade">
-      <div v-if="openSheet" class="sheet-backdrop" @click.self="openSheetId = null">
-        <div class="sheet-panel">
-          <div class="sheet-handle" />
-          <BlockList :blocks="openSheet.blocks || []" />
+    <Transition :name="`sheet-${sheetPosition}`">
+      <div
+        v-if="openSheet"
+        class="sheet-backdrop"
+        :class="`sheet-backdrop--${sheetPosition}`"
+        @click.self="openSheetId = null"
+      >
+        <div class="sheet-panel" :class="`sheet-panel--${sheetPosition}`">
+          <div v-if="sheetPosition !== 'center'" class="sheet-handle" />
+          <BlockList :blocks="displaySheet?.blocks || []" />
         </div>
       </div>
     </Transition>
@@ -104,6 +109,21 @@ const screenSheets = computed(() => collectBlocksOfType(currentScreen.value?.blo
 const openSheet = computed(
   () => screenSheets.value.find((s) => s.sheetId === openSheetId.value) || null,
 )
+// `<Transition>` keeps the backdrop's DOM node mounted for the whole leave
+// animation, but `openSheet` itself goes null the INSTANT `openSheetId`
+// clears — a direct `openSheet.blocks`/`openSheet.position` binding would
+// blank out the panel's content and reset its position class mid-animation,
+// before the leave transition even finishes. `displaySheet` only updates
+// when a sheet actually OPENS, so it keeps pointing at the closing sheet
+// throughout its own leave animation instead of flickering to empty.
+const displaySheet = ref(null)
+watch(openSheet, (s) => {
+  if (s) displaySheet.value = s
+})
+// 'bottom' (default, the original iOS-action-sheet look) / 'center' (a
+// plain centered dialog, no drag handle — it isn't a drawer) / 'top' (same
+// panel treatment as bottom, mirrored).
+const sheetPosition = computed(() => displaySheet.value?.position || 'bottom')
 provide('customAppOpenSheet', (sheetId) => {
   openSheetId.value = sheetId
 })
@@ -216,17 +236,43 @@ const backgroundOpacity = computed(() => (currentScreen.value?.backgroundOpacity
   inset: 0;
   z-index: 3;
   display: flex;
-  align-items: flex-end;
+  justify-content: center;
   background: rgba(0, 0, 0, 0.5);
 }
 
+.sheet-backdrop--bottom {
+  align-items: flex-end;
+}
+.sheet-backdrop--top {
+  align-items: flex-start;
+}
+.sheet-backdrop--center {
+  align-items: center;
+  padding: 24px;
+}
+
 .sheet-panel {
-  width: 100%;
   max-height: 80%;
   overflow-y: auto;
   padding: 8px 16px 24px;
-  border-radius: 20px 20px 0 0;
   background: var(--app-bg);
+}
+
+.sheet-panel--bottom,
+.sheet-panel--top {
+  width: 100%;
+}
+.sheet-panel--bottom {
+  border-radius: 20px 20px 0 0;
+}
+.sheet-panel--top {
+  border-radius: 0 0 20px 20px;
+}
+.sheet-panel--center {
+  width: 100%;
+  max-width: 320px;
+  border-radius: var(--app-radius);
+  padding: 16px;
 }
 
 .sheet-handle {
@@ -237,20 +283,49 @@ const backgroundOpacity = computed(() => (currentScreen.value?.backgroundOpacity
   background: rgba(255, 255, 255, 0.25);
 }
 
-.sheet-fade-enter-active,
-.sheet-fade-leave-active {
+/* `bottom`/`top` slide the panel off their own edge; `center` fades + scales
+   instead, since a plain dialog has no edge to slide toward. All three fade
+   the backdrop itself the same way. */
+.sheet-bottom-enter-active,
+.sheet-bottom-leave-active,
+.sheet-top-enter-active,
+.sheet-top-leave-active,
+.sheet-center-enter-active,
+.sheet-center-leave-active {
   transition: opacity 0.18s ease;
 }
-.sheet-fade-enter-active .sheet-panel,
-.sheet-fade-leave-active .sheet-panel {
+.sheet-bottom-enter-active .sheet-panel,
+.sheet-bottom-leave-active .sheet-panel,
+.sheet-top-enter-active .sheet-panel,
+.sheet-top-leave-active .sheet-panel {
   transition: transform 0.18s ease;
 }
-.sheet-fade-enter-from,
-.sheet-fade-leave-to {
+.sheet-center-enter-active .sheet-panel,
+.sheet-center-leave-active .sheet-panel {
+  transition:
+    transform 0.18s ease,
+    opacity 0.18s ease;
+}
+
+.sheet-bottom-enter-from,
+.sheet-bottom-leave-to,
+.sheet-top-enter-from,
+.sheet-top-leave-to,
+.sheet-center-enter-from,
+.sheet-center-leave-to {
   opacity: 0;
 }
-.sheet-fade-enter-from .sheet-panel,
-.sheet-fade-leave-to .sheet-panel {
+.sheet-bottom-enter-from .sheet-panel,
+.sheet-bottom-leave-to .sheet-panel {
   transform: translateY(100%);
+}
+.sheet-top-enter-from .sheet-panel,
+.sheet-top-leave-to .sheet-panel {
+  transform: translateY(-100%);
+}
+.sheet-center-enter-from .sheet-panel,
+.sheet-center-leave-to .sheet-panel {
+  opacity: 0;
+  transform: scale(0.92);
 }
 </style>

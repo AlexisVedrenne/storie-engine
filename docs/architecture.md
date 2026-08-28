@@ -399,7 +399,14 @@ no target needed) — both inject the same `customAppOpenSheet`/`customAppCloseS
 `CustomAppRenderer.vue` provides, same "one mechanism, consumed like `navigateScreen` consumes
 `customAppNavigate`" precedent. `BlockList.vue` never renders a `sheet` block in its own tree
 position — it's filtered out of `visibleBlocks` alongside the existing `requires` check — only
-`CustomAppRenderer.vue` renders the currently-open one, as a backdrop + bottom-sliding panel.
+`CustomAppRenderer.vue` renders the currently-open one, as a backdrop + panel. `block.position`
+(`'bottom'`/`'center'`/`'top'`, default `'bottom'`) picks where it docks and which transition
+applies (slide off the matching edge for bottom/top, fade+scale for center, since a centered dialog
+has no edge to slide toward) — read off a `displaySheet` ref that only updates when a sheet actually
+OPENS, not off `openSheet` directly: `<Transition>` keeps the backdrop mounted for the whole leave
+animation, but `openSheet` itself goes null the instant `openSheetId` clears, so binding the panel's
+content/position class straight to it would blank the content and reset the position class mid-
+animation, before the leave transition finishes.
 
 Only one sheet can be open at a time (`openSheetId`, a single ref, not a stack — opening a second
 sheet replaces the first, matching the pilier's own scoping decision to keep this simple rather

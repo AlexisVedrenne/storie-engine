@@ -265,6 +265,17 @@
         :hint="t('blockProps.sheetIdHint')"
         v-model="block.sheetId"
       />
+      <q-btn-toggle
+        dense
+        no-caps
+        :model-value="block.position || 'bottom'"
+        @update:model-value="(v) => (block.position = v)"
+        :options="[
+          { label: t('blockProps.sheetPositionBottom'), value: 'bottom' },
+          { label: t('blockProps.sheetPositionCenter'), value: 'center' },
+          { label: t('blockProps.sheetPositionTop'), value: 'top' },
+        ]"
+      />
       <BlockBuilder
         :blocks="ensureChildren()"
         :screens="screens"

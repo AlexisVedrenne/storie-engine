@@ -680,6 +680,9 @@ export default {
       'Ein modales Blatt, das von unten hochfährt, wenn ein Button es öffnet (Aktion "Blatt öffnen") — unsichtbar, bis etwas es öffnet.',
     sheetIdLabel: 'Blatt-Kennung',
     sheetIdHint: 'Wähle einen eindeutigen Namen — damit öffnen Buttons dieses Blatt.',
+    sheetPositionBottom: 'Unten',
+    sheetPositionCenter: 'Mitte',
+    sheetPositionTop: 'Oben',
     cardHelp: 'Eine Karte fasst andere Blöcke visuell zusammen.',
     layoutHelp:
       'Ordnet andere Blöcke in einer Zeile oder Spalte an, standardmäßig ohne Hintergrund — im Gegensatz zu einer Karte, außer du wählst unten eine Hintergrundfarbe.',

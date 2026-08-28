@@ -682,6 +682,9 @@ export default {
       'Un foglio modale che sale dal basso quando un pulsante lo apre (azione "Apri un foglio") — invisibile finché qualcosa non lo apre.',
     sheetIdLabel: 'Identificativo del foglio',
     sheetIdHint: 'Scegli un nome univoco — è quello che i pulsanti useranno per aprirlo.',
+    sheetPositionBottom: 'Basso',
+    sheetPositionCenter: 'Centro',
+    sheetPositionTop: 'Alto',
     cardHelp: 'Una scheda raggruppa visivamente altri blocchi al suo interno.',
     layoutHelp:
       'Dispone altri blocchi in riga o colonna, senza sfondo per default — a differenza di una scheda, a meno che tu non scelga un colore di sfondo qui sotto.',

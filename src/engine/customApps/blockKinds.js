@@ -71,11 +71,14 @@ export function defaultBlock(type) {
       // A modal that opens from a button's `openSheet` action (targeting
       // `sheetId`) instead of taking a spot in the normal row/column flow —
       // BlockList.vue never renders it inline, only CustomAppRenderer.vue
-      // does, as a backdrop + panel sliding up from the bottom, when its
-      // `sheetId` matches whichever one a button opened. Only one sheet can
-      // be open at a time; switching screens always closes it. `blocks[]`
-      // is its own content, same recursive shape as `card`.
-      return { type, sheetId: '', blocks: [] }
+      // does, as a backdrop + panel, when its `sheetId` matches whichever
+      // one a button opened. Only one sheet can be open at a time; switching
+      // screens always closes it. `blocks[]` is its own content, same
+      // recursive shape as `card`. `position` ('bottom'/'center'/'top',
+      // default 'bottom' — the original iOS-action-sheet-only behavior)
+      // picks where it docks and which edge(s) get rounded — see
+      // CustomAppRenderer.vue's SHEET_POSITIONS.
+      return { type, sheetId: '', position: 'bottom', blocks: [] }
     case 'layout':
       // Pure flex arranger — no background/padding chrome of its own,
       // unlike `card` (which is really "layout, column direction, + a

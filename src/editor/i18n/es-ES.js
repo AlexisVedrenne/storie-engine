@@ -687,6 +687,9 @@ export default {
       'Una hoja modal que sube desde abajo cuando un botón la abre (acción "Abrir una hoja") — invisible hasta que algo la abre.',
     sheetIdLabel: 'Identificador de la hoja',
     sheetIdHint: 'Elige un nombre único — es lo que usarán los botones para abrirla.',
+    sheetPositionBottom: 'Abajo',
+    sheetPositionCenter: 'Centro',
+    sheetPositionTop: 'Arriba',
     cardHelp: 'Una tarjeta agrupa visualmente otros bloques en su interior.',
     layoutHelp:
       'Organiza otros bloques en fila o columna, sin fondo por defecto — a diferencia de una tarjeta, a menos que elijas un color de fondo abajo.',

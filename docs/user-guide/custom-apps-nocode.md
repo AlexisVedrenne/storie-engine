@@ -55,7 +55,7 @@ having internet access to fetch one.
 | **Row**           | An icon + label + optional sublabel + optional chevron — a settings-style list row.                                                    |
 | **Card**          | A container with a visible background, for grouping other blocks.                                                                      |
 | **Overlay**       | A layer positioned over the normal content — see [Overlay](#overlay) below.                                                            |
-| **Sheet**         | A modal that slides up from the bottom when a button opens it — see [Sheet](#sheet) below.                                             |
+| **Sheet**         | A modal (bottom/center/top) that a button opens — see [Sheet](#sheet) below.                                                           |
 | **Layout**        | A plain flex container (row or column) with no background — for arranging other blocks without the visual weight of a card.            |
 | **Badge**         | A small colored label/pill.                                                                                                            |
 | **Divider**       | A horizontal rule.                                                                                                                     |
@@ -211,8 +211,12 @@ you pick what it's positioned against.
 ### Sheet
 
 A `sheet` block holds its own blocks but is invisible by default — it only appears when a button's
-**Open a sheet** action targets its id, sliding up from the bottom of the screen (like an iOS action
-sheet) over everything else. Give it a unique **id** so a button knows which one to open.
+**Open a sheet** action targets its id, over everything else. Give it a unique **id** so a button
+knows which one to open, and pick where it docks:
+
+- **Bottom** (default) — slides up from the bottom, like an iOS action sheet.
+- **Center** — a plain centered dialog, fading + scaling in instead of sliding.
+- **Top** — the same panel as Bottom, mirrored to the top edge.
 
 The player can dismiss it by tapping outside it, or you can add a button inside it with the
 **Close the sheet** action. Only one sheet is ever open at a time, and switching screens always

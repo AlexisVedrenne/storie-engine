@@ -686,6 +686,9 @@ export default {
       'Une feuille modale qui remonte du bas de l’écran quand un bouton l’ouvre (action "Ouvrir une feuille") — invisible tant que rien ne l’ouvre.',
     sheetIdLabel: 'Identifiant de la feuille',
     sheetIdHint: 'Choisis un nom unique — c’est ce que les boutons utiliseront pour l’ouvrir.',
+    sheetPositionBottom: 'Bas',
+    sheetPositionCenter: 'Centre',
+    sheetPositionTop: 'Haut',
     layoutHelp:
       'Arrange d’autres blocs en rangée ou en colonne, sans fond visuel par défaut — contrairement à la carte, sauf si tu choisis une couleur de fond ci-dessous.',
     stickyHeaderLabel: 'Fixé en haut (reste visible au défilement)',
