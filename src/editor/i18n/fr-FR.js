@@ -718,6 +718,12 @@ export default {
     actionOpenSheetLabel: 'Feuille à ouvrir',
     actionCloseSheet: 'Fermer la feuille',
     actionCloseSheetHelp: 'Ferme la feuille actuellement ouverte, quelle qu’elle soit.',
+    actionOpenApp: 'Ouvrir une app',
+    actionOpenAppHelp:
+      'Ouvre une autre app du téléphone (native ou créée par toi) — quitte l’app actuelle.',
+    actionOpenAppLabel: 'App à ouvrir',
+    actionOpenAppScreenLabel: 'Écran (optionnel)',
+    actionOpenAppScreenHint: 'Laisse vide pour l’écran par défaut de cette app.',
     actionGuardTitle: 'Condition avant action (avancé)',
     actionGuardHelp:
       'Si posée, vérifiée AVANT que l’action ci-dessus s’applique — si elle échoue, l’action est annulée (rien ne se passe, ou le message ci-dessous s’affiche à la place).',

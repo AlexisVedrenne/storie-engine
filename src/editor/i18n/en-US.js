@@ -699,6 +699,12 @@ export default {
     actionOpenSheetLabel: 'Sheet to open',
     actionCloseSheet: 'Close the sheet',
     actionCloseSheetHelp: 'Closes whichever sheet is currently open.',
+    actionOpenApp: 'Open an app',
+    actionOpenAppHelp:
+      'Opens another phone app (native or one you built) — leaves the current app.',
+    actionOpenAppLabel: 'App to open',
+    actionOpenAppScreenLabel: 'Screen (optional)',
+    actionOpenAppScreenHint: "Leave blank for that app's default screen.",
     actionToastHelp: 'Briefly shows a message on screen on tap — no other effect.',
     actionToastTextLabel: 'Message text',
     actionGuardTitle: 'Condition before action (advanced)',

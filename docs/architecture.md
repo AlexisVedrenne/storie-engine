@@ -430,6 +430,19 @@ it — arguably the more expected behavior for a background/persistent badge; `h
 `footer.sticky` are unaffected since `position: sticky` only cares about the actual scrolling
 ancestor, which is still `.app-screen-scroll`.
 
+**Cross-app deep link** (pilier 06, app+screen scope — entity-profile targeting deferred, no real
+need for it yet): a NEW button action kind, `openApp`, calls `phone.openApp(action.appId,
+{ screenId: action.screenId })` directly — already fully generic across native AND custom apps (see
+`phone.js`), nothing custom-app-specific needed. The target picker
+(`BlockPropertiesForm.vue`'s `appOptions`) lists `story.mergedAppRegistry` (the exact same merged
+native+custom list `HomeScreen.vue`'s own icons come from, and `GameForm.vue`'s Applications panel
+already reads for its own ordering UI) — resolving a native app's player-facing `labelKey` through
+the RUNTIME `vue-i18n` instance (`useI18n()`, aliased `storyT`), not `useEditorI18n()`'s editor-chrome
+tree, same precedent `GameForm.vue`'s own `appLabel()` already established. An optional `screenId`
+only shows once a CUSTOM app is picked (looked up fresh from `story.project.customApps`, since
+`mergedAppRegistry` itself strips `screens` down to the shared `{id,label,icon,color,badge,
+component}` shape) — meaningless for a native target, which has no such concept.
+
 **Merged registry**: `story.mergedAppRegistry` (a getter on the `story` store) concatenates
 `APP_REGISTRY` (native, code-defined) with `project.customApps` (author-built, JSON-defined),
 normalized to the same `{ id, label, icon, color, badge, component }` shape so every consumer

@@ -713,6 +713,12 @@ export default {
     actionOpenSheetLabel: 'Foglio da aprire',
     actionCloseSheet: 'Chiudi il foglio',
     actionCloseSheetHelp: 'Chiude il foglio attualmente aperto, qualunque esso sia.',
+    actionOpenApp: 'Apri un’app',
+    actionOpenAppHelp:
+      'Apre un’altra app del telefono (nativa o creata da te) — esce dall’app attuale.',
+    actionOpenAppLabel: 'App da aprire',
+    actionOpenAppScreenLabel: 'Schermata (opzionale)',
+    actionOpenAppScreenHint: 'Lascia vuoto per la schermata predefinita di quell’app.',
     actionToastHelp: 'Mostra brevemente un messaggio a schermo al tap — nessun altro effetto.',
     actionToastTextLabel: 'Testo del messaggio',
     actionGuardTitle: "Condizione prima dell'azione (avanzato)",

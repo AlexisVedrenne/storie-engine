@@ -713,6 +713,12 @@ export default {
     actionOpenSheetLabel: 'Zu öffnendes Blatt',
     actionCloseSheet: 'Blatt schließen',
     actionCloseSheetHelp: 'Schließt das gerade geöffnete Blatt, egal welches.',
+    actionOpenApp: 'App öffnen',
+    actionOpenAppHelp:
+      'Öffnet eine andere Telefon-App (nativ oder selbst erstellt) — verlässt die aktuelle App.',
+    actionOpenAppLabel: 'Zu öffnende App',
+    actionOpenAppScreenLabel: 'Bildschirm (optional)',
+    actionOpenAppScreenHint: 'Leer lassen für den Standardbildschirm dieser App.',
     actionToastHelp: 'Zeigt beim Tippen kurz eine Meldung an — kein weiterer Effekt.',
     actionToastTextLabel: 'Meldungstext',
     actionGuardTitle: 'Bedingung vor Aktion (erweitert)',

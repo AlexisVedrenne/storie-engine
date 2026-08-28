@@ -75,7 +75,7 @@ block by block.
 
 ### Buttons
 
-A button can do one of seven things:
+A button can do one of eight things:
 
 1. **Nothing** — purely visual/decorative.
 2. **Apply effects** — the same effects system used everywhere else (flags, phone widgets,
@@ -90,8 +90,11 @@ A button can do one of seven things:
 5. **Show a message** — briefly displays a short text on screen, no other effect.
 6. **Open a sheet** — opens a [Sheet](#sheet) block by its id.
 7. **Close the sheet** — closes whichever sheet is currently open, whichever it is.
+8. **Open an app** — jumps straight to another app on the phone, native (Messages, Pixly, Journal...)
+   or one you built, leaving the current app entirely. Optionally picks one of the target app's own
+   screens (if it's a custom app) instead of its default one.
 
-Whichever of the seven you pick, an optional **condition** can gate the whole thing — checked at the
+Whichever of the eight you pick, an optional **condition** can gate the whole thing — checked at the
 moment the button is tapped, not when the screen renders (that's what a block's own display
 condition already does). If the condition doesn't hold, the action is cancelled; you can optionally
 show a message explaining why (e.g. "Not enough funds.") instead of the tap silently doing nothing.

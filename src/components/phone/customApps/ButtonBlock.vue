@@ -24,9 +24,14 @@
 // story.triggerActionToast(), no other effect. 'openSheet'/'closeSheet'
 // (pilier 03) inject the SAME 'customAppOpenSheet'/'customAppCloseSheet'
 // functions CustomAppRenderer.vue provides — one modal mechanism, consumed
-// here exactly like 'navigateScreen' consumes 'customAppNavigate'. No
-// action / an unrecognized type is a no-op (still renders, just inert),
-// matching every other "silently absent" fallback in this engine.
+// here exactly like 'navigateScreen' consumes 'customAppNavigate'. 'openApp'
+// (pilier 06) calls phone.openApp() directly — already fully generic across
+// native AND custom apps (see phone.js), nothing custom-app-specific to
+// inject; an optional `screenId` deep-links straight to one of the TARGET
+// app's own screens (ignored/meaningless for a native app target, which has
+// no such concept). No action / an unrecognized type is a no-op (still
+// renders, just inert), matching every other "silently absent" fallback in
+// this engine.
 //
 // `action.requires` gates ALL of the above — same checkConditions() a
 // block's own display condition already uses, just checked at CLICK time
@@ -64,6 +69,9 @@ function onClick() {
     story.triggerActionToast(resolveDynamicText(action.toastText, story, listItem))
   } else if (action.type === 'openSheet') openSheet(action.sheetId)
   else if (action.type === 'closeSheet') closeSheet()
+  else if (action.type === 'openApp') {
+    phone.openApp(action.appId, { screenId: action.screenId || null })
+  }
   // Fires the fixed `button.pressed` engine trigger (see triggers.js) —
   // reacted to from the Events tab exactly like app.opened/photo.viewed,
   // NOT a free-form event name. `phone.currentApp` is reliably this

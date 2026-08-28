@@ -408,6 +408,7 @@
           { label: t('blockProps.actionToast'), value: 'toast' },
           { label: t('blockProps.actionOpenSheet'), value: 'openSheet' },
           { label: t('blockProps.actionCloseSheet'), value: 'closeSheet' },
+          { label: t('blockProps.actionOpenApp'), value: 'openApp' },
         ]"
         @update:model-value="setButtonActionType"
       />
@@ -463,6 +464,30 @@
       <p v-else-if="block.action.type === 'closeSheet'" class="tab-help">
         {{ t('blockProps.actionCloseSheetHelp') }}
       </p>
+      <template v-else-if="block.action.type === 'openApp'">
+        <p class="tab-help">{{ t('blockProps.actionOpenAppHelp') }}</p>
+        <q-select
+          dense
+          outlined
+          emit-value
+          map-options
+          :label="t('blockProps.actionOpenAppLabel')"
+          :options="appOptions"
+          v-model="block.action.appId"
+        />
+        <q-select
+          v-if="openAppScreenOptions.length"
+          dense
+          outlined
+          emit-value
+          map-options
+          clearable
+          :label="t('blockProps.actionOpenAppScreenLabel')"
+          :hint="t('blockProps.actionOpenAppScreenHint')"
+          :options="openAppScreenOptions"
+          v-model="block.action.screenId"
+        />
+      </template>
       <p v-else class="tab-help">{{ t('blockProps.buttonHelp') }}</p>
 
       <q-expansion-item
@@ -756,6 +781,7 @@
 
 <script setup>
 import { computed, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useStoryStore } from '@/engine/stores/story'
 import AssetField from '@/editor/components/AssetField.vue'
 import ColorField from '@/editor/components/ColorField.vue'
@@ -772,6 +798,11 @@ import BlockBuilder from '@/editor/components/BlockBuilder.vue'
 import { useEditorI18n } from '@/editor/i18n'
 
 const { t } = useEditorI18n()
+// The runtime vue-i18n instance (not useEditorI18n's editor-chrome tree) —
+// resolves a native app's player-facing `labelKey` for the openApp target
+// picker, same "show the name a player actually sees" precedent as
+// GameForm.vue's own `storyT`/`appLabel` for its Applications panel.
+const { t: storyT } = useI18n()
 const story = useStoryStore()
 
 const props = defineProps({
@@ -889,6 +920,8 @@ function setButtonActionType(type) {
   else if (type === 'toast') props.block.action = { ...base, toastText: prev.toastText || '' }
   else if (type === 'openSheet') props.block.action = { ...base, sheetId: prev.sheetId || '' }
   else if (type === 'closeSheet') props.block.action = { ...base }
+  else if (type === 'openApp')
+    props.block.action = { ...base, appId: prev.appId || '', screenId: prev.screenId || '' }
   else props.block.action = { type: 'none' }
 }
 
@@ -911,6 +944,26 @@ const screenOptions = computed(() =>
 const sheetOptions = computed(() =>
   props.sheets.map((s) => ({ label: s.label || s.id, value: s.id })),
 )
+
+// pilier 06 — `openApp`'s target picker lists EVERY app (native or custom),
+// same merged list HomeScreen.vue's own icons come from — `phone.openApp()`
+// itself is already fully generic across both (see phone.js), there's
+// nothing custom-app-specific about it.
+const appOptions = computed(() =>
+  (story.mergedAppRegistry || []).map((app) => ({
+    label: app.labelKey ? storyT(app.labelKey) : app.label,
+    value: app.id,
+  })),
+)
+
+// A native app has no `screens` concept — only a target that resolves to a
+// project's OWN custom app (looked up fresh, not from mergedAppRegistry,
+// which strips `screens` down to the shared `{id,label,icon,color,badge,
+// component}` shape) offers one, and only once picked.
+const openAppScreenOptions = computed(() => {
+  const target = story.project?.customApps?.find((a) => a.id === props.block.action?.appId)
+  return (target?.screens || []).map((s) => ({ label: s.label || s.id, value: s.id }))
+})
 </script>
 
 <style scoped>
