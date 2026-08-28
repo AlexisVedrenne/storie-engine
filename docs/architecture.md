@@ -305,7 +305,12 @@ iterates instances of an author-defined entity schema, see
 `type: 'schedule'` field — an array of `{ from, to, place }` slots authored on the schema
 (`EntityFieldInput.vue`) — and renders a day timeline, highlighting whichever slot covers
 `story.resolvedClock()`'s current time (`ScheduleBlock.vue`); `entityId: '*'` picks the first/only
-instance of the schema, same sentinel the `{entity:...}` token uses. A `ledger` block reads a
+instance of the schema, same sentinel the `{entity:...}` token uses. When no chapter has overridden
+the clock, `resolvedClock()` falls back to `new Date()`, which isn't itself reactive — `ScheduleBlock.vue`
+polls a `tick` ref every 15s (read, unused, inside the `nowLabel` computed purely to register as a
+dependency) to force re-evaluation as real time actually crosses a slot boundary, same cadence as
+`StatusBar.vue`'s own clock display; without it the highlighted slot froze at whatever moment the
+block last happened to re-render for an unrelated reason. A `ledger` block reads a
 numeric `story.flagCollections[flagKey]` (`LedgerBlock.vue`, plain inline SVG, no chart library) —
 the same collection a `list` block's `flagCollection` source already reads, just rendered as a
 mini area-chart plus the entry list, coercing non-numeric entries to 0 for the chart only. A `form`

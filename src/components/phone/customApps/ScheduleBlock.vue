@@ -32,7 +32,7 @@
 // overnight slot, e.g. 22:00–06:00), where "current is inside" instead means
 // "at or after from, OR before to". No real clock arithmetic needed for
 // either case.
-import { computed } from 'vue'
+import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useStoryStore } from '@/engine/stores/story'
 
@@ -59,7 +59,25 @@ const slots = computed(() => {
   return Array.isArray(value) ? value : []
 })
 
+// `story.resolvedClock()` falls back to the real device time whenever the
+// chapter hasn't overridden it (see story.js) — a plain value read out of
+// `new Date()` isn't itself reactive, so without this tick this computed
+// would freeze at whatever moment the block last happened to re-render (a
+// message arriving, a flag changing...) and never notice real time actually
+// crossing into or out of a slot. Same polling precedent as StatusBar.vue's
+// own clock display, same 15s cadence — no need for anything finer, slots
+// are authored to the minute.
+const tick = ref(0)
+let timer = null
+onMounted(() => {
+  timer = setInterval(() => {
+    tick.value++
+  }, 15000)
+})
+onUnmounted(() => clearInterval(timer))
+
 const nowLabel = computed(() => {
+  tick.value
   const d = story.resolvedClock()
   return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
 })
