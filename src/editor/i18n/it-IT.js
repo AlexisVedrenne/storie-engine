@@ -602,7 +602,11 @@ export default {
   },
 
   blockBuilder: {
-    empty: 'Ancora nessun blocco — trascinane uno dalla tavolozza qui sopra.',
+    empty: 'Ancora nessun blocco qui — clicca o trascinane uno dalla tavolozza qui sopra.',
+    emptyRootTitle: 'Questa schermata è vuota',
+    emptyRootDetail:
+      'Clicca (o trascina) un blocco dalla tavolozza qui sopra per aggiungerlo. Selezionalo per configurarlo a destra — il risultato appare dal vivo sul telefono.',
+    paletteBtnHint: 'Clicca per aggiungere, oppure trascinalo dove vuoi',
     duplicate: 'Duplica',
   },
 
@@ -632,6 +636,9 @@ export default {
   },
 
   blockProps: {
+    groupContent: 'Contenuto',
+    groupAppearance: 'Aspetto',
+    groupAction: 'Azione',
     titleLabel: 'Titolo',
     iconLabel: 'Icona',
     styleTitle: 'Titolo',

@@ -608,7 +608,11 @@ export default {
   },
 
   blockBuilder: {
-    empty: 'Aún no hay bloques — arrastra uno desde la paleta de arriba.',
+    empty: 'Aún no hay bloques aquí — haz clic o arrastra uno desde la paleta de arriba.',
+    emptyRootTitle: 'Esta pantalla está vacía',
+    emptyRootDetail:
+      'Haz clic (o arrastra) un bloque de la paleta de arriba para añadirlo. Selecciónalo para configurarlo a la derecha — el resultado se muestra en directo en el teléfono.',
+    paletteBtnHint: 'Haz clic para añadir, o arrástralo donde quieras',
     duplicate: 'Duplicar',
   },
 
@@ -638,6 +642,9 @@ export default {
   },
 
   blockProps: {
+    groupContent: 'Contenido',
+    groupAppearance: 'Apariencia',
+    groupAction: 'Acción',
     titleLabel: 'Título',
     iconLabel: 'Icono',
     styleTitle: 'Título',

@@ -589,7 +589,11 @@ export default {
   },
 
   blockBuilder: {
-    empty: 'No blocks yet — drag one in from the palette above.',
+    empty: 'No blocks here yet — click or drag one in from the palette above.',
+    emptyRootTitle: 'This screen is empty',
+    emptyRootDetail:
+      'Click (or drag) a block from the palette above to add it. Select it to configure it on the right — the result shows up live on the phone.',
+    paletteBtnHint: 'Click to add, or drag it wherever you want',
     duplicate: 'Duplicate',
   },
 
@@ -619,6 +623,9 @@ export default {
   },
 
   blockProps: {
+    groupContent: 'Content',
+    groupAppearance: 'Appearance',
+    groupAction: 'Action',
     titleLabel: 'Title',
     iconLabel: 'Icon',
     styleTitle: 'Title',

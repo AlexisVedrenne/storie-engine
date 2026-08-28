@@ -13,9 +13,12 @@ different, code-based path aimed at extending the engine itself.
 
 ## How it works
 
-A custom app is a **screen made of blocks**, stacked and nested. You drag blocks in from a
-palette, arrange them, and fill in their fields — every change shows up instantly in the live phone
-preview next to the editor, exactly like editing a chapter's timeline.
+A custom app is a **screen made of blocks**, stacked and nested. Click (or drag) a block from the
+palette to add it, then select its row to fill in its fields on the right — every change shows up
+instantly in the live phone preview next to the editor, exactly like editing a chapter's timeline.
+Hovering a row in the list outlines the matching element on the phone, and vice versa, so the list
+and the live result always read as the same thing. A block inside a Card/Layout is indented under
+it, same idea as a folder tree.
 
 An app can have multiple **screens** (switchable via a `tabs` block), and everything you build is
 saved as part of your project, ready to export like everything else.

@@ -49,6 +49,14 @@ export const usePhoneStore = defineStore('phone', {
     // effect on its own) even inside a shipped/exported game, where
     // nothing ever reads it — see docs/interactions-et-apps-custom.md.
     editorSelectedBlock: null,
+
+    // The other direction of the link above — set by BlockBuilder.vue
+    // (src/editor/) on mouseenter/mouseleave over a block's own row, read
+    // by BlockList.vue to outline the matching element in the live phone
+    // preview. Same "written unconditionally, inert in a shipped game"
+    // spirit as editorSelectedBlock — nothing in the editor's own UI ever
+    // sets it from outside a block row, so this never fires for a player.
+    hoveredEditorBlock: null,
   }),
 
   actions: {

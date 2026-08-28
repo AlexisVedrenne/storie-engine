@@ -605,7 +605,11 @@ export default {
   },
 
   blockBuilder: {
-    empty: 'Aucun bloc — glisse-en un depuis la palette au-dessus.',
+    empty: 'Aucun bloc ici — clique ou glisse-en un depuis la palette au-dessus.',
+    emptyRootTitle: 'Cet écran est vide',
+    emptyRootDetail:
+      'Clique (ou glisse) un bloc de la palette ci-dessus pour l’ajouter. Sélectionne-le ensuite pour le configurer à droite — le résultat s’affiche en direct sur le téléphone.',
+    paletteBtnHint: 'Clique pour ajouter, ou glisse-le où tu veux',
     duplicate: 'Dupliquer',
   },
 
@@ -635,6 +639,9 @@ export default {
   },
 
   blockProps: {
+    groupContent: 'Contenu',
+    groupAppearance: 'Apparence',
+    groupAction: 'Action',
     titleLabel: 'Titre',
     iconLabel: 'Icône',
     styleTitle: 'Titre',

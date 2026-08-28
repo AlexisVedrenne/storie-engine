@@ -1,6 +1,7 @@
 <template>
   <div class="block-props">
     <template v-if="block.type === 'header'">
+      <div class="prop-group-label">{{ t('blockProps.groupContent') }}</div>
       <q-input
         dense
         outlined
@@ -15,6 +16,8 @@
           />
         </template>
       </q-input>
+
+      <div class="prop-group-label">{{ t('blockProps.groupAppearance') }}</div>
       <q-input dense outlined :label="t('blockProps.iconLabel')" v-model="block.icon">
         <template #append>
           <IconPickerBtn @pick="(v) => (block.icon = v)" />
@@ -24,6 +27,7 @@
     </template>
 
     <template v-else-if="block.type === 'text'">
+      <div class="prop-group-label">{{ t('blockProps.groupContent') }}</div>
       <q-btn-toggle
         dense
         no-caps
@@ -49,6 +53,8 @@
           />
         </template>
       </q-input>
+
+      <div class="prop-group-label">{{ t('blockProps.groupAppearance') }}</div>
       <div class="row">
         <ColorField
           v-model="block.color"
@@ -77,6 +83,7 @@
     </template>
 
     <template v-else-if="block.type === 'avatar'">
+      <div class="prop-group-label">{{ t('blockProps.groupContent') }}</div>
       <q-input
         dense
         outlined
@@ -91,6 +98,8 @@
           />
         </template>
       </q-input>
+
+      <div class="prop-group-label">{{ t('blockProps.groupAppearance') }}</div>
       <q-toggle
         v-if="itemScope === 'contacts'"
         dense
@@ -117,16 +126,7 @@
     </template>
 
     <template v-else-if="block.type === 'row'">
-      <q-input dense outlined :label="t('blockProps.iconLabel')" v-model="block.icon">
-        <template #append>
-          <IconPickerBtn @pick="(v) => (block.icon = v)" />
-        </template>
-      </q-input>
-      <ColorField
-        v-model="block.iconColor"
-        :label="t('blockProps.iconColorLabel')"
-        default-value="#ffffff"
-      />
+      <div class="prop-group-label">{{ t('blockProps.groupContent') }}</div>
       <q-input
         dense
         outlined
@@ -157,11 +157,27 @@
           />
         </template>
       </q-input>
-      <ColorField
-        v-model="block.textColor"
-        :label="t('blockProps.textColorLabel')"
-        default-value="#ffffff"
-      />
+
+      <div class="prop-group-label">{{ t('blockProps.groupAppearance') }}</div>
+      <q-input dense outlined :label="t('blockProps.iconLabel')" v-model="block.icon">
+        <template #append>
+          <IconPickerBtn @pick="(v) => (block.icon = v)" />
+        </template>
+      </q-input>
+      <div class="row">
+        <ColorField
+          v-model="block.iconColor"
+          :label="t('blockProps.iconColorLabel')"
+          default-value="#ffffff"
+          class="grow"
+        />
+        <ColorField
+          v-model="block.textColor"
+          :label="t('blockProps.textColorLabel')"
+          default-value="#ffffff"
+          class="grow"
+        />
+      </div>
       <q-toggle dense :label="t('blockProps.chevronLabel')" v-model="block.chevron" />
     </template>
 
@@ -173,7 +189,12 @@
         default-value="#2a2e37"
         clearable
       />
-      <BlockBuilder :blocks="ensureChildren()" :screens="screens" :item-scope="itemScope" />
+      <BlockBuilder
+        :blocks="ensureChildren()"
+        :screens="screens"
+        :item-scope="itemScope"
+        :depth="depth + 1"
+      />
     </template>
 
     <template v-else-if="block.type === 'layout'">
@@ -202,10 +223,16 @@
         default-value="#2a2e37"
         clearable
       />
-      <BlockBuilder :blocks="ensureChildren()" :screens="screens" :item-scope="itemScope" />
+      <BlockBuilder
+        :blocks="ensureChildren()"
+        :screens="screens"
+        :item-scope="itemScope"
+        :depth="depth + 1"
+      />
     </template>
 
     <template v-else-if="block.type === 'badge'">
+      <div class="prop-group-label">{{ t('blockProps.groupContent') }}</div>
       <q-input
         dense
         outlined
@@ -220,6 +247,8 @@
           />
         </template>
       </q-input>
+
+      <div class="prop-group-label">{{ t('blockProps.groupAppearance') }}</div>
       <div class="row">
         <ColorField v-model="block.color" class="grow" />
         <ColorField
@@ -241,6 +270,7 @@
     </template>
 
     <template v-else-if="block.type === 'button'">
+      <div class="prop-group-label">{{ t('blockProps.groupContent') }}</div>
       <q-input
         dense
         outlined
@@ -255,6 +285,8 @@
           />
         </template>
       </q-input>
+
+      <div class="prop-group-label">{{ t('blockProps.groupAppearance') }}</div>
       <div class="row">
         <ColorField v-model="block.color" class="grow" />
         <ColorField
@@ -273,6 +305,8 @@
         :model-value="block.radius ?? 12"
         @update:model-value="(v) => (block.radius = v === null || v === '' ? 12 : Number(v))"
       />
+
+      <div class="prop-group-label">{{ t('blockProps.groupAction') }}</div>
       <q-btn-toggle
         dense
         no-caps
@@ -433,6 +467,7 @@
         :blocks="ensureTemplate()"
         :screens="screens"
         :item-scope="templateItemScope()"
+        :depth="depth + 1"
       />
     </template>
 
@@ -560,6 +595,10 @@ const props = defineProps({
   // `list` block's per-item template, so its VariablePickerBtn instances
   // also offer the `{item:...}` tokens.
   itemScope: { type: Boolean, default: false },
+  // Forwarded straight through to whichever nested BlockBuilder this form
+  // renders (card/layout/list-template) — see BlockBuilder.vue's own prop
+  // for what it drives (indent guide, empty-state treatment).
+  depth: { type: Number, default: 0 },
 })
 
 // One ref per text field that can take a {variable} — a bare template ref
@@ -669,6 +708,23 @@ const screenOptions = computed(() =>
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
+}
+
+/* Splits a block type's fields into "what it says" vs "how it looks" (vs
+   "what it does", for button) instead of one flat stack of inputs — the
+   single most-requested clarity fix after real user testing on this
+   builder. First-of-type only where a block genuinely mixes several kinds
+   of field; small/single-purpose types (image, card, divider...) skip it,
+   a lone header would just be noise there. */
+.prop-group-label {
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+  margin-top: var(--space-1);
+}
+.prop-group-label:first-child {
+  margin-top: 0;
 }
 
 .tab-row {

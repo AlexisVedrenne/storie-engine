@@ -4,6 +4,7 @@
       v-for="(block, i) in visibleBlocks"
       :key="i"
       class="block-wrap"
+      :class="{ 'editor-hover': block === phone.hoveredEditorBlock }"
       :style="{
         marginTop: block.spacingBefore ? `${block.spacingBefore}px` : undefined,
         marginBottom: block.spacingAfter ? `${block.spacingAfter}px` : undefined,
@@ -35,6 +36,12 @@
 // watches it to auto-expand/scroll to the matching row in the editor. The
 // wrapper also carries the block's own optional spacingBefore/spacingAfter
 // override (see BlockPropertiesForm.vue's generic "advanced" section).
+//
+// `editor-hover` is the OTHER direction of that same link — outlines
+// whichever block the author is currently hovering in the editor's own row
+// list (phone.hoveredEditorBlock, set/cleared by BlockBuilder.vue), so the
+// abstract list of rows and the actual visual result read as the same
+// thing rather than two disconnected views.
 import { computed } from 'vue'
 import { usePhoneStore } from '@/engine/stores/phone'
 import { useStoryStore } from '@/engine/stores/story'
@@ -98,5 +105,11 @@ function blockComponent(type) {
 
 .block-wrap {
   min-width: 0;
+}
+
+.block-wrap.editor-hover {
+  outline: 2px solid var(--app-accent, #4c8bf5);
+  outline-offset: 2px;
+  border-radius: 4px;
 }
 </style>

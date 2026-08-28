@@ -600,7 +600,11 @@ export default {
   },
 
   blockBuilder: {
-    empty: 'Noch keine Blöcke — ziehe einen aus der Palette oben hierher.',
+    empty: 'Noch keine Blöcke hier — klicke einen an oder ziehe ihn aus der Palette oben hierher.',
+    emptyRootTitle: 'Dieser Bildschirm ist leer',
+    emptyRootDetail:
+      'Klicke einen Block aus der Palette oben an (oder ziehe ihn hierher), um ihn hinzuzufügen. Wähle ihn aus, um ihn rechts zu konfigurieren — das Ergebnis erscheint live auf dem Handy.',
+    paletteBtnHint: 'Klicken zum Hinzufügen, oder beliebig hinziehen',
     duplicate: 'Duplizieren',
   },
 
@@ -630,6 +634,9 @@ export default {
   },
 
   blockProps: {
+    groupContent: 'Inhalt',
+    groupAppearance: 'Erscheinungsbild',
+    groupAction: 'Aktion',
     titleLabel: 'Titel',
     iconLabel: 'Symbol',
     styleTitle: 'Titel',
