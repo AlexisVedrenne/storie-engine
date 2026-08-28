@@ -403,6 +403,15 @@ in `story.entities[schemaId][entityId] = { field: value
   id (`Object.assign`, not overwrite) so an author can update a single field without
   re-specifying the rest; a blank `entityId` auto-generates one.
 
+`story.entities` is a runtime SNAPSHOT taken from `schema.seed` — editing a seed instance's fields
+after that snapshot exists (e.g. adding a `schedule` slot) mutates the schema's own `seed` template
+but not the already-materialized snapshot. The editor's Apps-tab live preview
+(`previewCustomApp()`/`EditorPage.vue`) re-derives that snapshot via `story.loadProject()` whenever
+`selectedCustomApp` changes (switching apps), but originally missed the case where the author edits
+a schema's seed data while staying on the SAME open app — the preview kept showing stale entities
+until "Relancer l'aperçu" forced a reload. Fixed with a second `deep` watch on
+`gameConfig.entitySchemas` alongside the existing one.
+
 A schema has no visual representation on its own — it's consumed by a custom-app `list` block
 (`source: 'entity'`, see [The apps system](#the-apps-system)) or by the
 `{entity:<schemaId>:<entityId>:<field>}` token (`resolveDynamicText.js`), usable in any custom-app

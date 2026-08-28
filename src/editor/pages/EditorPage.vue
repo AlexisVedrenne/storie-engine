@@ -1356,6 +1356,24 @@ watch(
   },
 )
 
+// `story.entities` (what a `schedule`/`ledger`/`list source:'entity'` block
+// actually reads) is a SNAPSHOT taken from each schema's `seed` the moment
+// previewCustomApp() last ran — editing a seed instance's fields afterward
+// (e.g. adding a schedule slot in the Données > Schémas tab, still with the
+// same app open) mutates the schema's `seed` template but not that already-
+// materialized snapshot, so the preview silently keeps showing stale data
+// until something forces a fresh loadProject() — confirmed by a real user
+// whose schedule slot never highlighted until they used "Relancer l'aperçu".
+// Deep-watching entitySchemas re-runs the same reset previewCustomApp()
+// already does on an app switch, so a seed edit reflects immediately too.
+watch(
+  () => (viewMode.value === 'apps' ? story.project?.gameConfig?.entitySchemas : null),
+  (schemas) => {
+    if (schemas && selectedCustomApp.value) previewCustomApp(selectedCustomApp.value.id)
+  },
+  { deep: true },
+)
+
 function onKeydown(e) {
   if ((e.ctrlKey || e.metaKey) && e.key === 's') {
     e.preventDefault()
