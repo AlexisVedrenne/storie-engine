@@ -296,7 +296,7 @@ is enough to register a working app, no other file needs editing. A manifest wit
 **Custom apps** are the no-code equivalent: authored entirely inside the editor's "Apps" tab as a
 tree of visual blocks (`header`, `footer`, `text`, `image`, `row`, `card`, `overlay`, `sheet`,
 `layout`, `badge`, `divider`, `button`, `tabs`, `list`, `conversations`, `schedule`, `ledger`,
-`form`, `lookup` — see
+`form`, `lookup`, `map` — see
 `src/engine/customApps/blockKinds.js`), stored as plain JSON at `apps/<id>.json` in the project, and
 rendered by one generic interpreter, `CustomAppRenderer.vue` (the same component instance for every
 custom app — same "one generic player driven by data" precedent as `InteractionPlayer.vue` for
@@ -534,6 +534,20 @@ before building.
   save/load `customApp.theme` as a plain `.json` file — NOT the app export/import `.zip` pipeline,
   scoped with the user: a theme (palette/font-stack enum/radius/spacing) never references an asset,
   so a zip would carry nothing beyond the same JSON anyway.
+
+**Map** (added after the roadmap shipped, user request): `map` shows an author-uploaded image at
+its NATURAL size (never scaled to fit the phone) inside a fixed-height viewport the player drags to
+pan around, with `pois[]` (`{x, y, label, icon, color, action}`) positioned in PERCENT of the
+image's own dimensions — same "no real GPS, a place is a name + picture" spirit `schedule` already
+commits to. Panning is a manual `translate()` on an inner `.map-canvas` div (not native scroll),
+clamped so the player can't drag past an edge into empty space — POI markers are children of that
+SAME canvas, so they pan together with the image for free via one shared transform, no separate
+"where's this POI relative to the current scroll offset" math needed. Distinguishing a tap from a
+drag: a browser still fires a native `click` on whatever's under the pointer at release regardless
+of how far the transform moved things in between, so a `justDragged` flag (set once total pointer
+movement crosses a small threshold) suppresses a POI's action when the tap was actually the end of
+a pan gesture. Each POI's `action` is the SAME fixed catalog a button/lookup-result offers —
+authored via `BlockActionEditor.vue`, run via `useBlockAction.js`, zero new machinery.
 
 **Merged registry**: `story.mergedAppRegistry` (a getter on the `story` store) concatenates
 `APP_REGISTRY` (native, code-defined) with `project.customApps` (author-built, JSON-defined),

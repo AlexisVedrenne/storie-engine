@@ -671,6 +671,98 @@
       />
     </template>
 
+    <template v-else-if="block.type === 'map'">
+      <p class="tab-help">{{ t('blockProps.mapHelp') }}</p>
+      <AssetField v-model="block.src" :label="t('blockProps.mapImageLabel')" />
+      <q-input
+        dense
+        outlined
+        type="number"
+        :label="t('blockProps.mapHeightLabel')"
+        suffix="px"
+        :model-value="block.height ?? 280"
+        @update:model-value="(v) => (block.height = v === null || v === '' ? 280 : Number(v))"
+      />
+
+      <div v-for="(poi, i) in ensurePois()" :key="i" class="lookup-result-row">
+        <div class="lookup-result-header">
+          <span class="prop-group-label">{{ t('blockProps.mapPoiN', { n: i + 1 }) }}</span>
+          <q-btn dense flat round icon="close" size="sm" @click="removePoi(i)">
+            <q-tooltip>{{ t('common.delete') }}</q-tooltip>
+          </q-btn>
+        </div>
+        <q-input
+          dense
+          outlined
+          :ref="(el) => (mapPoiLabelRefs[i] = el)"
+          :label="t('blockProps.mapPoiLabelLabel')"
+          v-model="poi.label"
+        >
+          <template #append>
+            <VariablePickerBtn
+              :item-scope="itemScope"
+              @pick="(v) => (poi.label = insertEmojiAtCaret(mapPoiLabelRefs[i], poi.label, v))"
+            />
+          </template>
+        </q-input>
+        <div class="row">
+          <q-input
+            dense
+            outlined
+            type="number"
+            :label="t('blockProps.mapPoiXLabel')"
+            suffix="%"
+            :model-value="poi.x ?? 50"
+            @update:model-value="(v) => (poi.x = v === null || v === '' ? 50 : Number(v))"
+            class="grow"
+          />
+          <q-input
+            dense
+            outlined
+            type="number"
+            :label="t('blockProps.mapPoiYLabel')"
+            suffix="%"
+            :model-value="poi.y ?? 50"
+            @update:model-value="(v) => (poi.y = v === null || v === '' ? 50 : Number(v))"
+            class="grow"
+          />
+        </div>
+        <div class="row">
+          <q-input
+            dense
+            outlined
+            :label="t('blockProps.iconLabel')"
+            v-model="poi.icon"
+            class="grow"
+          >
+            <template #append>
+              <IconPickerBtn @pick="(v) => (poi.icon = v)" />
+            </template>
+          </q-input>
+          <ColorField v-model="poi.color" default-value="#4c8bf5" clearable />
+        </div>
+        <q-expansion-item dense :label="t('blockProps.mapPoiActionTitle')" class="spacing-section">
+          <div class="spacing-body condition-body">
+            <BlockActionEditor
+              :target="poi"
+              :screens="screens"
+              :sheets="sheets"
+              :help-text="t('blockProps.mapPoiActionHelp')"
+            />
+          </div>
+        </q-expansion-item>
+      </div>
+      <q-btn
+        dense
+        flat
+        no-caps
+        icon="add"
+        :label="t('blockProps.mapAddPoi')"
+        class="btn-ghost"
+        @click="addPoi"
+      />
+    </template>
+
     <q-expansion-item
       dense
       :label="t('timelineEntryCard.displayCondition')"
@@ -773,6 +865,7 @@ const formLabelInputRef = ref(null)
 const tabLabelRefs = {}
 const lookupTitleRefs = {}
 const lookupExcerptRefs = {}
+const mapPoiLabelRefs = {}
 
 function ensureChildren() {
   if (!props.block.blocks) props.block.blocks = []
@@ -803,6 +896,21 @@ function addResult() {
 }
 function removeResult(i) {
   props.block.results.splice(i, 1)
+}
+
+// `map` block (fake map) — POIs are positioned in percent of the image's
+// own natural size, defaulted to dead center rather than a corner so a
+// freshly-added one starts somewhere visible regardless of image
+// dimensions.
+function ensurePois() {
+  if (!props.block.pois) props.block.pois = []
+  return props.block.pois
+}
+function addPoi() {
+  ensurePois().push({ x: 50, y: 50, label: '', icon: '', color: '', action: { type: 'none' } })
+}
+function removePoi(i) {
+  props.block.pois.splice(i, 1)
 }
 
 // Lazy-inits `source` for a `list` block saved before this field existed —

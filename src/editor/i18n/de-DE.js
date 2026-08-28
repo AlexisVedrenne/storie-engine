@@ -651,6 +651,7 @@ export default {
     ledger: { label: 'Verlauf (Diagramm)' },
     form: { label: 'Eingabefeld' },
     lookup: { label: 'Suche' },
+    map: { label: 'Karte' },
   },
 
   variableInspector: {
@@ -811,6 +812,17 @@ export default {
     lookupResultRequiresHelp:
       'Dieses Ergebnis erscheint erst in Suchen, wenn diese Bedingung erfüllt ist.',
     lookupAddResult: 'Ergebnis hinzufügen',
+    mapHelp:
+      'Eine gefälschte Karte — ein von dir hochgeladenes Bild mit platzierten Orten. Wird in Originalgröße gezeigt: Der Spieler zieht, um sich zu bewegen, wenn sie größer als der Bildschirm ist.',
+    mapImageLabel: 'Kartenbild',
+    mapHeightLabel: 'Höhe des sichtbaren Bereichs',
+    mapPoiN: 'Punkt {n}',
+    mapPoiLabelLabel: 'Ortsname',
+    mapPoiXLabel: 'X-Position',
+    mapPoiYLabel: 'Y-Position',
+    mapPoiActionTitle: 'Aktion beim Antippen (optional)',
+    mapPoiActionHelp: 'Beim Antippen dieses Punkts passiert nichts.',
+    mapAddPoi: 'Ort hinzufügen',
     lookupResultActionTitle: 'Aktion beim Antippen (optional)',
     lookupResultActionHelp: 'Beim Antippen dieses Ergebnisses passiert nichts.',
     showAvatarLabel: 'Avatar des Kontakts anzeigen',

@@ -258,5 +258,8 @@ export default {
       prompt: 'Type something to search.',
       noResults: 'No results.',
     },
+    map: {
+      empty: 'No map set.',
+    },
   },
 }

@@ -659,6 +659,7 @@ export default {
     ledger: { label: 'Registro (gráfico)' },
     form: { label: 'Campo de entrada' },
     lookup: { label: 'Búsqueda' },
+    map: { label: 'Mapa' },
   },
 
   variableInspector: {
@@ -817,6 +818,17 @@ export default {
     lookupResultRequiresHelp:
       'Este resultado solo aparece en las búsquedas si esta condición es verdadera.',
     lookupAddResult: 'Añadir un resultado',
+    mapHelp:
+      'Un mapa falso — una imagen que subes, con puntos de interés colocados encima. Se muestra a tamaño real: el jugador arrastra para desplazarse si es más grande que la pantalla.',
+    mapImageLabel: 'Imagen del mapa',
+    mapHeightLabel: 'Altura del área visible',
+    mapPoiN: 'Punto {n}',
+    mapPoiLabelLabel: 'Nombre del lugar',
+    mapPoiXLabel: 'Posición X',
+    mapPoiYLabel: 'Posición Y',
+    mapPoiActionTitle: 'Acción al tocar (opcional)',
+    mapPoiActionHelp: 'No pasa nada al tocar este punto.',
+    mapAddPoi: 'Añadir un punto de interés',
     lookupResultActionTitle: 'Acción al tocar (opcional)',
     lookupResultActionHelp: 'No pasa nada al tocar este resultado.',
     showAvatarLabel: 'Mostrar el avatar del contacto',

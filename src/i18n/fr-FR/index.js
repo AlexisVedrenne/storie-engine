@@ -260,5 +260,8 @@ export default {
       prompt: 'Tape quelque chose pour chercher.',
       noResults: 'Aucun résultat.',
     },
+    map: {
+      empty: 'Aucune carte définie.',
+    },
   },
 }

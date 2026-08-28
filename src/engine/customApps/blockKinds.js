@@ -25,6 +25,7 @@ export const BLOCK_KINDS = [
   { type: 'ledger', icon: 'show_chart' },
   { type: 'form', icon: 'edit_note' },
   { type: 'lookup', icon: 'search' },
+  { type: 'map', icon: 'map' },
 ]
 
 export function paletteIcon(type) {
@@ -217,6 +218,20 @@ export function defaultBlock(type) {
       // tapped result can apply an effect, open a sheet, jump to another
       // app, etc., not just display text.
       return { type, placeholder: '', results: [] }
+    case 'map':
+      // A fake map — an author-uploaded image shown at its own NATURAL
+      // size (never scaled down to fit the phone), inside a viewport the
+      // player drags to pan around when it's bigger than the screen — same
+      // "no real GPS/space modeling, just an image + labeled points" spirit
+      // the engine already commits to for `schedule`'s own place names (see
+      // that block's own comment). `pois[]` ({ x, y, label, icon, color,
+      // action }) are positioned in PERCENT of the image's own natural
+      // dimensions (0-100), not the viewport — stays correctly placed
+      // regardless of how much of the image happens to be scrolled into
+      // view. `action` is the SAME fixed catalog a button/lookup-result
+      // offers (BlockActionEditor.vue/useBlockAction.js) — a tap on a POI
+      // can apply an effect, open a sheet, trigger a scene, etc.
+      return { type, src: '', height: 280, pois: [] }
     default:
       return { type }
   }

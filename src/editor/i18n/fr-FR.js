@@ -656,6 +656,7 @@ export default {
     ledger: { label: 'Registre (graphe)' },
     form: { label: 'Champ de saisie' },
     lookup: { label: 'Recherche' },
+    map: { label: 'Carte' },
   },
 
   variableInspector: {
@@ -814,6 +815,17 @@ export default {
     lookupResultRequiresHelp:
       'Ce résultat n’apparaît dans les recherches que si cette condition est vraie.',
     lookupAddResult: 'Ajouter un résultat',
+    mapHelp:
+      'Une fausse carte — une image que tu uploades, avec des points d’intérêt posés dessus. Affichée à sa taille réelle : le joueur glisse pour se déplacer si elle dépasse l’écran.',
+    mapImageLabel: 'Image de la carte',
+    mapHeightLabel: 'Hauteur de la zone visible',
+    mapPoiN: 'Point {n}',
+    mapPoiLabelLabel: 'Nom du lieu',
+    mapPoiXLabel: 'Position X',
+    mapPoiYLabel: 'Position Y',
+    mapPoiActionTitle: 'Action au tap (optionnel)',
+    mapPoiActionHelp: 'Rien ne se passe au tap sur ce point.',
+    mapAddPoi: 'Ajouter un point d’intérêt',
     lookupResultActionTitle: 'Action au tap (optionnel)',
     lookupResultActionHelp: 'Rien ne se passe au tap sur ce résultat.',
     showAvatarLabel: 'Afficher l’avatar du contact',

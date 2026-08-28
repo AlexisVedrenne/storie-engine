@@ -86,6 +86,7 @@ Two things make building against invisible state (a flag, an entity field) less 
 | **Ledger**        | A numeric collection as a mini-chart + list — see [Ledger](#ledger) below.                                                             |
 | **Input field**   | A field the _player_ fills in — see [Input field](#input-field) below.                                                                 |
 | **Search**        | A fake search bar over content you write ahead of time — see [Search](#search) below.                                                  |
+| **Map**           | An uploaded image with points of interest on it — see [Map](#map) below.                                                               |
 
 Every block can be **dragged** between containers (not just reordered in place), **duplicated**,
 and given a **condition** — a block whose condition doesn't hold is entirely absent, not just
@@ -271,6 +272,18 @@ that mentions both "red" and "key" somewhere).
 Each result can also have its own **action on tap** — the exact same kinds a [button](#buttons)
 offers (apply effects, open a sheet, jump to another app, trigger a whole scene...). Nothing
 happens by default; a result is just text to read until you give it one.
+
+### Map
+
+A `map` block is a fake map — upload an image and drop **points of interest** on it, each with a
+name, an icon/color, and an optional position (a percentage of the image, so it stays put
+regardless of how the image is sized). The image shows at its real size, never shrunk to fit the
+phone — if it's bigger than the block's own height, the player drags to pan around it, the same way
+you'd pan a real map app.
+
+Like a search result, each point of interest can have its own **action on tap** — the same kinds a
+[button](#buttons) offers. No real GPS or distances are modeled — a "location" here is just a name
+and a picture, the same idea [Schedule](#schedule) already uses for a character's routine.
 
 ## Variables and translation
 

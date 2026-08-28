@@ -640,6 +640,7 @@ export default {
     ledger: { label: 'Ledger (chart)' },
     form: { label: 'Input field' },
     lookup: { label: 'Search' },
+    map: { label: 'Map' },
   },
 
   variableInspector: {
@@ -795,6 +796,17 @@ export default {
     lookupResultSourceLabel: 'Source',
     lookupResultRequiresHelp: 'This result only shows up in searches once this condition is true.',
     lookupAddResult: 'Add a result',
+    mapHelp:
+      "A fake map — an image you upload, with points of interest placed on it. Shown at its real size: the player drags to pan if it's bigger than the screen.",
+    mapImageLabel: 'Map image',
+    mapHeightLabel: 'Visible area height',
+    mapPoiN: 'Point {n}',
+    mapPoiLabelLabel: 'Place name',
+    mapPoiXLabel: 'X position',
+    mapPoiYLabel: 'Y position',
+    mapPoiActionTitle: 'Action on tap (optional)',
+    mapPoiActionHelp: 'Nothing happens when this point is tapped.',
+    mapAddPoi: 'Add a point of interest',
     lookupResultActionTitle: 'Action on tap (optional)',
     lookupResultActionHelp: 'Nothing happens when this result is tapped.',
     showAvatarLabel: "Show the contact's avatar",

@@ -64,6 +64,7 @@ import ScheduleBlock from './ScheduleBlock.vue'
 import LedgerBlock from './LedgerBlock.vue'
 import FormBlock from './FormBlock.vue'
 import LookupBlock from './LookupBlock.vue'
+import MapBlock from './MapBlock.vue'
 
 const phone = usePhoneStore()
 const story = useStoryStore()
@@ -107,6 +108,7 @@ const BLOCK_COMPONENTS = {
   ledger: LedgerBlock,
   form: FormBlock,
   lookup: LookupBlock,
+  map: MapBlock,
 }
 function blockComponent(type) {
   return BLOCK_COMPONENTS[type] || null
