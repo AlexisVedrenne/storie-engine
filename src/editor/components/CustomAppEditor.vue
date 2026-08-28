@@ -192,6 +192,7 @@
         v-if="currentScreen"
         :blocks="ensureBlocks(currentScreen)"
         :screens="screenOptions"
+        :sheets="sheetOptions"
       />
     </div>
   </div>
@@ -200,6 +201,7 @@
 <script setup>
 import { computed, provide, reactive, ref, watch } from 'vue'
 import BlockBuilder from '@/editor/components/BlockBuilder.vue'
+import { collectBlocksOfType } from '@/engine/customApps/appHasModule'
 import AssetField from '@/editor/components/AssetField.vue'
 import ColorField from '@/editor/components/ColorField.vue'
 import FieldHelp from '@/editor/components/FieldHelp.vue'
@@ -286,6 +288,18 @@ function removeScreen() {
 // screens automatically since it's derived, not hand-maintained.
 const screenOptions = computed(() =>
   screens.value.map((s) => ({ id: s.id, label: s.label || s.id })),
+)
+
+// Every `sheet` block anywhere in the app (any screen, any nesting depth) —
+// a button's `openSheet` action picks a target from this, same "derived
+// from what's actually authored" precedent as `screenOptions`. Label falls
+// back to a placeholder rather than the raw id when the author hasn't named
+// it yet, since an empty sheetId is genuinely ambiguous in a list of
+// several.
+const sheetOptions = computed(() =>
+  screens.value
+    .flatMap((s) => collectBlocksOfType(s.blocks, 'sheet'))
+    .map((b) => ({ id: b.sheetId, label: b.sheetId || t('customAppEditor.sheetUnnamed') })),
 )
 </script>
 

@@ -1,23 +1,39 @@
 <template>
   <div class="app-screen" :style="themeVars">
-    <video
-      v-if="currentScreen?.background && currentScreen.backgroundType === 'video'"
-      :src="resolveAssetUrl(currentScreen.background)"
-      class="screen-background"
-      :style="{ opacity: backgroundOpacity }"
-      autoplay
-      muted
-      loop
-      playsinline
-    />
-    <img
-      v-else-if="currentScreen?.background"
-      :src="resolveAssetUrl(currentScreen.background)"
-      class="screen-background"
-      :style="{ opacity: backgroundOpacity }"
-      alt=""
-    />
-    <BlockList v-if="currentScreen" :blocks="currentScreen.blocks || []" :gap="gapPx" />
+    <div class="app-screen-scroll">
+      <video
+        v-if="currentScreen?.background && currentScreen.backgroundType === 'video'"
+        :src="resolveAssetUrl(currentScreen.background)"
+        class="screen-background"
+        :style="{ opacity: backgroundOpacity }"
+        autoplay
+        muted
+        loop
+        playsinline
+      />
+      <img
+        v-else-if="currentScreen?.background"
+        :src="resolveAssetUrl(currentScreen.background)"
+        class="screen-background"
+        :style="{ opacity: backgroundOpacity }"
+        alt=""
+      />
+      <BlockList v-if="currentScreen" :blocks="currentScreen.blocks || []" :gap="gapPx" />
+    </div>
+
+    <!-- A direct child of `.app-screen`, a SIBLING of `.app-screen-scroll`
+         rather than nested inside it — so the backdrop always covers the
+         full screen regardless of the content's current scroll position
+         (see the comment on `.app-screen-scroll` below for why the split
+         exists at all). -->
+    <Transition name="sheet-fade">
+      <div v-if="openSheet" class="sheet-backdrop" @click.self="openSheetId = null">
+        <div class="sheet-panel">
+          <div class="sheet-handle" />
+          <BlockList :blocks="openSheet.blocks || []" />
+        </div>
+      </div>
+    </Transition>
   </div>
 </template>
 
@@ -33,6 +49,7 @@ import { computed, provide, ref, watch } from 'vue'
 import { usePhoneStore } from '@/engine/stores/phone'
 import { useStoryStore } from '@/engine/stores/story'
 import { resolveAssetUrl } from '@/engine/assets'
+import { collectBlocksOfType } from '@/engine/customApps/appHasModule'
 import BlockList from './BlockList.vue'
 
 const phone = usePhoneStore()
@@ -70,6 +87,29 @@ provide('customAppNavigate', (screenId) => {
   activeScreenId.value = screenId
 })
 provide('customAppActiveScreenId', activeScreenId)
+
+// `sheet` blocks (pilier 03) — a modal that opens from a button's
+// `openSheet` action instead of a spot in the normal block flow (BlockList
+// skips rendering them inline, see its own comment). Only ONE can be open at
+// a time, closing whichever else was open — same "one active thing" spirit
+// as `activeScreenId` itself. Scoped to the CURRENT screen's own blocks
+// (not the whole app) since a sheet only makes sense to open from the
+// screen it's authored on; switching screens always closes it, same reason
+// `activeScreenId`'s own reset exists above.
+const openSheetId = ref(null)
+watch(activeScreenId, () => {
+  openSheetId.value = null
+})
+const screenSheets = computed(() => collectBlocksOfType(currentScreen.value?.blocks, 'sheet'))
+const openSheet = computed(
+  () => screenSheets.value.find((s) => s.sheetId === openSheetId.value) || null,
+)
+provide('customAppOpenSheet', (sheetId) => {
+  openSheetId.value = sheetId
+})
+provide('customAppCloseSheet', () => {
+  openSheetId.value = null
+})
 
 // App theme (`def.theme`, authored in CustomAppEditor.vue's "Thème" panel)
 // — a small fixed set of design tokens (5-role palette, a font stack, a
@@ -133,12 +173,32 @@ const backgroundOpacity = computed(() => (currentScreen.value?.backgroundOpacity
 .app-screen {
   position: relative;
   height: 100%;
-  overflow-y: auto;
-  overflow-x: hidden;
-  padding: 8px 16px 24px;
+  overflow: hidden;
   background: var(--app-bg);
   color: var(--app-text);
   font-family: var(--app-font);
+}
+
+/* The actual scrolling happens here, one level below `.app-screen` itself
+   (pilier 03, added for the `sheet` block's backdrop below) — `.app-screen`
+   needs to stay a stable, non-scrolling `position: relative` root so the
+   backdrop's `inset: 0` always covers the full screen regardless of the
+   content's current scroll offset; if the backdrop were a descendant of the
+   scrolling element instead, `inset: 0` would resolve against the padding
+   box of the SCROLLED content (whatever's currently scrolled out of view
+   included), not the visible viewport. Same padding/overflow this single
+   element used to carry alone. As a side effect, `screen-background` and a
+   root-level `overlay` block now resolve their own absolute positioning
+   against THIS non-scrolling element too, so they stay put while the
+   content scrolls underneath instead of scrolling away with it — arguably
+   the more expected behavior for a background/floating badge anyway.
+   `header.sticky`/`footer.sticky` are unaffected: they still stick within
+   this same scrolling element, which is all `position: sticky` needs. */
+.app-screen-scroll {
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 8px 16px 24px;
 }
 
 /* No z-index needed — placed first in the template, default stacking order
@@ -149,5 +209,48 @@ const backgroundOpacity = computed(() => (currentScreen.value?.backgroundOpacity
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+.sheet-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: flex;
+  align-items: flex-end;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.sheet-panel {
+  width: 100%;
+  max-height: 80%;
+  overflow-y: auto;
+  padding: 8px 16px 24px;
+  border-radius: 20px 20px 0 0;
+  background: var(--app-bg);
+}
+
+.sheet-handle {
+  width: 36px;
+  height: 4px;
+  margin: 0 auto 12px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.sheet-fade-enter-active,
+.sheet-fade-leave-active {
+  transition: opacity 0.18s ease;
+}
+.sheet-fade-enter-active .sheet-panel,
+.sheet-fade-leave-active .sheet-panel {
+  transition: transform 0.18s ease;
+}
+.sheet-fade-enter-from,
+.sheet-fade-leave-to {
+  opacity: 0;
+}
+.sheet-fade-enter-from .sheet-panel,
+.sheet-fade-leave-to .sheet-panel {
+  transform: translateY(100%);
 }
 </style>

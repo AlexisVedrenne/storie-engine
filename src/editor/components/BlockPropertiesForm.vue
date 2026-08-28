@@ -52,6 +52,7 @@
       <BlockBuilder
         :blocks="ensureChildren()"
         :screens="screens"
+        :sheets="sheets"
         :item-scope="itemScope"
         :depth="depth + 1"
       />
@@ -223,6 +224,7 @@
       <BlockBuilder
         :blocks="ensureChildren()"
         :screens="screens"
+        :sheets="sheets"
         :item-scope="itemScope"
         :depth="depth + 1"
       />
@@ -248,6 +250,25 @@
       <BlockBuilder
         :blocks="ensureChildren()"
         :screens="screens"
+        :sheets="sheets"
+        :item-scope="itemScope"
+        :depth="depth + 1"
+      />
+    </template>
+
+    <template v-else-if="block.type === 'sheet'">
+      <p class="tab-help">{{ t('blockProps.sheetHelp') }}</p>
+      <q-input
+        dense
+        outlined
+        :label="t('blockProps.sheetIdLabel')"
+        :hint="t('blockProps.sheetIdHint')"
+        v-model="block.sheetId"
+      />
+      <BlockBuilder
+        :blocks="ensureChildren()"
+        :screens="screens"
+        :sheets="sheets"
         :item-scope="itemScope"
         :depth="depth + 1"
       />
@@ -282,6 +303,7 @@
       <BlockBuilder
         :blocks="ensureChildren()"
         :screens="screens"
+        :sheets="sheets"
         :item-scope="itemScope"
         :depth="depth + 1"
       />
@@ -373,6 +395,8 @@
           { label: t('blockProps.actionNavigateScreen'), value: 'navigateScreen' },
           { label: t('blockProps.actionEvent'), value: 'event' },
           { label: t('blockProps.actionToast'), value: 'toast' },
+          { label: t('blockProps.actionOpenSheet'), value: 'openSheet' },
+          { label: t('blockProps.actionCloseSheet'), value: 'closeSheet' },
         ]"
         @update:model-value="setButtonActionType"
       />
@@ -413,6 +437,21 @@
           v-model="block.action.toastText"
         />
       </template>
+      <template v-else-if="block.action.type === 'openSheet'">
+        <p class="tab-help">{{ t('blockProps.actionOpenSheetHelp') }}</p>
+        <q-select
+          dense
+          outlined
+          emit-value
+          map-options
+          :label="t('blockProps.actionOpenSheetLabel')"
+          :options="sheetOptions"
+          v-model="block.action.sheetId"
+        />
+      </template>
+      <p v-else-if="block.action.type === 'closeSheet'" class="tab-help">
+        {{ t('blockProps.actionCloseSheetHelp') }}
+      </p>
       <p v-else class="tab-help">{{ t('blockProps.buttonHelp') }}</p>
 
       <q-expansion-item
@@ -522,6 +561,7 @@
       <BlockBuilder
         :blocks="ensureTemplate()"
         :screens="screens"
+        :sheets="sheets"
         :item-scope="templateItemScope()"
         :depth="depth + 1"
       />
@@ -729,6 +769,10 @@ const props = defineProps({
   // the `tabs` block's screen picker. Passed straight through unchanged
   // when this form recurses into a `card` block's own BlockBuilder.
   screens: { type: Array, default: () => [] },
+  // Every `sheet` block anywhere in the app (id + display label) — populates
+  // a button's `openSheet` action target picker. Same "derived, passed
+  // straight through nested BlockBuilders unchanged" treatment as `screens`.
+  sheets: { type: Array, default: () => [] },
   // See BlockBuilder.vue's own prop — whether this block is inside a
   // `list` block's per-item template, so its VariablePickerBtn instances
   // also offer the `{item:...}` tokens.
@@ -832,6 +876,8 @@ function setButtonActionType(type) {
     props.block.action = { ...base, screenId: prev.screenId || '' }
   else if (type === 'event') props.block.action = { ...base, buttonId: prev.buttonId || '' }
   else if (type === 'toast') props.block.action = { ...base, toastText: prev.toastText || '' }
+  else if (type === 'openSheet') props.block.action = { ...base, sheetId: prev.sheetId || '' }
+  else if (type === 'closeSheet') props.block.action = { ...base }
   else props.block.action = { type: 'none' }
 }
 
@@ -849,6 +895,10 @@ function removeTab(i) {
 
 const screenOptions = computed(() =>
   props.screens.map((s) => ({ label: s.label || s.id, value: s.id })),
+)
+
+const sheetOptions = computed(() =>
+  props.sheets.map((s) => ({ label: s.label || s.id, value: s.id })),
 )
 </script>
 

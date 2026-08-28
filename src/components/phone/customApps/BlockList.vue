@@ -77,7 +77,14 @@ const props = defineProps({
   direction: { type: String, default: 'column' },
   gap: { type: [String, Number], default: 10 },
 })
-const visibleBlocks = computed(() => props.blocks.filter((b) => story.checkConditions(b.requires)))
+// `sheet` blocks (pilier 03) are never rendered in their own natural
+// position — only CustomAppRenderer.vue renders the currently-open one, as
+// a modal overlay above everything. A block anywhere in the tree still gets
+// to author one (it's just another entry in the palette), it just never
+// shows up inline.
+const visibleBlocks = computed(() =>
+  props.blocks.filter((b) => b.type !== 'sheet' && story.checkConditions(b.requires)),
+)
 
 const BLOCK_COMPONENTS = {
   header: HeaderBlock,

@@ -583,6 +583,7 @@ export default {
     backgroundTypeImage: 'Immagine',
     backgroundTypeVideo: 'Video',
     backgroundOpacityLabel: 'Opacità',
+    sheetUnnamed: 'Foglio senza nome',
     themeTitle: 'Tema',
     themeHelp:
       "Colori/font/raggio predefiniti di quest'app — ogni blocco può comunque sovrascriverli singolarmente (il colore di un pulsante, ecc.), questo imposta solo ciò che non è già fissato blocco per blocco.",
@@ -631,6 +632,7 @@ export default {
     row: { label: 'Riga' },
     card: { label: 'Scheda' },
     overlay: { label: 'Livello flottante' },
+    sheet: { label: 'Foglio (modale)' },
     layout: { label: 'Layout (riga/colonna)' },
     badge: { label: 'Badge' },
     divider: { label: 'Separatore' },
@@ -676,6 +678,10 @@ export default {
     anchorBottomLeft: 'Basso sinistra',
     anchorBottomRight: 'Basso destra',
     anchorCenter: 'Centro',
+    sheetHelp:
+      'Un foglio modale che sale dal basso quando un pulsante lo apre (azione "Apri un foglio") — invisibile finché qualcosa non lo apre.',
+    sheetIdLabel: 'Identificativo del foglio',
+    sheetIdHint: 'Scegli un nome univoco — è quello che i pulsanti useranno per aprirlo.',
     cardHelp: 'Una scheda raggruppa visivamente altri blocchi al suo interno.',
     layoutHelp:
       'Dispone altri blocchi in riga o colonna, senza sfondo per default — a differenza di una scheda, a meno che tu non scelga un colore di sfondo qui sotto.',
@@ -699,6 +705,11 @@ export default {
     actionEventButtonIdLabel: 'Id del pulsante (opzionale)',
     actionEventButtonIdHint: 'Lascia vuoto se nel progetto esiste un solo pulsante di questo tipo.',
     actionToast: 'Messaggio',
+    actionOpenSheet: 'Apri un foglio',
+    actionOpenSheetHelp: 'Apre un foglio modale (un blocco Foglio) sopra la schermata attuale.',
+    actionOpenSheetLabel: 'Foglio da aprire',
+    actionCloseSheet: 'Chiudi il foglio',
+    actionCloseSheetHelp: 'Chiude il foglio attualmente aperto, qualunque esso sia.',
     actionToastHelp: 'Mostra brevemente un messaggio a schermo al tap — nessun altro effetto.',
     actionToastTextLabel: 'Testo del messaggio',
     actionGuardTitle: "Condizione prima dell'azione (avanzato)",

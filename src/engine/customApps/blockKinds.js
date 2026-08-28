@@ -13,6 +13,7 @@ export const BLOCK_KINDS = [
   { type: 'row', icon: 'list' },
   { type: 'card', icon: 'crop_square' },
   { type: 'overlay', icon: 'layers' },
+  { type: 'sheet', icon: 'call_to_action' },
   { type: 'layout', icon: 'view_column' },
   { type: 'badge', icon: 'label' },
   { type: 'divider', icon: 'horizontal_rule' },
@@ -66,6 +67,15 @@ export function defaultBlock(type) {
       // arbitrary-block anchor id — same bounded-catalog trade as every
       // other block here.
       return { type, anchor: 'top-right', blocks: [] }
+    case 'sheet':
+      // A modal that opens from a button's `openSheet` action (targeting
+      // `sheetId`) instead of taking a spot in the normal row/column flow —
+      // BlockList.vue never renders it inline, only CustomAppRenderer.vue
+      // does, as a backdrop + panel sliding up from the bottom, when its
+      // `sheetId` matches whichever one a button opened. Only one sheet can
+      // be open at a time; switching screens always closes it. `blocks[]`
+      // is its own content, same recursive shape as `card`.
+      return { type, sheetId: '', blocks: [] }
     case 'layout':
       // Pure flex arranger — no background/padding chrome of its own,
       // unlike `card` (which is really "layout, column direction, + a

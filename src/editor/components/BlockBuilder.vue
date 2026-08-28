@@ -91,6 +91,7 @@
             <BlockPropertiesForm
               :block="block"
               :screens="screens"
+              :sheets="sheets"
               :item-scope="itemScope"
               :depth="depth"
             />
@@ -120,6 +121,10 @@ const phone = usePhoneStore()
 const props = defineProps({
   blocks: { type: Array, required: true },
   screens: { type: Array, default: () => [] },
+  // Every `sheet` block anywhere in the app (id + display label) — see
+  // BlockPropertiesForm.vue's own comment on this, same "derived, not
+  // hand-maintained" precedent as `screens`.
+  sheets: { type: Array, default: () => [] },
   // `false`, `'contacts'`, or `'flagCollection'` — set when this builder
   // edits a `list` block's per-item template (or is nested inside one),
   // and which of the two item shapes applies (see blockKinds.js's `list`

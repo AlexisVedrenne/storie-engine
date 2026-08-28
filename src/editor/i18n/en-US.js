@@ -570,6 +570,7 @@ export default {
     backgroundTypeImage: 'Image',
     backgroundTypeVideo: 'Video',
     backgroundOpacityLabel: 'Opacity',
+    sheetUnnamed: 'Unnamed sheet',
     themeTitle: 'Theme',
     themeHelp:
       "This app's default colors/font/radius — any block can still override them individually (a button's own color, etc.), this only sets what isn't already set block by block.",
@@ -618,6 +619,7 @@ export default {
     row: { label: 'Row' },
     card: { label: 'Card' },
     overlay: { label: 'Floating layer' },
+    sheet: { label: 'Sheet (modal)' },
     layout: { label: 'Layout (row/column)' },
     badge: { label: 'Badge' },
     divider: { label: 'Divider' },
@@ -662,6 +664,10 @@ export default {
     anchorBottomLeft: 'Bottom left',
     anchorBottomRight: 'Bottom right',
     anchorCenter: 'Center',
+    sheetHelp:
+      'A modal sheet that slides up from the bottom when a button opens it (the "Open a sheet" action) — invisible until something opens it.',
+    sheetIdLabel: 'Sheet id',
+    sheetIdHint: 'Pick a unique name — this is what buttons use to open it.',
     cardHelp: 'A card visually groups other blocks inside it.',
     layoutHelp:
       'Arranges other blocks in a row or column, no background by default — unlike a card, unless you pick a background color below.',
@@ -685,6 +691,11 @@ export default {
     actionEventButtonIdLabel: 'Button id (optional)',
     actionEventButtonIdHint: 'Leave empty if only one button of this kind exists in the project.',
     actionToast: 'Message',
+    actionOpenSheet: 'Open a sheet',
+    actionOpenSheetHelp: 'Opens a modal sheet (a Sheet block) over the current screen.',
+    actionOpenSheetLabel: 'Sheet to open',
+    actionCloseSheet: 'Close the sheet',
+    actionCloseSheetHelp: 'Closes whichever sheet is currently open.',
     actionToastHelp: 'Briefly shows a message on screen on tap — no other effect.',
     actionToastTextLabel: 'Message text',
     actionGuardTitle: 'Condition before action (advanced)',

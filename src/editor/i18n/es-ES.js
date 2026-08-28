@@ -589,6 +589,7 @@ export default {
     backgroundTypeImage: 'Imagen',
     backgroundTypeVideo: 'Vídeo',
     backgroundOpacityLabel: 'Opacidad',
+    sheetUnnamed: 'Hoja sin nombre',
     themeTitle: 'Tema',
     themeHelp:
       'Colores/fuente/radio por defecto de esta app — cualquier bloque puede seguir anulándolos individualmente (el color de un botón, etc.), esto solo define lo que no está ya fijado bloque por bloque.',
@@ -637,6 +638,7 @@ export default {
     row: { label: 'Fila' },
     card: { label: 'Tarjeta' },
     overlay: { label: 'Capa flotante' },
+    sheet: { label: 'Hoja (modal)' },
     layout: { label: 'Disposición (fila/columna)' },
     badge: { label: 'Insignia' },
     divider: { label: 'Separador' },
@@ -681,6 +683,10 @@ export default {
     anchorBottomLeft: 'Abajo izquierda',
     anchorBottomRight: 'Abajo derecha',
     anchorCenter: 'Centro',
+    sheetHelp:
+      'Una hoja modal que sube desde abajo cuando un botón la abre (acción "Abrir una hoja") — invisible hasta que algo la abre.',
+    sheetIdLabel: 'Identificador de la hoja',
+    sheetIdHint: 'Elige un nombre único — es lo que usarán los botones para abrirla.',
     cardHelp: 'Una tarjeta agrupa visualmente otros bloques en su interior.',
     layoutHelp:
       'Organiza otros bloques en fila o columna, sin fondo por defecto — a diferencia de una tarjeta, a menos que elijas un color de fondo abajo.',
@@ -704,6 +710,11 @@ export default {
     actionEventButtonIdLabel: 'Id del botón (opcional)',
     actionEventButtonIdHint: 'Déjalo vacío si solo existe un botón de este tipo en el proyecto.',
     actionToast: 'Mensaje',
+    actionOpenSheet: 'Abrir una hoja',
+    actionOpenSheetHelp: 'Abre una hoja modal (un bloque Hoja) sobre la pantalla actual.',
+    actionOpenSheetLabel: 'Hoja a abrir',
+    actionCloseSheet: 'Cerrar la hoja',
+    actionCloseSheetHelp: 'Cierra la hoja que esté abierta actualmente.',
     actionToastHelp: 'Muestra brevemente un mensaje en pantalla al tocar — ningún otro efecto.',
     actionToastTextLabel: 'Texto del mensaje',
     actionGuardTitle: 'Condición antes de la acción (avanzado)',

@@ -586,6 +586,7 @@ export default {
     backgroundTypeImage: 'Image',
     backgroundTypeVideo: 'Vidéo',
     backgroundOpacityLabel: 'Opacité',
+    sheetUnnamed: 'Feuille sans nom',
     themeTitle: 'Thème',
     themeHelp:
       'Couleurs, police et rayons par défaut de cette app — chaque bloc peut toujours les remplacer individuellement (couleur d’un bouton, etc.), ceci ne fixe que ce qui n’est pas déjà réglé bloc par bloc.',
@@ -634,6 +635,7 @@ export default {
     row: { label: 'Ligne' },
     card: { label: 'Carte' },
     overlay: { label: 'Calque flottant' },
+    sheet: { label: 'Feuille (modale)' },
     layout: { label: 'Disposition (rangée/colonne)' },
     badge: { label: 'Badge' },
     divider: { label: 'Séparateur' },
@@ -680,6 +682,10 @@ export default {
     anchorBottomLeft: 'Bas gauche',
     anchorBottomRight: 'Bas droite',
     anchorCenter: 'Centre',
+    sheetHelp:
+      'Une feuille modale qui remonte du bas de l’écran quand un bouton l’ouvre (action "Ouvrir une feuille") — invisible tant que rien ne l’ouvre.',
+    sheetIdLabel: 'Identifiant de la feuille',
+    sheetIdHint: 'Choisis un nom unique — c’est ce que les boutons utiliseront pour l’ouvrir.',
     layoutHelp:
       'Arrange d’autres blocs en rangée ou en colonne, sans fond visuel par défaut — contrairement à la carte, sauf si tu choisis une couleur de fond ci-dessous.',
     stickyHeaderLabel: 'Fixé en haut (reste visible au défilement)',
@@ -704,6 +710,11 @@ export default {
     actionToast: 'Message',
     actionToastHelp: 'Affiche brièvement un message à l’écran au tap — aucun autre effet.',
     actionToastTextLabel: 'Texte du message',
+    actionOpenSheet: 'Ouvrir une feuille',
+    actionOpenSheetHelp: 'Ouvre une feuille modale (bloc Feuille) par-dessus l’écran actuel.',
+    actionOpenSheetLabel: 'Feuille à ouvrir',
+    actionCloseSheet: 'Fermer la feuille',
+    actionCloseSheetHelp: 'Ferme la feuille actuellement ouverte, quelle qu’elle soit.',
     actionGuardTitle: 'Condition avant action (avancé)',
     actionGuardHelp:
       'Si posée, vérifiée AVANT que l’action ci-dessus s’applique — si elle échoue, l’action est annulée (rien ne se passe, ou le message ci-dessous s’affiche à la place).',

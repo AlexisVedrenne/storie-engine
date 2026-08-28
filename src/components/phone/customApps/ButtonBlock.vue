@@ -21,9 +21,12 @@
 // onWin already uses); 'navigateScreen' reuses the SAME
 // 'customAppNavigate' injection TabsBlock.vue already consumes — one nav
 // mechanism, not two; 'toast' just shows `action.toastText` via
-// story.triggerActionToast(), no other effect. No action / an unrecognized
-// type is a no-op (still renders, just inert), matching every other
-// "silently absent" fallback in this engine.
+// story.triggerActionToast(), no other effect. 'openSheet'/'closeSheet'
+// (pilier 03) inject the SAME 'customAppOpenSheet'/'customAppCloseSheet'
+// functions CustomAppRenderer.vue provides — one modal mechanism, consumed
+// here exactly like 'navigateScreen' consumes 'customAppNavigate'. No
+// action / an unrecognized type is a no-op (still renders, just inert),
+// matching every other "silently absent" fallback in this engine.
 //
 // `action.requires` gates ALL of the above — same checkConditions() a
 // block's own display condition already uses, just checked at CLICK time
@@ -42,6 +45,8 @@ const story = useStoryStore()
 const phone = usePhoneStore()
 const listItem = inject('customAppListItem', null)
 const navigate = inject('customAppNavigate', () => {})
+const openSheet = inject('customAppOpenSheet', () => {})
+const closeSheet = inject('customAppCloseSheet', () => {})
 const label = computed(() => resolveDynamicText(props.block.label, story, listItem) || '')
 
 function onClick() {
@@ -57,7 +62,8 @@ function onClick() {
   else if (action.type === 'navigateScreen') navigate(action.screenId)
   else if (action.type === 'toast') {
     story.triggerActionToast(resolveDynamicText(action.toastText, story, listItem))
-  }
+  } else if (action.type === 'openSheet') openSheet(action.sheetId)
+  else if (action.type === 'closeSheet') closeSheet()
   // Fires the fixed `button.pressed` engine trigger (see triggers.js) —
   // reacted to from the Events tab exactly like app.opened/photo.viewed,
   // NOT a free-form event name. `phone.currentApp` is reliably this

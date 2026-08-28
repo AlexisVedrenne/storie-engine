@@ -392,6 +392,37 @@ by-id system — nesting IS the anchor mechanism, the same "small bounded primit
 powerful but far more complex alternative" trade this project keeps making (flags as the only
 variable mechanism, blocks instead of a free canvas).
 
+**Sheet** (pilier 03, fourth and final sub-feature): `sheet` is a recursive container (own
+`blocks[]`, like `card`) identified by an author-set `block.sheetId`, opened by a NEW button action
+kind `openSheet` (targets `sheetId`) and closed by `closeSheet` (closes whichever one is open,
+no target needed) — both inject the same `customAppOpenSheet`/`customAppCloseSheet` functions
+`CustomAppRenderer.vue` provides, same "one mechanism, consumed like `navigateScreen` consumes
+`customAppNavigate`" precedent. `BlockList.vue` never renders a `sheet` block in its own tree
+position — it's filtered out of `visibleBlocks` alongside the existing `requires` check — only
+`CustomAppRenderer.vue` renders the currently-open one, as a backdrop + bottom-sliding panel.
+
+Only one sheet can be open at a time (`openSheetId`, a single ref, not a stack — opening a second
+sheet replaces the first, matching the pilier's own scoping decision to keep this simple rather
+than supporting stacked modals); switching screens always resets it, since a sheet's `sheetId` is
+only guaranteed unique within the screen it's authored on. `collectBlocksOfType()`
+(`appHasModule.js`, generalizing the existing `blocksContainType` boolean check into a real
+collector) finds every `sheet` in the CURRENT screen's own blocks for `CustomAppRenderer.vue`'s own
+lookup, and every `sheet` across ALL screens (flattened) for `CustomAppEditor.vue`'s app-wide picker
+that a button's `openSheet` action uses to pick a target without typing an id by hand.
+
+`CustomAppRenderer.vue`'s `.app-screen` root was split into a non-scrolling outer element (still
+`position: relative`, now `overflow: hidden`) and a new `.app-screen-scroll` inner element carrying
+the actual `overflow-y: auto` + all the original padding — needed so the sheet's backdrop
+(`inset: 0` on the OUTER, non-scrolling element) always covers the full visible screen regardless of
+the content's current scroll offset; nested one level inside the scrolling element instead, `inset: 0`
+would resolve against the scrolled content's own padding box, which could be scrolled out of view
+entirely. Side effect (intentional, not a regression): `screen-background` and a root-level
+`overlay` block now resolve their own `position: absolute` against the OUTER non-scrolling element
+too, so they stay fixed on screen while content scrolls underneath instead of scrolling away with
+it — arguably the more expected behavior for a background/persistent badge; `header.sticky`/
+`footer.sticky` are unaffected since `position: sticky` only cares about the actual scrolling
+ancestor, which is still `.app-screen-scroll`.
+
 **Merged registry**: `story.mergedAppRegistry` (a getter on the `story` store) concatenates
 `APP_REGISTRY` (native, code-defined) with `project.customApps` (author-built, JSON-defined),
 normalized to the same `{ id, label, icon, color, badge, component }` shape so every consumer

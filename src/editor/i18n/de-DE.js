@@ -581,6 +581,7 @@ export default {
     backgroundTypeImage: 'Bild',
     backgroundTypeVideo: 'Video',
     backgroundOpacityLabel: 'Deckkraft',
+    sheetUnnamed: 'Unbenanntes Blatt',
     themeTitle: 'Design',
     themeHelp:
       'Standardfarben/-schrift/-radius dieser App — jeder Block kann sie weiterhin einzeln überschreiben (z. B. die Farbe eines Buttons); dies legt nur fest, was nicht schon Block für Block gesetzt ist.',
@@ -629,6 +630,7 @@ export default {
     row: { label: 'Zeile' },
     card: { label: 'Karte' },
     overlay: { label: 'Schwebende Ebene' },
+    sheet: { label: 'Blatt (modal)' },
     layout: { label: 'Layout (Zeile/Spalte)' },
     badge: { label: 'Abzeichen' },
     divider: { label: 'Trennlinie' },
@@ -674,6 +676,10 @@ export default {
     anchorBottomLeft: 'Unten links',
     anchorBottomRight: 'Unten rechts',
     anchorCenter: 'Mitte',
+    sheetHelp:
+      'Ein modales Blatt, das von unten hochfährt, wenn ein Button es öffnet (Aktion "Blatt öffnen") — unsichtbar, bis etwas es öffnet.',
+    sheetIdLabel: 'Blatt-Kennung',
+    sheetIdHint: 'Wähle einen eindeutigen Namen — damit öffnen Buttons dieses Blatt.',
     cardHelp: 'Eine Karte fasst andere Blöcke visuell zusammen.',
     layoutHelp:
       'Ordnet andere Blöcke in einer Zeile oder Spalte an, standardmäßig ohne Hintergrund — im Gegensatz zu einer Karte, außer du wählst unten eine Hintergrundfarbe.',
@@ -698,6 +704,12 @@ export default {
     actionEventButtonIdHint:
       'Leer lassen, wenn im Projekt nur eine Schaltfläche dieser Art existiert.',
     actionToast: 'Meldung',
+    actionOpenSheet: 'Blatt öffnen',
+    actionOpenSheetHelp:
+      'Öffnet ein modales Blatt (ein Blatt-Block) über dem aktuellen Bildschirm.',
+    actionOpenSheetLabel: 'Zu öffnendes Blatt',
+    actionCloseSheet: 'Blatt schließen',
+    actionCloseSheetHelp: 'Schließt das gerade geöffnete Blatt, egal welches.',
     actionToastHelp: 'Zeigt beim Tippen kurz eine Meldung an — kein weiterer Effekt.',
     actionToastTextLabel: 'Meldungstext',
     actionGuardTitle: 'Bedingung vor Aktion (erweitert)',

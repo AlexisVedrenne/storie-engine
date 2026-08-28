@@ -55,6 +55,7 @@ having internet access to fetch one.
 | **Row**           | An icon + label + optional sublabel + optional chevron — a settings-style list row.                                                    |
 | **Card**          | A container with a visible background, for grouping other blocks.                                                                      |
 | **Overlay**       | A layer positioned over the normal content — see [Overlay](#overlay) below.                                                            |
+| **Sheet**         | A modal that slides up from the bottom when a button opens it — see [Sheet](#sheet) below.                                             |
 | **Layout**        | A plain flex container (row or column) with no background — for arranging other blocks without the visual weight of a card.            |
 | **Badge**         | A small colored label/pill.                                                                                                            |
 | **Divider**       | A horizontal rule.                                                                                                                     |
@@ -74,7 +75,7 @@ block by block.
 
 ### Buttons
 
-A button can do one of five things:
+A button can do one of seven things:
 
 1. **Nothing** — purely visual/decorative.
 2. **Apply effects** — the same effects system used everywhere else (flags, phone widgets,
@@ -83,12 +84,14 @@ A button can do one of five things:
    uses.
 4. **Fire an event** — emits the `button.pressed` event (with the app id and an optional button id
    you set as payload), which you can react to from the **Events** tab exactly like any other
-   trigger — see [Events](conditions-and-flags.md#events). Unlike the other four kinds, this is the
+   trigger — see [Events](conditions-and-flags.md#events). Unlike the other kinds, this is the
    _only_ one that also touches the Events system — picking any other action kind doesn't fire
    `button.pressed` on its own.
 5. **Show a message** — briefly displays a short text on screen, no other effect.
+6. **Open a sheet** — opens a [Sheet](#sheet) block by its id.
+7. **Close the sheet** — closes whichever sheet is currently open, whichever it is.
 
-Whichever of the five you pick, an optional **condition** can gate the whole thing — checked at the
+Whichever of the seven you pick, an optional **condition** can gate the whole thing — checked at the
 moment the button is tapped, not when the screen renders (that's what a block's own display
 condition already does). If the condition doesn't hold, the action is cancelled; you can optionally
 show a message explaining why (e.g. "Not enough funds.") instead of the tap silently doing nothing.
@@ -204,6 +207,16 @@ It anchors to whichever **Card** or **Layout** it's nested inside — placed at 
 level, it anchors to the whole screen; placed inside a Card, it anchors to just that card's own
 corner/center instead. There's no way to anchor it to an arbitrary block by name — nesting is how
 you pick what it's positioned against.
+
+### Sheet
+
+A `sheet` block holds its own blocks but is invisible by default — it only appears when a button's
+**Open a sheet** action targets its id, sliding up from the bottom of the screen (like an iOS action
+sheet) over everything else. Give it a unique **id** so a button knows which one to open.
+
+The player can dismiss it by tapping outside it, or you can add a button inside it with the
+**Close the sheet** action. Only one sheet is ever open at a time, and switching screens always
+closes it — a sheet belongs to the screen it's authored on.
 
 ## Variables and translation
 
