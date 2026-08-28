@@ -1364,14 +1364,27 @@ watch(
 // materialized snapshot, so the preview silently keeps showing stale data
 // until something forces a fresh loadProject() — confirmed by a real user
 // whose schedule slot never highlighted until they used "Relancer l'aperçu".
-// Deep-watching entitySchemas re-runs the same reset previewCustomApp()
-// already does on an app switch, so a seed edit reflects immediately too.
+//
+// The source is a JSON STRING, not the live `entitySchemas` array with
+// `deep: true` — a deep watch on that array recurses into itself here:
+// previewCustomApp() calls story.loadProject(story.project), which does
+// `Object.assign(this, defaultState())` (defaultState().project is `null`)
+// immediately followed by `this.project = projectData` — two writes to
+// story.project in the same tick, which a deep watcher rooted at
+// `story.project?.gameConfig?.entitySchemas` sees as its own dependency
+// changing and re-fires on, calling previewCustomApp() again, forever
+// ("Maximum recursive updates exceeded", hit by a real user). A string
+// snapshot only changes when the actual seed CONTENT changes — loadProject()
+// doesn't touch schema.seed itself, so re-running it can't perturb this
+// string, and the watcher can't retrigger itself.
 watch(
-  () => (viewMode.value === 'apps' ? story.project?.gameConfig?.entitySchemas : null),
-  (schemas) => {
-    if (schemas && selectedCustomApp.value) previewCustomApp(selectedCustomApp.value.id)
+  () =>
+    viewMode.value === 'apps'
+      ? JSON.stringify(story.project?.gameConfig?.entitySchemas?.map((s) => s.seed) || null)
+      : null,
+  (signature) => {
+    if (signature && selectedCustomApp.value) previewCustomApp(selectedCustomApp.value.id)
   },
-  { deep: true },
 )
 
 function onKeydown(e) {
