@@ -725,6 +725,11 @@ export default {
     formFieldLabel: 'Champ',
     formFieldHint:
       'Texte, nombre, oui/non ou référence à un contact — les autres types ne sont pas proposés ici.',
+    formReadonlyLabel: 'Lecture seule (affiche sans permettre la saisie)',
+    formCommitModeHint: 'Quand la valeur tapée est réellement écrite dans la variable.',
+    formCommitLive: 'En direct',
+    formCommitBlur: 'En quittant le champ',
+    formCommitButton: 'Bouton "Valider"',
     showAvatarLabel: 'Afficher l’avatar du contact',
     nameFieldName: 'Nom',
     nameFieldPseudo: 'Pseudo (@...)',

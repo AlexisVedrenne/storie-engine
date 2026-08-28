@@ -252,5 +252,8 @@ export default {
     ledger: {
       empty: 'Aucune entrée pour l’instant.',
     },
+    form: {
+      submit: 'Valider',
+    },
   },
 }

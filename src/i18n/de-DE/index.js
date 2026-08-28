@@ -253,5 +253,8 @@ export default {
     ledger: {
       empty: 'Noch keine Einträge.',
     },
+    form: {
+      submit: 'Bestätigen',
+    },
   },
 }

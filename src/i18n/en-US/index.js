@@ -250,5 +250,8 @@ export default {
     ledger: {
       empty: 'No entries yet.',
     },
+    form: {
+      submit: 'Submit',
+    },
   },
 }

@@ -252,5 +252,8 @@ export default {
     ledger: {
       empty: 'Nessuna voce ancora.',
     },
+    form: {
+      submit: 'Conferma',
+    },
   },
 }

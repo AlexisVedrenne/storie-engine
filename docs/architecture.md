@@ -317,7 +317,13 @@ numeric delta, wrong semantics for "the player just typed 42"), `target: 'entity
 field on the phone uses (`SetupWizard.vue`'s `.name-input`, Settings' `.switch`), not a Quasar form
 component, which this phone UI never uses for player input. For an entity target the widget type is
 read straight off the field's own declared schema type rather than asked again (schedule/
-`ref:entity` fields are excluded — structured data, not a fit for one input).
+`ref:entity` fields are excluded — structured data, not a fit for one input). `block.commitMode`
+(`'live'`/`'blur'`/`'button'`, default `'live'` for backward compatibility) controls when the typed
+value actually reaches `story` — added after the original always-on-keystroke write turned out to
+commit a half-typed or momentarily-empty value while the player was still editing; `'blur'` and
+`'button'` buffer the raw input locally (`draft` ref in `FormBlock.vue`) until the native `change`
+event or an explicit submit tap fires. `block.readonly` shows the current value with editing
+disabled, for mixing an editable field with a computed one in the same visual style.
 
 **Per-app theme** (`customApp.theme`, edited in CustomAppEditor.vue's "Thème" panel): a small fixed
 set of design tokens — a 5-role palette (background/surface/text/accent/danger), a font stack

@@ -253,5 +253,8 @@ export default {
     ledger: {
       empty: 'Aún no hay entradas.',
     },
+    form: {
+      submit: 'Validar',
+    },
   },
 }

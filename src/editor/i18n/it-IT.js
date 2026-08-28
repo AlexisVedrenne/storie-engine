@@ -723,6 +723,11 @@ export default {
     formFieldLabel: 'Campo',
     formFieldHint:
       'Testo, numero, sì/no o riferimento a un contatto — qui non sono proposti altri tipi.',
+    formReadonlyLabel: 'Sola lettura (mostra il valore senza permettere la modifica)',
+    formCommitModeHint: 'Quando il valore digitato viene davvero scritto nella variabile.',
+    formCommitLive: 'In diretta',
+    formCommitBlur: 'Uscendo dal campo',
+    formCommitButton: 'Pulsante "Conferma"',
     showAvatarLabel: "Mostra l'avatar del contatto",
     nameFieldName: 'Nome',
     nameFieldPseudo: 'Pseudonimo (@...)',

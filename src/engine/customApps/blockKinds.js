@@ -152,6 +152,14 @@ export function defaultBlock(type) {
         schemaId: '',
         entityId: '*',
         fieldKey: '',
+        // 'live' (write on every keystroke) is the historical default, kept
+        // so existing saved blocks don't change behavior. 'blur' commits
+        // once the player leaves the field; 'button' defers to an explicit
+        // submit tap. `readonly` shows the current value without letting
+        // the player edit it (e.g. a form mixing an editable field with a
+        // computed one displayed the same way).
+        commitMode: 'live',
+        readonly: false,
       }
     default:
       return { type }

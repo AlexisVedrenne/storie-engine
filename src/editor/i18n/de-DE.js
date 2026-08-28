@@ -722,6 +722,11 @@ export default {
     formFieldLabel: 'Feld',
     formFieldHint:
       'Text, Zahl, Ja/Nein oder ein Kontaktverweis — andere Typen werden hier nicht angeboten.',
+    formReadonlyLabel: 'Nur lesen (zeigt den Wert, keine Eingabe möglich)',
+    formCommitModeHint: 'Wann der eingegebene Wert tatsächlich in die Variable geschrieben wird.',
+    formCommitLive: 'Live',
+    formCommitBlur: 'Beim Verlassen des Felds',
+    formCommitButton: '"Bestätigen"-Schaltfläche',
     showAvatarLabel: 'Avatar des Kontakts anzeigen',
     nameFieldName: 'Name',
     nameFieldPseudo: 'Pseudonym (@...)',

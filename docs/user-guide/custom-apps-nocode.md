@@ -163,6 +163,18 @@ field, no button or effect needed on top.
 Like [Schedule](#schedule), an entity target uses `*` for "the first/only instance" or a specific
 id to address one among several.
 
+Below the target, choose **when the typed value is actually written**:
+
+- **Live** — every keystroke writes immediately (the original, still-default behavior — fine for a
+  quick numeric jog, but a text field left mid-edit briefly holds a half-typed value).
+- **On leaving the field** — commits once the player clicks/tabs away, so partial typing never
+  touches the flag or entity field.
+- **"Submit" button** — the field shows a separate button; nothing is written until the player taps
+  it, letting them back out of an edit entirely.
+
+**Read-only** shows the current value without letting the player edit it at all — useful for mixing
+a genuinely editable field with a computed one displayed the same way.
+
 ## Variables and translation
 
 Any text field on a block can interpolate live values with `{...}` tokens — `{flag:someKey}` for a

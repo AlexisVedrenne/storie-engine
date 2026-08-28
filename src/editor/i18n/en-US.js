@@ -708,6 +708,11 @@ export default {
     formFieldLabel: 'Field',
     formFieldHint:
       "Text, number, yes/no, or a contact reference — other types aren't offered here.",
+    formReadonlyLabel: 'Read-only (shows the value, no editing)',
+    formCommitModeHint: 'When the typed value is actually written to the variable.',
+    formCommitLive: 'Live',
+    formCommitBlur: 'On leaving the field',
+    formCommitButton: '"Submit" button',
     showAvatarLabel: "Show the contact's avatar",
     nameFieldName: 'Name',
     nameFieldPseudo: 'Pseudo (@...)',

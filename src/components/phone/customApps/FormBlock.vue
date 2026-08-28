@@ -6,8 +6,9 @@
       v-if="widgetType === 'boolean'"
       type="button"
       class="switch"
-      :class="{ on: Boolean(currentValue) }"
-      @click="onChange(!currentValue)"
+      :class="{ on: Boolean(displayValue), readonly }"
+      :disabled="readonly"
+      @click="setDraft(!displayValue)"
     >
       <span class="knob" />
     </button>
@@ -15,8 +16,9 @@
     <select
       v-else-if="widgetType === 'ref:contact'"
       class="form-select"
-      :value="currentValue"
-      @change="onChange($event.target.value)"
+      :value="displayValue"
+      :disabled="readonly"
+      @change="setDraft($event.target.value)"
     >
       <option value="" disabled>—</option>
       <option v-for="c in contactOptions" :key="c.value" :value="c.value">{{ c.label }}</option>
@@ -26,9 +28,20 @@
       v-else
       class="form-input"
       :type="widgetType === 'number' ? 'number' : 'text'"
-      :value="currentValue"
-      @input="onChange($event.target.value)"
+      :value="displayValue"
+      :readonly="readonly"
+      @input="onRawInput($event.target.value)"
+      @change="commitMode === 'blur' ? setDraft($event.target.value) : null"
     />
+
+    <button
+      v-if="commitMode === 'button' && !readonly"
+      type="button"
+      class="form-submit"
+      @click="submitDraft"
+    >
+      {{ t('customApps.form.submit') }}
+    </button>
   </div>
 </template>
 
@@ -48,7 +61,8 @@
 // instance, same sentinel `{entity:...}` tokens use — no matching instance
 // means there's nowhere to write, so the input still shows but changes are
 // silently dropped, same "absent = no-op" spirit as every other block here.
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useStoryStore } from '@/engine/stores/story'
 import { useContactOptions } from '@/components/shared/useContactOptions'
 import { resolveDynamicText } from '@/engine/customApps/resolveDynamicText'
@@ -56,6 +70,18 @@ import { resolveDynamicText } from '@/engine/customApps/resolveDynamicText'
 const props = defineProps({ block: { type: Object, required: true } })
 const story = useStoryStore()
 const { contactOptions } = useContactOptions()
+const { t } = useI18n()
+
+// `commitMode` fixes the real UX bug the author found by clicking this
+// block: the ORIGINAL version wrote on every keystroke, so an in-progress
+// edit (or a moment where the player clears the field to retype) briefly
+// wrote a half-typed/empty value into the flag or entity. 'live' keeps that
+// old behavior (still right for e.g. a quick numeric jog); 'blur' commits
+// only on blur/Enter (native <input> `change`), so partial typing never
+// touches story state; 'button' defers to an explicit submit, for cases
+// where the player should be able to back out entirely before committing.
+const commitMode = computed(() => props.block.commitMode || 'live')
+const readonly = computed(() => Boolean(props.block.readonly))
 
 const label = computed(() => resolveDynamicText(props.block.label, story) || '')
 
@@ -93,6 +119,40 @@ const currentValue = computed(() => {
   }
   return story.flags[props.block.flagKey] ?? ''
 })
+
+// Only meaningful in 'button' mode — otherwise `displayValue` always mirrors
+// story state directly, so there's nothing to buffer.
+const draft = ref(currentValue.value)
+watch(currentValue, (v) => {
+  draft.value = v
+})
+
+const displayValue = computed(() =>
+  commitMode.value === 'button' ? draft.value : currentValue.value,
+)
+
+function setDraft(value) {
+  if (commitMode.value === 'button') {
+    draft.value = value
+    return
+  }
+  onChange(value)
+}
+
+// 'live' commits every keystroke (see setDraft); 'blur'/'button' buffer the
+// raw text locally and rely on the input's native `change` event or the
+// submit button to actually call onChange.
+function onRawInput(value) {
+  if (commitMode.value === 'live') {
+    setDraft(value)
+    return
+  }
+  draft.value = value
+}
+
+function submitDraft() {
+  onChange(draft.value)
+}
 
 function onChange(value) {
   if (props.block.target === 'entity') {
@@ -145,6 +205,23 @@ function onChange(value) {
   border-color: var(--app-accent);
 }
 
+.form-input:read-only,
+.form-select:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.form-submit {
+  align-self: flex-start;
+  background: var(--app-accent);
+  color: #fff;
+  border: none;
+  border-radius: var(--app-radius);
+  padding: 8px 18px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
 .switch {
   align-self: flex-start;
   width: 42px;
@@ -160,6 +237,11 @@ function onChange(value) {
 
 .switch.on {
   background: var(--app-accent);
+}
+
+.switch.readonly {
+  opacity: 0.6;
+  cursor: default;
 }
 
 .knob {

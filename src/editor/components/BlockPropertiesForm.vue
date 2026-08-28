@@ -586,6 +586,20 @@
           ]"
         />
       </template>
+      <q-toggle dense v-model="block.readonly" :label="t('blockProps.formReadonlyLabel')" />
+      <template v-if="!block.readonly">
+        <p class="tab-help">{{ t('blockProps.formCommitModeHint') }}</p>
+        <q-btn-toggle
+          dense
+          no-caps
+          v-model="block.commitMode"
+          :options="[
+            { label: t('blockProps.formCommitLive'), value: 'live' },
+            { label: t('blockProps.formCommitBlur'), value: 'blur' },
+            { label: t('blockProps.formCommitButton'), value: 'button' },
+          ]"
+        />
+      </template>
     </template>
 
     <q-expansion-item
