@@ -14,7 +14,8 @@ export default {
       'Dieses Spiel enthält Szenen oder Themen für ein erwachsenes Publikum. Du musst mindestens 18 Jahre alt sein, um fortzufahren.',
     confirmYes: 'Ja, ich bin über 18',
     confirmNo: 'Nein',
-    blocked: 'Der Zugriff auf diesen Inhalt erfordert eine Altersbestätigung. Bitte schließe die Anwendung.',
+    blocked:
+      'Der Zugriff auf diesen Inhalt erfordert eine Altersbestätigung. Bitte schließe die Anwendung.',
   },
 
   endScreen: {
@@ -243,6 +244,11 @@ export default {
       empty: 'Noch keine Unterhaltungen.',
       privateNotice:
         'Antworten kommen über Auswahlmöglichkeiten der Geschichte — hier ist keine freie Eingabe möglich.',
+    },
+    schedule: {
+      nowLabel: 'Gerade jetzt',
+      unknown: 'Unbekannter Ort',
+      empty: 'Noch keine Zeitfenster festgelegt.',
     },
   },
 }

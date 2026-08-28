@@ -2,7 +2,7 @@
 
 A technical map of the codebase for anyone picking this up cold — a contributor, a future
 maintainer, or an AI agent working on the repo. It assumes nothing about prior context beyond
-"this is a Quasar/Vue/Electron app." For the feature set from a *user's* point of view, see the
+"this is a Quasar/Vue/Electron app." For the feature set from a _user's_ point of view, see the
 [user guide](user-guide/README.md). For adding a new native app to the engine, see
 [Building a native app in code](creating-custom-apps.md).
 
@@ -33,7 +33,7 @@ Stories Engine is two things wearing one Electron window:
 Both live in the same `pnpm run dev:electron` process during development — the editor is really
 just "the engine, with an authoring UI wrapped around a live instance of it, plus a build pipeline
 that can eject a clean copy." That's the central fact this whole document explains: which source
-directories are the *shipped* engine, which are *editor-only*, and how the export step tells them
+directories are the _shipped_ engine, which are _editor-only_, and how the export step tells them
 apart.
 
 ```mermaid
@@ -69,17 +69,17 @@ flowchart LR
 
 Three top-level source areas, with one hard rule between them:
 
-| Directory | Ships in every export? | What it is |
-|---|---|---|
-| `src/engine/` | **Yes** | The runtime: Pinia stores, app/entry-type registries, events, interactions, VFX kinds, i18n instance, `assets.js`. |
-| `src/components/phone/` and `src/components/apps/` | **Yes** | The phone shell UI and every native app (Messages, Pixly, Calls, Gallery, Journal, Email, Settings). |
-| `src/components/shared/`, `src/boot/`, `src/i18n/`, `src/css/`, `src/utils/` | **Yes** | Small shared utilities, boot hooks, shipped-game chrome translations, global styles. |
-| `src/editor/` | **Never** | The authoring UI — forms, the chapter graph, the translation editor, cloud sync UI, everything under the `EditorPage.vue` tabs. |
-| `src/project/` | **Never** | Editor-only pure-JS helpers (chapter-graph layout, search, validation, serialization) used by the authoring tools, not by the runtime. |
+| Directory                                                                    | Ships in every export? | What it is                                                                                                                             |
+| ---------------------------------------------------------------------------- | ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/engine/`                                                                | **Yes**                | The runtime: Pinia stores, app/entry-type registries, events, interactions, VFX kinds, i18n instance, `assets.js`.                     |
+| `src/components/phone/` and `src/components/apps/`                           | **Yes**                | The phone shell UI and every native app (Messages, Pixly, Calls, Gallery, Journal, Email, Settings).                                   |
+| `src/components/shared/`, `src/boot/`, `src/i18n/`, `src/css/`, `src/utils/` | **Yes**                | Small shared utilities, boot hooks, shipped-game chrome translations, global styles.                                                   |
+| `src/editor/`                                                                | **Never**              | The authoring UI — forms, the chapter graph, the translation editor, cloud sync UI, everything under the `EditorPage.vue` tabs.        |
+| `src/project/`                                                               | **Never**              | Editor-only pure-JS helpers (chapter-graph layout, search, validation, serialization) used by the authoring tools, not by the runtime. |
 
 **Where this is actually enforced:** not by an ESLint rule (there isn't one) — by the copy list in
 [`src-electron/ipc/shellAssembly.js`](../src-electron/ipc/shellAssembly.js)'s `assembleShell()`.
-When building or LAN-previewing a project, that function copies, *by name*, exactly:
+When building or LAN-previewing a project, that function copies, _by name_, exactly:
 
 ```
 src/engine/  src/components/phone/  src/components/apps/  src/components/shared/
@@ -132,13 +132,15 @@ my-project/
 ```
 
 **Loading**: `src-electron/ipc/project.js`'s `loadProjectFromDisk(rootPath)` runs in Electron's
-*main* process (the renderer has no filesystem access). It dynamically `import()`s every `.js`
+_main_ process (the renderer has no filesystem access). It dynamically `import()`s every `.js`
 file — chapters (recursively, so authors can organize them into subfolders), `contacts.js`,
 `threads.js`, `game.js`, every `seed/*.js` bucket, and every `i18n/<locale>/*.js` bucket — and
 assembles one plain object:
 
 ```js
-{ rootPath, manifest, chapters, contacts, threads, gameConfig, seed, i18n, assetsRoot, customApps }
+{
+  ;(rootPath, manifest, chapters, contacts, threads, gameConfig, seed, i18n, assetsRoot, customApps)
+}
 ```
 
 It's round-tripped through `JSON.parse(JSON.stringify(...))` before crossing the IPC boundary —
@@ -191,7 +193,7 @@ This is the narrative runtime. The core loop:
   battery/network/clock), social deltas, new-follower notifications.
 - **Save/load**: `save()` writes everything except `NON_PERSISTED_KEYS` (transient UI-ish state —
   `activeChoice`, `pendingCall`, notifications, typing indicators, etc.) to
-  `window.storieGameSave`, a bridge that only exists in an *exported* game (the editor's own live
+  `window.storieGameSave`, a bridge that only exists in an _exported_ game (the editor's own live
   preview is purely in-memory). Three fixed save slots (`activeSlotId` picks which one `save()`
   writes to); `loadSlot(slotId)` restores a snapshot and re-runs `advance()` once (in case a
   chapter that had no valid outgoing edge when the save happened has one now). All state lives in
@@ -211,22 +213,22 @@ Three genuinely independent translation mechanisms exist, on purpose — conflat
 was tried informally in earlier design notes and rejected because switching one must never affect
 the other:
 
-| System | Location | Drives | Ships? |
-|---|---|---|---|
-| Shipped-game chrome | `src/i18n/<locale>/index.js` | vue-i18n instance (`src/engine/i18n/instance.js`) — boot screen, setup wizard, settings, native app labels. 5 locales: fr-FR (default), en-US, es-ES, de-DE, it-IT. | Yes |
-| Editor's own UI | `src/editor/i18n/<locale>.js` | The editor's labels/tooltips/dialogs — a **custom flat-lookup** (`editorT()`), not a second vue-i18n instance. Same 5 locales, switched independently in the editor's own settings. | Never |
-| A project's narrative content | project's own `i18n/<locale>/<bucket>.js` | `story.translateStory()`/`story.fill()` — the actual chapter text, contact bios, custom-app block text the author wrote. Any locale code the author adds. | Yes (it's project data, not engine code) |
+| System                        | Location                                  | Drives                                                                                                                                                                              | Ships?                                   |
+| ----------------------------- | ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------- |
+| Shipped-game chrome           | `src/i18n/<locale>/index.js`              | vue-i18n instance (`src/engine/i18n/instance.js`) — boot screen, setup wizard, settings, native app labels. 5 locales: fr-FR (default), en-US, es-ES, de-DE, it-IT.                 | Yes                                      |
+| Editor's own UI               | `src/editor/i18n/<locale>.js`             | The editor's labels/tooltips/dialogs — a **custom flat-lookup** (`editorT()`), not a second vue-i18n instance. Same 5 locales, switched independently in the editor's own settings. | Never                                    |
+| A project's narrative content | project's own `i18n/<locale>/<bucket>.js` | `story.translateStory()`/`story.fill()` — the actual chapter text, contact bios, custom-app block text the author wrote. Any locale code the author adds.                           | Yes (it's project data, not engine code) |
 
 **Why the editor UI isn't a second vue-i18n instance**: vue-i18n's "local scope" composer would
 work, but every single descendant component in the tree has to re-declare
 `useI18n({ useScope: 'local' })` in the right order — miss one and it silently falls back to the
-*global* (story/game) locale instead of erroring, a nasty bug across 30+ files. A flat reactive
+_global_ (story/game) locale instead of erroring, a nasty bug across 30+ files. A flat reactive
 `ref` + dot-path lookup (`src/editor/i18n/index.js`) has no such failure mode: `editorT('dialog.confirmDelete.title')`
 looks up the current editor locale's dictionary, falls back to `fr-FR` (the always-complete
 source) if the key is missing, then to the raw key string if it's missing everywhere — a visibly
 wrong string during development beats a blank.
 
-**How narrative translation actually resolves at runtime**: chapters are always *written* in
+**How narrative translation actually resolves at runtime**: chapters are always _written_ in
 French — French is the source-of-truth key, not a locale like the others. `resolveStoryText(i18nDict, locale, frText, bucket)`
 in `story.js` looks up `frText` as a key inside `project.i18n[locale][bucket]`; `bucket` is either
 the current chapter's id or `'common'` (contact bios, custom-app block text, anything not tied to
@@ -235,11 +237,11 @@ so an untranslated project is still fully playable in French. `story.fill(text)`
 player-name interpolation on top of the same resolution.
 
 **The `sharedOverrides.js` wrinkle**: some player-facing text is authored inside files that
-*ship* (`src/engine/events/triggers.js`'s trigger labels, a plug-in app's `entryType.js` label/
+_ship_ (`src/engine/events/triggers.js`'s trigger labels, a plug-in app's `entryType.js` label/
 help — see `src/components/apps/email/entryType.js`). Those files can never import
 `src/editor/i18n` directly (that's a `@/editor/*` import from a file that ships — exactly the
 build-boundary violation described above). Instead `src/editor/i18n/sharedOverrides.js` looks up
-an editor-side translation *for* that trigger/entry-type name first
+an editor-side translation _for_ that trigger/entry-type name first
 (`editorTOptionalPath(['triggers', trigger.name, 'label'])`), falling back to the original text
 authored in the shared file if there's no override. The shared file's own text never has to know
 the editor's translation layer exists.
@@ -254,7 +256,7 @@ blocking on player input, a multi-stage timeskip cinematic) that a new content t
 doesn't need to reinvent.
 
 **The plug-in mechanism** (`src/engine/apps/entryTypeRegistry.js`) lets an app folder define an
-*additional* scriptable entry type with zero edits to `story.js`, `TimelineEditor.vue`,
+_additional_ scriptable entry type with zero edits to `story.js`, `TimelineEditor.vue`,
 `extractTranslatableStrings.js`, or `appIds.js`. Any `src/components/apps/*/entryType.js` is
 auto-discovered via `import.meta.glob('/src/components/apps/*/entryType.js', { eager: true })` and
 must default-export:
@@ -276,7 +278,7 @@ must default-export:
 ```
 
 Every one of those 4 "mechanism" files has exactly **one** additive fallback reading this
-registry, layered *on top of* its existing hardcoded switch, never inside it — e.g. `story.js`'s
+registry, layered _on top of_ its existing hardcoded switch, never inside it — e.g. `story.js`'s
 `processEntry` default case: `CUSTOM_ENTRY_TYPE_BY_TYPE[entry.type]?.process(entry, { story, chapter })`.
 `src/components/apps/email/` is the reference implementation, built using only this documented
 contract to prove it works end to end — see [Building a native app in code](creating-custom-apps.md)
@@ -293,19 +295,23 @@ is enough to register a working app, no other file needs editing. A manifest wit
 
 **Custom apps** are the no-code equivalent: authored entirely inside the editor's "Apps" tab as a
 tree of visual blocks (`header`, `text`, `image`, `row`, `card`, `layout`, `badge`, `divider`,
-`button`, `tabs`, `list`, `conversations` — see `src/engine/customApps/blockKinds.js`), stored as
-plain JSON at `apps/<id>.json` in the project, and rendered by one generic interpreter,
+`button`, `tabs`, `list`, `conversations`, `schedule` — see `src/engine/customApps/blockKinds.js`),
+stored as plain JSON at `apps/<id>.json` in the project, and rendered by one generic interpreter,
 `CustomAppRenderer.vue` (the same component instance for every custom app — same "one generic
 player driven by data" precedent as `InteractionPlayer.vue` for interactions). A `list` block's
 `source` is one of `contacts`/`flagCollection`/`entity` — the last iterates instances of an
-author-defined entity schema, see [Entity schemas](#conditions-effects-flags-events) below.
+author-defined entity schema, see [Entity schemas](#conditions-effects-flags-events) below. A
+`schedule` block reads ONE entity's own `type: 'schedule'` field — an array of `{ from, to, place }`
+slots authored on the schema (`EntityFieldInput.vue`) — and renders a day timeline, highlighting
+whichever slot covers `story.resolvedClock()`'s current time (`ScheduleBlock.vue`); `entityId: '*'`
+picks the first/only instance of the schema, same sentinel the `{entity:...}` token uses.
 
 **Merged registry**: `story.mergedAppRegistry` (a getter on the `story` store) concatenates
 `APP_REGISTRY` (native, code-defined) with `project.customApps` (author-built, JSON-defined),
 normalized to the same `{ id, label, icon, color, badge, component }` shape so every consumer
 (`PhoneShell.vue`, `HomeScreen.vue`, `SetupWizard.vue`, `GameForm.vue`'s Apps panel) treats them
 identically. `story.orderedApps` applies the project's saved `game.appOrder`; `story.enabledAppIds`
-filters out anything in `game.disabledApps` (an opt-*out* list — absent means "show it," so a
+filters out anything in `game.disabledApps` (an opt-_out_ list — absent means "show it," so a
 project authored before a given app existed shows it with zero migration).
 
 Disabling an app doesn't delete content that references it — a disabled app's already-authored
@@ -317,23 +323,25 @@ so re-enabling the app later brings that content right back.
 
 **Flags** are the project's variables. Three kinds share the concept ("created/labeled once in the
 Flags panel, referenced by key everywhere") but are stored separately because `story.flags[key]`
-is assumed numeric-or-boolean *everywhere* it's read:
+is assumed numeric-or-boolean _everywhere_ it's read:
 
 - **Numeric/boolean flags** — `story.flags[key]`. Effects either accumulate a numeric delta or
-  *set* a boolean (idempotent — a boolean effect firing twice doesn't double-toggle).
+  _set_ a boolean (idempotent — a boolean effect firing twice doesn't double-toggle).
 - **Flag collections** — `story.flagCollections[key]`, a `{ itemKey: value }` map, for
   history/ledger/inventory-shaped data. Three effect ops: `add` (auto-generates a key if left
   blank — the common "growing log" case), `remove`, `increment` (numeric delta on an existing
   key — the only op that reads-before-writing).
-- **`following`** — not a flag at all, a *live* signal (`story.isFollowing(contactId)`), since it
+- **`following`** — not a flag at all, a _live_ signal (`story.isFollowing(contactId)`), since it
   can change between when a condition is authored and when it's actually evaluated.
 
 **Entity schemas** (`game.entitySchemas[]`, edited in the Données tab's Schémas sub-tab) sit one
 level above flags: a flag collection is a flat `{ itemKey: value }` map (one scalar per entry,
-assumed everywhere it's read), but some data genuinely needs several *named, typed* fields per
+assumed everywhere it's read), but some data genuinely needs several _named, typed_ fields per
 record — a character with a location and a mood, an item with a price and a quantity. A schema
 declares `{ id, label, fields: [{ key, label, type }] }` (`type` ∈ `text`/`number`/`boolean`/
-`ref:contact`/`ref:entity`); instances live in `story.entities[schemaId][entityId] = { field: value
+`schedule`/`ref:contact`/`ref:entity` — `schedule`'s value is an array of `{ from, to, place }`
+slots, not a scalar, see [The apps system](#the-apps-system)'s `schedule` block); instances live
+in `story.entities[schemaId][entityId] = { field: value
 }`, a bucket of its own (not persisted-key-excluded, so it round-trips through save/load like
 `flagCollections`). Two ways instances come to exist:
 
@@ -363,14 +371,14 @@ condition type together (`flags`, `following`, `collections`); there is delibera
 condition, no randomness, no "already seen" condition.
 
 **Events** (`game.events[]`, edited in the Events tab) are the same
-`requires`/`effects`/`then` trio, but triggered by a *player action* instead of the timeline
+`requires`/`effects`/`then` trio, but triggered by a _player action_ instead of the timeline
 reaching a specific point — `handleEngineEvent()` reuses `checkConditions`/`applyEffects`/`runThen`
 exactly as a normal timeline entry would (see `docs/roadmap-modular-apps-events.md` §5: "don't
 build a second narrative system"). Triggers are cataloged in `src/engine/events/triggers.js`
 (`app.opened`, `app.closed`, `photo.viewed`, `post.liked`, `contact.followed`, `profile.opened`,
 `conversation.opened`, `button.pressed`, `interaction.won`/`interaction.lost`) and dispatched
 through a minimal pub/sub bus (`src/engine/events/eventManager.js`) that both `story.js` and
-`phone.js` `emit()` into — deliberately *not* a Pinia store, since neither store should depend on
+`phone.js` `emit()` into — deliberately _not_ a Pinia store, since neither store should depend on
 the other just for this.
 
 **Interactions** (`game.interactions[]`, the "Interactions" tab) are authored phone-gesture
@@ -388,7 +396,7 @@ game" and `webPreview.js`'s "LAN preview" — one function, two different final 
    with `node_modules` already installed — see [Vendoring](#vendoring-why-no-internet-access-is-needed))
    into a fresh temp directory.
 2. Copy `src/engine`, `src/components/phone`, `src/components/apps`, `src/components/shared`,
-   `src/boot`, `src/i18n`, `src/css`, `src/utils` from the *editor's own current source* — **never
+   `src/boot`, `src/i18n`, `src/css`, `src/utils` from the _editor's own current source_ — **never
    a hand-maintained second copy**. Whatever the engine looks like right now is exactly what
    ships.
 3. **Overwrite** the just-copied `src/engine/assets.js` with
@@ -416,7 +424,7 @@ the two environments it runs in:
 
 Rather than branching inside `resolveAssetUrl` itself, `templates/game-shell/engine-overrides/assets.js`
 holds the shipped-game version, and step 3 above **overwrites** the fresh copy of
-`src/engine/assets.js` with it, *after* the wholesale engine copy in step 2. Every other file that
+`src/engine/assets.js` with it, _after_ the wholesale engine copy in step 2. Every other file that
 imports `resolveAssetUrl` from `@/engine/assets` gets the right behavior in both contexts with zero
 special-casing anywhere else — this is the **one file in the whole engine that legitimately
 differs** between editor and shipped game, and the copy pipeline exists specifically to make that
@@ -428,7 +436,7 @@ A packaged Stories Engine build (`.exe` on Windows, `.app` on macOS, a binary on
 user's machine that may have no pnpm, no Node.js, and no guaranteed internet access — but
 building/exporting a game still needs a real `node_modules`, a real Electron binary to package
 into, and (for Android) a JDK+SDK. `pnpm run vendor:game-shell` does all of that heavy lifting
-*once*, ahead of time, on the maintainer's machine, and the result ships as part of Stories Engine
+_once_, ahead of time, on the maintainer's machine, and the result ships as part of Stories Engine
 itself, for every target platform:
 
 - `templates/game-shell/node_modules` — a hoisted `pnpm install` of the shell's own
@@ -466,17 +474,17 @@ itself, for every target platform:
 
 ## Glossary
 
-| Term | Meaning |
-|---|---|
-| **Chapter** | A node in the story graph — an id, a title, a `timeline[]`, `next[]` outgoing edges, an optional `endScreen`. |
-| **Entry** | One item in a chapter's `timeline[]` — a message, a choice, a VFX cue, etc. Has a `type` and an optional `requires`. |
-| **Flag** | A named variable (`story.flags[key]`), numeric or boolean, read by `requires` and written by `effects`. |
-| **Flag collection** | A named `{key: value}` map (`story.flagCollections[key]`) for ledger/history-shaped data — the third flag kind. |
-| **Entity schema** | An author-defined record type (`game.entitySchemas[]`) — id/label + typed fields. Instances live in `story.entities[schemaId][entityId]`. |
-| **Requires** | A condition object (`{ flags, following, collections }`) gating an entry, an edge, a choice option, a block, etc. |
-| **Effects** | A mutation object applied when an entry/option/event fires — flags, phone widgets, social deltas. |
-| **Entry-app** | The native/custom app a timeline entry type is scoped to (`ENTRY_TYPE_APP`) — drives hiding it when that app is disabled. |
-| **Plug-in entry type** | A scriptable timeline entry type contributed by an app's `entryType.js`, without touching the core engine switch. |
-| **Custom app** | An author-built phone app made of visual blocks, stored as `apps/<id>.json`, rendered by `CustomAppRenderer`. |
-| **Build boundary** | The rule that `src/engine`/`src/components/{phone,apps,shared}` must never import `src/editor` or `src/project` — enforced by `shellAssembly.js`'s copy list, not a lint rule. |
-| **Shell** | The temp Quasar project `assembleShell()` produces — `templates/game-shell` + a fresh engine copy + the project's own data. |
+| Term                   | Meaning                                                                                                                                                                        |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Chapter**            | A node in the story graph — an id, a title, a `timeline[]`, `next[]` outgoing edges, an optional `endScreen`.                                                                  |
+| **Entry**              | One item in a chapter's `timeline[]` — a message, a choice, a VFX cue, etc. Has a `type` and an optional `requires`.                                                           |
+| **Flag**               | A named variable (`story.flags[key]`), numeric or boolean, read by `requires` and written by `effects`.                                                                        |
+| **Flag collection**    | A named `{key: value}` map (`story.flagCollections[key]`) for ledger/history-shaped data — the third flag kind.                                                                |
+| **Entity schema**      | An author-defined record type (`game.entitySchemas[]`) — id/label + typed fields. Instances live in `story.entities[schemaId][entityId]`.                                      |
+| **Requires**           | A condition object (`{ flags, following, collections }`) gating an entry, an edge, a choice option, a block, etc.                                                              |
+| **Effects**            | A mutation object applied when an entry/option/event fires — flags, phone widgets, social deltas.                                                                              |
+| **Entry-app**          | The native/custom app a timeline entry type is scoped to (`ENTRY_TYPE_APP`) — drives hiding it when that app is disabled.                                                      |
+| **Plug-in entry type** | A scriptable timeline entry type contributed by an app's `entryType.js`, without touching the core engine switch.                                                              |
+| **Custom app**         | An author-built phone app made of visual blocks, stored as `apps/<id>.json`, rendered by `CustomAppRenderer`.                                                                  |
+| **Build boundary**     | The rule that `src/engine`/`src/components/{phone,apps,shared}` must never import `src/editor` or `src/project` — enforced by `shellAssembly.js`'s copy list, not a lint rule. |
+| **Shell**              | The temp Quasar project `assembleShell()` produces — `templates/game-shell` + a fresh engine copy + the project's own data.                                                    |

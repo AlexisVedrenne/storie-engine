@@ -486,6 +486,7 @@ export default {
     typeText: 'Texto',
     typeNumber: 'Número',
     typeBoolean: 'Sí / no',
+    typeSchedule: 'Horario',
     typeRefContact: 'Referencia — contacto del proyecto',
     typeRefEntity: 'Referencia — otro esquema',
     seedTitle: 'Instancias iniciales',
@@ -496,6 +497,14 @@ export default {
     seedIdLabel: 'Id (opcional)',
     seedIdAutoHint: 'Vacío = id generado automáticamente',
     addSeedRow: 'Añadir una instancia inicial',
+  },
+
+  entityFieldInput: {
+    scheduleEmpty: 'Aún no hay franjas horarias — añade al menos una.',
+    scheduleFromPlaceholder: 'Desde (ej: 08:00)',
+    scheduleToPlaceholder: 'Hasta (ej: 12:00)',
+    schedulePlacePlaceholder: 'Lugar',
+    addScheduleSlot: 'Añadir una franja horaria',
   },
 
   stepsEditor: {
@@ -603,6 +612,7 @@ export default {
     tabs: { label: 'Pestañas' },
     list: { label: 'Lista (contactos)' },
     conversations: { label: 'Conversación' },
+    schedule: { label: 'Horario' },
   },
 
   blockProps: {
@@ -673,6 +683,13 @@ export default {
       'El contenido de abajo se repite una vez por instancia del esquema elegido (creadas/modificadas mediante un efecto de entrada de línea temporal/botón...) — usa el botón de variable para insertar {item:<nombre del campo>}.',
     conversationsHelp:
       'Un módulo de conversación real (como Mensajes/Pixly) — lista de hilos, apertura de un hilo, respuestas guiadas por elecciones. Los mensajes se envían desde la línea temporal. Los grupos provienen de la pestaña Hilos del proyecto (los mismos contactos/grupos que en DM nativo) — nada que configurar aquí para eso.',
+    scheduleHelp:
+      'Muestra el horario de una instancia de esquema — ubicación actual recalculada según el reloj del juego, más la lista de franjas horarias.',
+    scheduleFieldLabel: 'Campo (horario)',
+    scheduleFieldHint: 'Debe ser un campo de tipo "Horario" del esquema elegido.',
+    scheduleEntityIdLabel: 'Id de la instancia',
+    scheduleEntityIdHint:
+      '"*" = 1ª/única instancia — sustitúyelo por un id concreto si hace falta.',
     showAvatarLabel: 'Mostrar el avatar del contacto',
     nameFieldName: 'Nombre',
     nameFieldPseudo: 'Pseudónimo (@...)',

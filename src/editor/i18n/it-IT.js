@@ -480,6 +480,7 @@ export default {
     typeText: 'Testo',
     typeNumber: 'Numero',
     typeBoolean: 'Sì / no',
+    typeSchedule: 'Orario',
     typeRefContact: 'Riferimento — contatto del progetto',
     typeRefEntity: 'Riferimento — altro schema',
     seedTitle: 'Istanze iniziali',
@@ -490,6 +491,14 @@ export default {
     seedIdLabel: 'Id (opzionale)',
     seedIdAutoHint: 'Vuoto = id generato automaticamente',
     addSeedRow: "Aggiungi un'istanza iniziale",
+  },
+
+  entityFieldInput: {
+    scheduleEmpty: 'Nessuna fascia oraria ancora — aggiungine almeno una.',
+    scheduleFromPlaceholder: 'Da (es: 08:00)',
+    scheduleToPlaceholder: 'A (es: 12:00)',
+    schedulePlacePlaceholder: 'Luogo',
+    addScheduleSlot: 'Aggiungi una fascia oraria',
   },
 
   stepsEditor: {
@@ -597,6 +606,7 @@ export default {
     tabs: { label: 'Schede (tab)' },
     list: { label: 'Elenco (contatti)' },
     conversations: { label: 'Conversazione' },
+    schedule: { label: 'Orario' },
   },
 
   blockProps: {
@@ -668,6 +678,12 @@ export default {
       'Il contenuto qui sotto si ripete una volta per ogni istanza dello schema scelto (create/modificate tramite un elemento della timeline/effetto di un pulsante...) — usa il pulsante variabile per inserire {item:<nome del campo>}.',
     conversationsHelp:
       'Un vero modulo di conversazione (come Messaggi/Pixly) — elenco conversazioni, apertura di una conversazione, risposte guidate da scelte. I messaggi vengono inviati dalla timeline. I gruppi provengono dalla scheda Gruppi del progetto (stessi contatti/gruppi del DM nativo) — nulla da configurare qui per questo.',
+    scheduleHelp:
+      "Mostra l'orario di un'istanza di schema — posizione attuale ricalcolata in base all'orologio di gioco, più l'elenco delle fasce orarie.",
+    scheduleFieldLabel: 'Campo (orario)',
+    scheduleFieldHint: 'Deve essere un campo di tipo "Orario" dello schema scelto.',
+    scheduleEntityIdLabel: "Id dell'istanza",
+    scheduleEntityIdHint: '"*" = 1ª/unica istanza — sostituiscilo con un id preciso se serve.',
     showAvatarLabel: "Mostra l'avatar del contatto",
     nameFieldName: 'Nome',
     nameFieldPseudo: 'Pseudonimo (@...)',

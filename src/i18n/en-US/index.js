@@ -242,5 +242,10 @@ export default {
       empty: 'No conversations yet.',
       privateNotice: 'Replies come from choices in the story — no free typing here.',
     },
+    schedule: {
+      nowLabel: 'Right now',
+      unknown: 'Unknown location',
+      empty: 'No time slots set yet.',
+    },
   },
 }

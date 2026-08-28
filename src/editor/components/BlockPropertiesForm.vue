@@ -450,6 +450,36 @@
       />
     </template>
 
+    <template v-else-if="block.type === 'schedule'">
+      <p class="tab-help">{{ t('blockProps.scheduleHelp') }}</p>
+      <q-select
+        dense
+        outlined
+        :label="t('blockProps.listSchemaLabel')"
+        v-model="block.schemaId"
+        :options="schemaOptions"
+        emit-value
+        map-options
+      />
+      <q-select
+        dense
+        outlined
+        :label="t('blockProps.scheduleFieldLabel')"
+        :hint="t('blockProps.scheduleFieldHint')"
+        v-model="block.fieldKey"
+        :options="scheduleFieldOptions(block.schemaId)"
+        emit-value
+        map-options
+      />
+      <q-input
+        dense
+        outlined
+        :label="t('blockProps.scheduleEntityIdLabel')"
+        :hint="t('blockProps.scheduleEntityIdHint')"
+        v-model="block.entityId"
+      />
+    </template>
+
     <q-expansion-item
       dense
       :label="t('timelineEntryCard.displayCondition')"
@@ -569,6 +599,16 @@ const schemaOptions = computed(
       value: s.id,
     })) || [],
 )
+
+// Field picker for a `schedule` block — only fields actually typed
+// `schedule` on the chosen schema make sense here (see EntityFieldInput.vue,
+// the only place that authors an array-of-slots value in the first place).
+function scheduleFieldOptions(schemaId) {
+  const schema = story.project?.gameConfig?.entitySchemas?.find((s) => s.id === schemaId)
+  return (schema?.fields || [])
+    .filter((f) => f.type === 'schedule')
+    .map((f) => ({ label: f.label || f.key, value: f.key }))
+}
 
 // What to forward as the nested BlockBuilder's `itemScope` — plain source
 // name for contacts/flagCollection (their token sets are fixed), but

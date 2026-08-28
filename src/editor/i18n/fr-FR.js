@@ -483,6 +483,7 @@ export default {
     typeText: 'Texte',
     typeNumber: 'Nombre',
     typeBoolean: 'Oui / non',
+    typeSchedule: 'Emploi du temps',
     typeRefContact: 'Référence — contact du projet',
     typeRefEntity: 'Référence — autre schéma',
     seedTitle: 'Instances de départ',
@@ -493,6 +494,14 @@ export default {
     seedIdLabel: 'Identifiant (optionnel)',
     seedIdAutoHint: 'Vide = identifiant généré automatiquement',
     addSeedRow: 'Ajouter une instance de départ',
+  },
+
+  entityFieldInput: {
+    scheduleEmpty: 'Aucun créneau — ajoute-en au moins un.',
+    scheduleFromPlaceholder: 'De (ex: 08:00)',
+    scheduleToPlaceholder: 'À (ex: 12:00)',
+    schedulePlacePlaceholder: 'Lieu',
+    addScheduleSlot: 'Ajouter un créneau',
   },
 
   stepsEditor: {
@@ -600,6 +609,7 @@ export default {
     tabs: { label: 'Onglets' },
     list: { label: 'Liste (contacts)' },
     conversations: { label: 'Conversation' },
+    schedule: { label: 'Emploi du temps' },
   },
 
   blockProps: {
@@ -670,6 +680,12 @@ export default {
       'Le contenu ci-dessous est répété une fois par instance du schéma choisi (créées/modifiées via les effets d’une entrée timeline, d’un bouton...) — utilise le bouton variable pour insérer {item:<nom du champ>}.',
     conversationsHelp:
       'Un vrai module de conversation (comme Messages/Pixly) — liste de discussions, ouverture d’un fil, réponses par choix. Les messages sont envoyés depuis la timeline. Les groupes viennent de l’onglet Threads du projet (même contacts/groupes que les DM natifs) — rien à configurer ici pour ça.',
+    scheduleHelp:
+      'Affiche l’emploi du temps d’une instance de schéma — position actuelle recalculée selon l’heure du jeu, plus la liste des créneaux.',
+    scheduleFieldLabel: 'Champ (emploi du temps)',
+    scheduleFieldHint: 'Doit être un champ de type "Emploi du temps" du schéma choisi.',
+    scheduleEntityIdLabel: 'Identifiant de l’instance',
+    scheduleEntityIdHint: '"*" = 1ère/seule instance — remplace par un id précis si besoin.',
     showAvatarLabel: 'Afficher l’avatar du contact',
     nameFieldName: 'Nom',
     nameFieldPseudo: 'Pseudo (@...)',

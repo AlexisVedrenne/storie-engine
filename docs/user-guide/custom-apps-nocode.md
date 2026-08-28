@@ -37,6 +37,7 @@ saved as part of your project, ready to export like everything else.
 | **Tabs**          | Switches which screen of the app is currently shown.                                                                        |
 | **List**          | Repeats a block template once per item — see [Lists](#lists) below.                                                         |
 | **Conversations** | A real chat module — see [Conversations](#conversations) below.                                                             |
+| **Schedule**      | A character's routine + current location — see [Schedule](#schedule) below.                                                 |
 
 Every block can be **dragged** between containers (not just reordered in place), **duplicated**,
 and given a **condition** — a block whose condition doesn't hold is entirely absent, not just
@@ -101,6 +102,20 @@ entry" menu once your app has a `conversations` block somewhere. If you send a p
 a custom app's conversation via a `timeskip`'s landing option (see
 [Writing chapters](writing-chapters.md)), the unread badge/notification for that exact thread is
 suppressed the same way it would be for a conversation the player already has open.
+
+### Schedule
+
+The `schedule` block shows one entity's own routine — pick a schema, a field on it typed
+**Schedule**, and (if that schema has more than one instance) which one. It renders as a day
+timeline: every slot you authored (a "from" time, a "to" time, a place), with whichever one covers
+the story's _current_ in-fiction time highlighted, plus a "right now" summary line at the top.
+
+A **Schedule**-typed field is authored on the schema itself (Données tab → Schémas, same place you
+add any other field) as a list of time slots — no JSON, no free text, just from/to/place rows. This
+is what makes a tracking-style app possible: define a schema for a character with a Schedule field,
+author their day (seed instances, so it's there from the start — see
+[Entity schemas](conditions-and-flags.md#entity-schemas)), and a `schedule` block anywhere shows
+where they are right now, recalculated live as the story's clock moves.
 
 ## Variables and translation
 

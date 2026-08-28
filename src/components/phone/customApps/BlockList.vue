@@ -51,6 +51,7 @@ import ButtonBlock from './ButtonBlock.vue'
 import TabsBlock from './TabsBlock.vue'
 import ListBlock from './ListBlock.vue'
 import ConversationsBlock from './ConversationsBlock.vue'
+import ScheduleBlock from './ScheduleBlock.vue'
 
 const phone = usePhoneStore()
 const story = useStoryStore()
@@ -81,6 +82,7 @@ const BLOCK_COMPONENTS = {
   tabs: TabsBlock,
   list: ListBlock,
   conversations: ConversationsBlock,
+  schedule: ScheduleBlock,
 }
 function blockComponent(type) {
   return BLOCK_COMPONENTS[type] || null

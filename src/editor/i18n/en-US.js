@@ -467,6 +467,7 @@ export default {
     typeText: 'Text',
     typeNumber: 'Number',
     typeBoolean: 'Yes / no',
+    typeSchedule: 'Schedule',
     typeRefContact: 'Reference — project contact',
     typeRefEntity: 'Reference — another schema',
     seedTitle: 'Starting instances',
@@ -477,6 +478,14 @@ export default {
     seedIdLabel: 'Id (optional)',
     seedIdAutoHint: 'Blank = auto-generated id',
     addSeedRow: 'Add a starting instance',
+  },
+
+  entityFieldInput: {
+    scheduleEmpty: 'No time slots yet — add at least one.',
+    scheduleFromPlaceholder: 'From (e.g. 08:00)',
+    scheduleToPlaceholder: 'To (e.g. 12:00)',
+    schedulePlacePlaceholder: 'Place',
+    addScheduleSlot: 'Add a time slot',
   },
 
   stepsEditor: {
@@ -584,6 +593,7 @@ export default {
     tabs: { label: 'Tabs' },
     list: { label: 'List (contacts)' },
     conversations: { label: 'Conversation' },
+    schedule: { label: 'Schedule' },
   },
 
   blockProps: {
@@ -653,6 +663,12 @@ export default {
       'The content below repeats once per instance of the chosen schema (created/updated via a timeline entry/button effect...) — use the variable button to insert {item:<field name>}.',
     conversationsHelp:
       "A real conversation module (like Messages/Pixly) — thread list, opening a thread, choice-driven replies. Messages are sent from the timeline. Groups come from the project's Threads tab (same contacts/groups as native DM) — nothing to configure here for that.",
+    scheduleHelp:
+      "Shows a schema instance's schedule — current location recalculated from the game clock, plus the list of time slots.",
+    scheduleFieldLabel: 'Field (schedule)',
+    scheduleFieldHint: 'Must be a "Schedule"-type field on the chosen schema.',
+    scheduleEntityIdLabel: 'Instance id',
+    scheduleEntityIdHint: '"*" = 1st/only instance — replace with a specific id if needed.',
     showAvatarLabel: "Show the contact's avatar",
     nameFieldName: 'Name',
     nameFieldPseudo: 'Pseudo (@...)',

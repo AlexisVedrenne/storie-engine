@@ -477,6 +477,7 @@ export default {
     typeText: 'Text',
     typeNumber: 'Zahl',
     typeBoolean: 'Ja / Nein',
+    typeSchedule: 'Zeitplan',
     typeRefContact: 'Referenz — Projektkontakt',
     typeRefEntity: 'Referenz — anderes Schema',
     seedTitle: 'Startinstanzen',
@@ -487,6 +488,14 @@ export default {
     seedIdLabel: 'ID (optional)',
     seedIdAutoHint: 'Leer = automatisch generierte ID',
     addSeedRow: 'Startinstanz hinzufügen',
+  },
+
+  entityFieldInput: {
+    scheduleEmpty: 'Noch keine Zeitfenster — füge mindestens eines hinzu.',
+    scheduleFromPlaceholder: 'Von (z. B. 08:00)',
+    scheduleToPlaceholder: 'Bis (z. B. 12:00)',
+    schedulePlacePlaceholder: 'Ort',
+    addScheduleSlot: 'Zeitfenster hinzufügen',
   },
 
   stepsEditor: {
@@ -595,6 +604,7 @@ export default {
     tabs: { label: 'Tabs' },
     list: { label: 'Liste (Kontakte)' },
     conversations: { label: 'Unterhaltung' },
+    schedule: { label: 'Zeitplan' },
   },
 
   blockProps: {
@@ -666,6 +676,13 @@ export default {
       'Der untenstehende Inhalt wiederholt sich für jede Instanz des gewählten Schemas (erstellt/geändert über einen Timeline-Eintrag/Schaltflächeneffekt...) — nutze die Variablenschaltfläche, um {item:<Feldname>} einzufügen.',
     conversationsHelp:
       'Ein echtes Unterhaltungsmodul (wie Nachrichten/Pixly) — Thread-Liste, Öffnen eines Threads, auswahlgesteuerte Antworten. Nachrichten werden über die Timeline gesendet. Gruppen stammen aus dem Tab „Gruppen" des Projekts (dieselben Kontakte/Gruppen wie native DMs) — hierfür ist nichts weiter zu konfigurieren.',
+    scheduleHelp:
+      'Zeigt den Zeitplan einer Schema-Instanz — aktueller Ort neu berechnet nach der Spieluhr, plus die Liste der Zeitfenster.',
+    scheduleFieldLabel: 'Feld (Zeitplan)',
+    scheduleFieldHint: 'Muss ein Feld vom Typ „Zeitplan" des gewählten Schemas sein.',
+    scheduleEntityIdLabel: 'Instanz-ID',
+    scheduleEntityIdHint:
+      '„*" = 1. / einzige Instanz — bei Bedarf durch eine konkrete ID ersetzen.',
     showAvatarLabel: 'Avatar des Kontakts anzeigen',
     nameFieldName: 'Name',
     nameFieldPseudo: 'Pseudonym (@...)',

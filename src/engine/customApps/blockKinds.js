@@ -18,6 +18,7 @@ export const BLOCK_KINDS = [
   { type: 'tabs', icon: 'tab' },
   { type: 'list', icon: 'repeat' },
   { type: 'conversations', icon: 'forum' },
+  { type: 'schedule', icon: 'schedule' },
 ]
 
 export function paletteIcon(type) {
@@ -101,6 +102,17 @@ export function defaultBlock(type) {
       // `nameField` are the two display options asked for — which contact
       // info to render, not per-message content.
       return { type, showAvatar: true, nameField: 'name' }
+    case 'schedule':
+      // Shows ONE entity instance's own `type: 'schedule'` field (an array
+      // of `{ from, to, place }` slots, authored in EntitySchemaForm.vue) as
+      // a day timeline, highlighting whichever slot covers the current
+      // in-fiction time (story.resolvedClock()) — see ScheduleBlock.vue.
+      // `entityId: '*'` is the same sentinel the `{entity:...}` token uses
+      // (see resolveDynamicText.js) for "the first/only instance of that
+      // schema"; a specific id addresses one among several. Not a `list`
+      // variant — a list repeats a template once PER ITEM, this renders ONE
+      // item's own structured field.
+      return { type, schemaId: '', entityId: '*', fieldKey: '' }
     default:
       return { type }
   }

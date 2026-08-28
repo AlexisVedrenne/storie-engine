@@ -244,5 +244,10 @@ export default {
       privateNotice:
         'Le risposte arrivano tramite le scelte della storia — non si può scrivere qui.',
     },
+    schedule: {
+      nowLabel: 'In questo momento',
+      unknown: 'Posizione sconosciuta',
+      empty: 'Nessuna fascia oraria ancora impostata.',
+    },
   },
 }

@@ -1,7 +1,54 @@
 <template>
-  <div class="entity-field" :class="{ 'entity-field--wide': field.type === 'text' }">
+  <div
+    class="entity-field"
+    :class="{ 'entity-field--wide': field.type === 'text' || field.type === 'schedule' }"
+  >
+    <div v-if="field.type === 'schedule'" class="schedule-field">
+      <div class="schedule-field-label">{{ field.label || field.key }}</div>
+      <div v-if="!slots.length" class="schedule-empty">
+        {{ t('entityFieldInput.scheduleEmpty') }}
+      </div>
+      <div v-for="(slot, i) in slots" :key="i" class="schedule-slot">
+        <q-input
+          dense
+          outlined
+          :placeholder="t('entityFieldInput.scheduleFromPlaceholder')"
+          :model-value="slot.from"
+          class="schedule-time"
+          @update:model-value="(v) => updateSlot(i, { from: v })"
+        />
+        <q-input
+          dense
+          outlined
+          :placeholder="t('entityFieldInput.scheduleToPlaceholder')"
+          :model-value="slot.to"
+          class="schedule-time"
+          @update:model-value="(v) => updateSlot(i, { to: v })"
+        />
+        <q-input
+          dense
+          outlined
+          :placeholder="t('entityFieldInput.schedulePlacePlaceholder')"
+          :model-value="slot.place"
+          class="schedule-place"
+          @update:model-value="(v) => updateSlot(i, { place: v })"
+        />
+        <q-btn dense flat round icon="close" size="sm" @click="removeSlot(i)">
+          <q-tooltip>{{ t('common.delete') }}</q-tooltip>
+        </q-btn>
+      </div>
+      <q-btn
+        dense
+        flat
+        no-caps
+        icon="add"
+        :label="t('entityFieldInput.addScheduleSlot')"
+        class="btn-ghost"
+        @click="addSlot"
+      />
+    </div>
     <q-toggle
-      v-if="field.type === 'boolean'"
+      v-else-if="field.type === 'boolean'"
       dense
       :label="field.label || field.key"
       :model-value="Boolean(modelValue)"
@@ -57,15 +104,44 @@
 // land on a real grid ITEM so the parent's `grid-template-columns` respects
 // it (see .seed-fields/.entity-fields in the callers); a fragment of
 // sibling root nodes has nothing to hang that class on.
+import { computed } from 'vue'
 import { useContactOptions } from '@/components/shared/useContactOptions'
+import { useEditorI18n } from '@/editor/i18n'
 
-defineProps({
+const { t } = useEditorI18n()
+
+const props = defineProps({
   field: { type: Object, required: true },
   modelValue: { default: '' },
 })
 const emit = defineEmits(['update:modelValue'])
 
 const { contactOptions } = useContactOptions()
+
+// `type: 'schedule'` is the one field type whose value is an ARRAY, not a
+// scalar — `[{ from, to, place }]`, consumed by a `schedule` block (see
+// ScheduleBlock.vue) to show a character's routine + current location.
+// Always emits a fresh array (never mutates `slots.value` in place) so the
+// same :model-value/@update:model-value contract every other field type
+// here uses still holds — EffectsBuilder's row.fields[key] = v; sync()
+// needs an actual CHANGE event to fire, a silent in-place push() wouldn't
+// give it one.
+const slots = computed(() => (Array.isArray(props.modelValue) ? props.modelValue : []))
+function addSlot() {
+  emit('update:modelValue', [...slots.value, { from: '', to: '', place: '' }])
+}
+function updateSlot(i, patch) {
+  emit(
+    'update:modelValue',
+    slots.value.map((s, idx) => (idx === i ? { ...s, ...patch } : s)),
+  )
+}
+function removeSlot(i) {
+  emit(
+    'update:modelValue',
+    slots.value.filter((_, idx) => idx !== i),
+  )
+}
 </script>
 
 <style scoped>
@@ -79,5 +155,37 @@ const { contactOptions } = useContactOptions()
 
 .entity-field--wide {
   grid-column: 1 / -1;
+}
+
+.schedule-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.schedule-field-label {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+
+.schedule-empty {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+.schedule-slot {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.schedule-time {
+  width: 90px;
+  flex-shrink: 0;
+}
+
+.schedule-place {
+  flex: 1;
 }
 </style>
