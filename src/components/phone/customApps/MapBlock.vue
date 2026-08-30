@@ -76,7 +76,7 @@
 // far a transform visually moved things in between — `justDragged` (set
 // once total pointer movement crosses a small threshold) suppresses a POI's
 // action when the tap was actually the END of a pan gesture.
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useStoryStore } from '@/engine/stores/story'
 import { resolveAssetUrl } from '@/engine/assets'
@@ -126,6 +126,21 @@ function onImageLoad() {
   clampPan()
 }
 
+// The `zoom` ref above only reads `block.initialZoom` once, at setup — the
+// editor's live preview keeps this component mounted while the author
+// tweaks block props, so without this watch, changing "initial zoom" would
+// never visibly apply until the whole preview remounts (same class of bug
+// as the Apps-tab stale-preview fixes elsewhere in this file's history).
+watch(
+  () => block.initialZoom,
+  (v) => {
+    zoom.value = clamp((v ?? 100) / 100, MIN_ZOOM, MAX_ZOOM)
+    panX.value = 0
+    panY.value = 0
+    clampPan()
+  },
+)
+
 function clamp(value, min, max) {
   return Math.min(Math.max(value, min), max)
 }
@@ -172,6 +187,12 @@ function onWheel(e) {
 }
 
 function onPointerDown(e) {
+  // Same class of bug as BlockBuilder.vue's palette-drag fix: an interactive
+  // child (the zoom buttons) sitting inside a container that runs its own
+  // pointer-gesture machinery needs to be excluded up front, or the
+  // container's pan/pinch state machine (pointer capture, dragStart) steps
+  // on the child's own click.
+  if (e.target.closest('.map-zoom-btn')) return
   e.currentTarget.setPointerCapture(e.pointerId)
   pointers.set(e.pointerId, { x: e.clientX, y: e.clientY })
 
