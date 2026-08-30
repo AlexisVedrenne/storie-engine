@@ -21,12 +21,13 @@ export default {
     tabEvents: 'Events — reactions to player actions (outside the timeline)',
     tabInteractions: 'Interactions — phone gestures you build, callable from the timeline',
     tabApps: 'Apps — phone applications built from visual blocks',
-    tabData: 'Data — Flags, Schemas, Contacts, Groups',
+    tabData: 'Data — Flags, Schemas, Automations, Contacts, Groups',
     tabSchemas: 'Schemas — catalog of structured data (several fields per instance) usable in apps',
     tabContacts: 'Contacts',
     tabThreads: 'Groups',
     dataSubFlags: 'Flags',
     dataSubSchemas: 'Schemas',
+    dataSubAutomations: 'Automations',
     dataSubContacts: 'Contacts',
     dataSubThreads: 'Groups',
     flagsSubtabHint: 'Flags have no selection — full view on the right.',
@@ -58,6 +59,7 @@ export default {
     interactionsEmptyState: 'Select or create an interaction on the left.',
     appsEmptyState: 'Select or create an app on the left.',
     schemasEmptyState: 'Select or create a schema on the left.',
+    automationsEmptyState: 'Select or create an automation on the left.',
     contactsEmptyState: 'Select a contact on the left.',
     threadsEmptyState: 'Select a thread on the left.',
     i18nEmptyState: 'Select a language on the left.',
@@ -441,6 +443,27 @@ export default {
     stepsTitle: 'Steps',
     stepsHelp:
       "The player must complete each step in order for the interaction to be won — a step's own time limit expiring fails it.",
+  },
+
+  automationList: {
+    empty: 'No automation created yet.',
+    newAutomation: 'New automation',
+  },
+
+  automationForm: {
+    intro:
+      'An automation runs an action on its own, as soon as a condition becomes true — no click from the player needed.',
+    labelLabel: 'Name (for reference only)',
+    conditionTitle: 'Condition',
+    actionTitle: 'Action',
+    actionHelp: 'Nothing happens until the condition above is true.',
+    repeatTitle: 'Repeat',
+    repeatHelp:
+      'How many times this automation can fire during a playthrough (each time the condition becomes true again after having been false).',
+    repeatOnce: 'Once',
+    repeatCount: 'A set number of times',
+    repeatUnlimited: 'Unlimited',
+    repeatCountLabel: 'Number of times',
   },
 
   entitySchemaList: {
@@ -871,6 +894,14 @@ export default {
     noFollowingCondition: 'No follow condition.',
     playerFollows: 'the player follows them',
     addFollowingCondition: 'Add a follow condition',
+    entitiesTitle: 'Schemas',
+    entitiesHelp:
+      'Checks a field on a schema instance (see Data > Schemas) — same idea as a stat condition, on a multi-field record instead of a flag.',
+    noEntityCondition: 'No schema condition.',
+    schemaLabel: 'Schema',
+    entityIdLabel: 'Instance (id, or * for the only/first one)',
+    fieldLabel: 'Field',
+    addEntityCondition: 'Add a schema condition',
     modeBool: 'true / false',
     modeExact: 'is exactly…',
     modeMin: 'at least…',
@@ -1355,6 +1386,10 @@ export default {
     'button.pressed': {
       label: 'Button pressed (custom app)',
       fields: { app: { label: 'Application' }, buttonId: { label: 'Button (id)' } },
+    },
+    'automation.fired': {
+      label: 'Automation fired',
+      fields: { automationId: { label: 'Automation' } },
     },
     'interaction.won': {
       label: 'Interaction won',

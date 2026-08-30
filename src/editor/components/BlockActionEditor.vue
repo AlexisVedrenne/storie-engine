@@ -7,20 +7,7 @@
     map-options
     :label="t('blockProps.actionTypeLabel')"
     :model-value="action.type"
-    :options="[
-      { label: t('blockProps.actionNone'), value: 'none' },
-      { label: t('blockProps.actionEffect'), value: 'effect' },
-      { label: t('blockProps.actionNavigateScreen'), value: 'navigateScreen' },
-      { label: t('blockProps.actionEvent'), value: 'event' },
-      { label: t('blockProps.actionToast'), value: 'toast' },
-      { label: t('blockProps.actionOpenSheet'), value: 'openSheet' },
-      { label: t('blockProps.actionCloseSheet'), value: 'closeSheet' },
-      { label: t('blockProps.actionOpenApp'), value: 'openApp' },
-      { label: t('blockProps.actionRequestInput'), value: 'requestInput' },
-      { label: t('blockProps.actionTriggerEntry'), value: 'triggerEntry' },
-      { label: t('blockProps.actionWait'), value: 'wait' },
-      { label: t('blockProps.actionSequence'), value: 'sequence' },
-    ]"
+    :options="actionOptions"
     @update:model-value="setActionType"
   />
   <template v-if="action.type === 'effect'">
@@ -223,6 +210,11 @@ const props = defineProps({
   // Shown when no action is set — the caller's own "what does this do by
   // default" copy (a button vs. a lookup result reads differently).
   helpText: { type: String, default: '' },
+  // Kinds to hide from the dropdown — for a caller with no app-screen
+  // context to inject() from (an automation, evaluated from inside the
+  // Pinia store itself, not a mounted block component). Everything else
+  // here mounts inside CustomAppRenderer, so this defaults to empty.
+  excludeKinds: { type: Array, default: () => [] },
 })
 
 // Read-only — every real caller already guarantees `target[actionKey]`
@@ -233,6 +225,23 @@ const props = defineProps({
 // against a value that's momentarily absent, it's never written back
 // (a computed with a side effect trips vue/no-side-effects-in-computed-properties).
 const action = computed(() => props.target[props.actionKey] || { type: 'none' })
+
+const actionOptions = computed(() =>
+  [
+    { label: t('blockProps.actionNone'), value: 'none' },
+    { label: t('blockProps.actionEffect'), value: 'effect' },
+    { label: t('blockProps.actionNavigateScreen'), value: 'navigateScreen' },
+    { label: t('blockProps.actionEvent'), value: 'event' },
+    { label: t('blockProps.actionToast'), value: 'toast' },
+    { label: t('blockProps.actionOpenSheet'), value: 'openSheet' },
+    { label: t('blockProps.actionCloseSheet'), value: 'closeSheet' },
+    { label: t('blockProps.actionOpenApp'), value: 'openApp' },
+    { label: t('blockProps.actionRequestInput'), value: 'requestInput' },
+    { label: t('blockProps.actionTriggerEntry'), value: 'triggerEntry' },
+    { label: t('blockProps.actionWait'), value: 'wait' },
+    { label: t('blockProps.actionSequence'), value: 'sequence' },
+  ].filter((opt) => !props.excludeKinds.includes(opt.value)),
+)
 
 // Switching kind replaces the action object wholesale (not just its
 // `type`) — keeps stale fields from a previous kind (e.g. `effects` while

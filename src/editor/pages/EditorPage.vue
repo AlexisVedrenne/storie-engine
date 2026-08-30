@@ -466,12 +466,17 @@
                 >
                   <q-tab name="flags" :label="t('editorPage.dataSubFlags')" />
                   <q-tab name="schemas" :label="t('editorPage.dataSubSchemas')" />
+                  <q-tab name="automations" :label="t('editorPage.dataSubAutomations')" />
                   <q-tab name="contacts" :label="t('editorPage.dataSubContacts')" />
                   <q-tab name="threads" :label="t('editorPage.dataSubThreads')" />
                 </q-tabs>
                 <q-separator />
                 <div class="data-subpanel">
                   <EntitySchemaList v-if="dataSubTab === 'schemas'" v-model="selectedSchemaIndex" />
+                  <AutomationList
+                    v-else-if="dataSubTab === 'automations'"
+                    v-model="selectedAutomationIndex"
+                  />
                   <ContactList
                     v-else-if="dataSubTab === 'contacts'"
                     v-model="selectedContactIndex"
@@ -548,6 +553,13 @@
                       <div v-else class="empty-state">
                         <q-icon name="dataset" size="40px" />
                         {{ t('editorPage.schemasEmptyState') }}
+                      </div>
+                    </template>
+                    <template v-else-if="dataSubTab === 'automations'">
+                      <AutomationForm v-if="selectedAutomationDef" :def="selectedAutomationDef" />
+                      <div v-else class="empty-state">
+                        <q-icon name="bolt" size="40px" />
+                        {{ t('editorPage.automationsEmptyState') }}
                       </div>
                     </template>
                     <template v-else-if="dataSubTab === 'contacts'">
@@ -710,6 +722,8 @@ import VariableInspectorPanel from '@/editor/components/VariableInspectorPanel.v
 import { generateTestData } from '@/editor/utils/generateTestData'
 import EntitySchemaList from '@/editor/components/EntitySchemaList.vue'
 import EntitySchemaForm from '@/editor/components/EntitySchemaForm.vue'
+import AutomationList from '@/editor/components/AutomationList.vue'
+import AutomationForm from '@/editor/components/AutomationForm.vue'
 import AssetsPanel from '@/editor/components/AssetsPanel.vue'
 import AssetTree from '@/editor/components/AssetTree.vue'
 import LocaleList from '@/editor/components/LocaleList.vue'
@@ -846,11 +860,15 @@ const selectedSchemaIndex = ref(0)
 const selectedSchemaDef = computed(
   () => story.project?.gameConfig?.entitySchemas?.[selectedSchemaIndex.value] || null,
 )
-// The 'Données' tab groups 4 catalogs that used to each have their own
+const selectedAutomationIndex = ref(0)
+const selectedAutomationDef = computed(
+  () => story.project?.gameConfig?.automations?.[selectedAutomationIndex.value] || null,
+)
+// The 'Données' tab groups 5 catalogs that used to each have their own
 // top-level tab (Flags was a dialog, not even a tab) — one topbar slot
-// instead of four, with this picking which of the four shows. 'flags' has
+// instead of five, with this picking which of the five shows. 'flags' has
 // no per-item selection (FlagsPanel lists everything at once), so it's the
-// only one of the four with nothing analogous to selectedContactIndex.
+// only one with nothing analogous to selectedContactIndex.
 const dataSubTab = ref('flags')
 // Selected folder path within assets/ ('' = root) — same lift-state-up
 // pattern as the selection refs above, shared between AssetTree (left pane)
@@ -874,7 +892,7 @@ function currentDescriptor() {
     case 'data':
       if (dataSubTab.value === 'contacts') return { kind: 'contacts' }
       if (dataSubTab.value === 'threads') return { kind: 'threads' }
-      // 'flags' and 'schemas' both live in gameConfig, same file as
+      // 'flags'/'schemas'/'automations' all live in gameConfig, same file as
       // events/interactions below.
       return { kind: 'game' }
     case 'game':
@@ -975,6 +993,10 @@ function navigateToResource(descriptor, hint) {
         viewMode.value = 'data'
         dataSubTab.value = 'schemas'
         if (hint.schemaIndex != null) selectedSchemaIndex.value = hint.schemaIndex
+      } else if (hint?.viewMode === 'automations') {
+        viewMode.value = 'data'
+        dataSubTab.value = 'automations'
+        if (hint.automationIndex != null) selectedAutomationIndex.value = hint.automationIndex
       } else if (hint?.viewMode === 'flags') {
         viewMode.value = 'data'
         dataSubTab.value = 'flags'
@@ -1025,6 +1047,9 @@ function currentNavHint() {
   }
   if (viewMode.value === 'data' && dataSubTab.value === 'schemas') {
     return { viewMode: 'schemas', schemaIndex: selectedSchemaIndex.value }
+  }
+  if (viewMode.value === 'data' && dataSubTab.value === 'automations') {
+    return { viewMode: 'automations', automationIndex: selectedAutomationIndex.value }
   }
   if (viewMode.value === 'data' && dataSubTab.value === 'flags') {
     return { viewMode: 'flags' }
@@ -1222,7 +1247,7 @@ async function save() {
       viewMode.value === 'game' ||
       viewMode.value === 'events' ||
       viewMode.value === 'interactions' ||
-      (viewMode.value === 'data' && ['flags', 'schemas'].includes(dataSubTab.value))
+      (viewMode.value === 'data' && ['flags', 'schemas', 'automations'].includes(dataSubTab.value))
     ) {
       await window.storieAPI.saveGame({
         rootPath: story.project.rootPath,

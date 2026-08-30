@@ -21,13 +21,14 @@ export default {
     tabInteractions:
       'Interacciones — gestos del teléfono que creas tú, invocables desde la línea temporal',
     tabApps: 'Aplicaciones — apps del teléfono creadas con bloques visuales',
-    tabData: 'Datos — Indicadores, Esquemas, Contactos, Grupos',
+    tabData: 'Datos — Indicadores, Esquemas, Automatizaciones, Contactos, Grupos',
     tabSchemas:
       'Esquemas — catálogo de datos estructurados (varios campos por instancia) usables en las apps',
     tabContacts: 'Contactos',
     tabThreads: 'Grupos',
     dataSubFlags: 'Indicadores',
     dataSubSchemas: 'Esquemas',
+    dataSubAutomations: 'Automatizaciones',
     dataSubContacts: 'Contactos',
     dataSubThreads: 'Grupos',
     flagsSubtabHint: 'Los indicadores no tienen selección — vista completa a la derecha.',
@@ -60,6 +61,7 @@ export default {
     interactionsEmptyState: 'Selecciona o crea una interacción a la izquierda.',
     appsEmptyState: 'Selecciona o crea una aplicación a la izquierda.',
     schemasEmptyState: 'Selecciona o crea un esquema a la izquierda.',
+    automationsEmptyState: 'Selecciona o crea una automatización a la izquierda.',
     contactsEmptyState: 'Selecciona un contacto a la izquierda.',
     threadsEmptyState: 'Selecciona un hilo a la izquierda.',
     i18nEmptyState: 'Selecciona un idioma a la izquierda.',
@@ -460,6 +462,27 @@ export default {
     stepsTitle: 'Pasos',
     stepsHelp:
       'El jugador debe completar cada paso en orden para ganar la interacción — que el límite de tiempo de un paso expire lo hace fallar.',
+  },
+
+  automationList: {
+    empty: 'Ninguna automatización creada.',
+    newAutomation: 'Nueva automatización',
+  },
+
+  automationForm: {
+    intro:
+      'Una automatización ejecuta una acción por sí sola, en cuanto una condición se vuelve verdadera — sin que el jugador toque nada.',
+    labelLabel: 'Nombre (solo referencia)',
+    conditionTitle: 'Condición',
+    actionTitle: 'Acción',
+    actionHelp: 'No pasa nada hasta que la condición de arriba sea verdadera.',
+    repeatTitle: 'Repetición',
+    repeatHelp:
+      'Cuántas veces puede dispararse esta automatización durante la partida (cada vez que la condición vuelve a ser verdadera tras haber sido falsa).',
+    repeatOnce: 'Una vez',
+    repeatCount: 'Un número de veces',
+    repeatUnlimited: 'Ilimitado',
+    repeatCountLabel: 'Número de veces',
   },
 
   entitySchemaList: {
@@ -894,6 +917,14 @@ export default {
     noFollowingCondition: 'Sin condición de seguimiento.',
     playerFollows: 'el jugador le sigue',
     addFollowingCondition: 'Añadir una condición de seguimiento',
+    entitiesTitle: 'Esquemas',
+    entitiesHelp:
+      'Comprueba un campo de una instancia de esquema (ver Datos > Esquemas) — misma idea que una condición de indicador, sobre un registro con varios campos en vez de un indicador.',
+    noEntityCondition: 'Ninguna condición de esquema.',
+    schemaLabel: 'Esquema',
+    entityIdLabel: 'Instancia (id, o * para la única/primera)',
+    fieldLabel: 'Campo',
+    addEntityCondition: 'Añadir una condición de esquema',
     modeBool: 'verdadero / falso',
     modeExact: 'es exactamente…',
     modeMin: 'al menos…',
@@ -1385,6 +1416,10 @@ export default {
     'button.pressed': {
       label: 'Botón pulsado (aplicación personalizada)',
       fields: { app: { label: 'Aplicación' }, buttonId: { label: 'Botón (id)' } },
+    },
+    'automation.fired': {
+      label: 'Automatización disparada',
+      fields: { automationId: { label: 'Automatización' } },
     },
     'interaction.won': {
       label: 'Interacción ganada',

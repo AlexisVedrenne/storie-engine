@@ -5,9 +5,17 @@
       <FieldHelp :text="t('eventForm.introHelp')" />
     </p>
 
-    <q-input dense outlined ref="titleInputRef" :label="t('eventForm.titleLabel')" v-model="event.title">
+    <q-input
+      dense
+      outlined
+      ref="titleInputRef"
+      :label="t('eventForm.titleLabel')"
+      v-model="event.title"
+    >
       <template #append>
-        <EmojiPickerBtn @pick="(e) => (event.title = insertEmojiAtCaret(titleInputRef, event.title, e))" />
+        <EmojiPickerBtn
+          @pick="(e) => (event.title = insertEmojiAtCaret(titleInputRef, event.title, e))"
+        />
       </template>
     </q-input>
 
@@ -58,7 +66,9 @@
           </template>
           <template #no-option>
             <q-item>
-              <q-item-section class="text-grey">{{ t('eventForm.typeFuturePhoto') }}</q-item-section>
+              <q-item-section class="text-grey">{{
+                t('eventForm.typeFuturePhoto')
+              }}</q-item-section>
             </q-item>
           </template>
         </q-select>
@@ -144,12 +154,18 @@
       </q-tab-panel>
 
       <q-tab-panel name="effects" class="event-panel">
-        <EffectsBuilder :model-value="event.effects" @update:model-value="(v) => (event.effects = v)" />
+        <EffectsBuilder
+          :model-value="event.effects"
+          @update:model-value="(v) => (event.effects = v)"
+        />
       </q-tab-panel>
 
       <q-tab-panel name="requires" class="event-panel">
         <p class="tab-help">{{ t('eventForm.tabRequiresHelp') }}</p>
-        <RequiresBuilder :model-value="event.requires" @update:model-value="(v) => (event.requires = v)" />
+        <RequiresBuilder
+          :model-value="event.requires"
+          @update:model-value="(v) => (event.requires = v)"
+        />
       </q-tab-panel>
     </q-tab-panels>
   </div>
@@ -186,12 +202,16 @@ const titleInputRef = ref(null)
 // computed, not a plain const — triggerLabel() re-evaluates when the
 // editor's own language switches, same reason every other *_OPTIONS list
 // converted during the i18n pass is a computed now.
-const TRIGGER_OPTIONS = computed(() => TRIGGERS.map((def) => ({ label: triggerLabel(def), value: def.name })))
+const TRIGGER_OPTIONS = computed(() =>
+  TRIGGERS.map((def) => ({ label: triggerLabel(def), value: def.name })),
+)
 const activeTab = ref('then')
 
 const matchFields = computed(() => triggerDef(props.event.trigger)?.matchFields || [])
 
-const appOptions = computed(() => APP_REGISTRY.map((app) => ({ label: storyT(app.labelKey), value: app.id })))
+const appOptions = computed(() =>
+  APP_REGISTRY.map((app) => ({ label: storyT(app.labelKey), value: app.id })),
+)
 // Separate from appOptions/APP_REGISTRY on purpose — button.pressed can
 // only ever fire from a custom app (native apps have no block-based
 // buttons), a per-project dynamic set, not the 5 fixed ids APP_REGISTRY
@@ -200,7 +220,16 @@ const customAppOptions = computed(() =>
   (story.project?.customApps || []).map((app) => ({ label: app.label || app.id, value: app.id })),
 )
 const interactionOptions = computed(() =>
-  (story.project?.gameConfig?.interactions || []).map((def) => ({ label: def.name || def.id, value: def.id })),
+  (story.project?.gameConfig?.interactions || []).map((def) => ({
+    label: def.name || def.id,
+    value: def.id,
+  })),
+)
+const automationOptions = computed(() =>
+  (story.project?.gameConfig?.automations || []).map((a) => ({
+    label: a.label || a.id,
+    value: a.id,
+  })),
 )
 // Recomputed from the whole project on every access rather than cached —
 // cheap (a handful of chapters/photos) and always reflects the latest
@@ -230,7 +259,9 @@ function filterPhotoOptions(val, update) {
       return
     }
     const needle = val.toLowerCase()
-    filteredPhotoOptions.value = photoOptions.value.filter((o) => o.label.toLowerCase().includes(needle))
+    filteredPhotoOptions.value = photoOptions.value.filter((o) =>
+      o.label.toLowerCase().includes(needle),
+    )
   })
 }
 const filteredPostOptions = ref(postOptions.value)
@@ -241,7 +272,9 @@ function filterPostOptions(val, update) {
       return
     }
     const needle = val.toLowerCase()
-    filteredPostOptions.value = postOptions.value.filter((o) => o.label.toLowerCase().includes(needle))
+    filteredPostOptions.value = postOptions.value.filter((o) =>
+      o.label.toLowerCase().includes(needle),
+    )
   })
 }
 
@@ -250,6 +283,7 @@ function optionsFor(field) {
   if (field.optionsFrom === 'customApps') return customAppOptions.value
   if (field.optionsFrom === 'contacts') return contactOptions.value
   if (field.optionsFrom === 'interactions') return interactionOptions.value
+  if (field.optionsFrom === 'automations') return automationOptions.value
   return null
 }
 

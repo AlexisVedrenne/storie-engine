@@ -20,13 +20,14 @@ export default {
     tabEvents: 'Ereignisse — Reaktionen auf Spieleraktionen (außerhalb der Timeline)',
     tabInteractions: 'Interaktionen — selbst erstellte Handy-Gesten, aus der Timeline aufrufbar',
     tabApps: 'Apps — Handy-Anwendungen aus visuellen Blöcken',
-    tabData: 'Daten — Flags, Schemas, Kontakte, Gruppen',
+    tabData: 'Daten — Flags, Schemas, Automatisierungen, Kontakte, Gruppen',
     tabSchemas:
       'Schemas — Katalog strukturierter Daten (mehrere Felder pro Instanz), nutzbar in Apps',
     tabContacts: 'Kontakte',
     tabThreads: 'Gruppen',
     dataSubFlags: 'Flags',
     dataSubSchemas: 'Schemas',
+    dataSubAutomations: 'Automatisierungen',
     dataSubContacts: 'Kontakte',
     dataSubThreads: 'Gruppen',
     flagsSubtabHint: 'Flags haben keine Auswahl — vollständige Ansicht rechts.',
@@ -59,6 +60,7 @@ export default {
     interactionsEmptyState: 'Wähle links eine Interaktion aus oder erstelle eine.',
     appsEmptyState: 'Wähle links eine App aus oder erstelle eine.',
     schemasEmptyState: 'Wähle links ein Schema aus oder erstelle eines.',
+    automationsEmptyState: 'Wähle links eine Automatisierung aus oder erstelle eine.',
     contactsEmptyState: 'Wähle links einen Kontakt aus.',
     threadsEmptyState: 'Wähle links einen Thread aus.',
     i18nEmptyState: 'Wähle links eine Sprache aus.',
@@ -451,6 +453,27 @@ export default {
     stepsTitle: 'Schritte',
     stepsHelp:
       'Der Spieler muss jeden Schritt der Reihe nach abschließen, damit die Interaktion gewonnen wird — läuft das Zeitlimit eines Schritts ab, schlägt er fehl.',
+  },
+
+  automationList: {
+    empty: 'Noch keine Automatisierung erstellt.',
+    newAutomation: 'Neue Automatisierung',
+  },
+
+  automationForm: {
+    intro:
+      'Eine Automatisierung führt von selbst eine Aktion aus, sobald eine Bedingung wahr wird — ohne dass der Spieler etwas anklickt.',
+    labelLabel: 'Name (nur zur Orientierung)',
+    conditionTitle: 'Bedingung',
+    actionTitle: 'Aktion',
+    actionHelp: 'Nichts passiert, solange die Bedingung oben nicht wahr ist.',
+    repeatTitle: 'Wiederholung',
+    repeatHelp:
+      'Wie oft diese Automatisierung während des Durchspielens auslösen darf (jedes Mal, wenn die Bedingung erneut wahr wird, nachdem sie falsch war).',
+    repeatOnce: 'Einmal',
+    repeatCount: 'Eine feste Anzahl',
+    repeatUnlimited: 'Unbegrenzt',
+    repeatCountLabel: 'Anzahl',
   },
 
   entitySchemaList: {
@@ -888,6 +911,14 @@ export default {
     noFollowingCondition: 'Keine Folge-Bedingung.',
     playerFollows: 'der Spieler folgt ihr/ihm',
     addFollowingCondition: 'Folge-Bedingung hinzufügen',
+    entitiesTitle: 'Schemas',
+    entitiesHelp:
+      'Prüft ein Feld einer Schema-Instanz (siehe Daten > Schemas) — gleiches Prinzip wie eine Flag-Bedingung, nur auf einem Datensatz mit mehreren Feldern statt einem Flag.',
+    noEntityCondition: 'Keine Schema-Bedingung.',
+    schemaLabel: 'Schema',
+    entityIdLabel: 'Instanz (ID, oder * für die einzige/erste)',
+    fieldLabel: 'Feld',
+    addEntityCondition: 'Schema-Bedingung hinzufügen',
     modeBool: 'wahr / falsch',
     modeExact: 'ist genau…',
     modeMin: 'mindestens…',
@@ -1382,6 +1413,10 @@ export default {
     'button.pressed': {
       label: 'Schaltfläche gedrückt (eigene App)',
       fields: { app: { label: 'Anwendung' }, buttonId: { label: 'Schaltfläche (ID)' } },
+    },
+    'automation.fired': {
+      label: 'Automatisierung ausgelöst',
+      fields: { automationId: { label: 'Automatisierung' } },
     },
     'interaction.won': {
       label: 'Interaktion gewonnen',

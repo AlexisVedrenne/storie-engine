@@ -1,8 +1,9 @@
 # Conditions, flags, and reactions
 
 This is what makes a story actually branch: remembering what the player has done (flags), gating
-content on it (conditions), reacting to what they do outside the main timeline (events), and
-letting them physically interact with the phone (interactions).
+content on it (conditions), reacting to what they do outside the main timeline (events), reacting
+to a condition on its own with no player action at all (automations), and letting them physically
+interact with the phone (interactions).
 
 ## Flags
 
@@ -10,10 +11,10 @@ A **flag** is a named variable your story remembers across the whole playthrough
 declare flags anywhere up front — you just start using a name (like `trustLevel` or
 `metErwan`) in a condition or an effect, and the editor picks it up. There are three kinds:
 
-- **Boolean flags** — on/off. An effect *sets* a boolean flag (true or false) rather than
+- **Boolean flags** — on/off. An effect _sets_ a boolean flag (true or false) rather than
   accumulating it, so triggering the same effect twice never causes unexpected drift.
 - **Numeric flags** — a number, typically used as a counter (trust, suspicion, points). Effects
-  *add to* a numeric flag's current value rather than replacing it, so several small choices can
+  _add to_ a numeric flag's current value rather than replacing it, so several small choices can
   build toward a threshold.
 - **Flag collections** — a growing key→value bucket, for things shaped like a history, a ledger,
   or an inventory rather than a single number. You can add an item (with an auto-generated key if
@@ -38,7 +39,7 @@ work.
 ## Entity schemas
 
 Flags and flag collections cover a single value, or a flat key→value bucket. Some data genuinely
-needs *several named fields per record* — a character with a location and a mood, an item with a
+needs _several named fields per record_ — a character with a location and a mood, an item with a
 price and a quantity. That's what an **entity schema** is for, authored in the **Données** tab's
 Schémas sub-tab:
 
@@ -67,6 +68,9 @@ a custom-app block, an event — it's the same builder, with the same rules:
 - **Flag collection checks**: the collection's size (exactly/at least/at most/between) and/or
   whether a specific key is present — both can be checked on the same condition, not an
   either/or choice.
+- **Schema field checks**: a specific field of an entity schema instance (exactly/at least/at
+  most/between, or true/false) — same rules as a flag check, just reading a schema instance's
+  field instead. See [Entity schemas](#entity-schemas).
 - Every condition inside one "requires" is combined with **AND** — all of them must hold.
 - There's deliberately no date/time condition, no randomness, and no "has the player seen this
   before" condition built in — flags cover all of those if you need them (e.g. set a boolean flag
@@ -77,7 +81,7 @@ type a new name to create one on the spot.
 
 ## Effects
 
-The other half of the same builder — what actually *changes* when an entry/option/event fires:
+The other half of the same builder — what actually _changes_ when an entry/option/event fires:
 
 - **Flags** — add/subtract a number, or set a boolean.
 - **Flag collections** — add, remove, or increment an item.
@@ -88,7 +92,7 @@ The other half of the same builder — what actually *changes* when an entry/opt
   release it back to real time). All purely decorative on their own — for bringing the home screen
   to life — but fully author-controllable.
 - **Social deltas** — bump a contact's follower/following count.
-- **New followers** — have one or more contacts start following the *player's* own account
+- **New followers** — have one or more contacts start following the _player's_ own account
   (notification + sound included). There's no "unfollow" effect for the author — only the player
   can unfollow someone themselves.
 
@@ -106,6 +110,7 @@ choice option) to one of these **triggers** instead of to a timeline position:
 - **Profile opened**
 - **Conversation opened**
 - **Button pressed** (from a custom app's own button — see [Custom apps](custom-apps-nocode.md))
+- **Automation fired** (see [Automations](#automations) below)
 
 You can combine several match filters on one event (all ANDed together) and give it a title just
 to keep the Events list readable as it grows.
@@ -117,9 +122,30 @@ both be "waiting" at once without clobbering each other, but it's best to keep e
 non-blocking content (a text, a post, an effect) rather than another choice/call, which is the
 best-supported case today.
 
+## Automations
+
+Events react to something the _player_ does. An **automation** (Données tab, Automatisations
+sub-tab) reacts to a condition becoming true on its own — nobody has to open an app or press a
+button. Each one is a condition (the exact same builder as everywhere else — flags, collections,
+following, schema fields) plus an action:
+
+- The action is the same fixed catalog a button offers — apply an effect, show a message, open
+  another app, chain several steps, wait, or run a whole scene. (The screen-navigation actions
+  that only make sense from inside a specific app — switch screen, open/close a sheet, ask for
+  input — aren't offered here, since an automation isn't tied to any one app screen.)
+- **Repeat**: once for the whole playthrough, a set number of times, or unlimited. Either way, it
+  only fires again after the condition has gone false and then become true again — it won't fire
+  over and over while the condition just sits there true.
+- Every automation that fires also shows up in the Events tab as an **"Automation fired"** trigger
+  — useful if you want several different reactions to the same automation without repeating its
+  condition.
+
+A simple example: a numeric flag `dette` (debt) that a "count" automation checks with
+`dette > 100` — the first three times it crosses that line, it fires a warning toast.
+
 ## Interactions
 
-For moments where you want the player to physically *do* something with the phone rather than just
+For moments where you want the player to physically _do_ something with the phone rather than just
 read and choose — plug in a cable, wipe dust off the screen, enter a code — the **Interactions**
 tab lets you compose one out of a small, fixed vocabulary of gestures:
 

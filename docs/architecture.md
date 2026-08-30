@@ -186,11 +186,12 @@ This is the narrative runtime. The core loop:
 - **`runThen(list, i, chapter, resume)`** — plays a `then: []` array (attached to a choice option,
   an event, an interaction's win/lose branch) one entry at a time with the same pacing/blocking
   rules as `advance()`, recursively threading `resume` through arbitrarily deep nesting.
-- **`checkConditions(requires)`** — evaluates `{ flags, following, collections }`, all ANDed
-  together. See [Conditions, effects, flags, events](#conditions-effects-flags-events).
-- **`applyEffects(effects)`** — the mutation side: flags (accumulate for numbers, set for
-  booleans), flag-collection ops (add/remove/increment), phone-widget state (weather/steps/
-  battery/network/clock), social deltas, new-follower notifications.
+- **`checkConditions(requires)`** — evaluates `{ flags, following, collections, entities }`, all
+  ANDed together. See [Conditions, effects, flags, events](#conditions-effects-flags-events).
+- **`applyEffects(effects, depth = 0)`** — the mutation side: flags (accumulate for numbers, set
+  for booleans), flag-collection ops (add/remove/increment), phone-widget state (weather/steps/
+  battery/network/clock), social deltas, new-follower notifications. Ends every call with
+  `this.evaluateAutomations(depth)` — see [Automations](#automations) below.
 - **Save/load**: `save()` writes everything except `NON_PERSISTED_KEYS` (transient UI-ish state —
   `activeChoice`, `pendingCall`, notifications, typing indicators, etc.) to
   `window.storieGameSave`, a bridge that only exists in an _exported_ game (the editor's own live
@@ -630,8 +631,16 @@ wallet, a settings object) with no id to type.
 (`RequiresBuilder.vue`/`EffectsBuilder.vue`) are reused everywhere a condition/effect can be
 authored: chapter-graph arrows, timeline entries, choice options, custom-app block visibility,
 custom-app buttons, events, interaction win/lose branches. `checkConditions()` ANDs every present
-condition type together (`flags`, `following`, `collections`); there is deliberately no date/time
-condition, no randomness, no "already seen" condition.
+condition type together (`flags`, `following`, `collections`, `entities`); there is deliberately no
+date/time condition, no randomness, no "already seen" condition.
+
+`requires.entities` — `[{ schemaId, entityId, field, value }]`, same comparison shape/semantics as
+`flags` (boolean, exact, `{min}`, `{max}`, `{min,max}`), just reading
+`story.entities[schemaId][entityId][field]` instead of a flag; `entityId: '*'` reads the first/only
+instance, same sentinel the `{entity:*:...}` text token already uses. Unlike a flag (always
+defaulted to `0` when absent), a missing instance/field reads as `undefined` — the min/max checks
+use `!(value >= min)`/`!(value <= max)` rather than `value < min` so that FAILS the condition
+instead of silently passing.
 
 **Events** (`game.events[]`, edited in the Events tab) are the same
 `requires`/`effects`/`then` trio, but triggered by a _player action_ instead of the timeline
@@ -643,6 +652,46 @@ build a second narrative system"). Triggers are cataloged in `src/engine/events/
 through a minimal pub/sub bus (`src/engine/events/eventManager.js`) that both `story.js` and
 `phone.js` `emit()` into — deliberately _not_ a Pinia store, since neither store should depend on
 the other just for this.
+
+### Automations
+
+`game.automations[]` (Données tab, `AutomationList.vue`/`AutomationForm.vue`) is a small reactive
+rule engine layered ON TOP of `checkConditions`/`applyEffects`, not a second one: each rule is
+`{ id, label, requires, action, repeatMode: 'once'|'count'|'unlimited', repeatCount }`. Unlike an
+Event (triggered by a discrete player action), an automation has no trigger at all — it's
+re-evaluated by `story.js`'s `evaluateAutomations(depth)`, called at the end of EVERY
+`applyEffects()` (the single choke point every flag/entity/collection mutation already flows
+through), rather than on a timer: exact, no polling, and nothing can react to a mutation that
+hasn't happened yet.
+
+Firing is **edge-triggered** — only on the condition's false→true transition, never on every
+re-check while it stays true. `story.automationState[id] = { active, firedCount }` (real save data,
+not in `NON_PERSISTED_KEYS`) remembers which side of the condition a rule was on last time, so
+"already fired" survives a reload. `repeatMode` caps how many transitions actually run the action
+(`'once'` = 1, `'count'` = the author's own number, `'unlimited'` = no cap) — a rule can keep
+flipping past its cap without erroring, it just stops firing.
+
+The action is the SAME fixed catalog a button offers (`BlockActionEditor.vue`), minus the
+app-screen-local kinds (`navigateScreen`/`openSheet`/`closeSheet`/`requestInput`) that need a
+`CustomAppRenderer` ancestor to `inject()` from — an automation isn't rendered inside any specific
+app screen, so those are hidden from its action-type dropdown via `BlockActionEditor`'s new
+`excludeKinds` prop. Running it needs no component context at all: `story.runAutomationAction()`
+duplicates the small `effect`/`toast`/`openApp`/`sequence`/`wait`/`triggerEntry` subset directly
+against `this`/`usePhoneStore()`, rather than reusing `useBlockAction.js`'s `inject()`-based
+composable (which requires a mounted component instance) — three similar branches kept apart on
+purpose here, not a missed reuse.
+
+A firing rule also emits the fixed `automation.fired` engine trigger (`{ automationId }` payload,
+see `triggers.js`) — same precedent as a button emitting `button.pressed` — so the Events tab can
+react to it too, chaining into the exact same condition/effects/then machinery instead of a second
+concept.
+
+`depth` caps the "automation's own effect re-satisfies its own condition" cascade at 5 generations,
+incremented once per `evaluateAutomations` → `runAutomationAction` step (one generation = one full
+evaluate-then-fire pass). Known gap, documented in `evaluateAutomations`'s own comment: a
+`triggerEntry` action's nested timeline can reach `applyEffects()` through existing call sites that
+don't thread `depth` through (they never needed to before this), re-entering at depth 0 — same
+"accepted partial guard" spirit as `runThen`'s own `timelineResume`-clobber limitation.
 
 **Interactions** (`game.interactions[]`, the "Interactions" tab) are authored phone-gesture
 sequences — `tap`/`hold`/`swipe`/`drag`/`wipe`/`code`/`wait`, a small bounded vocabulary

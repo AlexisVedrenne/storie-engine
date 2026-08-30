@@ -21,13 +21,14 @@ export default {
     tabInteractions:
       'Interazioni — gesti sullo smartphone creati da te, richiamabili dalla timeline',
     tabApps: 'App — applicazioni per smartphone create con blocchi visivi',
-    tabData: 'Dati — Flag, Schemi, Contatti, Gruppi',
+    tabData: 'Dati — Flag, Schemi, Automazioni, Contatti, Gruppi',
     tabSchemas:
       'Schemi — catalogo di dati strutturati (più campi per istanza) utilizzabili nelle app',
     tabContacts: 'Contatti',
     tabThreads: 'Gruppi',
     dataSubFlags: 'Flag',
     dataSubSchemas: 'Schemi',
+    dataSubAutomations: 'Automazioni',
     dataSubContacts: 'Contatti',
     dataSubThreads: 'Gruppi',
     flagsSubtabHint: 'I flag non hanno selezione — vista completa a destra.',
@@ -59,6 +60,7 @@ export default {
     interactionsEmptyState: "Seleziona o crea un'interazione a sinistra.",
     appsEmptyState: "Seleziona o crea un'app a sinistra.",
     schemasEmptyState: 'Seleziona o crea uno schema a sinistra.',
+    automationsEmptyState: "Seleziona o crea un'automazione a sinistra.",
     contactsEmptyState: 'Seleziona un contatto a sinistra.',
     threadsEmptyState: 'Seleziona un gruppo a sinistra.',
     i18nEmptyState: 'Seleziona una lingua a sinistra.',
@@ -454,6 +456,27 @@ export default {
     stepsTitle: 'Passaggi',
     stepsHelp:
       "Il giocatore deve completare ogni passaggio in ordine perché l'interazione sia vinta — lo scadere del limite di tempo di un passaggio lo fa fallire.",
+  },
+
+  automationList: {
+    empty: 'Nessuna automazione creata.',
+    newAutomation: 'Nuova automazione',
+  },
+
+  automationForm: {
+    intro:
+      'Un’automazione esegue un’azione da sola, non appena una condizione diventa vera — senza che il giocatore clicchi nulla.',
+    labelLabel: 'Nome (solo di riferimento)',
+    conditionTitle: 'Condizione',
+    actionTitle: 'Azione',
+    actionHelp: 'Non succede nulla finché la condizione sopra non è vera.',
+    repeatTitle: 'Ripetizione',
+    repeatHelp:
+      'Quante volte questa automazione può attivarsi durante la partita (ogni volta che la condizione torna vera dopo essere stata falsa).',
+    repeatOnce: 'Una volta',
+    repeatCount: 'Un numero di volte',
+    repeatUnlimited: 'Illimitato',
+    repeatCountLabel: 'Numero di volte',
   },
 
   entitySchemaList: {
@@ -888,6 +911,14 @@ export default {
     noFollowingCondition: 'Nessuna condizione di follow.',
     playerFollows: 'il giocatore lo segue',
     addFollowingCondition: 'Aggiungi una condizione di follow',
+    entitiesTitle: 'Schemi',
+    entitiesHelp:
+      'Controlla un campo di un’istanza di schema (vedi Dati > Schemi) — stessa logica di una condizione sui flag, ma su un record con più campi invece di un flag.',
+    noEntityCondition: 'Nessuna condizione di schema.',
+    schemaLabel: 'Schema',
+    entityIdLabel: 'Istanza (id, oppure * per l’unica/la prima)',
+    fieldLabel: 'Campo',
+    addEntityCondition: 'Aggiungi una condizione di schema',
     modeBool: 'vero / falso',
     modeExact: 'è esattamente…',
     modeMin: 'almeno…',
@@ -1381,6 +1412,10 @@ export default {
     'button.pressed': {
       label: 'Pulsante premuto (app personalizzata)',
       fields: { app: { label: 'Applicazione' }, buttonId: { label: 'Pulsante (id)' } },
+    },
+    'automation.fired': {
+      label: 'Automazione attivata',
+      fields: { automationId: { label: 'Automazione' } },
     },
     'interaction.won': {
       label: 'Interazione vinta',

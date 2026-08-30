@@ -16,6 +16,7 @@ import { orderedAppList } from '@/engine/apps/appOrder'
 import { APP_REGISTRY } from '@/engine/apps/registry'
 import { CUSTOM_ENTRY_TYPE_BY_TYPE } from '@/engine/apps/entryTypeRegistry'
 import { findScreenWithBlockType } from '@/engine/customApps/appHasModule'
+import { resolveDynamicText } from '@/engine/customApps/resolveDynamicText'
 import CustomAppRenderer from '@/components/phone/customApps/CustomAppRenderer.vue'
 import {
   on as onEngineEvent,
@@ -153,6 +154,14 @@ function defaultState() {
     // `effects.entities` below and entityItems getter (used by `list`
     // blocks with `source: 'entity'`, see ListBlock.vue).
     entities: {},
+    // Per-automation runtime bookkeeping (see game.automations, edited in
+    // the Données tab's Automatisations sub-tab, and evaluateAutomations()
+    // below) — `{ [automationId]: { active: bool, firedCount: number } }`.
+    // `active` remembers which side of the rule's condition it was on last
+    // check, so firing is edge-triggered (false->true only), never repeated
+    // every re-check while it stays true. Real save data, not transient —
+    // "already fired" (for a 'once' rule) must survive a reload.
+    automationState: {},
     currentChapterId: null,
     timelineIndex: 0,
     // Ordered, deduped chapter ids reached this playthrough (first-visit
@@ -898,6 +907,36 @@ export const useStoryStore = defineStore('story', {
           return true
         })
         if (!collectionsOk) return false
+      }
+
+      // { entities: [{ schemaId, entityId, field, value: bool|exact|{min}|
+      // {max}|{min,max} }] } — same comparison shape/semantics as `flags`
+      // above, just reading a schema instance's field instead of a flag.
+      // `entityId: '*'` reads the first/only instance of that schema, same
+      // sentinel the `{entity:*:...}` text token already uses (see
+      // resolveDynamicText.js) — most conditions only care about "the"
+      // instance, not a specific id. Uses `!(value >= min)` rather than
+      // `value < min` so a missing instance/field (value undefined) FAILS
+      // the condition instead of silently passing — unlike a flag, an
+      // entity field has no numeric-default fallback, since it can just as
+      // well be text or boolean.
+      if (requires.entities) {
+        const entitiesOk = requires.entities.every((cond) => {
+          const instance =
+            cond.entityId === '*'
+              ? this.entityItems(cond.schemaId)[0]
+              : this.entities?.[cond.schemaId]?.[cond.entityId]
+          const value = instance?.[cond.field]
+          const expected = cond.value
+          if (typeof expected === 'boolean') return Boolean(value) === expected
+          if (expected && typeof expected === 'object') {
+            if ('min' in expected && !(value >= expected.min)) return false
+            if ('max' in expected && !(value <= expected.max)) return false
+            return true
+          }
+          return value === expected
+        })
+        if (!entitiesOk) return false
       }
 
       return true
@@ -2037,7 +2076,12 @@ export const useStoryStore = defineStore('story', {
       if (key) this.flags[key] = value
     },
 
-    applyEffects(effects) {
+    // `depth` is internal — only evaluateAutomations() below ever passes it,
+    // to cap how many "automation fires -> its own effect -> re-evaluate
+    // automations" generations can chain from ONE original call. Every
+    // ordinary caller (a choice, a timeline entry, a button) calls this with
+    // one argument, same as always.
+    applyEffects(effects, depth = 0) {
       if (!effects) return
 
       if (effects.flags) {
@@ -2191,6 +2235,97 @@ export const useStoryStore = defineStore('story', {
             text: i18n.global.t('social.newFollowerNotification'),
           })
         }
+      }
+
+      this.evaluateAutomations(depth)
+    },
+
+    // --- automations (Données tab) -------------------------------------------
+    // A small reactive rule engine layered ON TOP of checkConditions/
+    // applyEffects, not a second narrative system: each rule in
+    // `game.automations[]` is `{ id, label, requires, action, repeatMode:
+    // 'once'|'count'|'unlimited', repeatCount }`. Re-evaluated after EVERY
+    // applyEffects() call (the single choke point every flag/entity/
+    // collection mutation already flows through) rather than on a timer —
+    // exact, no polling, and nothing can react to a mutation that hasn't
+    // happened yet.
+    //
+    // Fires on the FALSE -> TRUE transition only (edge-triggered), never on
+    // every re-check while already true — `automationState[id].active`
+    // (real save data, not in NON_PERSISTED_KEYS) remembers which side of
+    // the condition each rule was on last time, so "already fired" survives
+    // a reload. `repeatMode` caps how many transitions are allowed to
+    // actually run the action ('once' = 1, 'count' = the author's own
+    // number, 'unlimited' = no cap) — a rule can keep flipping true/false
+    // past its cap without erroring, it just stops firing.
+    //
+    // A firing rule ALSO emits the fixed `automation.fired` engine trigger
+    // (see triggers.js), same precedent as a button emitting `button.pressed`
+    // — lets the Events tab react to it too, chaining into the exact same
+    // condition/effects/then machinery, no separate concept needed.
+    //
+    // `depth` caps the "automation's own effect re-satisfies its own
+    // condition" cascade — capped at the TOP (evaluateAutomations), not
+    // inside runAutomationAction, so one generation = one full
+    // evaluate-then-fire pass. Known gap: a `triggerEntry` action's nested
+    // timeline can itself call applyEffects() through unrelated existing
+    // call sites that don't thread `depth` through (they never needed to
+    // before this) — those re-enter at depth 0, so a badly authored
+    // automation reachable ONLY through that path isn't caught. Accepted for
+    // now, same spirit as this engine's other documented partial guards
+    // (see runThen's own timelineResume-clobber comment).
+    evaluateAutomations(depth = 0) {
+      if (depth > 5) return
+      const automations = this.project?.gameConfig?.automations || []
+      for (const rule of automations) {
+        if (!rule.id) continue
+        const nowTrue = this.checkConditions(rule.requires)
+        const state = (this.automationState[rule.id] ||= { active: false, firedCount: 0 })
+        if (!nowTrue) {
+          state.active = false
+          continue
+        }
+        if (state.active) continue // already true last check — not a new transition
+        state.active = true
+        const cap =
+          rule.repeatMode === 'once'
+            ? 1
+            : rule.repeatMode === 'count'
+              ? (rule.repeatCount ?? 1)
+              : Infinity
+        if (state.firedCount >= cap) continue
+        state.firedCount++
+        emitEngineEvent('automation.fired', { automationId: rule.id })
+        this.runAutomationAction(rule.action, depth + 1)
+      }
+    },
+
+    // Subset of the button-action catalog (see useBlockAction.js) that needs
+    // no `inject()`-supplied context — an automation isn't rendered inside
+    // any specific app screen, so `navigateScreen`/`openSheet`/`closeSheet`/
+    // `requestInput` (which all need a CustomAppRenderer ancestor to inject
+    // from) aren't offered in its action editor (BlockActionEditor's
+    // `excludeKinds`) and are silently ignored here if a saved rule somehow
+    // still has one. Everything else — modify values, show a toast, open an
+    // app, chain steps, wait, run a scene — is the exact same behavior as a
+    // button tap, just fired by a condition instead of a click.
+    async runAutomationAction(action, depth = 0) {
+      if (!action || action.type === 'none') return
+      if (action.requires && !this.checkConditions(action.requires)) return
+      const phone = usePhoneStore()
+      if (action.type === 'effect') this.applyEffects(action.effects, depth)
+      else if (action.type === 'toast') {
+        this.triggerActionToast(resolveDynamicText(action.toastText, this))
+      } else if (action.type === 'openApp') {
+        phone.openApp(action.appId, { screenId: action.screenId || null })
+      } else if (action.type === 'sequence') {
+        for (const step of action.steps || []) await this.runAutomationAction(step, depth)
+      } else if (action.type === 'wait') {
+        await new Promise((resolve) => setTimeout(resolve, action.ms || 0))
+      } else if (action.type === 'triggerEntry') {
+        await new Promise((resolve) => {
+          this.runThen(action.then || [], 0, this.currentChapter, resolve)
+        })
       }
     },
 
