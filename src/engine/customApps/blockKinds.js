@@ -231,7 +231,10 @@ export function defaultBlock(type) {
       // view. `action` is the SAME fixed catalog a button/lookup-result
       // offers (BlockActionEditor.vue/useBlockAction.js) — a tap on a POI
       // can apply an effect, open a sheet, trigger a scene, etc.
-      return { type, src: '', height: 280, pois: [] }
+      // `initialZoom` (%, 100 = the image's natural size) sets the starting
+      // zoom level; the player can then zoom in/out at runtime (+/- buttons,
+      // wheel, pinch — see MapBlock.vue), clamped 50-300%.
+      return { type, src: '', height: 280, pois: [], initialZoom: 100 }
     default:
       return { type }
   }

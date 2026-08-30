@@ -683,6 +683,17 @@
         :model-value="block.height ?? 280"
         @update:model-value="(v) => (block.height = v === null || v === '' ? 280 : Number(v))"
       />
+      <q-input
+        dense
+        outlined
+        type="number"
+        :label="t('blockProps.mapInitialZoomLabel')"
+        suffix="%"
+        min="50"
+        max="300"
+        :model-value="block.initialZoom ?? 100"
+        @update:model-value="(v) => (block.initialZoom = v === null || v === '' ? 100 : Number(v))"
+      />
 
       <div v-for="(poi, i) in ensurePois()" :key="i" class="lookup-result-row">
         <div class="lookup-result-header">

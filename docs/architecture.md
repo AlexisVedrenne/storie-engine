@@ -549,6 +549,17 @@ movement crosses a small threshold) suppresses a POI's action when the tap was a
 a pan gesture. Each POI's `action` is the SAME fixed catalog a button/lookup-result offers —
 authored via `BlockActionEditor.vue`, run via `useBlockAction.js`, zero new machinery.
 
+**Zoom** (added right after, user request while testing): the SAME `translate(pan) scale(zoom)`
+transform on `.map-canvas` now also scales, so POIs stay correctly placed at any zoom level for
+free (same reasoning as pan). Three input paths converge on one `zoomAt(newZoom, viewportPoint)`
+helper that re-derives `pan` so the given viewport point stays visually fixed under the zoom
+change: the +/- buttons (anchor = viewport center), mouse wheel (anchor = cursor), and two-finger
+pinch (anchor = the pinch midpoint, recomputed every `pointermove` — tracked via a `Map` of active
+pointer ids, since native Pointer Events give one event stream per finger, not a built-in gesture).
+Zoom is clamped 50–300% (`MIN_ZOOM`/`MAX_ZOOM` in `MapBlock.vue`); `block.initialZoom` (%, default
+100, author-configurable) sets the starting level — absent on maps saved before this feature, same
+zero-migration precedent as every other optional block field here.
+
 **Merged registry**: `story.mergedAppRegistry` (a getter on the `story` store) concatenates
 `APP_REGISTRY` (native, code-defined) with `project.customApps` (author-built, JSON-defined),
 normalized to the same `{ id, label, icon, color, badge, component }` shape so every consumer

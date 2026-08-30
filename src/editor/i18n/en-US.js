@@ -800,6 +800,7 @@ export default {
       "A fake map — an image you upload, with points of interest placed on it. Shown at its real size: the player drags to pan if it's bigger than the screen.",
     mapImageLabel: 'Map image',
     mapHeightLabel: 'Visible area height',
+    mapInitialZoomLabel: 'Initial zoom',
     mapPoiN: 'Point {n}',
     mapPoiLabelLabel: 'Place name',
     mapPoiXLabel: 'X position',

@@ -816,6 +816,7 @@ export default {
       'Eine gefälschte Karte — ein von dir hochgeladenes Bild mit platzierten Orten. Wird in Originalgröße gezeigt: Der Spieler zieht, um sich zu bewegen, wenn sie größer als der Bildschirm ist.',
     mapImageLabel: 'Kartenbild',
     mapHeightLabel: 'Höhe des sichtbaren Bereichs',
+    mapInitialZoomLabel: 'Anfangszoom',
     mapPoiN: 'Punkt {n}',
     mapPoiLabelLabel: 'Ortsname',
     mapPoiXLabel: 'X-Position',

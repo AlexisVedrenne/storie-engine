@@ -816,6 +816,7 @@ export default {
       'Una mappa finta — un’immagine che carichi, con punti di interesse posizionati sopra. Mostrata a grandezza reale: il giocatore trascina per spostarsi se è più grande dello schermo.',
     mapImageLabel: 'Immagine della mappa',
     mapHeightLabel: 'Altezza dell’area visibile',
+    mapInitialZoomLabel: 'Zoom iniziale',
     mapPoiN: 'Punto {n}',
     mapPoiLabelLabel: 'Nome del luogo',
     mapPoiXLabel: 'Posizione X',

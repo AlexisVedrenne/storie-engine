@@ -819,6 +819,7 @@ export default {
       'Une fausse carte — une image que tu uploades, avec des points d’intérêt posés dessus. Affichée à sa taille réelle : le joueur glisse pour se déplacer si elle dépasse l’écran.',
     mapImageLabel: 'Image de la carte',
     mapHeightLabel: 'Hauteur de la zone visible',
+    mapInitialZoomLabel: 'Zoom initial',
     mapPoiN: 'Point {n}',
     mapPoiLabelLabel: 'Nom du lieu',
     mapPoiXLabel: 'Position X',

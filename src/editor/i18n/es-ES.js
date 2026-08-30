@@ -822,6 +822,7 @@ export default {
       'Un mapa falso — una imagen que subes, con puntos de interés colocados encima. Se muestra a tamaño real: el jugador arrastra para desplazarse si es más grande que la pantalla.',
     mapImageLabel: 'Imagen del mapa',
     mapHeightLabel: 'Altura del área visible',
+    mapInitialZoomLabel: 'Zoom inicial',
     mapPoiN: 'Punto {n}',
     mapPoiLabelLabel: 'Nombre del lugar',
     mapPoiXLabel: 'Posición X',
