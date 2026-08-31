@@ -262,6 +262,7 @@ export default {
     },
     map: {
       empty: 'Nessuna mappa impostata.',
+      pickHint: 'Tocca la mappa per posizionare il punto.',
     },
   },
 }

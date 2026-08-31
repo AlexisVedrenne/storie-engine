@@ -3,13 +3,16 @@
     ref="viewportRef"
     class="map-viewport"
     :style="{ height: `${block.height || 280}px` }"
-    :class="{ dragging }"
+    :class="{ dragging, picking: phone.mapPoiPicker }"
     @pointerdown="onPointerDown"
     @pointermove="onPointerMove"
     @pointerup="onPointerUp"
     @pointercancel="onPointerUp"
     @wheel="onWheel"
   >
+    <div v-if="phone.mapPoiPicker" class="map-pick-hint">
+      {{ t('customApps.map.pickHint') }}
+    </div>
     <div
       class="map-canvas"
       :style="{ transform: `translate(${panX}px, ${panY}px) scale(${zoom})` }"
@@ -27,14 +30,35 @@
         :key="i"
         type="button"
         class="map-poi"
-        :class="{ clickable: hasAction(poi) }"
-        :style="{ left: `${poi.x}%`, top: `${poi.y}%`, background: poi.color || undefined }"
+        :class="{ clickable: hasAction(poi), 'map-poi-card': poi.content?.length }"
+        :style="{
+          left: `${poiPosition(poi).x}%`,
+          top: `${poiPosition(poi).y}%`,
+          background: poi.content?.length ? undefined : poi.color || undefined,
+        }"
         @click="onPoiClick(poi)"
       >
-        <q-icon v-if="poi.icon" :name="poi.icon" size="16px" />
-        <span v-if="poi.label" class="map-poi-label">{{
-          resolveDynamicText(poi.label, story)
-        }}</span>
+        <template v-if="poi.content?.length">
+          <BlockList :blocks="poi.content" />
+        </template>
+        <template v-else>
+          <img
+            v-if="poi.image"
+            :src="resolveAssetUrl(poi.image)"
+            class="map-poi-image"
+            :style="{ width: `${poi.size || 16}px`, height: `${poi.size || 16}px` }"
+          />
+          <q-icon v-else-if="poi.icon" :name="poi.icon" :size="`${poi.size || 16}px`" />
+          <span
+            v-if="poi.label"
+            class="map-poi-label"
+            :style="{
+              fontSize: poi.labelSize ? `${poi.labelSize}px` : undefined,
+              color: poi.labelColor || undefined,
+            }"
+            >{{ resolveDynamicText(poi.label, story) }}</span
+          >
+        </template>
       </button>
     </div>
     <div v-if="!block.src" class="map-empty">{{ t('customApps.map.empty') }}</div>
@@ -79,18 +103,48 @@
 import { ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useStoryStore } from '@/engine/stores/story'
+import { usePhoneStore } from '@/engine/stores/phone'
 import { resolveAssetUrl } from '@/engine/assets'
 import { resolveDynamicText } from '@/engine/customApps/resolveDynamicText'
 import { useBlockAction } from '@/engine/customApps/useBlockAction'
+// Circular with BlockList.vue (it dispatches to MapBlock for the `map`
+// type, MapBlock renders a POI's own `content` blocks back through it) —
+// same tolerated pattern as CardBlock.vue/LayoutBlock.vue.
+import BlockList from './BlockList.vue'
 
 const props = defineProps({ block: { type: Object, required: true } })
 const block = props.block
 const story = useStoryStore()
+const phone = usePhoneStore()
 const { t } = useI18n()
 const { runAction } = useBlockAction()
 
 function hasAction(poi) {
   return Boolean(poi.action && poi.action.type !== 'none')
+}
+
+// A POI's position is either the authored static x/y (default), or — when
+// `poi.link` is set — read live from one entity instance's own two number
+// fields (e.g. a character's `posX`/`posY`, kept in sync by an automation
+// reacting to their `schedule` field's current place). Falls back to the
+// static x/y (then dead-center) whenever the link is incomplete or the
+// instance/field doesn't exist yet, so an author mid-setup never sees the
+// pin vanish or jump to (0,0).
+function poiPosition(poi) {
+  const link = poi.link
+  if (!link?.schemaId || !link?.xField || !link?.yField) {
+    return { x: poi.x ?? 50, y: poi.y ?? 50 }
+  }
+  const entityId = link.entityId || '*'
+  const bucket = story.entities?.[link.schemaId] || {}
+  const instance =
+    entityId === '*' ? Object.values(bucket)[0] : bucket[entityId]
+  const x = instance?.[link.xField]
+  const y = instance?.[link.yField]
+  return {
+    x: typeof x === 'number' ? x : (poi.x ?? 50),
+    y: typeof y === 'number' ? y : (poi.y ?? 50),
+  }
 }
 
 const MIN_ZOOM = 0.2
@@ -156,10 +210,25 @@ function clampPan() {
   panY.value = clamp(panY.value, minY, 0)
 }
 
+// Converts a real page/pointer coordinate into this viewport's OWN local
+// pixel space — the same space panX/panY/zoom/imgSize already live in.
+// These aren't always the same unit: the whole phone UI renders inside a
+// fixed-design-width canvas that PhoneShell.vue scales as a block to fit
+// whatever panel size the preview actually has (see its own `canvasScale`)
+// — so `getBoundingClientRect()` (the viewport's REAL on-screen box, in
+// page pixels, post-scale) can differ from `clientWidth`/`clientHeight`
+// (its LAYOUT size, which — like all CSS layout — is computed pre-transform
+// and therefore stays in the map's own design-pixel space regardless of how
+// small/large the preview is currently rendered on screen). Comparing the
+// two gives the ambient scale factor with no dependency on PhoneShell's own
+// internals; dividing it back out is what makes a click land under the
+// actual cursor instead of drifting further off the more zoomed-out the
+// preview panel happens to be.
 function viewportPoint(clientX, clientY) {
   const vp = viewportRef.value
-  const rect = vp ? vp.getBoundingClientRect() : { left: 0, top: 0 }
-  return { x: clientX - rect.left, y: clientY - rect.top }
+  const rect = vp ? vp.getBoundingClientRect() : { left: 0, top: 0, width: 1 }
+  const scale = vp && rect.width ? vp.clientWidth / rect.width : 1
+  return { x: (clientX - rect.left) * scale, y: (clientY - rect.top) * scale }
 }
 
 function zoomAt(newZoom, point) {
@@ -242,8 +311,20 @@ function onPointerUp(e) {
   }
 
   dragging.value = false
-  justDragged = dragDistance > 6
+  const wasDrag = dragDistance > 6
+  justDragged = wasDrag
   dragStart = null
+
+  // "Click the map instead of typing x/y" — done from the SAME pointerup
+  // pan/zoom already trusts, not a native `click` listener: a `click` event
+  // races against `setPointerCapture()` (called on pointerdown above for
+  // every non-zoom-button press, to drive panning) in ways that turned out
+  // unreliable in practice. `document.elementFromPoint` (real hit-testing at
+  // the release coordinates) replaces `e.target` for the poi/zoom-button
+  // exclusion check for the same reason — under an active pointer capture,
+  // a pointer event's own `target` is retargeted to the capturing element,
+  // so it can no longer tell what was actually under the finger/cursor.
+  if (phone.mapPoiPicker && !wasDrag) placePoiAt(e.clientX, e.clientY)
 }
 function onPoiClick(poi) {
   if (justDragged) {
@@ -251,6 +332,23 @@ function onPoiClick(poi) {
     return
   }
   runAction(poi.action)
+}
+
+// BlockPropertiesForm.vue arms `phone.mapPoiPicker` with the exact poi being
+// positioned; see onPointerUp above for why this reads coordinates directly
+// instead of a click event. Inverts the SAME translate(pan) scale(zoom)
+// transform the canvas itself uses, so it lands correctly at any pan/zoom
+// level.
+function placePoiAt(clientX, clientY) {
+  const hit = document.elementFromPoint(clientX, clientY)
+  if (hit?.closest('.map-poi') || hit?.closest('.map-zoom-btn')) return
+  if (!imgSize.value.w || !imgSize.value.h) return
+  const vp = viewportPoint(clientX, clientY)
+  const canvasX = (vp.x - panX.value) / zoom.value
+  const canvasY = (vp.y - panY.value) / zoom.value
+  phone.mapPoiPicker.x = clamp(Math.round((canvasX / imgSize.value.w) * 1000) / 10, 0, 100)
+  phone.mapPoiPicker.y = clamp(Math.round((canvasY / imgSize.value.h) * 1000) / 10, 0, 100)
+  phone.mapPoiPicker = null
 }
 </script>
 
@@ -267,6 +365,26 @@ function onPoiClick(poi) {
 
 .map-viewport.dragging {
   cursor: grabbing;
+}
+
+.map-viewport.picking {
+  cursor: crosshair;
+}
+
+.map-pick-hint {
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+  background: rgba(0, 0, 0, 0.75);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 999px;
+  pointer-events: none;
+  white-space: nowrap;
 }
 
 .map-canvas {
@@ -313,6 +431,30 @@ function onPoiClick(poi) {
 
 .map-poi.clickable {
   cursor: pointer;
+}
+
+.map-poi-image {
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+/* Compact mini-card mode (poi.content set) — bounded size so pins with
+   authored blocks (avatar+text+badge...) still read as pins on a map, not
+   full app screens. Overrides the pill look above rather than a separate
+   component: same block, same click/drag handling, just a different shell. */
+.map-poi.map-poi-card {
+  display: block;
+  width: max-content;
+  max-width: 130px;
+  padding: 6px;
+  border-radius: var(--app-radius, 10px);
+  background: var(--app-surface, #fff);
+  color: var(--app-text, inherit);
+  font-size: 11px;
+  font-weight: 400;
+  white-space: normal;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .map-zoom-controls {

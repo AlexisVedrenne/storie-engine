@@ -260,6 +260,7 @@ export default {
     },
     map: {
       empty: 'No map set.',
+      pickHint: 'Click the map to place the point.',
     },
   },
 }

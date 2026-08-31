@@ -234,6 +234,14 @@ export function defaultBlock(type) {
       // `initialZoom` (%, 100 = the image's natural size) sets the starting
       // zoom level; the player can then zoom in/out at runtime (+/- buttons,
       // wheel, pinch — see MapBlock.vue), clamped 50-300%.
+      // A POI can optionally carry `link: {schemaId, entityId, xField,
+      // yField}` — when set, x/y are read live from that ONE entity
+      // instance's own number fields instead of the static x/y (see
+      // MapBlock.vue's poiPosition()), so an automation writing those fields
+      // (e.g. reacting to a `schedule` field's current place) moves the pin
+      // with zero extra plumbing. A POI can also optionally carry `content`
+      // (a `blocks[]` subtree, same shape as card/overlay) rendered as a
+      // small bounded card instead of the default icon+label pill.
       return { type, src: '', height: 280, pois: [], initialZoom: 100 }
     default:
       return { type }

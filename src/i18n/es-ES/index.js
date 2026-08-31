@@ -263,6 +263,7 @@ export default {
     },
     map: {
       empty: 'Ningún mapa definido.',
+      pickHint: 'Toca el mapa para colocar el punto.',
     },
   },
 }

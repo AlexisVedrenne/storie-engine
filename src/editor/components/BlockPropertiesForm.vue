@@ -721,6 +721,31 @@
             dense
             outlined
             type="number"
+            :label="t('blockProps.mapPoiLabelSizeLabel')"
+            suffix="px"
+            :model-value="poi.labelSize ?? 12"
+            @update:model-value="(v) => (poi.labelSize = v === null || v === '' ? 12 : Number(v))"
+            class="grow"
+          />
+          <ColorField
+            v-model="poi.labelColor"
+            :label="t('blockProps.mapPoiLabelColorLabel')"
+            default-value="#ffffff"
+            clearable
+          />
+        </div>
+        <q-toggle
+          dense
+          :label="t('blockProps.mapPoiDynamicPositionLabel')"
+          :model-value="Boolean(poi.link)"
+          @update:model-value="(v) => togglePoiLink(poi, v)"
+        />
+        <p class="tab-help">{{ t('blockProps.mapPoiDynamicPositionHint') }}</p>
+        <div v-if="!poi.link" class="row">
+          <q-input
+            dense
+            outlined
+            type="number"
             :label="t('blockProps.mapPoiXLabel')"
             suffix="%"
             :model-value="poi.x ?? 50"
@@ -738,6 +763,65 @@
             class="grow"
           />
         </div>
+        <q-btn
+          v-if="!poi.link"
+          dense
+          outline
+          no-caps
+          icon="my_location"
+          :color="phone.mapPoiPicker === poi ? 'primary' : undefined"
+          :label="
+            phone.mapPoiPicker === poi
+              ? t('blockProps.mapPoiPickCancel')
+              : t('blockProps.mapPoiPickButton')
+          "
+          class="btn-ghost"
+          @click="togglePoiPick(poi)"
+        />
+        <template v-else>
+          <div class="row">
+            <q-select
+              dense
+              outlined
+              :label="t('blockProps.listSchemaLabel')"
+              v-model="poi.link.schemaId"
+              :options="schemaOptions"
+              emit-value
+              map-options
+              class="grow"
+            />
+            <q-input
+              dense
+              outlined
+              :label="t('blockProps.scheduleEntityIdLabel')"
+              :hint="t('blockProps.scheduleEntityIdHint')"
+              v-model="poi.link.entityId"
+              class="grow"
+            />
+          </div>
+          <div class="row">
+            <q-select
+              dense
+              outlined
+              :label="t('blockProps.mapPoiXFieldLabel')"
+              v-model="poi.link.xField"
+              :options="numberFieldOptions(poi.link.schemaId)"
+              emit-value
+              map-options
+              class="grow"
+            />
+            <q-select
+              dense
+              outlined
+              :label="t('blockProps.mapPoiYFieldLabel')"
+              v-model="poi.link.yField"
+              :options="numberFieldOptions(poi.link.schemaId)"
+              emit-value
+              map-options
+              class="grow"
+            />
+          </div>
+        </template>
         <div class="row">
           <q-input
             dense
@@ -752,6 +836,16 @@
           </q-input>
           <ColorField v-model="poi.color" default-value="#4c8bf5" clearable />
         </div>
+        <q-input
+          dense
+          outlined
+          type="number"
+          :label="t('blockProps.mapPoiSizeLabel')"
+          suffix="px"
+          :model-value="poi.size ?? 16"
+          @update:model-value="(v) => (poi.size = v === null || v === '' ? 16 : Number(v))"
+        />
+        <AssetField v-model="poi.image" :label="t('blockProps.mapPoiImageLabel')" />
         <q-expansion-item dense :label="t('blockProps.mapPoiActionTitle')" class="spacing-section">
           <div class="spacing-body condition-body">
             <BlockActionEditor
@@ -759,6 +853,18 @@
               :screens="screens"
               :sheets="sheets"
               :help-text="t('blockProps.mapPoiActionHelp')"
+            />
+          </div>
+        </q-expansion-item>
+        <q-expansion-item dense :label="t('blockProps.mapPoiContentTitle')" class="spacing-section">
+          <div class="spacing-body condition-body">
+            <p class="tab-help">{{ t('blockProps.mapPoiContentHelp') }}</p>
+            <BlockBuilder
+              :blocks="ensurePoiContent(poi)"
+              :screens="screens"
+              :sheets="sheets"
+              :item-scope="itemScope"
+              :depth="depth + 1"
             />
           </div>
         </q-expansion-item>
@@ -820,8 +926,9 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, ref, onUnmounted } from 'vue'
 import { useStoryStore } from '@/engine/stores/story'
+import { usePhoneStore } from '@/engine/stores/phone'
 import AssetField from '@/editor/components/AssetField.vue'
 import ColorField from '@/editor/components/ColorField.vue'
 import RequiresBuilder from '@/editor/components/RequiresBuilder.vue'
@@ -839,6 +946,7 @@ import { useEditorI18n } from '@/editor/i18n'
 
 const { t } = useEditorI18n()
 const story = useStoryStore()
+const phone = usePhoneStore()
 
 const props = defineProps({
   block: { type: Object, required: true },
@@ -921,7 +1029,57 @@ function addPoi() {
   ensurePois().push({ x: 50, y: 50, label: '', icon: '', color: '', action: { type: 'none' } })
 }
 function removePoi(i) {
+  if (phone.mapPoiPicker === props.block.pois[i]) phone.mapPoiPicker = null
   props.block.pois.splice(i, 1)
+}
+
+// "Click the map instead of typing x/y" (user request) — arms/disarms the
+// shared phone.mapPoiPicker (see phone.js) with this exact poi; MapBlock.vue's
+// own click handler in the live preview writes x/y into it and disarms.
+// Re-clicking the button on the ALREADY-armed poi cancels instead of
+// re-arming, so it also serves as the button's own "stop picking" action.
+function togglePoiPick(poi) {
+  phone.mapPoiPicker = phone.mapPoiPicker === poi ? null : poi
+}
+
+// Safety net for the picker above: if the author switches away from THIS
+// map block (this form unmounts) while a pick is still armed, don't leave a
+// stale poi reference around waiting to catch the next unrelated map click.
+// Scoped to only clear a picker this exact instance actually armed — this
+// form is recursive (nested instances mount for every expanded row across
+// the whole tree), so an unscoped clear here would also fire whenever some
+// unrelated block's row happens to unmount elsewhere, silently cancelling
+// an in-progress pick on a different map.
+onUnmounted(() => {
+  if (props.block.pois?.includes(phone.mapPoiPicker)) phone.mapPoiPicker = null
+})
+
+// Dynamic position (user request): instead of a fixed x/y, a POI can be
+// LINKED to one specific entity instance (schemaId/entityId, same
+// typed-by-hand entityId convention as `schedule`'s own field above — no
+// dedicated instance picker exists yet) and read its live x/y from two of
+// that schema's own number fields — see MapBlock.vue's resolvePosition().
+// Toggling off clears the link entirely (not just hides it) so a re-save
+// doesn't carry dead schemaId/entityId around once the author picked static
+// again.
+function togglePoiLink(poi, on) {
+  if (on) poi.link = { schemaId: '', entityId: '*', xField: '', yField: '' }
+  else poi.link = null
+}
+
+function ensurePoiContent(poi) {
+  if (!poi.content) poi.content = []
+  return poi.content
+}
+
+// Only `number`-typed fields make sense as a screen coordinate — same
+// filter-by-field-type precedent as scheduleFieldOptions() above, just a
+// different target type.
+function numberFieldOptions(schemaId) {
+  const schema = story.project?.gameConfig?.entitySchemas?.find((s) => s.id === schemaId)
+  return (schema?.fields || [])
+    .filter((f) => f.type === 'number')
+    .map((f) => ({ label: f.label || f.key, value: f.key }))
 }
 
 // Lazy-inits `source` for a `list` block saved before this field existed —
