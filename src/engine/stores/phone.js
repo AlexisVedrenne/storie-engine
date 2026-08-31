@@ -70,6 +70,16 @@ export const usePhoneStore = defineStore('phone', {
     // plumbing beyond the same "phone store as the editor<->preview
     // channel" precedent editorSelectedBlock/hoveredEditorBlock already are.
     editorActiveScreen: null,
+
+    // "Click the map instead of typing x/y" (user request — hand-typing
+    // percentages was tedious). Set by BlockPropertiesForm.vue to the exact
+    // poi object being positioned (same "direct reference into the live
+    // reactive project tree" convention as editorSelectedBlock above, not a
+    // copy) while its picker is armed; MapBlock.vue's own click handler
+    // writes straight into `poi.x`/`poi.y` and clears this back to null.
+    // Only one poi can be "armed" at a time — a second click on the panel's
+    // own toggle before placing the first just re-targets it.
+    mapPoiPicker: null,
   }),
 
   actions: {

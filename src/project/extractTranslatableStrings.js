@@ -104,6 +104,12 @@ export function addBlockStrings(blocks, set) {
           if (tab.label) set.add(tab.label)
         }
         break
+      case 'map':
+        for (const poi of block.pois || []) {
+          if (poi.label) set.add(poi.label)
+          if (Array.isArray(poi.content)) addBlockStrings(poi.content, set)
+        }
+        break
     }
     if (Array.isArray(block.blocks)) addBlockStrings(block.blocks, set)
     if (Array.isArray(block.template)) addBlockStrings(block.template, set)

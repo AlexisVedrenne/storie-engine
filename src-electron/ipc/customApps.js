@@ -51,6 +51,10 @@ export function collectAssetRefs(blocks, out = []) {
     if (typeof block.src === 'string' && block.src) out.push(block.src)
     if (Array.isArray(block.blocks)) collectAssetRefs(block.blocks, out)
     if (Array.isArray(block.template)) collectAssetRefs(block.template, out)
+    for (const poi of block.pois || []) {
+      if (typeof poi.image === 'string' && poi.image) out.push(poi.image)
+      if (Array.isArray(poi.content)) collectAssetRefs(poi.content, out)
+    }
   }
   return out
 }
@@ -64,6 +68,14 @@ export function rewriteBlockSrcs(blocks, mapFn) {
     if (typeof next.src === 'string' && next.src) next.src = mapFn(next.src)
     if (Array.isArray(next.blocks)) next.blocks = rewriteBlockSrcs(next.blocks, mapFn)
     if (Array.isArray(next.template)) next.template = rewriteBlockSrcs(next.template, mapFn)
+    if (Array.isArray(next.pois)) {
+      next.pois = next.pois.map((poi) => {
+        const nextPoi = { ...poi }
+        if (typeof nextPoi.image === 'string' && nextPoi.image) nextPoi.image = mapFn(nextPoi.image)
+        if (Array.isArray(nextPoi.content)) nextPoi.content = rewriteBlockSrcs(nextPoi.content, mapFn)
+        return nextPoi
+      })
+    }
     return next
   })
 }
