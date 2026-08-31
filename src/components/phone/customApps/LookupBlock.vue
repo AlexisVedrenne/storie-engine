@@ -107,7 +107,7 @@ const visibleResults = computed(() => {
 }
 
 .lookup-input:focus {
-  border-color: var(--app-accent);
+  border-color: var(--app-primary);
 }
 
 .lookup-empty {
@@ -150,6 +150,6 @@ const visibleResults = computed(() => {
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: var(--app-accent);
+  color: var(--app-primary);
 }
 </style>

@@ -3,14 +3,14 @@
     <div
       v-if="block.icon && !src"
       class="icon-circle"
-      :style="{ background: block.color || '#607d8b' }"
+      :style="{ background: block.color || 'var(--app-secondary)' }"
     >
       <q-icon :name="block.icon" size="28px" color="white" />
     </div>
     <AppAvatar
       v-else
       :name="label || '?'"
-      :color="block.color || '#607d8b'"
+      :color="block.color || 'var(--app-secondary)'"
       :image="src"
       :size="block.size || 64"
     />

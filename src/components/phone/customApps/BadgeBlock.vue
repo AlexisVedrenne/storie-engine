@@ -2,7 +2,7 @@
   <span
     class="badge-block"
     :style="{
-      background: block.color || 'var(--app-accent)',
+      background: block.color || 'var(--app-primary)',
       color: block.textColor || undefined,
       borderRadius: `${block.radius ?? 999}px`,
     }"

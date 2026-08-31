@@ -174,7 +174,7 @@ const syntheticFormBlock = computed(() =>
 )
 
 // App theme (`def.theme`, authored in CustomAppEditor.vue's "Thème" panel)
-// — a small fixed set of design tokens (5-role palette, a font stack, a
+// — a small fixed set of design tokens (7-role palette, a font stack, a
 // radius scale, a spacing scale), resolved here into CSS custom properties
 // on the screen's own root so every block underneath picks them up through
 // normal CSS cascade/inheritance, with ZERO wiring needed in each block
@@ -182,7 +182,7 @@ const syntheticFormBlock = computed(() =>
 // provide()/inject() needed the way `customAppNavigate` needs one, since
 // this is purely a styling concern. `theme` is entirely optional — an app
 // that never opens its Thème panel gets exactly the literal defaults this
-// engine always shipped (accent #4c8bf5, text white, transparent
+// engine always shipped (primary #4c8bf5, text white, transparent
 // background), byte-for-byte, so no existing project's look changes.
 const FONT_STACKS = {
   sans: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
@@ -206,13 +206,28 @@ function hexToRgbTriplet(hex) {
 const themeVars = computed(() => {
   const theme = appDef.value?.theme || {}
   const palette = theme.palette || {}
-  const accent = palette.accent || '#4c8bf5'
+  // `accent` (user request) is renamed `primary` — it was already the
+  // de-facto "brand color" every interactive block falls back to (button,
+  // badge, header icon, map pin...), `primary` just names that honestly.
+  // Reading the legacy `palette.accent` key as a fallback means a project
+  // saved before the rename keeps rendering its old color with zero
+  // migration; nothing ever writes `.accent` again (see CustomAppEditor.vue's
+  // own `primaryColor` computed, which does the same read-old/write-new).
+  const primary = palette.primary ?? palette.accent ?? '#4c8bf5'
+  // `secondary` (user request) is a second brand-ish role, wired to the one
+  // color this engine had left genuinely untheme-able: an avatar with no
+  // author-picked color of its own (see AvatarBlock.vue) — previously a
+  // literal gray no theme could touch. Default matches that exact former
+  // literal, so an app that never sets `secondary` looks byte-for-byte the
+  // same as before this role existed.
+  const secondary = palette.secondary || '#607d8b'
   return {
     '--app-bg': palette.background || 'transparent',
     '--app-surface': palette.surface || 'rgba(255, 255, 255, 0.06)',
     '--app-text': palette.text || '#ffffff',
-    '--app-accent': accent,
-    '--app-accent-rgb': hexToRgbTriplet(accent),
+    '--app-primary': primary,
+    '--app-primary-rgb': hexToRgbTriplet(primary),
+    '--app-secondary': secondary,
     '--app-danger': palette.danger || '#e05252',
     '--app-font': FONT_STACKS[theme.fontStack] || FONT_STACKS.sans,
     '--app-radius': `${RADIUS_SCALE[theme.radius] ?? RADIUS_SCALE.normal}px`,
@@ -254,13 +269,29 @@ const backgroundOpacity = computed(() => (currentScreen.value?.backgroundOpacity
    against THIS non-scrolling element too, so they stay put while the
    content scrolls underneath instead of scrolling away with it — arguably
    the more expected behavior for a background/floating badge anyway.
-   `header.sticky`/`footer.sticky` are unaffected: they still stick within
-   this same scrolling element, which is all `position: sticky` needs. */
+   `header.sticky`/`footer.sticky` still stick within this same scrolling
+   element, which is what `position: sticky` needs — but `position: sticky`
+   alone only pins an element once there's enough OTHER content to actually
+   scroll past it; on a screen shorter than the phone, a sticky footer used
+   to just sit at its natural in-flow position (bug fix, user-reported: "en
+   dessous du reste" instead of pinned to the bottom). Making this element a
+   flex column and letting its one child (BlockList's own root, see the rule
+   below) grow to fill it fixes that: BlockList.vue gives a sticky footer's
+   own wrap `margin-top: auto`, which now has a full-height column to push
+   against even when the rest of the content is short — and still degrades
+   to the exact same scroll+stick behavior once content actually overflows,
+   since `flex-grow` has no effect once there's no leftover space to fill. */
 .app-screen-scroll {
   height: 100%;
   overflow-y: auto;
   overflow-x: hidden;
   padding: 8px 16px 24px;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-screen-scroll > .block-list {
+  flex: 1 0 auto;
 }
 
 /* No z-index needed — placed first in the template, default stacking order

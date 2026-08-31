@@ -38,7 +38,7 @@ export function defaultBlock(type) {
       // `sticky` (pilier 03) pins the header to the top of the screen's own
       // scroll area instead of scrolling away with the rest of the content
       // — defaults false so every existing saved header renders unchanged.
-      return { type, title: '', icon: 'apps', color: '#4c8bf5', sticky: false }
+      return { type, title: '', icon: 'apps', color: '', sticky: false }
     case 'footer':
       // The symmetric counterpart to header.sticky (pilier 03) — a row of
       // action buttons pinned to the BOTTOM of the screen ("barre d'action
@@ -51,15 +51,27 @@ export function defaultBlock(type) {
       // pairing.
       return { type, direction: 'row', gap: 8, bgColor: '', sticky: true, blocks: [] }
     case 'text':
-      return { type, style: 'body', content: '' }
+      // `align` ('left'/'center'/'right', unset = 'left' — the browser's own
+      // default for LTR text, so an existing saved text block renders
+      // unchanged) — user request.
+      return { type, style: 'body', content: '', align: '' }
     case 'image':
       return { type, src: '', fullBleed: false }
     case 'avatar':
-      return { type, label: '', color: '#607d8b', icon: '', src: '' }
+      return { type, label: '', color: '', icon: '', src: '' }
     case 'row':
       return { type, icon: '', label: '', sublabel: '', chevron: false }
     case 'card':
-      return { type, blocks: [] }
+      // `action` (user request) — same fixed catalog a button offers
+      // (BlockActionEditor.vue/useBlockAction.js); 'none' (default) keeps
+      // the card purely a visual container exactly as before. A card with
+      // an action is clickable ANYWHERE on its own background, but a
+      // nested interactive block (e.g. a button placed inside it) still
+      // works independently and never double-fires it — BlockList.vue
+      // already wraps every block, including nested ones, in its own
+      // click-catching div, which stops the click from ever bubbling up to
+      // the card's own listener.
+      return { type, blocks: [], action: { type: 'none' } }
     case 'overlay':
       // A positioned layer above the normal flow (pilier 03) — `anchor`
       // picks one of 5 fixed corner/center presets, resolved against
@@ -67,8 +79,11 @@ export function defaultBlock(type) {
       // default, or the nearest Card/Layout it's nested inside — see
       // OverlayBlock.vue). Deliberately not a free x/y coordinate or an
       // arbitrary-block anchor id — same bounded-catalog trade as every
-      // other block here.
-      return { type, anchor: 'top-right', blocks: [] }
+      // other block here. `offsetX`/`offsetY` (px, default 0 — user
+      // request) nudge the block from that anchor point without abandoning
+      // the anchor system entirely — still "pin to a corner/center", just
+      // with fine adjustment on top.
+      return { type, anchor: 'top-right', offsetX: 0, offsetY: 0, blocks: [] }
     case 'sheet':
       // A modal that opens from a button's `openSheet` action (targeting
       // `sheetId`) instead of taking a spot in the normal row/column flow —
@@ -85,10 +100,14 @@ export function defaultBlock(type) {
       // Pure flex arranger — no background/padding chrome of its own,
       // unlike `card` (which is really "layout, column direction, + a
       // visible grouped-card background"). `direction` picks row vs column;
-      // `gap` in px between children.
-      return { type, direction: 'row', gap: 8, blocks: [] }
+      // `gap` in px between children. `justify`/`align` (unset = the
+      // browser's own flex defaults, flex-start/stretch — user request) map
+      // straight onto CSS justify-content/align-items, same small bounded
+      // option set every other enum-ish field here uses rather than a free
+      // CSS value.
+      return { type, direction: 'row', gap: 8, justify: '', align: '', blocks: [] }
     case 'badge':
-      return { type, label: '', color: '#4c8bf5' }
+      return { type, label: '', color: '' }
     case 'divider':
       return { type }
     case 'button':
@@ -103,7 +122,22 @@ export function defaultBlock(type) {
       // checkConditions, same shape as a block's own display condition) —
       // failing it no-ops and, if set, shows `action.onFailToast` instead
       // (e.g. "Not enough funds.") rather than silently doing nothing.
-      return { type, label: '', color: '#4c8bf5', action: { type: 'none' } }
+      // `icon` (optional, shown before the label — user request), `size`
+      // ('small'/'normal'/'large', default 'normal' — the original fixed
+      // padding/font-size this button always had) and `flat` (boolean,
+      // default false — a transparent background with `color` used as the
+      // TEXT color instead of the fill, same "flat" meaning Quasar's own
+      // `q-btn` uses elsewhere in this editor) are user-requested styling
+      // options, all optional so an existing saved button renders unchanged.
+      return {
+        type,
+        label: '',
+        icon: '',
+        color: '',
+        size: 'normal',
+        flat: false,
+        action: { type: 'none' },
+      }
     case 'tabs':
       return { type, tabs: [{ label: '', screenId: '' }] }
     case 'list':

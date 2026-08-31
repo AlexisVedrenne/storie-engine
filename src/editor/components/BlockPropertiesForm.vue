@@ -23,7 +23,7 @@
           <IconPickerBtn @pick="(v) => (block.icon = v)" />
         </template>
       </q-input>
-      <ColorField v-model="block.color" />
+      <ColorField v-model="block.color" clearable />
       <q-toggle dense :label="t('blockProps.stickyHeaderLabel')" v-model="block.sticky" />
     </template>
 
@@ -106,6 +106,17 @@
           class="grow"
         />
       </div>
+      <q-btn-toggle
+        dense
+        no-caps
+        :model-value="block.align || 'left'"
+        @update:model-value="(v) => (block.align = v === 'left' ? '' : v)"
+        :options="[
+          { label: t('blockProps.alignLeft'), value: 'left', icon: 'format_align_left' },
+          { label: t('blockProps.alignCenter'), value: 'center', icon: 'format_align_center' },
+          { label: t('blockProps.alignRight'), value: 'right', icon: 'format_align_right' },
+        ]"
+      />
     </template>
 
     <template v-else-if="block.type === 'image'">
@@ -154,7 +165,7 @@
           <IconPickerBtn @pick="(v) => (block.icon = v)" />
         </template>
       </q-input>
-      <ColorField v-model="block.color" />
+      <ColorField v-model="block.color" clearable />
     </template>
 
     <template v-else-if="block.type === 'row'">
@@ -221,6 +232,16 @@
         default-value="#2a2e37"
         clearable
       />
+      <q-expansion-item dense :label="t('blockProps.mapPoiActionTitle')" class="spacing-section">
+        <div class="spacing-body condition-body">
+          <BlockActionEditor
+            :target="block"
+            :screens="screens"
+            :sheets="sheets"
+            :help-text="t('blockProps.cardActionHelp')"
+          />
+        </div>
+      </q-expansion-item>
       <BlockBuilder
         :blocks="ensureChildren()"
         :screens="screens"
@@ -247,6 +268,28 @@
         emit-value
         map-options
       />
+      <div class="row">
+        <q-input
+          dense
+          outlined
+          type="number"
+          :label="t('blockProps.overlayOffsetXLabel')"
+          suffix="px"
+          :model-value="block.offsetX ?? 0"
+          @update:model-value="(v) => (block.offsetX = v === null || v === '' ? 0 : Number(v))"
+          class="grow"
+        />
+        <q-input
+          dense
+          outlined
+          type="number"
+          :label="t('blockProps.overlayOffsetYLabel')"
+          suffix="px"
+          :model-value="block.offsetY ?? 0"
+          @update:model-value="(v) => (block.offsetY = v === null || v === '' ? 0 : Number(v))"
+          class="grow"
+        />
+      </div>
       <BlockBuilder
         :blocks="ensureChildren()"
         :screens="screens"
@@ -305,6 +348,41 @@
         :model-value="block.gap ?? 8"
         @update:model-value="(v) => (block.gap = v === null || v === '' ? 8 : Number(v))"
       />
+      <div class="row">
+        <q-select
+          dense
+          outlined
+          :label="t('blockProps.layoutJustifyLabel')"
+          :model-value="block.justify || ''"
+          @update:model-value="(v) => (block.justify = v)"
+          :options="[
+            { label: t('blockProps.justifyStart'), value: '' },
+            { label: t('blockProps.justifyCenter'), value: 'center' },
+            { label: t('blockProps.justifyEnd'), value: 'flex-end' },
+            { label: t('blockProps.justifyBetween'), value: 'space-between' },
+            { label: t('blockProps.justifyAround'), value: 'space-around' },
+          ]"
+          emit-value
+          map-options
+          class="grow"
+        />
+        <q-select
+          dense
+          outlined
+          :label="t('blockProps.layoutAlignLabel')"
+          :model-value="block.align || ''"
+          @update:model-value="(v) => (block.align = v)"
+          :options="[
+            { label: t('blockProps.alignStretch'), value: '' },
+            { label: t('blockProps.alignItemsStart'), value: 'flex-start' },
+            { label: t('blockProps.alignItemsCenter'), value: 'center' },
+            { label: t('blockProps.alignItemsEnd'), value: 'flex-end' },
+          ]"
+          emit-value
+          map-options
+          class="grow"
+        />
+      </div>
       <ColorField
         v-model="block.bgColor"
         :label="t('blockProps.bgColorLabel')"
@@ -339,7 +417,7 @@
 
       <div class="prop-group-label">{{ t('blockProps.groupAppearance') }}</div>
       <div class="row">
-        <ColorField v-model="block.color" class="grow" />
+        <ColorField v-model="block.color" clearable class="grow" />
         <ColorField
           v-model="block.textColor"
           :label="t('blockProps.textColorLabel')"
@@ -375,16 +453,40 @@
         </template>
       </q-input>
 
+      <q-input dense outlined :label="t('blockProps.iconLabel')" v-model="block.icon">
+        <template #append>
+          <IconPickerBtn @pick="(v) => (block.icon = v)" />
+        </template>
+      </q-input>
+
       <div class="prop-group-label">{{ t('blockProps.groupAppearance') }}</div>
+      <q-toggle dense :label="t('blockProps.buttonFlatLabel')" v-model="block.flat" />
       <div class="row">
-        <ColorField v-model="block.color" class="grow" />
         <ColorField
+          v-model="block.color"
+          :label="block.flat ? t('blockProps.textColorLabel') : ''"
+          clearable
+          class="grow"
+        />
+        <ColorField
+          v-if="!block.flat"
           v-model="block.textColor"
           :label="t('blockProps.textColorLabel')"
           default-value="#ffffff"
           class="grow"
         />
       </div>
+      <q-btn-toggle
+        dense
+        no-caps
+        :model-value="block.size || 'normal'"
+        @update:model-value="(v) => (block.size = v)"
+        :options="[
+          { label: t('blockProps.sizeSmall'), value: 'small' },
+          { label: t('blockProps.sizeNormal'), value: 'normal' },
+          { label: t('blockProps.sizeLarge'), value: 'large' },
+        ]"
+      />
       <q-input
         dense
         outlined
