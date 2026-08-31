@@ -137,6 +137,33 @@ export function registerCustomAppHandlers(mainWindow) {
   // namespace so an imported app can never silently overwrite an unrelated
   // asset already in this project that happens to share a filename/path.
   // Block `src` fields are rewritten to match (see rewriteBlockSrcs).
+  // Theme presets (pilier 07) — a THEME alone, not a whole app, shared as a
+  // plain `.json` file rather than the app's own `.zip` pipeline: a theme
+  // (palette/font stack/radius/spacing) never references an asset (no
+  // images, no live-loaded fonts — see docs/architecture.md's Vendoring
+  // section for why fonts are a fixed enum here), so a zip would carry
+  // nothing beyond the same JSON anyway.
+  ipcMain.handle('project:exportTheme', async (_evt, { theme }) => {
+    const result = await dialog.showSaveDialog(mainWindow, {
+      title: 'Exporter le thème',
+      defaultPath: 'theme.json',
+      filters: [{ name: 'Storie Theme', extensions: ['json'] }],
+    })
+    if (result.canceled || !result.filePath) return null
+    fs.writeFileSync(result.filePath, JSON.stringify(theme, null, 2) + '\n', 'utf-8')
+    return true
+  })
+
+  ipcMain.handle('project:importTheme', async () => {
+    const result = await dialog.showOpenDialog(mainWindow, {
+      title: 'Importer un thème',
+      properties: ['openFile'],
+      filters: [{ name: 'Storie Theme', extensions: ['json'] }],
+    })
+    if (result.canceled || !result.filePaths[0]) return null
+    return JSON.parse(fs.readFileSync(result.filePaths[0], 'utf-8'))
+  })
+
   ipcMain.handle('project:importCustomApp', async (_evt, { rootPath }) => {
     const result = await dialog.showOpenDialog(mainWindow, {
       title: 'Importer une application',

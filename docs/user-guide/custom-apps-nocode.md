@@ -13,30 +13,80 @@ different, code-based path aimed at extending the engine itself.
 
 ## How it works
 
-A custom app is a **screen made of blocks**, stacked and nested. You drag blocks in from a
-palette, arrange them, and fill in their fields — every change shows up instantly in the live phone
-preview next to the editor, exactly like editing a chapter's timeline.
+A custom app is a **screen made of blocks**, stacked and nested. Click (or drag) a block from the
+palette to add it, then select its row to fill in its fields on the right — every change shows up
+instantly in the live phone preview next to the editor, exactly like editing a chapter's timeline.
+Hovering a row in the list outlines the matching element on the phone, and vice versa, so the list
+and the live result always read as the same thing. A block inside a Card/Layout is indented under
+it, same idea as a folder tree.
 
 An app can have multiple **screens** (switchable via a `tabs` block), and everything you build is
 saved as part of your project, ready to export like everything else.
 
+Each screen can also have its own **background** — an image, or a short muted video that loops —
+shown behind every block on that screen, with an adjustable opacity so it can sit subtly behind the
+content instead of fighting with it. Good for the ambiance of a place or the background noise of a
+scene rather than a decorative wallpaper.
+
+## App theme
+
+Every app has its own **Theme** panel (top of the editor, above Screens) — a 5-color palette
+(background, surface, text, accent, danger), a font (sans-serif, serif, monospace, or rounded), a
+corner-radius scale (sharp/normal/round), and a spacing density (tight/normal/loose). This is what
+gives two apps in the same project genuinely different identities — a clean sans-serif wallet next
+to a glitchy monospace black-market — without touching CSS.
+
+The theme only fills in what a block doesn't already set itself: a button whose own color you
+picked keeps that color regardless of the app's accent; a button with no color set uses the app's
+accent instead of the engine's generic default blue. Change the theme any time and every block that
+hasn't been individually overridden updates with it. Fonts are limited to families already
+installed on the player's device (no live Google Fonts) — a packaged, exported game can't rely on
+having internet access to fetch one.
+
+**Export**/**Import** (next to the panel's title) save or load a theme as a standalone `.json`
+file — a look you like can be reused across apps or shared with someone else, the same way a whole
+app can, without dragging the app itself along. Importing REPLACES the current app's entire theme.
+
+## Author tools
+
+Two things make building against invisible state (a flag, an entity field) less of a guessing game:
+
+- **Variable inspector** — the small panel next to the phone preview (click the arrow to
+  show/hide it) lists every flag and entity field the CURRENTLY OPEN screen's blocks actually
+  reference — in a display condition, an action's guard, a `{flag:...}`/`{entity:...}` token, a
+  Schedule/Ledger/Input field's own target — each with its live current value, updating as you
+  click around the preview.
+- **Test as player** (button next to the screen's own toolbar) — generates fake data (3 instances
+  per entity schema, 5 entries per collection) for everything the app references, so a `List`/
+  `Schedule`/`Ledger` block shows something realistic without you first playing through the chapter
+  that would normally fill it, or hand-authoring seed rows just to check a layout. Click it again to
+  clear the fake data and restart a clean preview.
+
 ## The block catalog
 
-| Block | What it does |
-|---|---|
-| **Header** | A title + icon + color band at the top of a section. |
-| **Text** | A paragraph or label, with a style (body, heading, etc). |
-| **Image** | A picture, optionally full-bleed. |
-| **Avatar** | A round profile picture/initial, with a color. |
-| **Row** | An icon + label + optional sublabel + optional chevron — a settings-style list row. |
-| **Card** | A container with a visible background, for grouping other blocks. |
-| **Layout** | A plain flex container (row or column) with no background — for arranging other blocks without the visual weight of a card. |
-| **Badge** | A small colored label/pill. |
-| **Divider** | A horizontal rule. |
-| **Button** | See [Buttons](#buttons) below. |
-| **Tabs** | Switches which screen of the app is currently shown. |
-| **List** | Repeats a block template once per item — see [Lists](#lists) below. |
-| **Conversations** | A real chat module — see [Conversations](#conversations) below. |
+| Block             | What it does                                                                                                                           |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| **Header**        | A title + icon + color band at the top of a section — can be pinned so it stays visible while scrolling.                               |
+| **Footer**        | An action bar (like Row, but built to be pinned to the bottom of the screen) — see [Sticky header/footer](#sticky-headerfooter) below. |
+| **Text**          | A paragraph or label, with a style (body, heading, etc).                                                                               |
+| **Image**         | A picture, optionally full-bleed.                                                                                                      |
+| **Avatar**        | A round profile picture/initial, with a color.                                                                                         |
+| **Row**           | An icon + label + optional sublabel + optional chevron — a settings-style list row.                                                    |
+| **Card**          | A container with a visible background, for grouping other blocks.                                                                      |
+| **Overlay**       | A layer positioned over the normal content — see [Overlay](#overlay) below.                                                            |
+| **Sheet**         | A modal (bottom/center/top) that a button opens — see [Sheet](#sheet) below.                                                           |
+| **Layout**        | A plain flex container (row or column) with no background — for arranging other blocks without the visual weight of a card.            |
+| **Badge**         | A small colored label/pill.                                                                                                            |
+| **Divider**       | A horizontal rule.                                                                                                                     |
+| **Button**        | See [Buttons](#buttons) below.                                                                                                         |
+| **Tabs**          | Switches which screen of the app is currently shown.                                                                                   |
+| **List**          | Repeats a block template once per item — see [Lists](#lists) below.                                                                    |
+| **Conversations** | A real chat module — see [Conversations](#conversations) below.                                                                        |
+| **Schedule**      | A character's routine + current location — see [Schedule](#schedule) below.                                                            |
+| **Ledger**        | A numeric collection as a mini-chart + list — see [Ledger](#ledger) below.                                                             |
+| **Input field**   | A field the _player_ fills in — see [Input field](#input-field) below.                                                                 |
+| **Search**        | A fake search bar over content you write ahead of time — see [Search](#search) below.                                                  |
+| **Map**           | An uploaded image with points of interest on it — see [Map](#map) below.                                                               |
 
 Every block can be **dragged** between containers (not just reordered in place), **duplicated**,
 and given a **condition** — a block whose condition doesn't hold is entirely absent, not just
@@ -46,29 +96,61 @@ block by block.
 
 ### Buttons
 
-A button can do one of three things:
+A button (or a [search result](#search)) can do one of twelve things:
 
 1. **Nothing** — purely visual/decorative.
-2. **Apply effects** — the same effects system used everywhere else (flags, phone widgets...).
+2. **Apply effects** — the same effects system used everywhere else (flags, phone widgets,
+   entities...).
 3. **Navigate to a screen** — switch this app's active screen, the same mechanism the Tabs block
    uses.
+4. **Fire an event** — emits the `button.pressed` event (with the app id and an optional button id
+   you set as payload), which you can react to from the **Events** tab exactly like any other
+   trigger — see [Events](conditions-and-flags.md#events). Unlike the other kinds, this is the
+   _only_ one that also touches the Events system — picking any other action kind doesn't fire
+   `button.pressed` on its own.
+5. **Show a message** — briefly displays a short text on screen, no other effect.
+6. **Open a sheet** — opens a [Sheet](#sheet) block by its id.
+7. **Close the sheet** — closes whichever sheet is currently open, whichever it is.
+8. **Open an app** — jumps straight to another app on the phone, native (Messages, Pixly, Journal...)
+   or one you built, leaving the current app entirely. Optionally picks one of the target app's own
+   screens (if it's a custom app) instead of its default one.
+9. **Request input** — opens a small centered prompt with one field (text, number, yes/no, or an
+   entity field) — writes straight into a flag or entity field, without you having to build a
+   [Sheet](#sheet) + [Input field](#input-field) combo by hand for the common case.
+10. **Trigger a scene** — runs a small scripted sequence (a message, a choice, a call...) authored
+    right on the action, using the exact same timeline editor as a chapter. Good for a purchase, a
+    correct guess, or any tap that should cause something to actually HAPPEN in the story, not just
+    flip a flag.
+11. **Wait** — pauses before the next step of a **Sequence** runs. Only useful inside one.
+12. **Sequence** — chains several of the above, in order: apply an effect, THEN wait a moment, THEN
+    show a confirmation message — one tap, several consequences. Each step can have its own
+    condition too.
 
-Every button press also fires the `button.pressed` event (with the app id and an optional button
-id as payload), which you can react to from the **Events** tab exactly like any other trigger — see
-[Events](conditions-and-flags.md#events).
+Whichever of the twelve you pick, an optional **condition** can gate the whole thing — checked at
+the moment the button is tapped, not when the screen renders (that's what a block's own display
+condition already does). If the condition doesn't hold, the action is cancelled; you can optionally
+show a message explaining why (e.g. "Not enough funds.") instead of the tap silently doing nothing.
 
 ### Lists
 
 A `list` block repeats a block **template** — a small subtree you design once — once per item from
-one of two sources:
+one of three sources:
 
 - **Contacts** — every project contact (optionally filtered to only the ones the player follows).
 - **A flag collection** — one of your [flag collections](conditions-and-flags.md#flags), so a list
   can display a growing history/ledger/inventory the story has been building up via effects.
+- **Entities** — instances of an [entity schema](conditions-and-flags.md#entity-schemas) you've
+  defined in the Données tab, for records with more than one field each (a character, an item, a
+  transaction...).
 
 Inside the template, text fields can reference the current item with `{item:...}` tokens (a
-contact's name, pseudo, follower count, color — or a collection item's key/value, depending on the
-source).
+contact's name, pseudo, follower count, color; a collection item's key/value; or, for an entity
+list, one token per field of that schema — `{item:<fieldKey>}`).
+
+For an entity specifically, you're not limited to inside a list template: `{entity:<schemaId>:<entityId>:<field>}`
+works in **any** text field anywhere in the app builder, no list needed — use `*` as the entity id
+to mean "the first/only instance of that schema" (the common case for a singleton record like a
+wallet or a settings object), or a specific id to address one instance among several.
 
 ### Conversations
 
@@ -85,6 +167,127 @@ entry" menu once your app has a `conversations` block somewhere. If you send a p
 a custom app's conversation via a `timeskip`'s landing option (see
 [Writing chapters](writing-chapters.md)), the unread badge/notification for that exact thread is
 suppressed the same way it would be for a conversation the player already has open.
+
+### Schedule
+
+The `schedule` block shows one entity's own routine — pick a schema, a field on it typed
+**Schedule**, and (if that schema has more than one instance) which one. It renders as a day
+timeline: every slot you authored (a "from" time, a "to" time, a place), with whichever one covers
+the story's _current_ in-fiction time highlighted, plus a "right now" summary line at the top.
+
+A **Schedule**-typed field is authored on the schema itself (Données tab → Schémas, same place you
+add any other field) as a list of time slots — no JSON, no free text, just from/to/place rows. This
+is what makes a tracking-style app possible: define a schema for a character with a Schedule field,
+author their day (seed instances, so it's there from the start — see
+[Entity schemas](conditions-and-flags.md#entity-schemas)), and a `schedule` block anywhere shows
+where they are right now, recalculated live as the story's clock moves.
+
+### Ledger
+
+The `ledger` block picks a [flag collection](conditions-and-flags.md#flags) — the same one the
+`list` block's "Collection" source reads — and renders it as a mini area-chart (most recent value
+front and center, a line tracing every entry) plus the entry list underneath. Nothing new to
+author: any collection you already build via effects (`add`/`increment` — a wallet balance, a
+reputation score, a running total) becomes a real chart the moment you point a `ledger` block at
+it, no separate chart data to maintain. A non-numeric collection still lists its entries, just
+without the chart on top.
+
+### Input field
+
+Every other block shows something _you_ authored. `form` is the one that lets the **player** type
+or pick a value themselves — a name, a code, a guess — writing it straight into a flag or an entity
+field, no button or effect needed on top.
+
+- **Target a flag**: pick which one and an input kind (text, number, or yes/no) — a flag has no
+  type of its own, so you choose one here.
+- **Target an entity field**: pick a schema, then one of its fields — the input automatically
+  matches that field's own type (text, number, yes/no, or a contact picker). Schedule and
+  reference-to-another-schema fields aren't offered here; they're structured data, not a fit for a
+  single field.
+
+Like [Schedule](#schedule), an entity target uses `*` for "the first/only instance" or a specific
+id to address one among several.
+
+Below the target, choose **when the typed value is actually written**:
+
+- **Live** — every keystroke writes immediately (the original, still-default behavior — fine for a
+  quick numeric jog, but a text field left mid-edit briefly holds a half-typed value).
+- **On leaving the field** — commits once the player clicks/tabs away, so partial typing never
+  touches the flag or entity field.
+- **"Submit" button** — the field shows a separate button; nothing is written until the player taps
+  it, letting them back out of an edit entirely.
+
+**Read-only** shows the current value without letting the player edit it at all — useful for mixing
+a genuinely editable field with a computed one displayed the same way.
+
+### Sticky header/footer
+
+**Header** has a **Pinned to the top** toggle — enable it and the header stays visible at the top
+of the screen while everything below it scrolls underneath, instead of scrolling away with the rest
+of the content. Off by default, so every existing header keeps behaving exactly as before.
+
+**Footer** is a new block for the opposite case — an action bar (buttons, usually) pinned to the
+**bottom** of the screen, like a "Submit" bar that should always stay reachable in a long form. It's
+a container (row or column, like Layout) that holds its own blocks, with **Pinned to the bottom**
+on by default — turn it off if you want the footer's visual style without actually fixing it in
+place.
+
+### Overlay
+
+An `overlay` block holds its own blocks and positions them over the normal content — a floating
+badge, a small bubble, a tooltip — instead of taking up space in the row/column flow like every
+other block. Pick where it sits: top-left, top-right, bottom-left, bottom-right, or center.
+
+It anchors to whichever **Card** or **Layout** it's nested inside — placed at a screen's root
+level, it anchors to the whole screen; placed inside a Card, it anchors to just that card's own
+corner/center instead. There's no way to anchor it to an arbitrary block by name — nesting is how
+you pick what it's positioned against.
+
+### Sheet
+
+A `sheet` block holds its own blocks but is invisible by default — it only appears when a button's
+**Open a sheet** action targets its id, over everything else. Give it a unique **id** so a button
+knows which one to open, and pick where it docks:
+
+- **Bottom** (default) — slides up from the bottom, like an iOS action sheet.
+- **Center** — a plain centered dialog, fading + scaling in instead of sliding.
+- **Top** — the same panel as Bottom, mirrored to the top edge.
+
+The player can dismiss it by tapping outside it, or you can add a button inside it with the
+**Close the sheet** action. Only one sheet is ever open at a time, and switching screens always
+closes it — a sheet belongs to the screen it's authored on.
+
+### Search
+
+A `search` block is a search bar over **results you write ahead of time** — each result is a
+title, an excerpt, and a source, and can be gated by its own condition (`requires`), so a result
+only becomes findable once the player has actually discovered whatever it's gated on. Good for
+archives, a fake forum, a search engine, or any internal database the player consults.
+
+The player has to actually type something — nothing shows until they do, same as a real search
+engine, not a browsable list with a filter on top. Every word they type has to appear somewhere in
+a result's title, excerpt, or source for it to show up (searching "red key" only matches a result
+that mentions both "red" and "key" somewhere).
+
+Each result can also have its own **action on tap** — the exact same kinds a [button](#buttons)
+offers (apply effects, open a sheet, jump to another app, trigger a whole scene...). Nothing
+happens by default; a result is just text to read until you give it one.
+
+### Map
+
+A `map` block is a fake map — upload an image and drop **points of interest** on it, each with a
+name, an icon/color, and an optional position (a percentage of the image, so it stays put
+regardless of how the image is sized). The image shows at its real size, never shrunk to fit the
+phone — if it's bigger than the block's own height, the player drags to pan around it, the same way
+you'd pan a real map app.
+
+Like a search result, each point of interest can have its own **action on tap** — the same kinds a
+[button](#buttons) offers. No real GPS or distances are modeled — a "location" here is just a name
+and a picture, the same idea [Schedule](#schedule) already uses for a character's routine.
+
+The player can zoom in and out — floating +/- buttons, mouse wheel, or a two-finger pinch on a
+touchscreen — between 20% and 300%. **Initial zoom** in the block's settings sets the starting
+level (100% = the image's real size, same as before this existed).
 
 ## Variables and translation
 
@@ -107,7 +310,7 @@ just custom apps specifically.
 
 A custom app is stored as one file, `apps/<id>.json` — plain JSON, not executable code. This makes
 it easy to export a single app (data + whatever assets it references) as a `.zip` and import it
-into a *different* project — asset paths get renamed to avoid collisions with anything already in
+into a _different_ project — asset paths get renamed to avoid collisions with anything already in
 the target project's `assets/` folder, and the app's own id is de-collided too if needed. Handy for
 reusing a "settings-style app" you built once across multiple stories.
 

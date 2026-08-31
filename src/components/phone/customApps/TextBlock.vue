@@ -28,7 +28,7 @@ const content = computed(() => resolveDynamicText(props.block.content, story, li
 <style scoped>
 .text-block {
   margin: 0;
-  color: #fff;
+  color: var(--app-text);
 }
 
 .text-block.title {

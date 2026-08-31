@@ -16,6 +16,8 @@ import { orderedAppList } from '@/engine/apps/appOrder'
 import { APP_REGISTRY } from '@/engine/apps/registry'
 import { CUSTOM_ENTRY_TYPE_BY_TYPE } from '@/engine/apps/entryTypeRegistry'
 import { findScreenWithBlockType } from '@/engine/customApps/appHasModule'
+import { resolveDynamicText } from '@/engine/customApps/resolveDynamicText'
+import { activeSlotPlace } from '@/engine/customApps/scheduleSlot'
 import CustomAppRenderer from '@/components/phone/customApps/CustomAppRenderer.vue'
 import {
   on as onEngineEvent,
@@ -24,6 +26,16 @@ import {
   ENGINE_TRIGGERS,
 } from '@/engine/events/eventManager'
 import { findMatchingEvents } from '@/engine/events/matchEvent'
+
+// Polls evaluateAutomations() every 15s (same cadence as StatusBar.vue's own
+// clock display) — restarted on every loadProject() alongside the engine-
+// event resubscription just below. Needed because a condition can become
+// true purely from TIME passing (a schedule field's active slot changing)
+// with no accompanying flag/entity mutation to hang off of; every other
+// automation trigger path already goes through applyEffects() and doesn't
+// need this. Module-level, not component-scoped: automations are global
+// game logic, not tied to whichever phone screen happens to be mounted.
+let automationPollTimer = null
 
 // Phase 1: this store is project-agnostic — it holds no hardcoded chapters/
 // contacts/threads/seed/i18n of its own. All of that lives in `state.project`,
@@ -140,6 +152,27 @@ function defaultState() {
     // on itself), remove deletes one. See applyEffects()'s `effects.
     // collections` and checkConditions()'s `requires.collections` below.
     flagCollections: {},
+    // Typed instances of an author-defined entity SCHEMA (see
+    // `game.entitySchemas`, edited in the Schémas tab — EntitySchemaList.vue/
+    // EntitySchemaForm.vue) — `story.entities[schemaId][entityId] = { field:
+    // value, ... }`. Sits one level above flagCollections: a collection is a
+    // flat key->value map (assumed a single scalar per entry everywhere it's
+    // read); an entity has several NAMED, typed fields per instance (a
+    // character with a location and a routine, an item with a price and a
+    // quantity) — nothing else in the engine models "more than one field per
+    // record", so this is deliberately its own bucket rather than overloading
+    // flagCollections' value with an object. See applyEffects()'s
+    // `effects.entities` below and entityItems getter (used by `list`
+    // blocks with `source: 'entity'`, see ListBlock.vue).
+    entities: {},
+    // Per-automation runtime bookkeeping (see game.automations, edited in
+    // the Données tab's Automatisations sub-tab, and evaluateAutomations()
+    // below) — `{ [automationId]: { active: bool, firedCount: number } }`.
+    // `active` remembers which side of the rule's condition it was on last
+    // check, so firing is edge-triggered (false->true only), never repeated
+    // every re-check while it stays true. Real save data, not transient —
+    // "already fired" (for a 'once' rule) must survive a reload.
+    automationState: {},
     currentChapterId: null,
     timelineIndex: 0,
     // Ordered, deduped chapter ids reached this playthrough (first-visit
@@ -254,6 +287,7 @@ function defaultState() {
     messagesSinceBatteryTick: 0, // counts up to 5 incoming message/dm entries, then drains 2% and resets
     pendingTimeSkipLabel: null, // set by a `timeskip` entry, shown once on the next lock screen
     timeSkipToast: null, // set once by continueAfterTimeSkip() when entry.landApp is set — TimeSkipToast.vue shows+clears it, transient like timeSkipFading
+    actionToast: null, // set by triggerActionToast() (custom-app button toast/guard) — AppToast.vue shows+clears it, same transient shape as timeSkipToast
 
     // Which of the 3 fixed save slots this session is writing into — set by
     // loadSlot() once the player picks one on SlotPickerScreen.vue. Session
@@ -287,6 +321,7 @@ const NON_PERSISTED_KEYS = new Set([
   'typingAppDm',
   'timeSkipFading',
   'timeSkipToast',
+  'actionToast',
   'screenEffect',
   'nowPlaying',
   'activeEnding',
@@ -303,6 +338,13 @@ export const useStoryStore = defineStore('story', {
     // always iterate in insertion order), oldest item first.
     collectionItems: (state) => (flagKey) =>
       Object.entries(state.flagCollections[flagKey] || {}).map(([key, value]) => ({ key, value })),
+    // Flattened for a `list` block's `source: 'entity'` (see ListBlock.vue) —
+    // each item is `{ id, ...fields }` so `{item:<fieldKey>}` tokens
+    // (resolveDynamicText.js) read straight off it, same shape a contact or
+    // a collection item already has. Insertion order, oldest first, same as
+    // collectionItems above.
+    entityItems: (state) => (schemaId) =>
+      Object.entries(state.entities[schemaId] || {}).map(([id, fields]) => ({ id, ...fields })),
     totalUnread: (state) => Object.values(state.unreadCounts).reduce((a, b) => a + b, 0),
     currentChapter: (state) =>
       (state.project?.chapters ?? []).find((c) => c.id === state.currentChapterId) || null,
@@ -559,6 +601,9 @@ export const useStoryStore = defineStore('story', {
       for (const trigger of ENGINE_TRIGGERS) {
         onEngineEvent(trigger, (payload) => this.handleEngineEvent(trigger, payload))
       }
+
+      clearInterval(automationPollTimer)
+      automationPollTimer = setInterval(() => this.evaluateAutomations(), 15000)
     },
 
     // Reacts to an engine-emitted trigger (eventManager.js) by running
@@ -771,6 +816,25 @@ export const useStoryStore = defineStore('story', {
           caption: seedFill(p.caption) || '',
         })
       }
+
+      // Entity schemas keep their own seed instances (`schema.seed`, edited
+      // right in the Schémas tab — EntitySchemaForm.vue) instead of a bucket
+      // here, since the field list an author needs to fill them in already
+      // lives on the schema itself. Same "present before the timeline plays
+      // its first entry" semantics as every seed above, applied via the
+      // exact op effects.entities' 'set' mode already uses (merge fields
+      // onto whatever's there, auto-generate an id if left blank).
+      for (const schema of this.project?.gameConfig?.entitySchemas || []) {
+        if (!schema.seed?.length) continue
+        if (!this.entities[schema.id]) this.entities[schema.id] = {}
+        const bucket = this.entities[schema.id]
+        for (const inst of schema.seed) {
+          const id =
+            inst.entityId ||
+            `entity-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`
+          bucket[id] = { ...bucket[id], ...inst.fields }
+        }
+      }
     },
 
     // called by LockScreen right after every unlock (see PhoneShell/
@@ -857,6 +921,51 @@ export const useStoryStore = defineStore('story', {
           return true
         })
         if (!collectionsOk) return false
+      }
+
+      // { entities: [{ schemaId, entityId, field, value: bool|exact|{min}|
+      // {max}|{min,max} }] } — same comparison shape/semantics as `flags`
+      // above, just reading a schema instance's field instead of a flag.
+      // `entityId: '*'` reads the first/only instance of that schema, same
+      // sentinel the `{entity:*:...}` text token already uses (see
+      // resolveDynamicText.js) — most conditions only care about "the"
+      // instance, not a specific id. Uses `!(value >= min)` rather than
+      // `value < min` so a missing instance/field (value undefined) FAILS
+      // the condition instead of silently passing — unlike a flag, an
+      // entity field has no numeric-default fallback, since it can just as
+      // well be text or boolean.
+      if (requires.entities) {
+        const entitiesOk = requires.entities.every((cond) => {
+          const instance =
+            cond.entityId === '*'
+              ? this.entityItems(cond.schemaId)[0]
+              : this.entities?.[cond.schemaId]?.[cond.entityId]
+          let value = instance?.[cond.field]
+          // A `schedule` field holds an ARRAY of { from, to, place } slots,
+          // not a scalar — comparing it directly against `cond.value` could
+          // never match. Resolve it to whichever slot covers RIGHT NOW
+          // first (same logic ScheduleBlock.vue uses to highlight the
+          // active slot), so a condition reads as "this character is
+          // currently at <place>" rather than needing to know the field's
+          // internal array shape.
+          const fieldDef = this.project?.gameConfig?.entitySchemas
+            ?.find((s) => s.id === cond.schemaId)
+            ?.fields?.find((f) => f.key === cond.field)
+          if (fieldDef?.type === 'schedule') {
+            const d = this.resolvedClock()
+            const nowLabel = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+            value = activeSlotPlace(value, nowLabel)
+          }
+          const expected = cond.value
+          if (typeof expected === 'boolean') return Boolean(value) === expected
+          if (expected && typeof expected === 'object') {
+            if ('min' in expected && !(value >= expected.min)) return false
+            if ('max' in expected && !(value <= expected.max)) return false
+            return true
+          }
+          return value === expected
+        })
+        if (!entitiesOk) return false
       }
 
       return true
@@ -1152,7 +1261,10 @@ export const useStoryStore = defineStore('story', {
       // than leaving the widget on its old decorative placeholder text —
       // real music playing under fake "Vibes du soir" copy would read as
       // broken, not charming.
-      const derivedTitle = track.split('/').pop().replace(/\.[^./]+$/, '')
+      const derivedTitle = track
+        .split('/')
+        .pop()
+        .replace(/\.[^./]+$/, '')
       this.nowPlaying = { title: title || derivedTitle }
     },
 
@@ -1811,9 +1923,7 @@ export const useStoryStore = defineStore('story', {
     // to the block instance, see its own comment), not derived here.
     isViewingAppThread(appId, threadId) {
       const phone = usePhoneStore()
-      return (
-        phone.activeAppThread?.appId === appId && phone.activeAppThread?.threadId === threadId
-      )
+      return phone.activeAppThread?.appId === appId && phone.activeAppThread?.threadId === threadId
     },
 
     pushMessage(contactId, { from, text, image, deleteAfter }) {
@@ -1974,7 +2084,33 @@ export const useStoryStore = defineStore('story', {
       if (notif.app === 'social' && !notif.thread) playSound('social-new-follower')
     },
 
-    applyEffects(effects) {
+    // Brief on-screen message (AppToast.vue), independent of the lock-screen
+    // notification banner above — used by a custom-app button's own
+    // `action.type: 'toast'` and by its `action.onFailToast` when a guard
+    // condition doesn't hold (see ButtonBlock.vue). Just the latest string;
+    // no queue, matching every other one-shot transient field here
+    // (timeSkipToast, screenEffect...) — a second toast firing before the
+    // first faded out simply replaces it.
+    triggerActionToast(text) {
+      if (text) this.actionToast = text
+    },
+
+    // Direct overwrite, unlike applyEffects()'s own `effects.flags` (which
+    // ACCUMULATES a numeric delta rather than setting it — right for an
+    // authored "+1 trust", wrong for "the player just typed 42"). Used by a
+    // `form` block (see FormBlock.vue) — no other engine path needs a flag
+    // *set* outright, so this stays its own small action rather than a new
+    // effects op.
+    setFlag(key, value) {
+      if (key) this.flags[key] = value
+    },
+
+    // `depth` is internal — only evaluateAutomations() below ever passes it,
+    // to cap how many "automation fires -> its own effect -> re-evaluate
+    // automations" generations can chain from ONE original call. Every
+    // ordinary caller (a choice, a timeline entry, a button) calls this with
+    // one argument, same as always.
+    applyEffects(effects, depth = 0) {
       if (!effects) return
 
       if (effects.flags) {
@@ -2013,12 +2149,39 @@ export const useStoryStore = defineStore('story', {
           if (op.mode === 'remove') {
             if (op.itemKey) delete map[op.itemKey]
           } else if (op.mode === 'increment') {
-            if (op.itemKey) map[op.itemKey] = (Number(map[op.itemKey]) || 0) + (Number(op.value) || 0)
+            if (op.itemKey)
+              map[op.itemKey] = (Number(map[op.itemKey]) || 0) + (Number(op.value) || 0)
           } else {
             const key =
               op.itemKey ||
               `item-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`
             map[key] = op.value
+          }
+        }
+      }
+
+      // effects.entities = [{ schemaId, entityId, mode: 'set'|'remove',
+      // fields }] — same "list of ops, not object-keyed" shape as
+      // effects.collections above, for the same reason (one effect can touch
+      // more than one entity, or the same one twice). 'set' MERGES `fields`
+      // onto whatever's already at that id (Object.assign, not overwrite) so
+      // an author can update a single field — e.g. just `humeur` — without
+      // re-specifying every other field of that instance; entityId left
+      // blank auto-generates one, same id-gen shape as the collections
+      // 'add' case just above. 'remove' with no matching entityId is a
+      // silent no-op, same "nothing to do" spirit as collections' 'remove'.
+      if (effects.entities) {
+        for (const op of effects.entities) {
+          if (!op.schemaId) continue
+          if (!this.entities[op.schemaId]) this.entities[op.schemaId] = {}
+          const bucket = this.entities[op.schemaId]
+          if (op.mode === 'remove') {
+            if (op.entityId) delete bucket[op.entityId]
+          } else {
+            const id =
+              op.entityId ||
+              `entity-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`
+            bucket[id] = { ...bucket[id], ...op.fields }
           }
         }
       }
@@ -2101,6 +2264,99 @@ export const useStoryStore = defineStore('story', {
             text: i18n.global.t('social.newFollowerNotification'),
           })
         }
+      }
+
+      this.evaluateAutomations(depth)
+    },
+
+    // --- automations (Données tab) -------------------------------------------
+    // A small reactive rule engine layered ON TOP of checkConditions/
+    // applyEffects, not a second narrative system: each rule in
+    // `game.automations[]` is `{ id, label, requires, action, repeatMode:
+    // 'once'|'count'|'unlimited', repeatCount }`. Re-evaluated after EVERY
+    // applyEffects() call (the single choke point every flag/entity/
+    // collection mutation already flows through) — exact, reacts the instant
+    // a mutation happens. ALSO polled every 15s (see `automationPollTimer`,
+    // started in loadProject()) for the one case that isn't a mutation at
+    // all: a condition on a `schedule` field, whose resolved value changes
+    // purely from real time passing.
+    //
+    // Fires on the FALSE -> TRUE transition only (edge-triggered), never on
+    // every re-check while already true — `automationState[id].active`
+    // (real save data, not in NON_PERSISTED_KEYS) remembers which side of
+    // the condition each rule was on last time, so "already fired" survives
+    // a reload. `repeatMode` caps how many transitions are allowed to
+    // actually run the action ('once' = 1, 'count' = the author's own
+    // number, 'unlimited' = no cap) — a rule can keep flipping true/false
+    // past its cap without erroring, it just stops firing.
+    //
+    // A firing rule ALSO emits the fixed `automation.fired` engine trigger
+    // (see triggers.js), same precedent as a button emitting `button.pressed`
+    // — lets the Events tab react to it too, chaining into the exact same
+    // condition/effects/then machinery, no separate concept needed.
+    //
+    // `depth` caps the "automation's own effect re-satisfies its own
+    // condition" cascade — capped at the TOP (evaluateAutomations), not
+    // inside runAutomationAction, so one generation = one full
+    // evaluate-then-fire pass. Known gap: a `triggerEntry` action's nested
+    // timeline can itself call applyEffects() through unrelated existing
+    // call sites that don't thread `depth` through (they never needed to
+    // before this) — those re-enter at depth 0, so a badly authored
+    // automation reachable ONLY through that path isn't caught. Accepted for
+    // now, same spirit as this engine's other documented partial guards
+    // (see runThen's own timelineResume-clobber comment).
+    evaluateAutomations(depth = 0) {
+      if (depth > 5) return
+      const automations = this.project?.gameConfig?.automations || []
+      for (const rule of automations) {
+        if (!rule.id) continue
+        const nowTrue = this.checkConditions(rule.requires)
+        const state = (this.automationState[rule.id] ||= { active: false, firedCount: 0 })
+        if (!nowTrue) {
+          state.active = false
+          continue
+        }
+        if (state.active) continue // already true last check — not a new transition
+        state.active = true
+        const cap =
+          rule.repeatMode === 'once'
+            ? 1
+            : rule.repeatMode === 'count'
+              ? (rule.repeatCount ?? 1)
+              : Infinity
+        if (state.firedCount >= cap) continue
+        state.firedCount++
+        emitEngineEvent('automation.fired', { automationId: rule.id })
+        this.runAutomationAction(rule.action, depth + 1)
+      }
+    },
+
+    // Subset of the button-action catalog (see useBlockAction.js) that needs
+    // no `inject()`-supplied context — an automation isn't rendered inside
+    // any specific app screen, so `navigateScreen`/`openSheet`/`closeSheet`/
+    // `requestInput` (which all need a CustomAppRenderer ancestor to inject
+    // from) aren't offered in its action editor (BlockActionEditor's
+    // `excludeKinds`) and are silently ignored here if a saved rule somehow
+    // still has one. Everything else — modify values, show a toast, open an
+    // app, chain steps, wait, run a scene — is the exact same behavior as a
+    // button tap, just fired by a condition instead of a click.
+    async runAutomationAction(action, depth = 0) {
+      if (!action || action.type === 'none') return
+      if (action.requires && !this.checkConditions(action.requires)) return
+      const phone = usePhoneStore()
+      if (action.type === 'effect') this.applyEffects(action.effects, depth)
+      else if (action.type === 'toast') {
+        this.triggerActionToast(resolveDynamicText(action.toastText, this))
+      } else if (action.type === 'openApp') {
+        phone.openApp(action.appId, { screenId: action.screenId || null })
+      } else if (action.type === 'sequence') {
+        for (const step of action.steps || []) await this.runAutomationAction(step, depth)
+      } else if (action.type === 'wait') {
+        await new Promise((resolve) => setTimeout(resolve, action.ms || 0))
+      } else if (action.type === 'triggerEntry') {
+        await new Promise((resolve) => {
+          this.runThen(action.then || [], 0, this.currentChapter, resolve)
+        })
       }
     },
 

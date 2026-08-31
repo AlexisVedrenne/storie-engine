@@ -33,8 +33,8 @@
           <q-tab name="chapters" icon="auto_stories">
             <q-tooltip>{{ t('editorPage.tabChapters') }}</q-tooltip>
           </q-tab>
-          <q-tab name="events" icon="sensors">
-            <q-tooltip>{{ t('editorPage.tabEvents') }}</q-tooltip>
+          <q-tab name="reactions" icon="sensors">
+            <q-tooltip>{{ t('editorPage.tabReactions') }}</q-tooltip>
           </q-tab>
           <q-tab name="interactions" icon="touch_app">
             <q-tooltip>{{ t('editorPage.tabInteractions') }}</q-tooltip>
@@ -42,11 +42,8 @@
           <q-tab name="apps" icon="widgets">
             <q-tooltip>{{ t('editorPage.tabApps') }}</q-tooltip>
           </q-tab>
-          <q-tab name="contacts" icon="contacts">
-            <q-tooltip>{{ t('editorPage.tabContacts') }}</q-tooltip>
-          </q-tab>
-          <q-tab name="threads" icon="groups">
-            <q-tooltip>{{ t('editorPage.tabThreads') }}</q-tooltip>
+          <q-tab name="data" icon="storage">
+            <q-tooltip>{{ t('editorPage.tabData') }}</q-tooltip>
           </q-tab>
           <q-tab name="game" icon="sports_esports">
             <q-tooltip>{{ t('editorPage.tabGame') }}</q-tooltip>
@@ -101,7 +98,14 @@
              replient dans un seul bouton "more_vert" (voir plus bas) — le
              markup ci-dessous reste identique à avant, juste conditionné. -->
         <template v-if="!topbarCompact">
-          <q-btn dense flat round icon="search" class="btn-ghost" @click="globalSearchDialogRef?.open()">
+          <q-btn
+            dense
+            flat
+            round
+            icon="search"
+            class="btn-ghost"
+            @click="globalSearchDialogRef?.open()"
+          >
             <q-tooltip>{{ t('editorPage.globalSearchTooltip') }}</q-tooltip>
           </q-btn>
           <q-btn
@@ -265,7 +269,14 @@
              EditorSettingsDialog.vue). Tout à droite, après Enregistrer —
              dernier item de la barre, un seul bouton, pas de variante
              compacte nécessaire. -->
-        <q-btn dense flat round icon="settings" class="btn-ghost" @click="editorSettingsDialogRef?.open()">
+        <q-btn
+          dense
+          flat
+          round
+          icon="settings"
+          class="btn-ghost"
+          @click="editorSettingsDialogRef?.open()"
+        >
           <q-tooltip>{{ t('editorSettings.title') }}</q-tooltip>
         </q-btn>
         <EditorSettingsDialog
@@ -434,8 +445,27 @@
         >
           <template #before>
             <q-tab-panels class="pane chapters-pane" v-model="viewMode" animated>
-              <q-tab-panel name="events">
-                <EventList v-model="selectedEventIndex" />
+              <q-tab-panel name="reactions" class="data-panel">
+                <q-tabs
+                  dense
+                  no-caps
+                  v-model="reactionsSubTab"
+                  class="data-subtabs"
+                  active-color="primary"
+                  indicator-color="primary"
+                  align="left"
+                >
+                  <q-tab name="events" :label="t('editorPage.reactionsSubEvents')" />
+                  <q-tab name="automations" :label="t('editorPage.reactionsSubAutomations')" />
+                </q-tabs>
+                <q-separator />
+                <div class="data-subpanel">
+                  <EventList v-if="reactionsSubTab === 'events'" v-model="selectedEventIndex" />
+                  <AutomationList
+                    v-else-if="reactionsSubTab === 'automations'"
+                    v-model="selectedAutomationIndex"
+                  />
+                </div>
               </q-tab-panel>
               <q-tab-panel name="interactions">
                 <InteractionDefList v-model="selectedInteractionIndex" />
@@ -443,12 +473,35 @@
               <q-tab-panel name="apps">
                 <CustomAppList v-model="selectedCustomAppIndex" />
               </q-tab-panel>
-              <q-tab-panel name="contacts">
-                <ContactList v-model="selectedContactIndex"
-              /></q-tab-panel>
-              <q-tab-panel name="threads">
-                <ThreadList v-model="selectedThreadIndex"
-              /></q-tab-panel>
+              <q-tab-panel name="data" class="data-panel">
+                <q-tabs
+                  dense
+                  no-caps
+                  v-model="dataSubTab"
+                  class="data-subtabs"
+                  active-color="primary"
+                  indicator-color="primary"
+                  align="left"
+                >
+                  <q-tab name="flags" :label="t('editorPage.dataSubFlags')" />
+                  <q-tab name="schemas" :label="t('editorPage.dataSubSchemas')" />
+                  <q-tab name="contacts" :label="t('editorPage.dataSubContacts')" />
+                  <q-tab name="threads" :label="t('editorPage.dataSubThreads')" />
+                </q-tabs>
+                <q-separator />
+                <div class="data-subpanel">
+                  <EntitySchemaList v-if="dataSubTab === 'schemas'" v-model="selectedSchemaIndex" />
+                  <ContactList
+                    v-else-if="dataSubTab === 'contacts'"
+                    v-model="selectedContactIndex"
+                  />
+                  <ThreadList v-else-if="dataSubTab === 'threads'" v-model="selectedThreadIndex" />
+                  <div v-else class="empty-state">
+                    <q-icon name="flag" size="40px" />
+                    {{ t('editorPage.flagsSubtabHint') }}
+                  </div>
+                </div>
+              </q-tab-panel>
               <q-tab-panel name="game">
                 <div class="empty-state">
                   <q-icon name="sports_esports" size="40px" />
@@ -475,12 +528,21 @@
                   transition-next="fade"
                   class="pane timeline-pane"
                 >
-                  <q-tab-panel name="events">
-                    <EventForm v-if="selectedEvent" :event="selectedEvent" />
-                    <div v-else class="empty-state">
-                      <q-icon name="sensors" size="40px" />
-                      {{ t('editorPage.eventsEmptyState') }}
-                    </div>
+                  <q-tab-panel name="reactions">
+                    <template v-if="reactionsSubTab === 'events'">
+                      <EventForm v-if="selectedEvent" :event="selectedEvent" />
+                      <div v-else class="empty-state">
+                        <q-icon name="sensors" size="40px" />
+                        {{ t('editorPage.eventsEmptyState') }}
+                      </div>
+                    </template>
+                    <template v-else-if="reactionsSubTab === 'automations'">
+                      <AutomationForm v-if="selectedAutomationDef" :def="selectedAutomationDef" />
+                      <div v-else class="empty-state">
+                        <q-icon name="bolt" size="40px" />
+                        {{ t('editorPage.automationsEmptyState') }}
+                      </div>
+                    </template>
                   </q-tab-panel>
 
                   <q-tab-panel name="interactions">
@@ -495,27 +557,41 @@
                   </q-tab-panel>
 
                   <q-tab-panel name="apps">
-                    <CustomAppEditor v-if="selectedCustomApp" :def="selectedCustomApp" />
+                    <CustomAppEditor
+                      v-if="selectedCustomApp"
+                      :def="selectedCustomApp"
+                      :test-mode-on="testModeOn"
+                      @toggle-test-mode="toggleTestMode"
+                    />
                     <div v-else class="empty-state">
                       <q-icon name="widgets" size="40px" />
                       {{ t('editorPage.appsEmptyState') }}
                     </div>
                   </q-tab-panel>
 
-                  <q-tab-panel name="contacts">
-                    <ContactForm v-if="selectedContact" :contact="selectedContact" />
-                    <div v-else class="empty-state">
-                      <q-icon name="contacts" size="40px" />
-                      {{ t('editorPage.contactsEmptyState') }}
-                    </div>
-                  </q-tab-panel>
-
-                  <q-tab-panel name="threads">
-                    <ThreadForm v-if="selectedThread" :thread="selectedThread" />
-                    <div v-else class="empty-state">
-                      <q-icon name="groups" size="40px" />
-                      {{ t('editorPage.threadsEmptyState') }}
-                    </div>
+                  <q-tab-panel name="data">
+                    <FlagsPanel v-if="dataSubTab === 'flags'" :game="story.project.gameConfig" />
+                    <template v-else-if="dataSubTab === 'schemas'">
+                      <EntitySchemaForm v-if="selectedSchemaDef" :def="selectedSchemaDef" />
+                      <div v-else class="empty-state">
+                        <q-icon name="dataset" size="40px" />
+                        {{ t('editorPage.schemasEmptyState') }}
+                      </div>
+                    </template>
+                    <template v-else-if="dataSubTab === 'contacts'">
+                      <ContactForm v-if="selectedContact" :contact="selectedContact" />
+                      <div v-else class="empty-state">
+                        <q-icon name="contacts" size="40px" />
+                        {{ t('editorPage.contactsEmptyState') }}
+                      </div>
+                    </template>
+                    <template v-else-if="dataSubTab === 'threads'">
+                      <ThreadForm v-if="selectedThread" :thread="selectedThread" />
+                      <div v-else class="empty-state">
+                        <q-icon name="groups" size="40px" />
+                        {{ t('editorPage.threadsEmptyState') }}
+                      </div>
+                    </template>
                   </q-tab-panel>
 
                   <q-tab-panel name="game">
@@ -547,6 +623,7 @@
               <template #after>
                 <div class="pane preview-pane">
                   <div id="phone-slot-docked"></div>
+                  <VariableInspectorPanel v-if="viewMode === 'apps'" />
                 </div>
               </template>
             </q-splitter>
@@ -657,6 +734,12 @@ import InteractionDefList from '@/editor/components/InteractionDefList.vue'
 import InteractionDefForm from '@/editor/components/InteractionDefForm.vue'
 import CustomAppList from '@/editor/components/CustomAppList.vue'
 import CustomAppEditor from '@/editor/components/CustomAppEditor.vue'
+import VariableInspectorPanel from '@/editor/components/VariableInspectorPanel.vue'
+import { generateTestData } from '@/editor/utils/generateTestData'
+import EntitySchemaList from '@/editor/components/EntitySchemaList.vue'
+import EntitySchemaForm from '@/editor/components/EntitySchemaForm.vue'
+import AutomationList from '@/editor/components/AutomationList.vue'
+import AutomationForm from '@/editor/components/AutomationForm.vue'
 import AssetsPanel from '@/editor/components/AssetsPanel.vue'
 import AssetTree from '@/editor/components/AssetTree.vue'
 import LocaleList from '@/editor/components/LocaleList.vue'
@@ -705,18 +788,17 @@ const topbarCompact = computed(() => $q.screen.width < TOPBAR_COLLAPSE_WIDTH)
 const topbarDrawerOpen = ref(false)
 const navDrawerOpen = ref(false)
 
-// Alimente le drawer de navigation compact — mêmes 10 destinations que la
-// q-tabs pleine largeur, mais avec un libellé COURT (tabEvents/
+// Alimente le drawer de navigation compact — mêmes 9 destinations que la
+// q-tabs pleine largeur, mais avec un libellé COURT (tabReactions/
 // tabInteractions/tabApps sont des phrases-tooltip complètes, trop longues
 // pour une ligne de liste — voir editorPage.navLabel* ci-dessous), pas la
 // description longue utilisée comme tooltip sur les onglets en icône.
 const NAV_TABS = [
   { name: 'chapters', icon: 'auto_stories', labelKey: 'editorPage.tabChapters' },
-  { name: 'events', icon: 'sensors', labelKey: 'editorPage.navLabelEvents' },
+  { name: 'reactions', icon: 'sensors', labelKey: 'editorPage.navLabelReactions' },
   { name: 'interactions', icon: 'touch_app', labelKey: 'editorPage.navLabelInteractions' },
   { name: 'apps', icon: 'widgets', labelKey: 'editorPage.navLabelApps' },
-  { name: 'contacts', icon: 'contacts', labelKey: 'editorPage.tabContacts' },
-  { name: 'threads', icon: 'groups', labelKey: 'editorPage.tabThreads' },
+  { name: 'data', icon: 'storage', labelKey: 'editorPage.navLabelData' },
   { name: 'game', icon: 'sports_esports', labelKey: 'editorPage.tabGame' },
   { name: 'assets', icon: 'folder', labelKey: 'editorPage.tabAssets' },
   { name: 'i18n', icon: 'translate', labelKey: 'editorPage.tabI18n' },
@@ -731,7 +813,7 @@ const globalSearchDialogRef = ref(null)
 // Explicit persist — this dialog opens on top of the 'chapters' tab, whose
 // dirty/save watch is armed on `selectedChapter`, not on `gameConfig` (see
 // activeResource below), so editing a flag's label here needs its own
-// write, same IPC call as the 'game'/'events' tabs' own save() branch.
+// write, same IPC call as the 'game'/'reactions' tabs' own save() branch.
 async function onFlagsDialogHide() {
   await window.storieAPI.saveGame({
     rootPath: story.project.rootPath,
@@ -790,6 +872,27 @@ const selectedCustomAppIndex = ref(0)
 const selectedCustomApp = computed(
   () => story.project?.customApps?.[selectedCustomAppIndex.value] || null,
 )
+const selectedSchemaIndex = ref(0)
+const selectedSchemaDef = computed(
+  () => story.project?.gameConfig?.entitySchemas?.[selectedSchemaIndex.value] || null,
+)
+const selectedAutomationIndex = ref(0)
+const selectedAutomationDef = computed(
+  () => story.project?.gameConfig?.automations?.[selectedAutomationIndex.value] || null,
+)
+// The 'Données' tab groups 4 catalogs that used to each have their own
+// top-level tab (Flags was a dialog, not even a tab) — one topbar slot
+// instead of four, with this picking which of the four shows. 'flags' has
+// no per-item selection (FlagsPanel lists everything at once), so it's the
+// only one with nothing analogous to selectedContactIndex.
+const dataSubTab = ref('flags')
+// Same merge, one level up: Events and Automations are the same shape
+// (trigger/condition -> effects/then) and used to each have their own slot
+// (Events was standalone, Automations briefly lived under Données) — one
+// 'Réactions' tab instead, picking which of the two shows. Interactions
+// stays its OWN top-level tab: it's a gesture-sequence builder referenced by
+// id from the timeline, not a condition-driven reaction like these two.
+const reactionsSubTab = ref('events')
 // Selected folder path within assets/ ('' = root) — same lift-state-up
 // pattern as the selection refs above, shared between AssetTree (left pane)
 // and AssetsPanel (middle pane, filters its grid to this folder).
@@ -802,19 +905,21 @@ const selectedSeedBucket = ref('messages')
 // the dirty flag/autosave watch below is watching (via resolveResource) and
 // to give the global undo/redo history (useUndoHistory.js) something
 // stable to tag each entry with, independent of what's on screen at the
-// moment an entry is undone. 'game'/'events'/'interactions' deliberately
+// moment an entry is undone. 'game'/'reactions'/'interactions' deliberately
 // collapse to the SAME descriptor — they all live in game.js, one file,
 // one resource, not three (see resolveResource's own comment).
 function currentDescriptor() {
   switch (viewMode.value) {
     case 'chapters':
       return selectedChapter.value ? { kind: 'chapter', id: selectedChapter.value.id } : null
-    case 'contacts':
-      return { kind: 'contacts' }
-    case 'threads':
-      return { kind: 'threads' }
+    case 'data':
+      if (dataSubTab.value === 'contacts') return { kind: 'contacts' }
+      if (dataSubTab.value === 'threads') return { kind: 'threads' }
+      // 'flags'/'schemas' both live in gameConfig, same file as
+      // reactions/interactions below.
+      return { kind: 'game' }
     case 'game':
-    case 'events':
+    case 'reactions':
     case 'interactions':
       return { kind: 'game' }
     case 'apps':
@@ -893,22 +998,41 @@ function navigateToResource(descriptor, hint) {
       return true
     }
     case 'contacts':
-      viewMode.value = 'contacts'
+      viewMode.value = 'data'
+      dataSubTab.value = 'contacts'
       return true
     case 'threads':
-      viewMode.value = 'threads'
+      viewMode.value = 'data'
+      dataSubTab.value = 'threads'
       return true
     case 'game':
-      // navHint picks the right sub-tab/row (Jeu/Events/Interactions all
-      // share one descriptor, see currentDescriptor's comment) — without
-      // it, an edit made in Events would land on Jeu, which shows neither
-      // the event list nor its form: correctly undone, invisibly so.
-      viewMode.value = hint?.viewMode || 'game'
-      if (hint?.viewMode === 'events' && hint.eventIndex != null) {
-        selectedEventIndex.value = hint.eventIndex
-      }
-      if (hint?.viewMode === 'interactions' && hint.interactionIndex != null) {
-        selectedInteractionIndex.value = hint.interactionIndex
+      // navHint picks the right sub-tab/row (Jeu/Réactions/Interactions/
+      // Données all share one descriptor, see currentDescriptor's comment)
+      // — without it, an edit made in Events would land on Jeu, which shows
+      // neither the event list nor its form: correctly undone, invisibly so.
+      // 'schemas'/'flags' route through the merged Données tab, 'events'/
+      // 'automations' through the merged Réactions tab, rather than being
+      // top-level viewModes themselves.
+      if (hint?.viewMode === 'schemas') {
+        viewMode.value = 'data'
+        dataSubTab.value = 'schemas'
+        if (hint.schemaIndex != null) selectedSchemaIndex.value = hint.schemaIndex
+      } else if (hint?.viewMode === 'flags') {
+        viewMode.value = 'data'
+        dataSubTab.value = 'flags'
+      } else if (hint?.viewMode === 'events') {
+        viewMode.value = 'reactions'
+        reactionsSubTab.value = 'events'
+        if (hint.eventIndex != null) selectedEventIndex.value = hint.eventIndex
+      } else if (hint?.viewMode === 'automations') {
+        viewMode.value = 'reactions'
+        reactionsSubTab.value = 'automations'
+        if (hint.automationIndex != null) selectedAutomationIndex.value = hint.automationIndex
+      } else if (hint?.viewMode === 'interactions') {
+        viewMode.value = 'interactions'
+        if (hint.interactionIndex != null) selectedInteractionIndex.value = hint.interactionIndex
+      } else {
+        viewMode.value = 'game'
       }
       return true
     case 'app': {
@@ -933,14 +1057,27 @@ function navigateToResource(descriptor, hint) {
 }
 
 // Non-identity context captured alongside a history entry — see
-// navigateToResource's 'game' case for why this exists (Jeu/Events/
-// Interactions share one descriptor but need different sub-tab navigation).
+// navigateToResource's 'game' case for why this exists (Jeu/Réactions/
+// Interactions/Données-schémas-et-flags share one descriptor but need
+// different sub-tab navigation). Données' 'contacts'/'threads' sub-tabs
+// don't need an entry here — they resolve to their OWN descriptor kind
+// ('contacts'/'threads', not 'game'), which navigateToResource already
+// routes straight back to the Données tab on its own.
 function currentNavHint() {
-  if (viewMode.value === 'events') {
+  if (viewMode.value === 'reactions' && reactionsSubTab.value === 'events') {
     return { viewMode: 'events', eventIndex: selectedEventIndex.value }
+  }
+  if (viewMode.value === 'reactions' && reactionsSubTab.value === 'automations') {
+    return { viewMode: 'automations', automationIndex: selectedAutomationIndex.value }
   }
   if (viewMode.value === 'interactions') {
     return { viewMode: 'interactions', interactionIndex: selectedInteractionIndex.value }
+  }
+  if (viewMode.value === 'data' && dataSubTab.value === 'schemas') {
+    return { viewMode: 'schemas', schemaIndex: selectedSchemaIndex.value }
+  }
+  if (viewMode.value === 'data' && dataSubTab.value === 'flags') {
+    return { viewMode: 'flags' }
   }
   return null
 }
@@ -1012,6 +1149,7 @@ watch(
     viewMode,
     selectedIndex,
     selectedCustomAppIndex,
+    dataSubTab,
     selectedLocale,
     selectedBucket,
     selectedSeedBucket,
@@ -1120,20 +1258,21 @@ async function save() {
         sourceFile: chapter.__sourceFile,
         source: serializeChapter(chapter),
       })
-    } else if (viewMode.value === 'contacts') {
+    } else if (viewMode.value === 'data' && dataSubTab.value === 'contacts') {
       await window.storieAPI.saveContacts({
         rootPath: story.project.rootPath,
         source: serializeContacts(story.project.contacts),
       })
-    } else if (viewMode.value === 'threads') {
+    } else if (viewMode.value === 'data' && dataSubTab.value === 'threads') {
       await window.storieAPI.saveThreads({
         rootPath: story.project.rootPath,
         source: serializeThreads(story.project.threads),
       })
     } else if (
       viewMode.value === 'game' ||
-      viewMode.value === 'events' ||
-      viewMode.value === 'interactions'
+      viewMode.value === 'reactions' ||
+      viewMode.value === 'interactions' ||
+      (viewMode.value === 'data' && ['flags', 'schemas'].includes(dataSubTab.value))
     ) {
       await window.storieAPI.saveGame({
         rootPath: story.project.rootPath,
@@ -1235,16 +1374,53 @@ function previewFrom(chapterId) {
 // CustomAppRenderer.vue reads story.project.customApps reactively, every
 // block edit shows up on the preview immediately, no extra wiring needed
 // beyond having the right app open.
-function previewCustomApp(appId) {
-  if (!story.playerName) {
-    const osLocale = story.availableLocales.some((l) => l.code === navigator.language)
-      ? navigator.language
-      : DEFAULT_LOCALE
-    story.setLocale(osLocale)
-    story.setPlayerName('DemoName')
-    story.setPlayerColor('#9c27b0')
-    phone.requestReboot()
+//
+// ALWAYS resets via story.loadProject() first (same mechanism the topbar's
+// "Relancer l'aperçu" button uses, see restartPreview() above) — not just
+// when playerName is empty. story.startIfNeeded()'s own `if (this.started)
+// return` guard otherwise makes this a no-op once a session has started
+// once, which used to mean entity-schema seed instances (or anything else
+// re-derived at start) added mid-session never showed up in the Apps tab
+// without a manual full restart first — confirmed by a real user hitting
+// exactly this. playerName/locale/color are preserved across the reset
+// (defaulted only the first time) so the identity shown doesn't churn on
+// every app switch.
+// "Test as player" mode (pilier 07) — a per-open-app-session toggle, reset
+// whenever `selectedCustomApp` changes (see the watch just below) so it
+// never silently carries fake data into a DIFFERENT app. Turning it OFF
+// just calls previewCustomApp() again — the exact same clean reset
+// "Relancer l'aperçu" already does — rather than tracking/undoing exactly
+// what was injected.
+const testModeOn = ref(false)
+function toggleTestMode() {
+  if (!selectedCustomApp.value) return
+  testModeOn.value = !testModeOn.value
+  previewCustomApp(selectedCustomApp.value.id)
+  if (testModeOn.value) {
+    const { entities, flagCollections } = generateTestData(
+      selectedCustomApp.value,
+      story.project?.gameConfig,
+      story.project?.contacts,
+    )
+    Object.assign(story.entities, entities)
+    Object.assign(story.flagCollections, flagCollections)
   }
+}
+
+function previewCustomApp(appId) {
+  const prevName = story.playerName
+  const prevLocale = story.locale
+  const prevColor = story.playerColor
+  story.loadProject(story.project)
+  story.setLocale(
+    prevLocale ||
+      (story.availableLocales.some((l) => l.code === navigator.language)
+        ? navigator.language
+        : DEFAULT_LOCALE),
+  )
+  story.setPlayerName(prevName || 'DemoName')
+  story.setPlayerColor(prevColor || '#9c27b0')
+  phone.requestReboot()
   phone.unlock()
   phone.openApp(appId)
 }
@@ -1256,7 +1432,41 @@ function previewCustomApp(appId) {
 watch(
   () => (viewMode.value === 'apps' ? selectedCustomApp.value : null),
   (app) => {
-    if (app) previewCustomApp(app.id)
+    if (app) {
+      testModeOn.value = false
+      previewCustomApp(app.id)
+    }
+  },
+)
+
+// `story.entities` (what a `schedule`/`ledger`/`list source:'entity'` block
+// actually reads) is a SNAPSHOT taken from each schema's `seed` the moment
+// previewCustomApp() last ran — editing a seed instance's fields afterward
+// (e.g. adding a schedule slot in the Données > Schémas tab, still with the
+// same app open) mutates the schema's `seed` template but not that already-
+// materialized snapshot, so the preview silently keeps showing stale data
+// until something forces a fresh loadProject() — confirmed by a real user
+// whose schedule slot never highlighted until they used "Relancer l'aperçu".
+//
+// The source is a JSON STRING, not the live `entitySchemas` array with
+// `deep: true` — a deep watch on that array recurses into itself here:
+// previewCustomApp() calls story.loadProject(story.project), which does
+// `Object.assign(this, defaultState())` (defaultState().project is `null`)
+// immediately followed by `this.project = projectData` — two writes to
+// story.project in the same tick, which a deep watcher rooted at
+// `story.project?.gameConfig?.entitySchemas` sees as its own dependency
+// changing and re-fires on, calling previewCustomApp() again, forever
+// ("Maximum recursive updates exceeded", hit by a real user). A string
+// snapshot only changes when the actual seed CONTENT changes — loadProject()
+// doesn't touch schema.seed itself, so re-running it can't perturb this
+// string, and the watcher can't retrigger itself.
+watch(
+  () =>
+    viewMode.value === 'apps'
+      ? JSON.stringify(story.project?.gameConfig?.entitySchemas?.map((s) => s.seed) || null)
+      : null,
+  (signature) => {
+    if (signature && selectedCustomApp.value) previewCustomApp(selectedCustomApp.value.id)
   },
 )
 
@@ -1536,6 +1746,27 @@ async function openBuildStepper() {
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
+}
+
+/* Données tab (Flags/Schémas/Contacts/Groupes merged into one topbar slot) —
+   the list pane gets its own small nested tab strip instead of a 4th level
+   of topbar tabs; the form pane just switches on `dataSubTab` directly (see
+   template), no CSS of its own needed there. */
+.data-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 0;
+}
+
+.data-subtabs {
+  padding: 0 var(--space-2);
+  flex-shrink: 0;
+}
+
+.data-subpanel {
+  flex: 1;
+  overflow-y: auto;
 }
 
 .panel {

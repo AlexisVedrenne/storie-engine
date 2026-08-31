@@ -1,5 +1,5 @@
 <template>
-  <div class="block-builder">
+  <div class="block-builder" :class="{ nested: depth > 0 }">
     <div class="palette">
       <button
         v-for="kind in BLOCK_KINDS"
@@ -7,6 +7,8 @@
         type="button"
         class="palette-btn"
         draggable="true"
+        :title="t('blockBuilder.paletteBtnHint')"
+        @click="addBlock(kind.type)"
         @dragstart="onPaletteDragStart(kind.type, $event)"
         @dragend="clearDrag"
       >
@@ -29,7 +31,12 @@
     </div>
 
     <div class="drop-area" @dragover="onRootDragOver" @drop="performDrop">
-      <div v-if="!blocks.length" class="empty-hint">{{ t('blockBuilder.empty') }}</div>
+      <div v-if="!blocks.length && depth === 0" class="empty-state">
+        <q-icon name="widgets" size="28px" />
+        <p>{{ t('blockBuilder.emptyRootTitle') }}</p>
+        <p class="empty-state-detail">{{ t('blockBuilder.emptyRootDetail') }}</p>
+      </div>
+      <div v-else-if="!blocks.length" class="empty-hint">{{ t('blockBuilder.empty') }}</div>
 
       <template v-for="(block, i) in blocks" :key="i">
         <div class="drop-line" :class="{ active: dropIndex === i }" />
@@ -45,6 +52,8 @@
           @dragstart="onBlockDragStart(i, $event)"
           @dragover="onListDragOver(i, $event)"
           @dragend="clearDrag"
+          @mouseenter="phone.hoveredEditorBlock = block"
+          @mouseleave="onRowMouseLeave(block)"
         >
           <template #header>
             <q-icon name="drag_indicator" size="16px" class="drag-handle" />
@@ -79,7 +88,13 @@
             </q-item-section>
           </template>
           <div class="block-body">
-            <BlockPropertiesForm :block="block" :screens="screens" :item-scope="itemScope" />
+            <BlockPropertiesForm
+              :block="block"
+              :screens="screens"
+              :sheets="sheets"
+              :item-scope="itemScope"
+              :depth="depth"
+            />
           </div>
         </q-expansion-item>
       </template>
@@ -106,6 +121,10 @@ const phone = usePhoneStore()
 const props = defineProps({
   blocks: { type: Array, required: true },
   screens: { type: Array, default: () => [] },
+  // Every `sheet` block anywhere in the app (id + display label) — see
+  // BlockPropertiesForm.vue's own comment on this, same "derived, not
+  // hand-maintained" precedent as `screens`.
+  sheets: { type: Array, default: () => [] },
   // `false`, `'contacts'`, or `'flagCollection'` — set when this builder
   // edits a `list` block's per-item template (or is nested inside one),
   // and which of the two item shapes applies (see blockKinds.js's `list`
@@ -113,6 +132,12 @@ const props = defineProps({
   // VariablePickerBtn instances offer the matching `{item:...}` token set.
   // See resolveDynamicText.js.
   itemScope: { type: [Boolean, String], default: false },
+  // How many card/layout/list-template levels deep this instance is nested
+  // — 0 at a screen's own top level. Only used for the left indent guide
+  // (see .nested below) and to pick the empty-state treatment (a friendly
+  // onboarding panel only at the root; a terse one-liner everywhere nested,
+  // where a full explanation would just repeat itself down every branch).
+  depth: { type: Number, default: 0 },
 })
 
 const expanded = reactive({})
@@ -134,6 +159,25 @@ function duplicate(i) {
 function addPreset(preset) {
   props.blocks.push(JSON.parse(JSON.stringify(preset.build())))
   expanded[props.blocks.length - 1] = true
+}
+
+// Click, not just drag — dragging a palette button in was the ONLY way to
+// add a block until real users hit this and didn't discover it (confirmed
+// live). Appends to the end and jumps straight to it, same as addPreset()
+// above; drag & drop still works for both new blocks and reordering.
+function addBlock(type) {
+  props.blocks.push(defaultBlock(type))
+  const idx = props.blocks.length - 1
+  expanded[idx] = true
+  nextTick(() => rowRefs[idx]?.$el?.scrollIntoView({ behavior: 'smooth', block: 'center' }))
+}
+
+// Only clears the shared hover ref if IT'S STILL this block — without the
+// guard, quickly moving the pointer from row A to row B could fire A's
+// mouseleave (queued) after B's mouseenter already set the ref to B,
+// wiping out the correct highlight a moment after it appeared.
+function onRowMouseLeave(block) {
+  if (phone.hoveredEditorBlock === block) phone.hoveredEditorBlock = null
 }
 
 // Native HTML5 drag & drop, same hand-rolled approach as TimelineEditor.vue
@@ -317,6 +361,43 @@ watch(
   color: var(--color-text-muted);
   font-style: italic;
   padding: var(--space-2) 0;
+}
+
+/* Root-screen-only onboarding (see `depth === 0` in the template) — a
+   nested empty card/layout keeps the terser .empty-hint above instead,
+   since the full explanation would just repeat itself at every level. */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--space-1);
+  padding: var(--space-6) var(--space-3);
+  color: var(--color-text-muted);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.empty-state p {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--color-text);
+}
+
+.empty-state-detail {
+  font-size: var(--text-xs) !important;
+  color: var(--color-text-muted) !important;
+  max-width: 34ch;
+}
+
+/* Left indent guide for a card/layout/list-template's OWN nested builder —
+   without this, a nested palette+drop-area looked pixel-identical to the
+   screen's own top-level one, with nothing showing it's actually "inside"
+   the block above it. */
+.block-builder.nested {
+  border-left: 2px solid var(--color-border);
+  padding-left: var(--space-3);
+  margin-left: var(--space-1);
 }
 
 .drop-line {

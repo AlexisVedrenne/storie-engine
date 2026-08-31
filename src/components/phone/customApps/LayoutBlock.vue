@@ -23,7 +23,17 @@ import BlockList from './BlockList.vue'
 const props = defineProps({ block: { type: Object, required: true } })
 const wrapperStyle = computed(() =>
   props.block.bgColor
-    ? { background: props.block.bgColor, borderRadius: '14px', padding: '4px 14px' }
+    ? { background: props.block.bgColor, borderRadius: 'var(--app-radius)', padding: '4px 14px' }
     : {},
 )
 </script>
+
+<style scoped>
+/* Lets a nested `overlay` block (pilier 03) position itself against THIS
+   layout specifically instead of bubbling up to the screen root — the only
+   reason this file has a style block at all, LayoutBlock is otherwise
+   chrome-free by design (see wrapperStyle's own comment above). */
+.layout-block {
+  position: relative;
+}
+</style>

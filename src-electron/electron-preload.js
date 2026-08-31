@@ -65,6 +65,8 @@ contextBridge.exposeInMainWorld('storieAPI', {
   deleteCustomApp: (payload) => ipcRenderer.invoke('project:deleteCustomApp', payload),
   exportCustomApp: (payload) => ipcRenderer.invoke('project:exportCustomApp', payload),
   importCustomApp: (payload) => ipcRenderer.invoke('project:importCustomApp', payload),
+  exportTheme: (payload) => ipcRenderer.invoke('project:exportTheme', payload),
+  importTheme: () => ipcRenderer.invoke('project:importTheme'),
   buildAll: (payload) => ipcRenderer.invoke('project:buildAll', payload),
   startWebPreview: (payload) => ipcRenderer.invoke('project:startWebPreview', payload),
   stopWebPreview: () => ipcRenderer.invoke('project:stopWebPreview'),

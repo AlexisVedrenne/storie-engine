@@ -14,7 +14,8 @@ export default {
       'Este juego contiene escenas o temas destinados a un público adulto. Debes tener al menos 18 años para continuar.',
     confirmYes: 'Sí, tengo más de 18 años',
     confirmNo: 'No',
-    blocked: 'El acceso a este contenido requiere confirmar tu edad. Por favor, cierra la aplicación.',
+    blocked:
+      'El acceso a este contenido requiere confirmar tu edad. Por favor, cierra la aplicación.',
   },
 
   endScreen: {
@@ -243,6 +244,25 @@ export default {
       empty: 'Todavía no hay conversaciones.',
       privateNotice:
         'Las respuestas llegan mediante elecciones de la historia — no se puede escribir aquí.',
+    },
+    schedule: {
+      nowLabel: 'Ahora mismo',
+      unknown: 'Ubicación desconocida',
+      empty: 'Ningún horario definido todavía.',
+    },
+    ledger: {
+      empty: 'Aún no hay entradas.',
+    },
+    form: {
+      submit: 'Validar',
+    },
+    lookup: {
+      placeholderDefault: 'Buscar…',
+      prompt: 'Escribe algo para buscar.',
+      noResults: 'Sin resultados.',
+    },
+    map: {
+      empty: 'Ningún mapa definido.',
     },
   },
 }

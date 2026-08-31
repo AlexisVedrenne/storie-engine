@@ -6,11 +6,14 @@
 // per-block field.
 export const BLOCK_KINDS = [
   { type: 'header', icon: 'view_headline' },
+  { type: 'footer', icon: 'vertical_align_bottom' },
   { type: 'text', icon: 'notes' },
   { type: 'image', icon: 'image' },
   { type: 'avatar', icon: 'account_circle' },
   { type: 'row', icon: 'list' },
   { type: 'card', icon: 'crop_square' },
+  { type: 'overlay', icon: 'layers' },
+  { type: 'sheet', icon: 'call_to_action' },
   { type: 'layout', icon: 'view_column' },
   { type: 'badge', icon: 'label' },
   { type: 'divider', icon: 'horizontal_rule' },
@@ -18,6 +21,11 @@ export const BLOCK_KINDS = [
   { type: 'tabs', icon: 'tab' },
   { type: 'list', icon: 'repeat' },
   { type: 'conversations', icon: 'forum' },
+  { type: 'schedule', icon: 'schedule' },
+  { type: 'ledger', icon: 'show_chart' },
+  { type: 'form', icon: 'edit_note' },
+  { type: 'lookup', icon: 'search' },
+  { type: 'map', icon: 'map' },
 ]
 
 export function paletteIcon(type) {
@@ -27,7 +35,21 @@ export function paletteIcon(type) {
 export function defaultBlock(type) {
   switch (type) {
     case 'header':
-      return { type, title: '', icon: 'apps', color: '#4c8bf5' }
+      // `sticky` (pilier 03) pins the header to the top of the screen's own
+      // scroll area instead of scrolling away with the rest of the content
+      // — defaults false so every existing saved header renders unchanged.
+      return { type, title: '', icon: 'apps', color: '#4c8bf5', sticky: false }
+    case 'footer':
+      // The symmetric counterpart to header.sticky (pilier 03) — a row of
+      // action buttons pinned to the BOTTOM of the screen ("barre d'action
+      // fixe en bas d'un formulaire"). Same recursive-container shape as
+      // `layout` (row/column, its own `blocks[]`), not `card`'s padded-panel
+      // look. `sticky` defaults true here (unlike header) since a
+      // non-sticky footer is indistinguishable from just placing a `layout`
+      // block last — the toggle exists for the rarer "footer-styled but not
+      // pinned" case, matching the doc's own `header.sticky`/`footer.sticky`
+      // pairing.
+      return { type, direction: 'row', gap: 8, bgColor: '', sticky: true, blocks: [] }
     case 'text':
       return { type, style: 'body', content: '' }
     case 'image':
@@ -38,6 +60,27 @@ export function defaultBlock(type) {
       return { type, icon: '', label: '', sublabel: '', chevron: false }
     case 'card':
       return { type, blocks: [] }
+    case 'overlay':
+      // A positioned layer above the normal flow (pilier 03) — `anchor`
+      // picks one of 5 fixed corner/center presets, resolved against
+      // whichever ancestor sets `position: relative` (the screen root by
+      // default, or the nearest Card/Layout it's nested inside — see
+      // OverlayBlock.vue). Deliberately not a free x/y coordinate or an
+      // arbitrary-block anchor id — same bounded-catalog trade as every
+      // other block here.
+      return { type, anchor: 'top-right', blocks: [] }
+    case 'sheet':
+      // A modal that opens from a button's `openSheet` action (targeting
+      // `sheetId`) instead of taking a spot in the normal row/column flow —
+      // BlockList.vue never renders it inline, only CustomAppRenderer.vue
+      // does, as a backdrop + panel, when its `sheetId` matches whichever
+      // one a button opened. Only one sheet can be open at a time; switching
+      // screens always closes it. `blocks[]` is its own content, same
+      // recursive shape as `card`. `position` ('bottom'/'center'/'top',
+      // default 'bottom' — the original iOS-action-sheet-only behavior)
+      // picks where it docks and which edge(s) get rounded — see
+      // CustomAppRenderer.vue's SHEET_POSITIONS.
+      return { type, sheetId: '', position: 'bottom', blocks: [] }
     case 'layout':
       // Pure flex arranger — no background/padding chrome of its own,
       // unlike `card` (which is really "layout, column direction, + a
@@ -52,8 +95,14 @@ export function defaultBlock(type) {
       // `action.type`: 'none' (default, purely visual) | 'effect' (applies
       // flags/effects, same shape/mechanism as a choice option's own
       // `effects`) | 'navigateScreen' (switches this app's active screen,
-      // same mechanism as the `tabs` block). Small fixed catalog, not a
-      // generic action system — see ButtonBlock.vue.
+      // same mechanism as the `tabs` block) | 'event' (fires
+      // `button.pressed`) | 'toast' (shows `action.toastText` briefly, no
+      // other effect). Small fixed catalog, not a generic action system —
+      // see ButtonBlock.vue. Independent of which kind is picked: an
+      // optional `action.requires` gates the whole action (reuses
+      // checkConditions, same shape as a block's own display condition) —
+      // failing it no-ops and, if set, shows `action.onFailToast` instead
+      // (e.g. "Not enough funds.") rather than silently doing nothing.
       return { type, label: '', color: '#4c8bf5', action: { type: 'none' } }
     case 'tabs':
       return { type, tabs: [{ label: '', screenId: '' }] }
@@ -65,12 +114,23 @@ export function defaultBlock(type) {
       // iterates a collection flag's key->value map (story.flagCollections,
       // `flagKey` picks which one) — a growing history/log/inventory an
       // author builds via `effects.collections` (see EffectsBuilder.vue),
-      // not fixed project data. `template` is a block subtree (same shape
-      // as card/layout's own `blocks[]`) authored ONCE and repeated per
-      // item; its text fields can use the `{item:...}` tokens (see
-      // resolveDynamicText.js — CONTACT_ITEM_TOKENS or
-      // COLLECTION_ITEM_TOKENS depending on `source`).
-      return { type, source: 'contacts', onlyFollowed: false, flagKey: '', template: [] }
+      // not fixed project data. `source: 'entity'` iterates instances of an
+      // author-defined entity schema (story.entities, `schemaId` picks
+      // which one — see the Schémas tab / EntitySchemaForm.vue), for
+      // structured multi-field records a flat collection can't hold.
+      // `template` is a block subtree (same shape as card/layout's own
+      // `blocks[]`) authored ONCE and repeated per item; its text fields can
+      // use the `{item:...}` tokens (see resolveDynamicText.js —
+      // CONTACT_ITEM_TOKENS/COLLECTION_ITEM_TOKENS, or one token per field
+      // of the chosen schema for `source: 'entity'`).
+      return {
+        type,
+        source: 'contacts',
+        onlyFollowed: false,
+        flagKey: '',
+        schemaId: '',
+        template: [],
+      }
     case 'conversations':
       // The "conversation module" — real interactive chat, not just visual
       // (see docs — this is the first custom-app block that reads/writes
@@ -84,6 +144,97 @@ export function defaultBlock(type) {
       // `nameField` are the two display options asked for — which contact
       // info to render, not per-message content.
       return { type, showAvatar: true, nameField: 'name' }
+    case 'schedule':
+      // Shows ONE entity instance's own `type: 'schedule'` field (an array
+      // of `{ from, to, place }` slots, authored in EntitySchemaForm.vue) as
+      // a day timeline, highlighting whichever slot covers the current
+      // in-fiction time (story.resolvedClock()) — see ScheduleBlock.vue.
+      // `entityId: '*'` is the same sentinel the `{entity:...}` token uses
+      // (see resolveDynamicText.js) for "the first/only instance of that
+      // schema"; a specific id addresses one among several. Not a `list`
+      // variant — a list repeats a template once PER ITEM, this renders ONE
+      // item's own structured field.
+      return { type, schemaId: '', entityId: '*', fieldKey: '' }
+    case 'ledger':
+      // A numeric flag COLLECTION (story.flagCollections[flagKey], the same
+      // one `list` block's `source: 'flagCollection'` already reads —
+      // `story.collectionItems`) rendered as a mini area-chart + the entry
+      // list below it, for any value that varies over time: a currency
+      // balance, a reputation/trust score, anything an author already
+      // builds via `effects.collections`. Not its own data source — deliberately
+      // reuses collections rather than inventing a "ledger" concept, same
+      // spirit as `schedule` reusing entity fields instead of a new bucket.
+      // Non-numeric entries are ignored by the chart (coerced to 0) but
+      // still shown in the list.
+      return { type, flagKey: '' }
+    case 'form':
+      // The first block that lets the PLAYER write a value instead of just
+      // triggering an author-authored one. `target: 'flag'` writes
+      // `story.flags[flagKey]` directly (story.setFlag() — a real
+      // overwrite, not applyEffects()'s accumulate-by-default) with
+      // `inputType` (text/number/boolean) picked by the author, since a
+      // flag has no declared type of its own to read at runtime.
+      // `target: 'entity'` writes one field of an entity instance
+      // (`effects.entities`'s own 'set' op) — its input widget is inferred
+      // from that field's OWN declared schema type instead of asking the
+      // author to pick one again; only text/number/boolean/ref:contact
+      // fields are supported here (schedule/ref:entity are structured data,
+      // not a fit for a single form input). `entityId: '*'` is the usual
+      // first/only-instance sentinel — a form with no matching instance to
+      // write into silently does nothing, same "absent = no-op" spirit as
+      // every other block here.
+      return {
+        type,
+        label: '',
+        target: 'flag',
+        flagKey: '',
+        inputType: 'text',
+        schemaId: '',
+        entityId: '*',
+        fieldKey: '',
+        // 'live' (write on every keystroke) is the historical default, kept
+        // so existing saved blocks don't change behavior. 'blur' commits
+        // once the player leaves the field; 'button' defers to an explicit
+        // submit tap. `readonly` shows the current value without letting
+        // the player edit it (e.g. a form mixing an editable field with a
+        // computed one displayed the same way).
+        commitMode: 'live',
+        readonly: false,
+      }
+    case 'lookup':
+      // A fake search/browser (pilier 05) — `results[]` is author-authored
+      // ({ title, excerpt, source, requires, action }), each individually
+      // gated by its OWN `requires` (same RequiresBuilder every other
+      // condition in this project uses) so a result only becomes findable
+      // once the player has actually discovered whatever it's gated on.
+      // Filtering is plain client-side text matching (LookupBlock.vue)
+      // against the player's typed query — no results shown at all until
+      // they type something, same "search, don't browse" spirit as a real
+      // search engine. Generic to any "consult authored content" mechanic:
+      // archives, a forum, an internal database — not fixed to one theme.
+      // `action` (added right after shipping, per user feedback) is the
+      // SAME fixed catalog a button offers — authored via the shared
+      // BlockActionEditor.vue, run via the shared useBlockAction.js — a
+      // tapped result can apply an effect, open a sheet, jump to another
+      // app, etc., not just display text.
+      return { type, placeholder: '', results: [] }
+    case 'map':
+      // A fake map — an author-uploaded image shown at its own NATURAL
+      // size (never scaled down to fit the phone), inside a viewport the
+      // player drags to pan around when it's bigger than the screen — same
+      // "no real GPS/space modeling, just an image + labeled points" spirit
+      // the engine already commits to for `schedule`'s own place names (see
+      // that block's own comment). `pois[]` ({ x, y, label, icon, color,
+      // action }) are positioned in PERCENT of the image's own natural
+      // dimensions (0-100), not the viewport — stays correctly placed
+      // regardless of how much of the image happens to be scrolled into
+      // view. `action` is the SAME fixed catalog a button/lookup-result
+      // offers (BlockActionEditor.vue/useBlockAction.js) — a tap on a POI
+      // can apply an effect, open a sheet, trigger a scene, etc.
+      // `initialZoom` (%, 100 = the image's natural size) sets the starting
+      // zoom level; the player can then zoom in/out at runtime (+/- buttons,
+      // wheel, pinch — see MapBlock.vue), clamped 50-300%.
+      return { type, src: '', height: 280, pois: [], initialZoom: 100 }
     default:
       return { type }
   }

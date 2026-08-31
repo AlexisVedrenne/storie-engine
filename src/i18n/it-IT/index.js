@@ -244,5 +244,24 @@ export default {
       privateNotice:
         'Le risposte arrivano tramite le scelte della storia — non si può scrivere qui.',
     },
+    schedule: {
+      nowLabel: 'In questo momento',
+      unknown: 'Posizione sconosciuta',
+      empty: 'Nessuna fascia oraria ancora impostata.',
+    },
+    ledger: {
+      empty: 'Nessuna voce ancora.',
+    },
+    form: {
+      submit: 'Conferma',
+    },
+    lookup: {
+      placeholderDefault: 'Cerca…',
+      prompt: 'Digita qualcosa per cercare.',
+      noResults: 'Nessun risultato.',
+    },
+    map: {
+      empty: 'Nessuna mappa impostata.',
+    },
   },
 }

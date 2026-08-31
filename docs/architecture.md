@@ -2,7 +2,7 @@
 
 A technical map of the codebase for anyone picking this up cold — a contributor, a future
 maintainer, or an AI agent working on the repo. It assumes nothing about prior context beyond
-"this is a Quasar/Vue/Electron app." For the feature set from a *user's* point of view, see the
+"this is a Quasar/Vue/Electron app." For the feature set from a _user's_ point of view, see the
 [user guide](user-guide/README.md). For adding a new native app to the engine, see
 [Building a native app in code](creating-custom-apps.md).
 
@@ -33,7 +33,7 @@ Stories Engine is two things wearing one Electron window:
 Both live in the same `pnpm run dev:electron` process during development — the editor is really
 just "the engine, with an authoring UI wrapped around a live instance of it, plus a build pipeline
 that can eject a clean copy." That's the central fact this whole document explains: which source
-directories are the *shipped* engine, which are *editor-only*, and how the export step tells them
+directories are the _shipped_ engine, which are _editor-only_, and how the export step tells them
 apart.
 
 ```mermaid
@@ -69,17 +69,17 @@ flowchart LR
 
 Three top-level source areas, with one hard rule between them:
 
-| Directory | Ships in every export? | What it is |
-|---|---|---|
-| `src/engine/` | **Yes** | The runtime: Pinia stores, app/entry-type registries, events, interactions, VFX kinds, i18n instance, `assets.js`. |
-| `src/components/phone/` and `src/components/apps/` | **Yes** | The phone shell UI and every native app (Messages, Pixly, Calls, Gallery, Journal, Email, Settings). |
-| `src/components/shared/`, `src/boot/`, `src/i18n/`, `src/css/`, `src/utils/` | **Yes** | Small shared utilities, boot hooks, shipped-game chrome translations, global styles. |
-| `src/editor/` | **Never** | The authoring UI — forms, the chapter graph, the translation editor, cloud sync UI, everything under the `EditorPage.vue` tabs. |
-| `src/project/` | **Never** | Editor-only pure-JS helpers (chapter-graph layout, search, validation, serialization) used by the authoring tools, not by the runtime. |
+| Directory                                                                    | Ships in every export? | What it is                                                                                                                             |
+| ---------------------------------------------------------------------------- | ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/engine/`                                                                | **Yes**                | The runtime: Pinia stores, app/entry-type registries, events, interactions, VFX kinds, i18n instance, `assets.js`.                     |
+| `src/components/phone/` and `src/components/apps/`                           | **Yes**                | The phone shell UI and every native app (Messages, Pixly, Calls, Gallery, Journal, Email, Settings).                                   |
+| `src/components/shared/`, `src/boot/`, `src/i18n/`, `src/css/`, `src/utils/` | **Yes**                | Small shared utilities, boot hooks, shipped-game chrome translations, global styles.                                                   |
+| `src/editor/`                                                                | **Never**              | The authoring UI — forms, the chapter graph, the translation editor, cloud sync UI, everything under the `EditorPage.vue` tabs.        |
+| `src/project/`                                                               | **Never**              | Editor-only pure-JS helpers (chapter-graph layout, search, validation, serialization) used by the authoring tools, not by the runtime. |
 
 **Where this is actually enforced:** not by an ESLint rule (there isn't one) — by the copy list in
 [`src-electron/ipc/shellAssembly.js`](../src-electron/ipc/shellAssembly.js)'s `assembleShell()`.
-When building or LAN-previewing a project, that function copies, *by name*, exactly:
+When building or LAN-previewing a project, that function copies, _by name_, exactly:
 
 ```
 src/engine/  src/components/phone/  src/components/apps/  src/components/shared/
@@ -117,7 +117,7 @@ my-project/
 ├── contacts.js            # export default [{ id, name, color, pseudo, avatar, ... }]
 ├── threads.js              # export default [...] — only GROUP DM threads need an entry
 ├── game.js                # gameConfig: title, flags catalog, events, interactions, appOrder,
-│                           #   disabledApps, matureContent, sounds, icon...
+│                           #   disabledApps, matureContent, sounds, icon, entitySchemas...
 ├── chapters/
 │   ├── chapter1.js         # export default { id, title, timeline: [...], next: [...], position }
 │   └── ...                 # one file per chapter, freely nested in subfolders
@@ -132,13 +132,15 @@ my-project/
 ```
 
 **Loading**: `src-electron/ipc/project.js`'s `loadProjectFromDisk(rootPath)` runs in Electron's
-*main* process (the renderer has no filesystem access). It dynamically `import()`s every `.js`
+_main_ process (the renderer has no filesystem access). It dynamically `import()`s every `.js`
 file — chapters (recursively, so authors can organize them into subfolders), `contacts.js`,
 `threads.js`, `game.js`, every `seed/*.js` bucket, and every `i18n/<locale>/*.js` bucket — and
 assembles one plain object:
 
 ```js
-{ rootPath, manifest, chapters, contacts, threads, gameConfig, seed, i18n, assetsRoot, customApps }
+{
+  ;(rootPath, manifest, chapters, contacts, threads, gameConfig, seed, i18n, assetsRoot, customApps)
+}
 ```
 
 It's round-tripped through `JSON.parse(JSON.stringify(...))` before crossing the IPC boundary —
@@ -184,14 +186,15 @@ This is the narrative runtime. The core loop:
 - **`runThen(list, i, chapter, resume)`** — plays a `then: []` array (attached to a choice option,
   an event, an interaction's win/lose branch) one entry at a time with the same pacing/blocking
   rules as `advance()`, recursively threading `resume` through arbitrarily deep nesting.
-- **`checkConditions(requires)`** — evaluates `{ flags, following, collections }`, all ANDed
-  together. See [Conditions, effects, flags, events](#conditions-effects-flags-events).
-- **`applyEffects(effects)`** — the mutation side: flags (accumulate for numbers, set for
-  booleans), flag-collection ops (add/remove/increment), phone-widget state (weather/steps/
-  battery/network/clock), social deltas, new-follower notifications.
+- **`checkConditions(requires)`** — evaluates `{ flags, following, collections, entities }`, all
+  ANDed together. See [Conditions, effects, flags, events](#conditions-effects-flags-events).
+- **`applyEffects(effects, depth = 0)`** — the mutation side: flags (accumulate for numbers, set
+  for booleans), flag-collection ops (add/remove/increment), phone-widget state (weather/steps/
+  battery/network/clock), social deltas, new-follower notifications. Ends every call with
+  `this.evaluateAutomations(depth)` — see [Automations](#automations) below.
 - **Save/load**: `save()` writes everything except `NON_PERSISTED_KEYS` (transient UI-ish state —
   `activeChoice`, `pendingCall`, notifications, typing indicators, etc.) to
-  `window.storieGameSave`, a bridge that only exists in an *exported* game (the editor's own live
+  `window.storieGameSave`, a bridge that only exists in an _exported_ game (the editor's own live
   preview is purely in-memory). Three fixed save slots (`activeSlotId` picks which one `save()`
   writes to); `loadSlot(slotId)` restores a snapshot and re-runs `advance()` once (in case a
   chapter that had no valid outgoing edge when the save happened has one now). All state lives in
@@ -211,22 +214,22 @@ Three genuinely independent translation mechanisms exist, on purpose — conflat
 was tried informally in earlier design notes and rejected because switching one must never affect
 the other:
 
-| System | Location | Drives | Ships? |
-|---|---|---|---|
-| Shipped-game chrome | `src/i18n/<locale>/index.js` | vue-i18n instance (`src/engine/i18n/instance.js`) — boot screen, setup wizard, settings, native app labels. 5 locales: fr-FR (default), en-US, es-ES, de-DE, it-IT. | Yes |
-| Editor's own UI | `src/editor/i18n/<locale>.js` | The editor's labels/tooltips/dialogs — a **custom flat-lookup** (`editorT()`), not a second vue-i18n instance. Same 5 locales, switched independently in the editor's own settings. | Never |
-| A project's narrative content | project's own `i18n/<locale>/<bucket>.js` | `story.translateStory()`/`story.fill()` — the actual chapter text, contact bios, custom-app block text the author wrote. Any locale code the author adds. | Yes (it's project data, not engine code) |
+| System                        | Location                                  | Drives                                                                                                                                                                              | Ships?                                   |
+| ----------------------------- | ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------- |
+| Shipped-game chrome           | `src/i18n/<locale>/index.js`              | vue-i18n instance (`src/engine/i18n/instance.js`) — boot screen, setup wizard, settings, native app labels. 5 locales: fr-FR (default), en-US, es-ES, de-DE, it-IT.                 | Yes                                      |
+| Editor's own UI               | `src/editor/i18n/<locale>.js`             | The editor's labels/tooltips/dialogs — a **custom flat-lookup** (`editorT()`), not a second vue-i18n instance. Same 5 locales, switched independently in the editor's own settings. | Never                                    |
+| A project's narrative content | project's own `i18n/<locale>/<bucket>.js` | `story.translateStory()`/`story.fill()` — the actual chapter text, contact bios, custom-app block text the author wrote. Any locale code the author adds.                           | Yes (it's project data, not engine code) |
 
 **Why the editor UI isn't a second vue-i18n instance**: vue-i18n's "local scope" composer would
 work, but every single descendant component in the tree has to re-declare
 `useI18n({ useScope: 'local' })` in the right order — miss one and it silently falls back to the
-*global* (story/game) locale instead of erroring, a nasty bug across 30+ files. A flat reactive
+_global_ (story/game) locale instead of erroring, a nasty bug across 30+ files. A flat reactive
 `ref` + dot-path lookup (`src/editor/i18n/index.js`) has no such failure mode: `editorT('dialog.confirmDelete.title')`
 looks up the current editor locale's dictionary, falls back to `fr-FR` (the always-complete
 source) if the key is missing, then to the raw key string if it's missing everywhere — a visibly
 wrong string during development beats a blank.
 
-**How narrative translation actually resolves at runtime**: chapters are always *written* in
+**How narrative translation actually resolves at runtime**: chapters are always _written_ in
 French — French is the source-of-truth key, not a locale like the others. `resolveStoryText(i18nDict, locale, frText, bucket)`
 in `story.js` looks up `frText` as a key inside `project.i18n[locale][bucket]`; `bucket` is either
 the current chapter's id or `'common'` (contact bios, custom-app block text, anything not tied to
@@ -235,11 +238,11 @@ so an untranslated project is still fully playable in French. `story.fill(text)`
 player-name interpolation on top of the same resolution.
 
 **The `sharedOverrides.js` wrinkle**: some player-facing text is authored inside files that
-*ship* (`src/engine/events/triggers.js`'s trigger labels, a plug-in app's `entryType.js` label/
+_ship_ (`src/engine/events/triggers.js`'s trigger labels, a plug-in app's `entryType.js` label/
 help — see `src/components/apps/email/entryType.js`). Those files can never import
 `src/editor/i18n` directly (that's a `@/editor/*` import from a file that ships — exactly the
 build-boundary violation described above). Instead `src/editor/i18n/sharedOverrides.js` looks up
-an editor-side translation *for* that trigger/entry-type name first
+an editor-side translation _for_ that trigger/entry-type name first
 (`editorTOptionalPath(['triggers', trigger.name, 'label'])`), falling back to the original text
 authored in the shared file if there's no override. The shared file's own text never has to know
 the editor's translation layer exists.
@@ -254,7 +257,7 @@ blocking on player input, a multi-stage timeskip cinematic) that a new content t
 doesn't need to reinvent.
 
 **The plug-in mechanism** (`src/engine/apps/entryTypeRegistry.js`) lets an app folder define an
-*additional* scriptable entry type with zero edits to `story.js`, `TimelineEditor.vue`,
+_additional_ scriptable entry type with zero edits to `story.js`, `TimelineEditor.vue`,
 `extractTranslatableStrings.js`, or `appIds.js`. Any `src/components/apps/*/entryType.js` is
 auto-discovered via `import.meta.glob('/src/components/apps/*/entryType.js', { eager: true })` and
 must default-export:
@@ -276,7 +279,7 @@ must default-export:
 ```
 
 Every one of those 4 "mechanism" files has exactly **one** additive fallback reading this
-registry, layered *on top of* its existing hardcoded switch, never inside it — e.g. `story.js`'s
+registry, layered _on top of_ its existing hardcoded switch, never inside it — e.g. `story.js`'s
 `processEntry` default case: `CUSTOM_ENTRY_TYPE_BY_TYPE[entry.type]?.process(entry, { story, chapter })`.
 `src/components/apps/email/` is the reference implementation, built using only this documented
 contract to prove it works end to end — see [Building a native app in code](creating-custom-apps.md)
@@ -292,18 +295,278 @@ is enough to register a working app, no other file needs editing. A manifest wit
 `App.vue` is skipped with a console warning rather than crashing.
 
 **Custom apps** are the no-code equivalent: authored entirely inside the editor's "Apps" tab as a
-tree of visual blocks (`header`, `text`, `image`, `row`, `card`, `layout`, `badge`, `divider`,
-`button`, `tabs`, `list`, `conversations` — see `src/engine/customApps/blockKinds.js`), stored as
-plain JSON at `apps/<id>.json` in the project, and rendered by one generic interpreter,
-`CustomAppRenderer.vue` (the same component instance for every custom app — same "one generic
-player driven by data" precedent as `InteractionPlayer.vue` for interactions).
+tree of visual blocks (`header`, `footer`, `text`, `image`, `row`, `card`, `overlay`, `sheet`,
+`layout`, `badge`, `divider`, `button`, `tabs`, `list`, `conversations`, `schedule`, `ledger`,
+`form`, `lookup`, `map` — see
+`src/engine/customApps/blockKinds.js`), stored as plain JSON at `apps/<id>.json` in the project, and
+rendered by one generic interpreter, `CustomAppRenderer.vue` (the same component instance for every
+custom app — same "one generic player driven by data" precedent as `InteractionPlayer.vue` for
+interactions). A `list` block's `source` is one of `contacts`/`flagCollection`/`entity` — the last
+iterates instances of an author-defined entity schema, see
+[Entity schemas](#conditions-effects-flags-events) below. A `schedule` block reads ONE entity's own
+`type: 'schedule'` field — an array of `{ from, to, place }` slots authored on the schema
+(`EntityFieldInput.vue`) — and renders a day timeline, highlighting whichever slot covers
+`story.resolvedClock()`'s current time (`ScheduleBlock.vue`); `entityId: '*'` picks the first/only
+instance of the schema, same sentinel the `{entity:...}` token uses. When no chapter has overridden
+the clock, `resolvedClock()` falls back to `new Date()`, which isn't itself reactive — `ScheduleBlock.vue`
+polls a `tick` ref every 15s (read, unused, inside the `nowLabel` computed purely to register as a
+dependency) to force re-evaluation as real time actually crosses a slot boundary, same cadence as
+`StatusBar.vue`'s own clock display; without it the highlighted slot froze at whatever moment the
+block last happened to re-render for an unrelated reason. A `ledger` block reads a
+numeric `story.flagCollections[flagKey]` (`LedgerBlock.vue`, plain inline SVG, no chart library) —
+the same collection a `list` block's `flagCollection` source already reads, just rendered as a
+mini area-chart plus the entry list, coercing non-numeric entries to 0 for the chart only. A `form`
+block is the first one the _player_ writes through instead of just reading — `target: 'flag'`
+calls the new `story.setFlag(key, value)` (a real overwrite; `effects.flags` itself accumulates a
+numeric delta, wrong semantics for "the player just typed 42"), `target: 'entity'` reuses
+`effects.entities`'s existing `'set'` op unchanged. Its input widget is a plain native
+`<input>`/`<select>`/switch button (`FormBlock.vue`) — same convention every other player-facing
+field on the phone uses (`SetupWizard.vue`'s `.name-input`, Settings' `.switch`), not a Quasar form
+component, which this phone UI never uses for player input. For an entity target the widget type is
+read straight off the field's own declared schema type rather than asked again (schedule/
+`ref:entity` fields are excluded — structured data, not a fit for one input). `block.commitMode`
+(`'live'`/`'blur'`/`'button'`, default `'live'` for backward compatibility) controls when the typed
+value actually reaches `story` — added after the original always-on-keystroke write turned out to
+commit a half-typed or momentarily-empty value while the player was still editing; `'blur'` and
+`'button'` buffer the raw input locally (`draft` ref in `FormBlock.vue`) until the native `change`
+event or an explicit submit tap fires. `block.readonly` shows the current value with editing
+disabled, for mixing an editable field with a computed one in the same visual style.
+
+`EntityFieldInput.vue`'s `schedule` slot editor (from/to/place rows) lives inside whatever column
+width its caller has — `EntitySchemaForm.vue`'s resizable splitter pane, or a dialog in
+`EffectsBuilder.vue` — both ancestors set `overflow-x: hidden` (`.pane` in `EditorPage.vue`). The
+slot row originally had no `flex-wrap`, so on a narrow column its two fixed-width time inputs
+(`flex-shrink: 0`) plus the delete button overflowed and were silently clipped by that
+`overflow-x: hidden` instead of reflowing — fixed by wrapping the row (`.schedule-slot`) and letting
+the place field shrink (`flex: 1 1 140px; min-width: 0`).
+
+**Per-app theme** (`customApp.theme`, edited in CustomAppEditor.vue's "Thème" panel): a small fixed
+set of design tokens — a 5-role palette (background/surface/text/accent/danger), a font stack
+(sans/serif/mono/rounded — real installed-font families, not live Google Fonts, since a packaged
+export has no guaranteed internet access, see [Vendoring](#vendoring-why-no-internet-access-is-needed)),
+a radius scale (sharp/normal/round), and a spacing scale (tight/normal/loose, applied to the root
+screen's block gap only, not nested containers). `CustomAppRenderer.vue` resolves `theme` (entirely
+optional — absent falls back to the engine's original literal defaults, byte-for-byte, so no
+existing app's look changes) into CSS custom properties (`--app-accent`, `--app-surface`,
+`--app-radius`...) set once on the screen's own root element; every `customApps/*` block component
+just swaps a hardcoded literal for `var(--app-*)`, picking the value up through normal CSS
+cascade/inheritance — no `provide()`/`inject()` plumbing needed the way `customAppNavigate` needs
+one, since this is a pure styling concern. A block's own explicit color/radius (when the author set
+one) still wins over the theme, which itself still loses to the engine's hard-coded fallback for
+anything genuinely fixed by design (a badge's pill shape, an avatar's circle) rather than themed.
+
+**Screen background** (pilier 03, first sub-feature): `screen.background` (an asset path, pre-
+existing) now pairs with `screen.backgroundType` (`'image'`/`'video'`, default `'image'` for zero
+migration) and `screen.backgroundOpacity` (0-100, default 100 — fully opaque, matching the original
+always-opaque image). `CustomAppRenderer.vue` renders either an `<img>` or a muted/looping/autoplay
+`<video>` absolutely positioned behind `BlockList`, with `opacity` applied via inline style. Video is
+a genuinely new asset category for this engine (nothing else — reels, photos — uses real video
+files, those are all authored as static images) — `categorizeAsset()` gained a `video` bucket
+(`mp4`/`webm`/`mov`), and `project:pickAsset`/`project:importAsset` (`src-electron/ipc/project.js`)
+gained a matching file-dialog filter, mirroring the existing `audio` branch. `AssetField.vue` shows
+a muted looping `<video>` preview the same way it already shows an `<img>` for images.
+
+**Sticky header/footer** (pilier 03, second sub-feature): `header` gains `block.sticky` (default
+`false`, zero migration); a brand-new `footer` block type is `layout`'s exact shape (row/column,
+its own `blocks[]`, optional `bgColor`) with `block.sticky` defaulting `true` instead — a non-sticky
+footer would be indistinguishable from just placing a `layout` block last, so the toggle exists for
+the rarer "footer-styled but not pinned" case. Both rely on plain CSS `position: sticky`, which
+resolves against the nearest SCROLLING ancestor — `CustomAppRenderer.vue`'s `.app-screen`
+(`overflow-y: auto`) already is one, so no new scroll-container plumbing was needed. Each needs an
+opaque background so scrolled-past content doesn't show through underneath it while stuck — falls
+back to the app's own `--app-bg` (same "absent = engine default" precedent as everywhere else) when
+no explicit color is set. `footer` reuses the exact same `.blocks[]`/recursive-BlockList shape every
+other container here does, so it's picked up for free by every generic block-tree walk that already
+existed (asset collection, zip export/import, translation extraction, the drag/duplicate/condition
+machinery) — no block-type-specific list anywhere needed a new entry, by design (see
+`BLOCK_KINDS`/`BLOCK_COMPONENTS`, the only two places a block type is ever named explicitly).
+
+**Overlay** (pilier 03, third sub-feature): `overlay` is a recursive container (own `blocks[]`, like
+`card`) rendered `position: absolute` at one of 5 fixed presets (`block.anchor`:
+`top-left`/`top-right`/`bottom-left`/`bottom-right`/`center` — `OverlayBlock.vue`'s
+`ANCHOR_STYLES`). CSS `position: absolute` resolves against the nearest ancestor with
+`position: relative` — `CustomAppRenderer.vue`'s `.app-screen` already is one (so an overlay at a
+screen's own root level pins to a corner/center of the WHOLE screen), and `CardBlock.vue`/
+`LayoutBlock.vue` now set it too (so an overlay nested inside either one pins to THAT container's
+own corner/center instead — `LayoutBlock.vue` needed a `<style>` block for the first time, being
+otherwise chrome-free by design). Deliberately not a free x/y coordinate or an anchor-to-any-block-
+by-id system — nesting IS the anchor mechanism, the same "small bounded primitive over a more
+powerful but far more complex alternative" trade this project keeps making (flags as the only
+variable mechanism, blocks instead of a free canvas).
+
+**Sheet** (pilier 03, fourth and final sub-feature): `sheet` is a recursive container (own
+`blocks[]`, like `card`) identified by an author-set `block.sheetId`, opened by a NEW button action
+kind `openSheet` (targets `sheetId`) and closed by `closeSheet` (closes whichever one is open,
+no target needed) — both inject the same `customAppOpenSheet`/`customAppCloseSheet` functions
+`CustomAppRenderer.vue` provides, same "one mechanism, consumed like `navigateScreen` consumes
+`customAppNavigate`" precedent. `BlockList.vue` never renders a `sheet` block in its own tree
+position — it's filtered out of `visibleBlocks` alongside the existing `requires` check — only
+`CustomAppRenderer.vue` renders the currently-open one, as a backdrop + panel. `block.position`
+(`'bottom'`/`'center'`/`'top'`, default `'bottom'`) picks where it docks and which transition
+applies (slide off the matching edge for bottom/top, fade+scale for center, since a centered dialog
+has no edge to slide toward) — read off a `displaySheet` ref that only updates when a sheet actually
+OPENS, not off `openSheet` directly: `<Transition>` keeps the backdrop mounted for the whole leave
+animation, but `openSheet` itself goes null the instant `openSheetId` clears, so binding the panel's
+content/position class straight to it would blank the content and reset the position class mid-
+animation, before the leave transition finishes.
+
+Only one sheet can be open at a time (`openSheetId`, a single ref, not a stack — opening a second
+sheet replaces the first, matching the pilier's own scoping decision to keep this simple rather
+than supporting stacked modals); switching screens always resets it, since a sheet's `sheetId` is
+only guaranteed unique within the screen it's authored on. `collectBlocksOfType()`
+(`appHasModule.js`, generalizing the existing `blocksContainType` boolean check into a real
+collector) finds every `sheet` in the CURRENT screen's own blocks for `CustomAppRenderer.vue`'s own
+lookup, and every `sheet` across ALL screens (flattened) for `CustomAppEditor.vue`'s app-wide picker
+that a button's `openSheet` action uses to pick a target without typing an id by hand.
+
+`CustomAppRenderer.vue`'s `.app-screen` root was split into a non-scrolling outer element (still
+`position: relative`, now `overflow: hidden`) and a new `.app-screen-scroll` inner element carrying
+the actual `overflow-y: auto` + all the original padding — needed so the sheet's backdrop
+(`inset: 0` on the OUTER, non-scrolling element) always covers the full visible screen regardless of
+the content's current scroll offset; nested one level inside the scrolling element instead, `inset: 0`
+would resolve against the scrolled content's own padding box, which could be scrolled out of view
+entirely. Side effect (intentional, not a regression): `screen-background` and a root-level
+`overlay` block now resolve their own `position: absolute` against the OUTER non-scrolling element
+too, so they stay fixed on screen while content scrolls underneath instead of scrolling away with
+it — arguably the more expected behavior for a background/persistent badge; `header.sticky`/
+`footer.sticky` are unaffected since `position: sticky` only cares about the actual scrolling
+ancestor, which is still `.app-screen-scroll`.
+
+**Cross-app deep link** (pilier 06, app+screen scope — entity-profile targeting deferred, no real
+need for it yet): a NEW button action kind, `openApp`, calls `phone.openApp(action.appId,
+{ screenId: action.screenId })` directly — already fully generic across native AND custom apps (see
+`phone.js`), nothing custom-app-specific needed. The target picker
+(`BlockPropertiesForm.vue`'s `appOptions`) lists `story.mergedAppRegistry` (the exact same merged
+native+custom list `HomeScreen.vue`'s own icons come from, and `GameForm.vue`'s Applications panel
+already reads for its own ordering UI) — resolving a native app's player-facing `labelKey` through
+the RUNTIME `vue-i18n` instance (`useI18n()`, aliased `storyT`), not `useEditorI18n()`'s editor-chrome
+tree, same precedent `GameForm.vue`'s own `appLabel()` already established. An optional `screenId`
+only shows once a CUSTOM app is picked (looked up fresh from `story.project.customApps`, since
+`mergedAppRegistry` itself strips `screens` down to the shared `{id,label,icon,color,badge,
+component}` shape) — meaningless for a native target, which has no such concept.
+
+**Lookup** (pilier 05, remaining sub-feature): `lookup` is a fake search/browser —
+`block.results[]` is entirely author-authored (`{title, excerpt, source, requires, action}`), each
+result individually gated by its own `requires` (`RequiresBuilder.vue`, same component every other
+condition in this project uses) rather than the whole block sharing one condition, since results
+are individually distinct content, not repetitions of one template the way a `list` block's items
+are. `LookupBlock.vue` keeps the search query as local component state (not story state — a
+search box's current text isn't a game variable worth persisting), and shows nothing at all until
+the player types something (scoped with the user: "search", not "browse a list with a filter").
+Matching is plain client-side text search: every whitespace-separated word in the query must
+appear SOMEWHERE across a result's title+excerpt+source (AND across words, scoped with the user
+over the looser "any word matches" alternative) — no real search index, no fuzzy matching.
+
+**Shared action editor, added right after shipping Lookup**: the user asked for a result to be
+able to do something on tap, "les mêmes [actions] que via le bouton" — rather than duplicating
+`ButtonBlock`'s ~130-line action-editing form per result, it was extracted into
+`BlockActionEditor.vue` (`target` prop — the object whose `.action` field it edits, mutated
+directly, same "props edited in place" convention every other editor form here already uses) and
+`useBlockAction.js` (the runtime dispatch, `inject()`-based like the original, called from
+`ButtonBlock.vue` and `LookupBlock.vue` alike). One fixed action catalog, one implementation,
+offered from two different blocks — same shape as `RequiresBuilder.vue` being reused everywhere a
+condition can be authored.
+
+**Actions that check, chain, and inform** (pilier 04, remaining sub-features — guard/toast/
+`openApp` shipped earlier): four new action kinds, all reusing existing infrastructure rather than
+inventing new mechanisms.
+
+- **`sequence`**: `steps[]`, each element itself an action-shaped object (the SAME fixed catalog,
+  including nesting another `sequence`) — `useBlockAction.js`'s `runAction()` is now `async` and
+  awaits each step strictly in order, so a `wait` or a blocking `triggerEntry` step genuinely holds
+  up whatever comes after it. Each step gets its own `requires`/`onFailToast` guard for free, since
+  every step re-enters the exact same `runAction()` recursively.
+- **`wait`**: `{ ms }`, resolves a `Promise` via `setTimeout` — only meaningful as a sequence step.
+- **`requestInput`**: opens a small centered prompt for ONE value, without the author building a
+  `sheet` + `form` combo by hand — scoped with the user as a shortcut rather than a dedicated new
+  widget. The action's own config carries the exact fields a `form` block does (`target`,
+  `flagKey`/`inputType` or `schemaId`/`entityId`/`fieldKey`) — `CustomAppRenderer.vue` turns it into
+  a SYNTHETIC `form` block at runtime (never part of the authored tree, never saved) with
+  `commitMode` forced to `'button'`, rendered in the same sheet-backdrop/panel shell as a real
+  `sheet`, at the `'center'` position. `FormBlock.vue` gained one new `submit` emit (fired from its
+  existing `submitDraft()`, additive — nothing else listens) so the prompt can close itself once the
+  value actually commits. The target-picking fields (`target`/flag-vs-entity sub-fields) were
+  extracted out of `form`'s own properties form into `FormTargetFields.vue` so this action's UI
+  doesn't duplicate them.
+- **`triggerEntry`**: `{ then: [] }`, run via `story.runThen()` — the SAME mechanism `game.events[]`
+  reactions already use (see `handleEngineEvent()`), just triggered by a tap instead of an engine
+  trigger, with the same documented limitation (a blocking step here can clobber `timelineResume` if
+  the main timeline is ALSO mid-choice/call at that exact moment). Authored with the full
+  `TimelineEditor.vue`, same reuse precedent as `EventForm.vue`'s own `then` tab — not a smaller
+  purpose-built editor for what's structurally the identical concept. Scoped with the user as an
+  inline authored mini-scene rather than a reference to an existing entry elsewhere, since entries
+  have no stable cross-referenceable id today and building one was judged not worth it without a
+  real need.
+
+`BlockActionEditor.vue` (the shared action-editing UI, see the Lookup entry above) generalized its
+`target.action` assumption into `target[actionKey]` (default `'action'`) specifically so a
+`sequence`'s own steps — a plain array, not an `{action: ...}` wrapper — can reuse the exact same
+component recursively: `:target="action.steps" :action-key="i"` reads/writes `action.steps[i]`
+directly. Vue's built-in SFC self-reference (a component can reference itself by its own filename in
+`<script setup>`, no explicit import) makes the recursion work with no extra wiring.
+
+**Author tooling** (pilier 07, final pilier of the roadmap — the visual schema designer itself,
+`EntitySchemaForm.vue`, already shipped earlier): three sub-features, all scoped with the user
+before building.
+
+- **Live variable inspector** (`VariableInspectorPanel.vue`, docked next to the phone preview in
+  `EditorPage.vue`'s Apps-tab pane, `v-if="viewMode === 'apps'"`): lists every flag/collection/
+  entity-field the CURRENTLY-SELECTED-IN-THE-BUILDER screen's blocks reference, with its live
+  value. `collectScreenVariables.js` walks the screen's block tree — the same recursive `.blocks`/
+  `.template` shape every other walk here uses — picking up STRUCTURED references (a `schedule`
+  block's own `schemaId`/`fieldKey`, a `ledger`'s `flagKey`, any `requires`/`effects` object) and
+  free-typed `{flag:x}`/`{entity:s:e:f}` tokens found via regex across every other own string field.
+  Deliberately does NOT descend into a `triggerEntry` action's own `then[]` (timeline entries are a
+  different shape entirely) — out of scope for a first cut. Reads `phone.editorActiveScreen`, a new
+  small piece of state on the SAME "phone store as the editor↔preview channel" precedent
+  `editorSelectedBlock`/`hoveredEditorBlock` already are — the BUILDER's own screen selection
+  (`CustomAppEditor.vue`'s `currentScreen`), not whichever screen the live phone preview happens to
+  be showing (that's local `ref` state inside `CustomAppRenderer.vue`, unreachable from
+  `EditorPage.vue`, an ANCESTOR of it — provide/inject only flows downward).
+- **Test as player** (`generateTestData.js`, a button in `CustomAppEditor.vue`'s screen toolbar):
+  reuses `collectScreenVariables()`'s own output (filtered to `entity`/`collection` kinds) to know
+  which schemas/collections the app touches, then fabricates 3 entity instances / 5 collection
+  entries per one referenced, merged directly into the live `story.entities`/`story.flagCollections`
+  state. Turning it back OFF is just another `previewCustomApp()` call — the SAME clean reset
+  "Relancer l'aperçu" already does — rather than tracking and undoing exactly what was injected;
+  `testModeOn` also resets automatically when `selectedCustomApp` changes, so it can never carry
+  fake data into a different app silently.
+- **Theme presets**: `project:exportTheme`/`project:importTheme` (`src-electron/ipc/customApps.js`)
+  save/load `customApp.theme` as a plain `.json` file — NOT the app export/import `.zip` pipeline,
+  scoped with the user: a theme (palette/font-stack enum/radius/spacing) never references an asset,
+  so a zip would carry nothing beyond the same JSON anyway.
+
+**Map** (added after the roadmap shipped, user request): `map` shows an author-uploaded image at
+its NATURAL size (never scaled to fit the phone) inside a fixed-height viewport the player drags to
+pan around, with `pois[]` (`{x, y, label, icon, color, action}`) positioned in PERCENT of the
+image's own dimensions — same "no real GPS, a place is a name + picture" spirit `schedule` already
+commits to. Panning is a manual `translate()` on an inner `.map-canvas` div (not native scroll),
+clamped so the player can't drag past an edge into empty space — POI markers are children of that
+SAME canvas, so they pan together with the image for free via one shared transform, no separate
+"where's this POI relative to the current scroll offset" math needed. Distinguishing a tap from a
+drag: a browser still fires a native `click` on whatever's under the pointer at release regardless
+of how far the transform moved things in between, so a `justDragged` flag (set once total pointer
+movement crosses a small threshold) suppresses a POI's action when the tap was actually the end of
+a pan gesture. Each POI's `action` is the SAME fixed catalog a button/lookup-result offers —
+authored via `BlockActionEditor.vue`, run via `useBlockAction.js`, zero new machinery.
+
+**Zoom** (added right after, user request while testing): the SAME `translate(pan) scale(zoom)`
+transform on `.map-canvas` now also scales, so POIs stay correctly placed at any zoom level for
+free (same reasoning as pan). Three input paths converge on one `zoomAt(newZoom, viewportPoint)`
+helper that re-derives `pan` so the given viewport point stays visually fixed under the zoom
+change: the +/- buttons (anchor = viewport center), mouse wheel (anchor = cursor), and two-finger
+pinch (anchor = the pinch midpoint, recomputed every `pointermove` — tracked via a `Map` of active
+pointer ids, since native Pointer Events give one event stream per finger, not a built-in gesture).
+Zoom is clamped 50–300% (`MIN_ZOOM`/`MAX_ZOOM` in `MapBlock.vue`); `block.initialZoom` (%, default
+100, author-configurable) sets the starting level — absent on maps saved before this feature, same
+zero-migration precedent as every other optional block field here.
 
 **Merged registry**: `story.mergedAppRegistry` (a getter on the `story` store) concatenates
 `APP_REGISTRY` (native, code-defined) with `project.customApps` (author-built, JSON-defined),
 normalized to the same `{ id, label, icon, color, badge, component }` shape so every consumer
 (`PhoneShell.vue`, `HomeScreen.vue`, `SetupWizard.vue`, `GameForm.vue`'s Apps panel) treats them
 identically. `story.orderedApps` applies the project's saved `game.appOrder`; `story.enabledAppIds`
-filters out anything in `game.disabledApps` (an opt-*out* list — absent means "show it," so a
+filters out anything in `game.disabledApps` (an opt-_out_ list — absent means "show it," so a
 project authored before a given app existed shows it with zero migration).
 
 Disabling an app doesn't delete content that references it — a disabled app's already-authored
@@ -315,34 +578,135 @@ so re-enabling the app later brings that content right back.
 
 **Flags** are the project's variables. Three kinds share the concept ("created/labeled once in the
 Flags panel, referenced by key everywhere") but are stored separately because `story.flags[key]`
-is assumed numeric-or-boolean *everywhere* it's read:
+is assumed numeric-or-boolean _everywhere_ it's read:
 
 - **Numeric/boolean flags** — `story.flags[key]`. Effects either accumulate a numeric delta or
-  *set* a boolean (idempotent — a boolean effect firing twice doesn't double-toggle).
+  _set_ a boolean (idempotent — a boolean effect firing twice doesn't double-toggle).
 - **Flag collections** — `story.flagCollections[key]`, a `{ itemKey: value }` map, for
   history/ledger/inventory-shaped data. Three effect ops: `add` (auto-generates a key if left
   blank — the common "growing log" case), `remove`, `increment` (numeric delta on an existing
   key — the only op that reads-before-writing).
-- **`following`** — not a flag at all, a *live* signal (`story.isFollowing(contactId)`), since it
+- **`following`** — not a flag at all, a _live_ signal (`story.isFollowing(contactId)`), since it
   can change between when a condition is authored and when it's actually evaluated.
+
+**Entity schemas** (`game.entitySchemas[]`, edited in the Données tab's Schémas sub-tab) sit one
+level above flags: a flag collection is a flat `{ itemKey: value }` map (one scalar per entry,
+assumed everywhere it's read), but some data genuinely needs several _named, typed_ fields per
+record — a character with a location and a mood, an item with a price and a quantity. A schema
+declares `{ id, label, fields: [{ key, label, type }] }` (`type` ∈ `text`/`number`/`boolean`/
+`schedule`/`ref:contact`/`ref:entity` — `schedule`'s value is an array of `{ from, to, place }`
+slots, not a scalar, see [The apps system](#the-apps-system)'s `schedule` block); instances live
+in `story.entities[schemaId][entityId] = { field: value
+}`, a bucket of its own (not persisted-key-excluded, so it round-trips through save/load like
+`flagCollections`). Two ways instances come to exist:
+
+- **`schema.seed`** — `[{ entityId, fields }]` authored right on the schema, merged into
+  `story.entities` once by `seedInitialContent()` at a fresh game's very first start — same
+  "present before the timeline plays its first entry" precedent as `project.seed.messages`/`.dms`/
+  `.posts` (see [Project data on disk](#project-data-on-disk)), just kept on the schema itself
+  rather than in a generic bucket, since the field list an author needs is already right there.
+- **`effects.entities`** — `[{ schemaId, entityId, mode: 'set'|'remove', fields }]`, the same
+  "list of ops" shape `effects.collections` uses and for the same reason (one effect can touch more
+  than one entity, or the same one twice). `'set'` merges `fields` onto whatever's already at that
+  id (`Object.assign`, not overwrite) so an author can update a single field without
+  re-specifying the rest; a blank `entityId` auto-generates one.
+
+`story.entities` is a runtime SNAPSHOT taken from `schema.seed` — editing a seed instance's fields
+after that snapshot exists (e.g. adding a `schedule` slot) mutates the schema's own `seed` template
+but not the already-materialized snapshot. The editor's Apps-tab live preview
+(`previewCustomApp()`/`EditorPage.vue`) re-derives that snapshot via `story.loadProject()` whenever
+`selectedCustomApp` changes (switching apps), but originally missed the case where the author edits
+a schema's seed data while staying on the SAME open app — the preview kept showing stale entities
+until "Relancer l'aperçu" forced a reload. Fixed with a second `deep` watch on
+`gameConfig.entitySchemas` alongside the existing one.
+
+A schema has no visual representation on its own — it's consumed by a custom-app `list` block
+(`source: 'entity'`, see [The apps system](#the-apps-system)) or by the
+`{entity:<schemaId>:<entityId>:<field>}` token (`resolveDynamicText.js`), usable in any custom-app
+text field, not just inside a list's per-item template — `entityId: '*'` reads the first/only
+instance of that schema (`story.entityItems`, insertion order), useful for a singleton record (a
+wallet, a settings object) with no id to type.
 
 **Conditions** (`requires`) and **effects** — the same two builder components
 (`RequiresBuilder.vue`/`EffectsBuilder.vue`) are reused everywhere a condition/effect can be
 authored: chapter-graph arrows, timeline entries, choice options, custom-app block visibility,
 custom-app buttons, events, interaction win/lose branches. `checkConditions()` ANDs every present
-condition type together (`flags`, `following`, `collections`); there is deliberately no date/time
-condition, no randomness, no "already seen" condition.
+condition type together (`flags`, `following`, `collections`, `entities`); there is deliberately no
+date/time condition, no randomness, no "already seen" condition.
 
-**Events** (`game.events[]`, edited in the Events tab) are the same
-`requires`/`effects`/`then` trio, but triggered by a *player action* instead of the timeline
+`requires.entities` — `[{ schemaId, entityId, field, value }]`, same comparison shape/semantics as
+`flags` (boolean, exact, `{min}`, `{max}`, `{min,max}`), just reading
+`story.entities[schemaId][entityId][field]` instead of a flag; `entityId: '*'` reads the first/only
+instance, same sentinel the `{entity:*:...}` text token already uses. Unlike a flag (always
+defaulted to `0` when absent), a missing instance/field reads as `undefined` — the min/max checks
+use `!(value >= min)`/`!(value <= max)` rather than `value < min` so that FAILS the condition
+instead of silently passing.
+
+A field of type `schedule` is special-cased: its raw value is an ARRAY of `{from,to,place}` slots,
+not a scalar, so comparing it directly would never match anything. `checkConditions()` resolves it
+to whichever slot's `place` covers the current `resolvedClock()` time first — `src/engine/
+customApps/scheduleSlot.js`'s `activeSlotPlace()`, extracted from `ScheduleBlock.vue`'s own
+highlighting logic so the two can't drift — letting an author write "this character is currently at
+`<place>`" instead of needing to know the field's internal shape.
+
+**Events** (`game.events[]`, edited in the Réactions tab's Events sub-tab) are the same
+`requires`/`effects`/`then` trio, but triggered by a _player action_ instead of the timeline
 reaching a specific point — `handleEngineEvent()` reuses `checkConditions`/`applyEffects`/`runThen`
 exactly as a normal timeline entry would (see `docs/roadmap-modular-apps-events.md` §5: "don't
 build a second narrative system"). Triggers are cataloged in `src/engine/events/triggers.js`
 (`app.opened`, `app.closed`, `photo.viewed`, `post.liked`, `contact.followed`, `profile.opened`,
 `conversation.opened`, `button.pressed`, `interaction.won`/`interaction.lost`) and dispatched
 through a minimal pub/sub bus (`src/engine/events/eventManager.js`) that both `story.js` and
-`phone.js` `emit()` into — deliberately *not* a Pinia store, since neither store should depend on
+`phone.js` `emit()` into — deliberately _not_ a Pinia store, since neither store should depend on
 the other just for this.
+
+### Automations
+
+`game.automations[]` (Réactions tab's Automatisations sub-tab — grouped with Events, not Données,
+since the two share the exact same trigger/condition/action shape; see `docs/user-guide/
+conditions-and-flags.md`'s own note on this reorg — `AutomationList.vue`/`AutomationForm.vue`) is a
+small reactive rule engine layered ON TOP of `checkConditions`/`applyEffects`, not a second one:
+each rule is
+`{ id, label, requires, action, repeatMode: 'once'|'count'|'unlimited', repeatCount }`. Unlike an
+Event (triggered by a discrete player action), an automation has no trigger at all — it's
+re-evaluated by `story.js`'s `evaluateAutomations(depth)`, called at the end of EVERY
+`applyEffects()` (the single choke point every flag/entity/collection mutation already flows
+through), rather than on a timer: exact, no polling, and nothing can react to a mutation that
+hasn't happened yet.
+
+Firing is **edge-triggered** — only on the condition's false→true transition, never on every
+re-check while it stays true. `story.automationState[id] = { active, firedCount }` (real save data,
+not in `NON_PERSISTED_KEYS`) remembers which side of the condition a rule was on last time, so
+"already fired" survives a reload. `repeatMode` caps how many transitions actually run the action
+(`'once'` = 1, `'count'` = the author's own number, `'unlimited'` = no cap) — a rule can keep
+flipping past its cap without erroring, it just stops firing.
+
+The action is the SAME fixed catalog a button offers (`BlockActionEditor.vue`), minus the
+app-screen-local kinds (`navigateScreen`/`openSheet`/`closeSheet`/`requestInput`) that need a
+`CustomAppRenderer` ancestor to `inject()` from — an automation isn't rendered inside any specific
+app screen, so those are hidden from its action-type dropdown via `BlockActionEditor`'s new
+`excludeKinds` prop. Running it needs no component context at all: `story.runAutomationAction()`
+duplicates the small `effect`/`toast`/`openApp`/`sequence`/`wait`/`triggerEntry` subset directly
+against `this`/`usePhoneStore()`, rather than reusing `useBlockAction.js`'s `inject()`-based
+composable (which requires a mounted component instance) — three similar branches kept apart on
+purpose here, not a missed reuse.
+
+A firing rule also emits the fixed `automation.fired` engine trigger (`{ automationId }` payload,
+see `triggers.js`) — same precedent as a button emitting `button.pressed` — so the Events tab can
+react to it too, chaining into the exact same condition/effects/then machinery instead of a second
+concept.
+
+`depth` caps the "automation's own effect re-satisfies its own condition" cascade at 5 generations,
+incremented once per `evaluateAutomations` → `runAutomationAction` step (one generation = one full
+evaluate-then-fire pass). Known gap, documented in `evaluateAutomations`'s own comment: a
+`triggerEntry` action's nested timeline can reach `applyEffects()` through existing call sites that
+don't thread `depth` through (they never needed to before this), re-entering at depth 0 — same
+"accepted partial guard" spirit as `runThen`'s own `timelineResume`-clobber limitation.
+
+Also polled every 15s (`automationPollTimer`, (re)started in `loadProject()`, same cadence as
+`StatusBar.vue`'s own clock) on top of the `applyEffects()`-driven checks — needed for a condition
+that can become true purely from TIME passing (a `schedule` field's active slot changing) with no
+accompanying flag/entity mutation to hang the evaluation off of.
 
 **Interactions** (`game.interactions[]`, the "Interactions" tab) are authored phone-gesture
 sequences — `tap`/`hold`/`swipe`/`drag`/`wipe`/`code`/`wait`, a small bounded vocabulary
@@ -359,7 +723,7 @@ game" and `webPreview.js`'s "LAN preview" — one function, two different final 
    with `node_modules` already installed — see [Vendoring](#vendoring-why-no-internet-access-is-needed))
    into a fresh temp directory.
 2. Copy `src/engine`, `src/components/phone`, `src/components/apps`, `src/components/shared`,
-   `src/boot`, `src/i18n`, `src/css`, `src/utils` from the *editor's own current source* — **never
+   `src/boot`, `src/i18n`, `src/css`, `src/utils` from the _editor's own current source_ — **never
    a hand-maintained second copy**. Whatever the engine looks like right now is exactly what
    ships.
 3. **Overwrite** the just-copied `src/engine/assets.js` with
@@ -387,7 +751,7 @@ the two environments it runs in:
 
 Rather than branching inside `resolveAssetUrl` itself, `templates/game-shell/engine-overrides/assets.js`
 holds the shipped-game version, and step 3 above **overwrites** the fresh copy of
-`src/engine/assets.js` with it, *after* the wholesale engine copy in step 2. Every other file that
+`src/engine/assets.js` with it, _after_ the wholesale engine copy in step 2. Every other file that
 imports `resolveAssetUrl` from `@/engine/assets` gets the right behavior in both contexts with zero
 special-casing anywhere else — this is the **one file in the whole engine that legitimately
 differs** between editor and shipped game, and the copy pipeline exists specifically to make that
@@ -399,7 +763,7 @@ A packaged Stories Engine build (`.exe` on Windows, `.app` on macOS, a binary on
 user's machine that may have no pnpm, no Node.js, and no guaranteed internet access — but
 building/exporting a game still needs a real `node_modules`, a real Electron binary to package
 into, and (for Android) a JDK+SDK. `pnpm run vendor:game-shell` does all of that heavy lifting
-*once*, ahead of time, on the maintainer's machine, and the result ships as part of Stories Engine
+_once_, ahead of time, on the maintainer's machine, and the result ships as part of Stories Engine
 itself, for every target platform:
 
 - `templates/game-shell/node_modules` — a hoisted `pnpm install` of the shell's own
@@ -437,16 +801,17 @@ itself, for every target platform:
 
 ## Glossary
 
-| Term | Meaning |
-|---|---|
-| **Chapter** | A node in the story graph — an id, a title, a `timeline[]`, `next[]` outgoing edges, an optional `endScreen`. |
-| **Entry** | One item in a chapter's `timeline[]` — a message, a choice, a VFX cue, etc. Has a `type` and an optional `requires`. |
-| **Flag** | A named variable (`story.flags[key]`), numeric or boolean, read by `requires` and written by `effects`. |
-| **Flag collection** | A named `{key: value}` map (`story.flagCollections[key]`) for ledger/history-shaped data — the third flag kind. |
-| **Requires** | A condition object (`{ flags, following, collections }`) gating an entry, an edge, a choice option, a block, etc. |
-| **Effects** | A mutation object applied when an entry/option/event fires — flags, phone widgets, social deltas. |
-| **Entry-app** | The native/custom app a timeline entry type is scoped to (`ENTRY_TYPE_APP`) — drives hiding it when that app is disabled. |
-| **Plug-in entry type** | A scriptable timeline entry type contributed by an app's `entryType.js`, without touching the core engine switch. |
-| **Custom app** | An author-built phone app made of visual blocks, stored as `apps/<id>.json`, rendered by `CustomAppRenderer`. |
-| **Build boundary** | The rule that `src/engine`/`src/components/{phone,apps,shared}` must never import `src/editor` or `src/project` — enforced by `shellAssembly.js`'s copy list, not a lint rule. |
-| **Shell** | The temp Quasar project `assembleShell()` produces — `templates/game-shell` + a fresh engine copy + the project's own data. |
+| Term                   | Meaning                                                                                                                                                                        |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Chapter**            | A node in the story graph — an id, a title, a `timeline[]`, `next[]` outgoing edges, an optional `endScreen`.                                                                  |
+| **Entry**              | One item in a chapter's `timeline[]` — a message, a choice, a VFX cue, etc. Has a `type` and an optional `requires`.                                                           |
+| **Flag**               | A named variable (`story.flags[key]`), numeric or boolean, read by `requires` and written by `effects`.                                                                        |
+| **Flag collection**    | A named `{key: value}` map (`story.flagCollections[key]`) for ledger/history-shaped data — the third flag kind.                                                                |
+| **Entity schema**      | An author-defined record type (`game.entitySchemas[]`) — id/label + typed fields. Instances live in `story.entities[schemaId][entityId]`.                                      |
+| **Requires**           | A condition object (`{ flags, following, collections }`) gating an entry, an edge, a choice option, a block, etc.                                                              |
+| **Effects**            | A mutation object applied when an entry/option/event fires — flags, phone widgets, social deltas.                                                                              |
+| **Entry-app**          | The native/custom app a timeline entry type is scoped to (`ENTRY_TYPE_APP`) — drives hiding it when that app is disabled.                                                      |
+| **Plug-in entry type** | A scriptable timeline entry type contributed by an app's `entryType.js`, without touching the core engine switch.                                                              |
+| **Custom app**         | An author-built phone app made of visual blocks, stored as `apps/<id>.json`, rendered by `CustomAppRenderer`.                                                                  |
+| **Build boundary**     | The rule that `src/engine`/`src/components/{phone,apps,shared}` must never import `src/editor` or `src/project` — enforced by `shellAssembly.js`'s copy list, not a lint rule. |
+| **Shell**              | The temp Quasar project `assembleShell()` produces — `templates/game-shell` + a fresh engine copy + the project's own data.                                                    |

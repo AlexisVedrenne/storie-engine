@@ -242,5 +242,24 @@ export default {
       empty: 'No conversations yet.',
       privateNotice: 'Replies come from choices in the story — no free typing here.',
     },
+    schedule: {
+      nowLabel: 'Right now',
+      unknown: 'Unknown location',
+      empty: 'No time slots set yet.',
+    },
+    ledger: {
+      empty: 'No entries yet.',
+    },
+    form: {
+      submit: 'Submit',
+    },
+    lookup: {
+      placeholderDefault: 'Search…',
+      prompt: 'Type something to search.',
+      noResults: 'No results.',
+    },
+    map: {
+      empty: 'No map set.',
+    },
   },
 }
