@@ -1,6 +1,6 @@
 <template>
   <div class="automation-list">
-    <div class="pane-label">{{ t('editorPage.dataSubAutomations') }}</div>
+    <div class="pane-label">{{ t('editorPage.reactionsSubAutomations') }}</div>
 
     <div v-if="!automations.length" class="empty-hint">{{ t('automationList.empty') }}</div>
 

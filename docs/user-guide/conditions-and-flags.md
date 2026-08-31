@@ -101,8 +101,8 @@ The other half of the same builder — what actually _changes_ when an entry/opt
 
 Not everything worth reacting to happens at a fixed point in your timeline — a player opening an
 app, spending time in it, liking a post, following someone, opening a specific conversation. The
-**Events** tab lets you attach a condition/effects/follow-up reaction (the exact same trio as a
-choice option) to one of these **triggers** instead of to a timeline position:
+**Réactions** tab's **Events** sub-tab lets you attach a condition/effects/follow-up reaction (the
+exact same trio as a choice option) to one of these **triggers** instead of to a timeline position:
 
 - **App opened** / **App closed** (with a minimum time-spent threshold)
 - **Photo viewed**
@@ -125,10 +125,10 @@ best-supported case today.
 
 ## Automations
 
-Events react to something the _player_ does. An **automation** (Données tab, Automatisations
-sub-tab) reacts to a condition becoming true on its own — nobody has to open an app or press a
-button. Each one is a condition (the exact same builder as everywhere else — flags, collections,
-following, schema fields) plus an action:
+Events react to something the _player_ does. An **automation** (Réactions tab, Automatisations
+sub-tab — same tab as Events, since the two are the same shape) reacts to a condition becoming true
+on its own — nobody has to open an app or press a button. Each one is a condition (the exact same
+builder as everywhere else — flags, collections, following, schema fields) plus an action:
 
 - The action is the same fixed catalog a button offers — apply an effect, show a message, open
   another app, chain several steps, wait, or run a whole scene. (The screen-navigation actions

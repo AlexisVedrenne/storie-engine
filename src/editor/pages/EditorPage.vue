@@ -33,8 +33,8 @@
           <q-tab name="chapters" icon="auto_stories">
             <q-tooltip>{{ t('editorPage.tabChapters') }}</q-tooltip>
           </q-tab>
-          <q-tab name="events" icon="sensors">
-            <q-tooltip>{{ t('editorPage.tabEvents') }}</q-tooltip>
+          <q-tab name="reactions" icon="sensors">
+            <q-tooltip>{{ t('editorPage.tabReactions') }}</q-tooltip>
           </q-tab>
           <q-tab name="interactions" icon="touch_app">
             <q-tooltip>{{ t('editorPage.tabInteractions') }}</q-tooltip>
@@ -445,8 +445,27 @@
         >
           <template #before>
             <q-tab-panels class="pane chapters-pane" v-model="viewMode" animated>
-              <q-tab-panel name="events">
-                <EventList v-model="selectedEventIndex" />
+              <q-tab-panel name="reactions" class="data-panel">
+                <q-tabs
+                  dense
+                  no-caps
+                  v-model="reactionsSubTab"
+                  class="data-subtabs"
+                  active-color="primary"
+                  indicator-color="primary"
+                  align="left"
+                >
+                  <q-tab name="events" :label="t('editorPage.reactionsSubEvents')" />
+                  <q-tab name="automations" :label="t('editorPage.reactionsSubAutomations')" />
+                </q-tabs>
+                <q-separator />
+                <div class="data-subpanel">
+                  <EventList v-if="reactionsSubTab === 'events'" v-model="selectedEventIndex" />
+                  <AutomationList
+                    v-else-if="reactionsSubTab === 'automations'"
+                    v-model="selectedAutomationIndex"
+                  />
+                </div>
               </q-tab-panel>
               <q-tab-panel name="interactions">
                 <InteractionDefList v-model="selectedInteractionIndex" />
@@ -466,17 +485,12 @@
                 >
                   <q-tab name="flags" :label="t('editorPage.dataSubFlags')" />
                   <q-tab name="schemas" :label="t('editorPage.dataSubSchemas')" />
-                  <q-tab name="automations" :label="t('editorPage.dataSubAutomations')" />
                   <q-tab name="contacts" :label="t('editorPage.dataSubContacts')" />
                   <q-tab name="threads" :label="t('editorPage.dataSubThreads')" />
                 </q-tabs>
                 <q-separator />
                 <div class="data-subpanel">
                   <EntitySchemaList v-if="dataSubTab === 'schemas'" v-model="selectedSchemaIndex" />
-                  <AutomationList
-                    v-else-if="dataSubTab === 'automations'"
-                    v-model="selectedAutomationIndex"
-                  />
                   <ContactList
                     v-else-if="dataSubTab === 'contacts'"
                     v-model="selectedContactIndex"
@@ -514,12 +528,21 @@
                   transition-next="fade"
                   class="pane timeline-pane"
                 >
-                  <q-tab-panel name="events">
-                    <EventForm v-if="selectedEvent" :event="selectedEvent" />
-                    <div v-else class="empty-state">
-                      <q-icon name="sensors" size="40px" />
-                      {{ t('editorPage.eventsEmptyState') }}
-                    </div>
+                  <q-tab-panel name="reactions">
+                    <template v-if="reactionsSubTab === 'events'">
+                      <EventForm v-if="selectedEvent" :event="selectedEvent" />
+                      <div v-else class="empty-state">
+                        <q-icon name="sensors" size="40px" />
+                        {{ t('editorPage.eventsEmptyState') }}
+                      </div>
+                    </template>
+                    <template v-else-if="reactionsSubTab === 'automations'">
+                      <AutomationForm v-if="selectedAutomationDef" :def="selectedAutomationDef" />
+                      <div v-else class="empty-state">
+                        <q-icon name="bolt" size="40px" />
+                        {{ t('editorPage.automationsEmptyState') }}
+                      </div>
+                    </template>
                   </q-tab-panel>
 
                   <q-tab-panel name="interactions">
@@ -553,13 +576,6 @@
                       <div v-else class="empty-state">
                         <q-icon name="dataset" size="40px" />
                         {{ t('editorPage.schemasEmptyState') }}
-                      </div>
-                    </template>
-                    <template v-else-if="dataSubTab === 'automations'">
-                      <AutomationForm v-if="selectedAutomationDef" :def="selectedAutomationDef" />
-                      <div v-else class="empty-state">
-                        <q-icon name="bolt" size="40px" />
-                        {{ t('editorPage.automationsEmptyState') }}
                       </div>
                     </template>
                     <template v-else-if="dataSubTab === 'contacts'">
@@ -772,14 +788,14 @@ const topbarCompact = computed(() => $q.screen.width < TOPBAR_COLLAPSE_WIDTH)
 const topbarDrawerOpen = ref(false)
 const navDrawerOpen = ref(false)
 
-// Alimente le drawer de navigation compact — mêmes 10 destinations que la
-// q-tabs pleine largeur, mais avec un libellé COURT (tabEvents/
+// Alimente le drawer de navigation compact — mêmes 9 destinations que la
+// q-tabs pleine largeur, mais avec un libellé COURT (tabReactions/
 // tabInteractions/tabApps sont des phrases-tooltip complètes, trop longues
 // pour une ligne de liste — voir editorPage.navLabel* ci-dessous), pas la
 // description longue utilisée comme tooltip sur les onglets en icône.
 const NAV_TABS = [
   { name: 'chapters', icon: 'auto_stories', labelKey: 'editorPage.tabChapters' },
-  { name: 'events', icon: 'sensors', labelKey: 'editorPage.navLabelEvents' },
+  { name: 'reactions', icon: 'sensors', labelKey: 'editorPage.navLabelReactions' },
   { name: 'interactions', icon: 'touch_app', labelKey: 'editorPage.navLabelInteractions' },
   { name: 'apps', icon: 'widgets', labelKey: 'editorPage.navLabelApps' },
   { name: 'data', icon: 'storage', labelKey: 'editorPage.navLabelData' },
@@ -797,7 +813,7 @@ const globalSearchDialogRef = ref(null)
 // Explicit persist — this dialog opens on top of the 'chapters' tab, whose
 // dirty/save watch is armed on `selectedChapter`, not on `gameConfig` (see
 // activeResource below), so editing a flag's label here needs its own
-// write, same IPC call as the 'game'/'events' tabs' own save() branch.
+// write, same IPC call as the 'game'/'reactions' tabs' own save() branch.
 async function onFlagsDialogHide() {
   await window.storieAPI.saveGame({
     rootPath: story.project.rootPath,
@@ -864,12 +880,19 @@ const selectedAutomationIndex = ref(0)
 const selectedAutomationDef = computed(
   () => story.project?.gameConfig?.automations?.[selectedAutomationIndex.value] || null,
 )
-// The 'Données' tab groups 5 catalogs that used to each have their own
+// The 'Données' tab groups 4 catalogs that used to each have their own
 // top-level tab (Flags was a dialog, not even a tab) — one topbar slot
-// instead of five, with this picking which of the five shows. 'flags' has
+// instead of four, with this picking which of the four shows. 'flags' has
 // no per-item selection (FlagsPanel lists everything at once), so it's the
 // only one with nothing analogous to selectedContactIndex.
 const dataSubTab = ref('flags')
+// Same merge, one level up: Events and Automations are the same shape
+// (trigger/condition -> effects/then) and used to each have their own slot
+// (Events was standalone, Automations briefly lived under Données) — one
+// 'Réactions' tab instead, picking which of the two shows. Interactions
+// stays its OWN top-level tab: it's a gesture-sequence builder referenced by
+// id from the timeline, not a condition-driven reaction like these two.
+const reactionsSubTab = ref('events')
 // Selected folder path within assets/ ('' = root) — same lift-state-up
 // pattern as the selection refs above, shared between AssetTree (left pane)
 // and AssetsPanel (middle pane, filters its grid to this folder).
@@ -882,7 +905,7 @@ const selectedSeedBucket = ref('messages')
 // the dirty flag/autosave watch below is watching (via resolveResource) and
 // to give the global undo/redo history (useUndoHistory.js) something
 // stable to tag each entry with, independent of what's on screen at the
-// moment an entry is undone. 'game'/'events'/'interactions' deliberately
+// moment an entry is undone. 'game'/'reactions'/'interactions' deliberately
 // collapse to the SAME descriptor — they all live in game.js, one file,
 // one resource, not three (see resolveResource's own comment).
 function currentDescriptor() {
@@ -892,11 +915,11 @@ function currentDescriptor() {
     case 'data':
       if (dataSubTab.value === 'contacts') return { kind: 'contacts' }
       if (dataSubTab.value === 'threads') return { kind: 'threads' }
-      // 'flags'/'schemas'/'automations' all live in gameConfig, same file as
-      // events/interactions below.
+      // 'flags'/'schemas' both live in gameConfig, same file as
+      // reactions/interactions below.
       return { kind: 'game' }
     case 'game':
-    case 'events':
+    case 'reactions':
     case 'interactions':
       return { kind: 'game' }
     case 'apps':
@@ -983,31 +1006,33 @@ function navigateToResource(descriptor, hint) {
       dataSubTab.value = 'threads'
       return true
     case 'game':
-      // navHint picks the right sub-tab/row (Jeu/Events/Interactions/
+      // navHint picks the right sub-tab/row (Jeu/Réactions/Interactions/
       // Données all share one descriptor, see currentDescriptor's comment)
       // — without it, an edit made in Events would land on Jeu, which shows
       // neither the event list nor its form: correctly undone, invisibly so.
-      // 'schemas'/'flags' route through the merged Données tab rather than
-      // being top-level viewModes themselves.
+      // 'schemas'/'flags' route through the merged Données tab, 'events'/
+      // 'automations' through the merged Réactions tab, rather than being
+      // top-level viewModes themselves.
       if (hint?.viewMode === 'schemas') {
         viewMode.value = 'data'
         dataSubTab.value = 'schemas'
         if (hint.schemaIndex != null) selectedSchemaIndex.value = hint.schemaIndex
-      } else if (hint?.viewMode === 'automations') {
-        viewMode.value = 'data'
-        dataSubTab.value = 'automations'
-        if (hint.automationIndex != null) selectedAutomationIndex.value = hint.automationIndex
       } else if (hint?.viewMode === 'flags') {
         viewMode.value = 'data'
         dataSubTab.value = 'flags'
+      } else if (hint?.viewMode === 'events') {
+        viewMode.value = 'reactions'
+        reactionsSubTab.value = 'events'
+        if (hint.eventIndex != null) selectedEventIndex.value = hint.eventIndex
+      } else if (hint?.viewMode === 'automations') {
+        viewMode.value = 'reactions'
+        reactionsSubTab.value = 'automations'
+        if (hint.automationIndex != null) selectedAutomationIndex.value = hint.automationIndex
+      } else if (hint?.viewMode === 'interactions') {
+        viewMode.value = 'interactions'
+        if (hint.interactionIndex != null) selectedInteractionIndex.value = hint.interactionIndex
       } else {
-        viewMode.value = hint?.viewMode || 'game'
-        if (hint?.viewMode === 'events' && hint.eventIndex != null) {
-          selectedEventIndex.value = hint.eventIndex
-        }
-        if (hint?.viewMode === 'interactions' && hint.interactionIndex != null) {
-          selectedInteractionIndex.value = hint.interactionIndex
-        }
+        viewMode.value = 'game'
       }
       return true
     case 'app': {
@@ -1032,24 +1057,24 @@ function navigateToResource(descriptor, hint) {
 }
 
 // Non-identity context captured alongside a history entry — see
-// navigateToResource's 'game' case for why this exists (Jeu/Events/
+// navigateToResource's 'game' case for why this exists (Jeu/Réactions/
 // Interactions/Données-schémas-et-flags share one descriptor but need
 // different sub-tab navigation). Données' 'contacts'/'threads' sub-tabs
 // don't need an entry here — they resolve to their OWN descriptor kind
 // ('contacts'/'threads', not 'game'), which navigateToResource already
 // routes straight back to the Données tab on its own.
 function currentNavHint() {
-  if (viewMode.value === 'events') {
+  if (viewMode.value === 'reactions' && reactionsSubTab.value === 'events') {
     return { viewMode: 'events', eventIndex: selectedEventIndex.value }
+  }
+  if (viewMode.value === 'reactions' && reactionsSubTab.value === 'automations') {
+    return { viewMode: 'automations', automationIndex: selectedAutomationIndex.value }
   }
   if (viewMode.value === 'interactions') {
     return { viewMode: 'interactions', interactionIndex: selectedInteractionIndex.value }
   }
   if (viewMode.value === 'data' && dataSubTab.value === 'schemas') {
     return { viewMode: 'schemas', schemaIndex: selectedSchemaIndex.value }
-  }
-  if (viewMode.value === 'data' && dataSubTab.value === 'automations') {
-    return { viewMode: 'automations', automationIndex: selectedAutomationIndex.value }
   }
   if (viewMode.value === 'data' && dataSubTab.value === 'flags') {
     return { viewMode: 'flags' }
@@ -1245,9 +1270,9 @@ async function save() {
       })
     } else if (
       viewMode.value === 'game' ||
-      viewMode.value === 'events' ||
+      viewMode.value === 'reactions' ||
       viewMode.value === 'interactions' ||
-      (viewMode.value === 'data' && ['flags', 'schemas', 'automations'].includes(dataSubTab.value))
+      (viewMode.value === 'data' && ['flags', 'schemas'].includes(dataSubTab.value))
     ) {
       await window.storieAPI.saveGame({
         rootPath: story.project.rootPath,

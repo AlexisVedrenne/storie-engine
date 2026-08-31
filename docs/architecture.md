@@ -649,7 +649,7 @@ customApps/scheduleSlot.js`'s `activeSlotPlace()`, extracted from `ScheduleBlock
 highlighting logic so the two can't drift — letting an author write "this character is currently at
 `<place>`" instead of needing to know the field's internal shape.
 
-**Events** (`game.events[]`, edited in the Events tab) are the same
+**Events** (`game.events[]`, edited in the Réactions tab's Events sub-tab) are the same
 `requires`/`effects`/`then` trio, but triggered by a _player action_ instead of the timeline
 reaching a specific point — `handleEngineEvent()` reuses `checkConditions`/`applyEffects`/`runThen`
 exactly as a normal timeline entry would (see `docs/roadmap-modular-apps-events.md` §5: "don't
@@ -662,8 +662,11 @@ the other just for this.
 
 ### Automations
 
-`game.automations[]` (Données tab, `AutomationList.vue`/`AutomationForm.vue`) is a small reactive
-rule engine layered ON TOP of `checkConditions`/`applyEffects`, not a second one: each rule is
+`game.automations[]` (Réactions tab's Automatisations sub-tab — grouped with Events, not Données,
+since the two share the exact same trigger/condition/action shape; see `docs/user-guide/
+conditions-and-flags.md`'s own note on this reorg — `AutomationList.vue`/`AutomationForm.vue`) is a
+small reactive rule engine layered ON TOP of `checkConditions`/`applyEffects`, not a second one:
+each rule is
 `{ id, label, requires, action, repeatMode: 'once'|'count'|'unlimited', repeatCount }`. Unlike an
 Event (triggered by a discrete player action), an automation has no trigger at all — it's
 re-evaluated by `story.js`'s `evaluateAutomations(depth)`, called at the end of EVERY
