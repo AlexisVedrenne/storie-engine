@@ -31,9 +31,13 @@
         v-if="openSheet"
         class="sheet-backdrop"
         :class="`sheet-backdrop--${sheetPosition}`"
+        :style="{ background: `rgba(0, 0, 0, ${sheetBackdropOpacity})` }"
         @click.self="openSheetId = null"
       >
-        <div class="sheet-panel" :class="`sheet-panel--${sheetPosition}`">
+        <div
+          class="sheet-panel"
+          :class="[`sheet-panel--${sheetPosition}`, `sheet-panel--size-${sheetSize}`]"
+        >
           <div v-if="sheetPosition !== 'center'" class="sheet-handle" />
           <BlockList :blocks="displaySheet?.blocks || []" />
         </div>
@@ -141,6 +145,19 @@ watch(openSheet, (s) => {
 // plain centered dialog, no drag handle — it isn't a drawer) / 'top' (same
 // panel treatment as bottom, mirrored).
 const sheetPosition = computed(() => displaySheet.value?.position || 'bottom')
+// Backdrop darkness (user request) — 0-100%, default 50 matching the
+// original hardcoded `rgba(0, 0, 0, 0.5)`, so an existing saved sheet
+// renders unchanged.
+const sheetBackdropOpacity = computed(() => {
+  const v = displaySheet.value?.opacity
+  return (v == null ? 50 : v) / 100
+})
+// Panel size (user request — "full width, full height, ou full screen"):
+// 'auto' (default) keeps the original per-position sizing (edge-to-edge
+// width but content-driven height for bottom/top, a small centered card for
+// center); the other 3 override width/height/both regardless of position —
+// see `.sheet-panel--size-*` below.
+const sheetSize = computed(() => displaySheet.value?.size || 'auto')
 provide('customAppOpenSheet', (sheetId) => {
   openSheetId.value = sheetId
 })
@@ -346,6 +363,34 @@ const backgroundOpacity = computed(() => (currentScreen.value?.backgroundOpacity
   max-width: 320px;
   border-radius: var(--app-radius);
   padding: 16px;
+}
+
+/* `size` (user request) — additive overrides on top of the position's own
+   base sizing above, `auto` (default) sets none of these and changes
+   nothing. `full-width` only visibly affects `center` (bottom/top are
+   already edge-to-edge); `full-height` drops the 80% content-driven cap;
+   `full-screen` is both together, plus flush corners/no outer gutter since
+   a panel covering the whole screen reading as a rounded/inset card would
+   look like a bug, not a takeover. */
+.sheet-panel--size-full-width {
+  max-width: none;
+}
+
+.sheet-panel--size-full-height {
+  max-height: none;
+  height: 100%;
+}
+
+.sheet-panel--size-full-screen {
+  max-width: none;
+  max-height: none;
+  width: 100%;
+  height: 100%;
+  border-radius: 0;
+}
+
+.sheet-backdrop:has(.sheet-panel--size-full-screen) {
+  padding: 0;
 }
 
 .sheet-handle {

@@ -94,8 +94,12 @@ export function defaultBlock(type) {
       // recursive shape as `card`. `position` ('bottom'/'center'/'top',
       // default 'bottom' — the original iOS-action-sheet-only behavior)
       // picks where it docks and which edge(s) get rounded — see
-      // CustomAppRenderer.vue's SHEET_POSITIONS.
-      return { type, sheetId: '', position: 'bottom', blocks: [] }
+      // CustomAppRenderer.vue's SHEET_POSITIONS. `size` ('auto'/'full-width'/
+      // 'full-height'/'full-screen', default 'auto' — user request) overrides
+      // the panel's own width/height regardless of position; `opacity`
+      // (0-100, default 50 — user request) controls the darkening backdrop
+      // behind it, matching the original hardcoded `rgba(0, 0, 0, 0.5)`.
+      return { type, sheetId: '', position: 'bottom', size: 'auto', opacity: 50, blocks: [] }
     case 'layout':
       // Pure flex arranger — no background/padding chrome of its own,
       // unlike `card` (which is really "layout, column direction, + a

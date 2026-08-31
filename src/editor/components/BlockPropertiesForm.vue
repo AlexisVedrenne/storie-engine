@@ -166,6 +166,15 @@
         </template>
       </q-input>
       <ColorField v-model="block.color" clearable />
+      <q-input
+        dense
+        outlined
+        type="number"
+        :label="t('blockProps.avatarSizeLabel')"
+        suffix="px"
+        :model-value="block.size ?? 64"
+        @update:model-value="(v) => (block.size = v === null || v === '' ? 64 : Number(v))"
+      />
     </template>
 
     <template v-else-if="block.type === 'row'">
@@ -318,6 +327,32 @@
           { label: t('blockProps.sheetPositionCenter'), value: 'center' },
           { label: t('blockProps.sheetPositionTop'), value: 'top' },
         ]"
+      />
+      <q-select
+        dense
+        outlined
+        :label="t('blockProps.sheetSizeLabel')"
+        :model-value="block.size || 'auto'"
+        @update:model-value="(v) => (block.size = v)"
+        :options="[
+          { label: t('blockProps.sheetSizeAuto'), value: 'auto' },
+          { label: t('blockProps.sheetSizeFullWidth'), value: 'full-width' },
+          { label: t('blockProps.sheetSizeFullHeight'), value: 'full-height' },
+          { label: t('blockProps.sheetSizeFullScreen'), value: 'full-screen' },
+        ]"
+        emit-value
+        map-options
+      />
+      <q-input
+        dense
+        outlined
+        type="number"
+        :label="t('blockProps.sheetOpacityLabel')"
+        suffix="%"
+        min="0"
+        max="100"
+        :model-value="block.opacity ?? 50"
+        @update:model-value="(v) => (block.opacity = v === null || v === '' ? 50 : Number(v))"
       />
       <BlockBuilder
         :blocks="ensureChildren()"
