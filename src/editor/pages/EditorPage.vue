@@ -890,6 +890,16 @@ const selectedCustomAppIndex = ref(0)
 const selectedCustomApp = computed(
   () => story.project?.customApps?.[selectedCustomAppIndex.value] || null,
 )
+// Used instead of the raw index below to re-arm the dirty-tracking watch —
+// bug fix (user-reported: created a first app, edited it, closed, edits
+// gone with no warning). Creating a project's FIRST custom app moves
+// `selectedCustomAppIndex` from 0 to 0 (still the only/first slot) — no
+// actual value change, so a watch keyed on the index never fires, so
+// watchActiveResource() never re-arms onto the new app, so every edit made
+// afterward is invisible to the dirty flag/autosave/close-warning. The id
+// always genuinely changes (undefined/old-app's-id -> the new app's own
+// id), even when the index coincidentally repeats.
+const selectedCustomAppId = computed(() => selectedCustomApp.value?.id ?? null)
 const selectedSchemaIndex = ref(0)
 const selectedSchemaDef = computed(
   () => story.project?.gameConfig?.entitySchemas?.[selectedSchemaIndex.value] || null,
@@ -1173,7 +1183,7 @@ watch(
   [
     viewMode,
     selectedIndex,
-    selectedCustomAppIndex,
+    selectedCustomAppId,
     dataSubTab,
     selectedLocale,
     selectedBucket,

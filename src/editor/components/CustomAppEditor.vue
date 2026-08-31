@@ -328,7 +328,12 @@ const primaryColor = computed({
 // as switching a button's action kind.
 async function exportTheme() {
   try {
-    const ok = await window.storieAPI.exportTheme({ theme: theme.value })
+    // `theme.value` is the live reactive object (props.def.theme, via
+    // ensureTheme() above) — Electron's IPC structured-clone rejects a Vue
+    // Proxy outright ("An object could not be cloned", user-reported bug).
+    // Same JSON round-trip EditorPage.vue's own saveCustomApp call already
+    // uses for the exact same reason.
+    const ok = await window.storieAPI.exportTheme({ theme: JSON.parse(JSON.stringify(theme.value)) })
     if (ok) Notify.create({ type: 'positive', message: t('customAppEditor.themeExported') })
   } catch (err) {
     Notify.create({ type: 'negative', message: err.message || String(err) })
