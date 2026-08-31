@@ -775,7 +775,7 @@ export default {
     sheetSizeFullWidth: 'Full width',
     sheetSizeFullHeight: 'Full height',
     sheetSizeFullScreen: 'Full screen',
-    sheetOpacityLabel: 'Backdrop opacity',
+    sheetOpacityLabel: 'Modal opacity',
     cardHelp: 'A card visually groups other blocks inside it.',
     layoutHelp:
       'Arranges other blocks in a row or column, no background by default — unlike a card, unless you pick a background color below.',

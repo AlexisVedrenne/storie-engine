@@ -343,17 +343,27 @@
         emit-value
         map-options
       />
-      <q-input
-        dense
-        outlined
-        type="number"
-        :label="t('blockProps.sheetOpacityLabel')"
-        suffix="%"
-        min="0"
-        max="100"
-        :model-value="block.opacity ?? 50"
-        @update:model-value="(v) => (block.opacity = v === null || v === '' ? 50 : Number(v))"
-      />
+      <div class="row">
+        <ColorField
+          v-model="block.bgColor"
+          :label="t('blockProps.bgColorLabel')"
+          default-value="#1c1f26"
+          clearable
+          class="grow"
+        />
+        <q-input
+          dense
+          outlined
+          type="number"
+          :label="t('blockProps.sheetOpacityLabel')"
+          suffix="%"
+          min="0"
+          max="100"
+          :model-value="block.opacity ?? 95"
+          @update:model-value="(v) => (block.opacity = v === null || v === '' ? 95 : Number(v))"
+          class="grow"
+        />
+      </div>
       <BlockBuilder
         :blocks="ensureChildren()"
         :screens="screens"
