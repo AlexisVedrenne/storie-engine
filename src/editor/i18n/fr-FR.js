@@ -795,7 +795,7 @@ export default {
     sheetSizeFullWidth: 'Pleine largeur',
     sheetSizeFullHeight: 'Pleine hauteur',
     sheetSizeFullScreen: 'Plein écran',
-    sheetOpacityLabel: 'Opacité du fond',
+    sheetOpacityLabel: 'Opacité du modal',
     layoutHelp:
       'Arrange d’autres blocs en rangée ou en colonne, sans fond visuel par défaut — contrairement à la carte, sauf si tu choisis une couleur de fond ci-dessous.',
     stickyHeaderLabel: 'Fixé en haut (reste visible au défilement)',

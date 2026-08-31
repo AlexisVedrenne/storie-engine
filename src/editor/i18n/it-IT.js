@@ -789,7 +789,7 @@ export default {
     sheetSizeFullWidth: 'Larghezza piena',
     sheetSizeFullHeight: 'Altezza piena',
     sheetSizeFullScreen: 'Schermo intero',
-    sheetOpacityLabel: 'Opacità dello sfondo',
+    sheetOpacityLabel: 'Opacità del modale',
     cardHelp: 'Una scheda raggruppa visivamente altri blocchi al suo interno.',
     layoutHelp:
       'Dispone altri blocchi in riga o colonna, senza sfondo per default — a differenza di una scheda, a meno che tu non scelga un colore di sfondo qui sotto.',

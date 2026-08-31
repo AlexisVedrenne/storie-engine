@@ -147,6 +147,7 @@ function blockComponent(type) {
 <style scoped>
 .block-list {
   display: flex;
+  width: 100%;
 }
 
 .block-wrap {

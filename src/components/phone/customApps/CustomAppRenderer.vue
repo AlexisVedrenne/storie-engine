@@ -31,12 +31,12 @@
         v-if="openSheet"
         class="sheet-backdrop"
         :class="`sheet-backdrop--${sheetPosition}`"
-        :style="{ background: `rgba(0, 0, 0, ${sheetBackdropOpacity})` }"
         @click.self="openSheetId = null"
       >
         <div
           class="sheet-panel"
           :class="[`sheet-panel--${sheetPosition}`, `sheet-panel--size-${sheetSize}`]"
+          :style="{ background: sheetPanelBackground }"
         >
           <div v-if="sheetPosition !== 'center'" class="sheet-handle" />
           <BlockList :blocks="displaySheet?.blocks || []" />
@@ -145,12 +145,15 @@ watch(openSheet, (s) => {
 // plain centered dialog, no drag handle — it isn't a drawer) / 'top' (same
 // panel treatment as bottom, mirrored).
 const sheetPosition = computed(() => displaySheet.value?.position || 'bottom')
-// Backdrop darkness (user request) — 0-100%, default 50 matching the
-// original hardcoded `rgba(0, 0, 0, 0.5)`, so an existing saved sheet
-// renders unchanged.
-const sheetBackdropOpacity = computed(() => {
-  const v = displaySheet.value?.opacity
-  return (v == null ? 50 : v) / 100
+// Panel background (user request, corrected from an earlier miss — see
+// blockKinds.js's own comment on `bgColor`/`opacity`): the panel used to be
+// `var(--app-bg)`, transparent by default — this replaces it outright,
+// blending the author's own color (or the literal fallback) with
+// transparent at their chosen opacity via `color-mix()`.
+const sheetPanelBackground = computed(() => {
+  const color = displaySheet.value?.bgColor || '#1c1f26'
+  const opacity = displaySheet.value?.opacity ?? 95
+  return `color-mix(in srgb, ${color} ${opacity}%, transparent)`
 })
 // Panel size (user request — "full width, full height, ou full screen"):
 // 'auto' (default) keeps the original per-position sizing (edge-to-edge
@@ -345,7 +348,6 @@ const backgroundOpacity = computed(() => (currentScreen.value?.backgroundOpacity
   max-height: 80%;
   overflow-y: auto;
   padding: 8px 16px 24px;
-  background: var(--app-bg);
 }
 
 .sheet-panel--bottom,
@@ -367,11 +369,17 @@ const backgroundOpacity = computed(() => (currentScreen.value?.backgroundOpacity
 
 /* `size` (user request) — additive overrides on top of the position's own
    base sizing above, `auto` (default) sets none of these and changes
-   nothing. `full-width` only visibly affects `center` (bottom/top are
-   already edge-to-edge); `full-height` drops the 80% content-driven cap;
-   `full-screen` is both together, plus flush corners/no outer gutter since
-   a panel covering the whole screen reading as a rounded/inset card would
-   look like a bug, not a takeover. */
+   nothing. `full-height` drops the 80% content-driven cap; `full-screen` is
+   both width and height together, plus flush corners since a panel
+   covering the whole screen reading as a rounded/inset card would look
+   like a bug, not a takeover.
+   `full-width` only visibly affects `center` (bottom/top are already
+   edge-to-edge) — and removing the PANEL's own `max-width` cap isn't
+   enough on its own: `.sheet-backdrop--center` has its own fixed 24px
+   padding (breathing room around the ORIGINAL small ~320px dialog), which
+   a "full width" panel needs zeroed too, or it still can't reach the
+   actual screen edges — bug fix (user-reported: set full-width, the panel
+   still had a visible gap down each side). */
 .sheet-panel--size-full-width {
   max-width: none;
 }
@@ -389,8 +397,15 @@ const backgroundOpacity = computed(() => (currentScreen.value?.backgroundOpacity
   border-radius: 0;
 }
 
+.sheet-backdrop:has(.sheet-panel--size-full-width),
 .sheet-backdrop:has(.sheet-panel--size-full-screen) {
-  padding: 0;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.sheet-backdrop:has(.sheet-panel--size-full-screen) {
+  padding-top: 0;
+  padding-bottom: 0;
 }
 
 .sheet-handle {

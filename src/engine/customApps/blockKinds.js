@@ -96,10 +96,30 @@ export function defaultBlock(type) {
       // picks where it docks and which edge(s) get rounded — see
       // CustomAppRenderer.vue's SHEET_POSITIONS. `size` ('auto'/'full-width'/
       // 'full-height'/'full-screen', default 'auto' — user request) overrides
-      // the panel's own width/height regardless of position; `opacity`
-      // (0-100, default 50 — user request) controls the darkening backdrop
-      // behind it, matching the original hardcoded `rgba(0, 0, 0, 0.5)`.
-      return { type, sheetId: '', position: 'bottom', size: 'auto', opacity: 50, blocks: [] }
+      // the panel's own width/height regardless of position.
+      // `bgColor`/`opacity` (user request, corrected from an earlier miss —
+      // "the MODAL itself is see-through, not the backdrop") control the
+      // PANEL's own background: it used to be `var(--app-bg)`, which is
+      // 'transparent' by default (that var is really "the whole screen's
+      // wallpaper layer", never meant for a floating panel that needs to
+      // read as solid on its own) — a real bug independent of these new
+      // fields, not just a missing option. `bgColor` (optional, falls back
+      // to a literal `#1c1f26` — same "hardcoded, not theme-derived"
+      // treatment the backdrop's own darkening color already gets, for the
+      // same reason: it must look right regardless of how translucent the
+      // author's theme colors happen to be) is blended with transparent at
+      // `opacity`% (0-100, default 95 — solid-looking by default, fixing
+      // the "can't see the card inside" report without the author touching
+      // anything) via `color-mix()`.
+      return {
+        type,
+        sheetId: '',
+        position: 'bottom',
+        size: 'auto',
+        bgColor: '',
+        opacity: 95,
+        blocks: [],
+      }
     case 'layout':
       // Pure flex arranger — no background/padding chrome of its own,
       // unlike `card` (which is really "layout, column direction, + a

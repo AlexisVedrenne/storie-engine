@@ -794,7 +794,7 @@ export default {
     sheetSizeFullWidth: 'Ancho completo',
     sheetSizeFullHeight: 'Alto completo',
     sheetSizeFullScreen: 'Pantalla completa',
-    sheetOpacityLabel: 'Opacidad del fondo',
+    sheetOpacityLabel: 'Opacidad del modal',
     cardHelp: 'Una tarjeta agrupa visualmente otros bloques en su interior.',
     layoutHelp:
       'Organiza otros bloques en fila o columna, sin fondo por defecto — a diferencia de una tarjeta, a menos que elijas un color de fondo abajo.',

@@ -42,6 +42,8 @@ function onClick() {
   /* Lets a nested `overlay` block (pilier 03) position itself against THIS
      card specifically instead of bubbling up to the screen root. */
   position: relative;
+  width: 100%;
+  box-sizing: border-box;
   background: var(--app-surface);
   border-radius: var(--app-radius);
   padding: 4px 14px;
