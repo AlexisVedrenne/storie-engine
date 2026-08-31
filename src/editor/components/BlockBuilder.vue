@@ -105,6 +105,7 @@
 
 <script setup>
 import { inject, nextTick, reactive, ref, watch } from 'vue'
+import { Dialog } from 'quasar'
 import { usePhoneStore } from '@/engine/stores/phone'
 import { BLOCK_KINDS, paletteIcon, defaultBlock } from '@/engine/customApps/blockKinds'
 import { BLOCK_PRESETS } from '@/engine/customApps/blockPresets'
@@ -148,8 +149,42 @@ function summaryFor(block) {
   return text ? ` — ${text}` : ''
 }
 
+// A `card`/`layout`/list-template block can nest an arbitrarily deep
+// authored screen under `.blocks`/`.template` — same shape isOwnDescendantArray
+// below already walks. One click on the row's delete icon (no separate
+// confirm step) could otherwise wipe that whole subtree with no warning.
+function countNested(block) {
+  let n = 0
+  for (const children of [block.blocks, block.template]) {
+    if (!Array.isArray(children)) continue
+    for (const child of children) n += 1 + countNested(child)
+  }
+  return n
+}
+
 function remove(i) {
-  props.blocks.splice(i, 1)
+  const block = props.blocks[i]
+  const nested = countNested(block)
+  if (nested > 0) {
+    Dialog.create({
+      title: t('blockBuilder.confirmRemoveNestedTitle'),
+      message: t('blockBuilder.confirmRemoveNestedMessage', { n: nested }),
+      cancel: true,
+      persistent: true,
+      color: 'negative',
+    }).onOk(() => removeBlock(block))
+    return
+  }
+  removeBlock(block)
+}
+
+// Takes the block object, not the index — the confirm dialog above is
+// async, so the array may have reordered under it by the time onOk fires
+// (drag/duplicate/another remove); re-finding by identity avoids removing
+// the wrong row.
+function removeBlock(block) {
+  const i = props.blocks.indexOf(block)
+  if (i !== -1) props.blocks.splice(i, 1)
 }
 
 function duplicate(i) {

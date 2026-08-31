@@ -1,5 +1,6 @@
 // Project-wide search — one result per matching chapter/contact/thread/
-// custom app/event/interaction/flag. Deliberately reuses EditorPage.vue's
+// custom app/event/automation/interaction/entity schema/flag. Deliberately
+// reuses EditorPage.vue's
 // existing `navigateToResource(descriptor, navHint)` (added for the global
 // undo/redo feature) for click-to-navigate rather than inventing new
 // navigation — which also means results share its exact granularity limit:
@@ -107,6 +108,23 @@ export function searchProject(project, query) {
     }
   })
 
+  // Automations — same id/label/requires/action/repeat shape as Events
+  // above (AutomationList.vue's own comment: "mirrors EntitySchemaList.vue's
+  // own list/select/create/delete shape exactly"), and the two are
+  // presented as one merged "Réactions" tab in the UI (EditorPage.vue) —
+  // omitting this loop left half of that tab's content unsearchable.
+  ;(project.gameConfig?.automations || []).forEach((def, i) => {
+    if (matches(q, def.label, def.id)) {
+      results.push({
+        kind: 'automation',
+        label: def.label || def.id,
+        context: 'Automatisation',
+        descriptor: { kind: 'game' },
+        navHint: { viewMode: 'automations', automationIndex: i },
+      })
+    }
+  })
+
   ;(project.gameConfig?.interactions || []).forEach((def, i) => {
     if (matches(q, def.name, def.id)) {
       results.push({
@@ -115,6 +133,21 @@ export function searchProject(project, query) {
         context: 'Interaction',
         descriptor: { kind: 'game' },
         navHint: { viewMode: 'interactions', interactionIndex: i },
+      })
+    }
+  })
+
+  // Entity schemas — a growing catalog once a project uses custom data
+  // types (EntitySchemaForm.vue), previously invisible to search entirely.
+  ;(project.gameConfig?.entitySchemas || []).forEach((def, i) => {
+    const fieldLabels = (def.fields || []).flatMap((f) => [f.label, f.key])
+    if (matches(q, def.label, def.id, ...fieldLabels)) {
+      results.push({
+        kind: 'entitySchema',
+        label: def.label || def.id,
+        context: 'Schéma',
+        descriptor: { kind: 'game' },
+        navHint: { viewMode: 'schemas', schemaIndex: i },
       })
     }
   })

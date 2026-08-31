@@ -45,6 +45,7 @@ export default {
     validateTooltip:
       'Valider le projet — cherche les références cassées (contact/thread/image introuvable) et les problèmes de chapitres',
     globalSearchTooltip: 'Recherche globale (Ctrl+K)',
+    conceptsTooltip: "Lexique — comprendre les mots de l'éditeur (chapitre, flag, event…)",
     undoTooltip: 'Annuler (Ctrl+Z)',
     redoTooltip: 'Rétablir (Ctrl+Maj+Z)',
     undoTargetGone: "Impossible d'annuler : cet élément a été supprimé depuis.",
@@ -52,6 +53,9 @@ export default {
     buildTooltip: 'Build — exporter ce projet en jeu jouable (desktop et/ou Android)',
     webPreviewTooltip: 'Preview web — tester sur ton téléphone via le Wi-Fi',
     switchProjectTooltip: 'Changer de projet',
+    unsavedCloseTitle: 'Modifications non enregistrées',
+    unsavedCloseMessage:
+      'Les modifications en cours seront perdues si tu changes de projet maintenant. Continuer ?',
     backToGraphTooltip: 'Retour au graphe',
     chapterTitleLabel: 'Titre',
     chapterRenamed: 'Chapitre renommé — id mis à jour.',
@@ -123,7 +127,42 @@ export default {
     buildingGeneric: 'Build en cours…',
   },
 
+  conceptsDialog: {
+    title: "Comprendre l'éditeur",
+    intro: "Petit lexique des mots utilisés partout dans l'éditeur — utile si tu découvres l'outil.",
+    chapterTerm: 'Chapitre',
+    chapterDesc:
+      "Un morceau de l'histoire : la timeline de messages, choix et événements que le joueur vit d'affilée avant de passer au chapitre suivant.",
+    flagTerm: 'Flag',
+    flagDesc:
+      "Une valeur mémorisée (oui/non, un nombre, ou du texte) qui garde en tête ce qui s'est passé, pour que la suite de l'histoire puisse réagir à un choix fait plus tôt.",
+    eventTerm: 'Event',
+    eventDesc:
+      "Une réaction automatique à une action du joueur sur le téléphone — ouvrir une app, liker un post… — indépendante de la timeline d'un chapitre.",
+    automationTerm: 'Automatisation',
+    automationDesc:
+      "Une action qui se déclenche toute seule dès qu'une condition devient vraie, sans que le joueur ait besoin de cliquer sur quoi que ce soit.",
+    interactionTerm: 'Interaction',
+    interactionDesc:
+      'Un geste téléphone que tu construis toi-même (glisser, maintenir, secouer…) et que tu déclenches depuis un chapitre.',
+    customAppTerm: 'App custom',
+    customAppDesc:
+      "Un écran de téléphone que tu construis avec des blocs visuels (texte, boutons, listes…) — comme concevoir ta propre app de réglages, journal, etc.",
+    entitySchemaTerm: "Schéma d'entité",
+    entitySchemaDesc:
+      "Un modèle de données réutilisable (comme un formulaire) pour du contenu structuré utilisé dans les apps custom — par exemple une « fiche contact » avec nom, photo, bio.",
+    seedTerm: 'Contenu initial',
+    seedDesc:
+      "Ce qui est déjà présent sur le téléphone avant même que l'histoire commence à se jouer — messages, posts, photos préchargés.",
+    i18nTerm: 'Traductions',
+    i18nDesc:
+      'Les copies traduites de chaque texte du projet, pour les joueurs dans une autre langue que le français.',
+  },
+
   chapterGraph: {
+    emptyTitle: "Ce projet n'a encore aucun chapitre",
+    emptyDetail:
+      "Un chapitre est un morceau de l'histoire (sa propre timeline de messages/choix). Clique sur « + Nouveau chapitre » pour créer le premier, ou fais un clic droit n'importe où sur le canevas.",
     newChapter: 'Nouveau chapitre',
     visitedTooltip: 'Déjà visité pendant cet aperçu',
     titleLabel: 'Titre',
@@ -151,6 +190,9 @@ export default {
   },
 
   timelineEditor: {
+    confirmRemoveNestedTitle: 'Supprimer cette entrée ?',
+    confirmRemoveNestedMessage:
+      'Cette entrée contient {n} entrée(s) imbriquée(s) dans ses branches (choix). Tout sera supprimé. Cette action est irréversible.',
     selectedOne: '1 entrée sélectionnée',
     selectedMany: '{n} entrées sélectionnées',
     groupSelection: 'Grouper en accordéon',
@@ -443,6 +485,8 @@ export default {
   },
 
   interactionList: {
+    confirmDeleteTitle: 'Supprimer cette interaction ?',
+    confirmDeleteMessage: '« {name} » sera supprimée. Cette action est irréversible.',
     empty: 'Aucune interaction créée.',
     stepsCount: '{n} étapes',
     newInteraction: 'Nouvelle interaction',
@@ -464,6 +508,8 @@ export default {
   },
 
   automationList: {
+    confirmDeleteTitle: 'Supprimer cette automatisation ?',
+    confirmDeleteMessage: '« {name} » sera supprimée. Cette action est irréversible.',
     empty: 'Aucune automatisation créée.',
     newAutomation: 'Nouvelle automatisation',
   },
@@ -471,6 +517,8 @@ export default {
   automationForm: {
     intro:
       'Une automatisation exécute une action tout seul, dès qu’une condition devient vraie — sans que le joueur clique sur quoi que ce soit.',
+    introHelp:
+      "Contrairement à un Event (qui réagit à une action du joueur), une automatisation se déclenche seule — ex : dès que la confiance dépasse 5, envoyer un message sans que le joueur ait rien fait.",
     labelLabel: 'Nom (repère seulement)',
     conditionTitle: 'Condition',
     actionTitle: 'Action',
@@ -485,6 +533,9 @@ export default {
   },
 
   entitySchemaList: {
+    confirmDeleteTitle: 'Supprimer ce schéma ?',
+    confirmDeleteMessage:
+      '« {name} » sera supprimé. Les références à ce schéma ailleurs dans le projet (conditions, apps custom) ne seront pas mises à jour. Cette action est irréversible.',
     empty: 'Aucun schéma créé.',
     fieldsCount: '{n} champs',
     newSchema: 'Nouveau schéma',
@@ -645,6 +696,9 @@ export default {
   },
 
   blockBuilder: {
+    confirmRemoveNestedTitle: 'Supprimer ce bloc ?',
+    confirmRemoveNestedMessage:
+      'Ce bloc contient {n} bloc(s) imbriqué(s). Tout sera supprimé. Cette action est irréversible.',
     empty: 'Aucun bloc ici — clique ou glisse-en un depuis la palette au-dessus.',
     emptyRootTitle: 'Cet écran est vide',
     emptyRootDetail:
@@ -1078,6 +1132,8 @@ export default {
   },
 
   eventList: {
+    confirmDeleteTitle: 'Supprimer cet event ?',
+    confirmDeleteMessage: '« {name} » sera supprimé. Cette action est irréversible.',
     paneLabel: 'Events',
     empty: "Aucun event pour l'instant.",
     addEvent: 'Ajouter un event',

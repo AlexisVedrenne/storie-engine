@@ -44,6 +44,7 @@ export default {
     validateTooltip:
       'Validate project — looks for broken references (missing contact/thread/image) and chapter issues',
     globalSearchTooltip: 'Global search (Ctrl+K)',
+    conceptsTooltip: "Glossary — understand the editor's vocabulary (chapter, flag, event…)",
     undoTooltip: 'Undo (Ctrl+Z)',
     redoTooltip: 'Redo (Ctrl+Shift+Z)',
     undoTargetGone: "Can't undo: that item has since been deleted.",
@@ -51,6 +52,8 @@ export default {
     buildTooltip: 'Build — export this project as a playable game (desktop and/or Android)',
     webPreviewTooltip: 'Web preview — test on your phone over Wi-Fi',
     switchProjectTooltip: 'Switch project',
+    unsavedCloseTitle: 'Unsaved changes',
+    unsavedCloseMessage: 'Your current changes will be lost if you switch project now. Continue?',
     backToGraphTooltip: 'Back to graph',
     chapterTitleLabel: 'Title',
     chapterRenamed: 'Chapter renamed — id updated.',
@@ -120,7 +123,41 @@ export default {
     buildingGeneric: 'Building…',
   },
 
+  conceptsDialog: {
+    title: 'Understand the editor',
+    intro: "A small glossary of the words used throughout the editor — useful if you're new to the tool.",
+    chapterTerm: 'Chapter',
+    chapterDesc:
+      "A piece of the story: the timeline of messages, choices and events the player goes through in one go before moving to the next chapter.",
+    flagTerm: 'Flag',
+    flagDesc:
+      "A remembered value (yes/no, a number, or text) that keeps track of what happened, so later content can react to a choice made earlier.",
+    eventTerm: 'Event',
+    eventDesc:
+      "An automatic reaction to a player action on the phone — opening an app, liking a post… — independent of any chapter's timeline.",
+    automationTerm: 'Automation',
+    automationDesc:
+      'An action that fires on its own as soon as a condition becomes true, with no click needed from the player.',
+    interactionTerm: 'Interaction',
+    interactionDesc:
+      'A phone gesture you build yourself (swipe, hold, shake…) and trigger from a chapter.',
+    customAppTerm: 'Custom app',
+    customAppDesc:
+      'A phone screen you build with visual blocks (text, buttons, lists…) — like designing your own settings app, journal, etc.',
+    entitySchemaTerm: 'Entity schema',
+    entitySchemaDesc:
+      'A reusable data template (like a form) for structured content used in custom apps — e.g. a "contact card" with name, photo, bio.',
+    seedTerm: 'Seed content',
+    seedDesc:
+      "What's already on the phone before the story even starts playing — pre-loaded messages, posts, photos.",
+    i18nTerm: 'Translations',
+    i18nDesc: "Translated copies of every piece of text in the project, for players in another language.",
+  },
+
   chapterGraph: {
+    emptyTitle: "This project has no chapter yet",
+    emptyDetail:
+      'A chapter is a piece of the story (its own timeline of messages/choices). Click "+ New chapter" to create the first one, or right-click anywhere on the canvas.',
     newChapter: 'New chapter',
     visitedTooltip: 'Already visited during this preview',
     titleLabel: 'Title',
@@ -147,6 +184,9 @@ export default {
   },
 
   timelineEditor: {
+    confirmRemoveNestedTitle: 'Delete this entry?',
+    confirmRemoveNestedMessage:
+      'This entry contains {n} nested entries in its branches (choice). Everything will be deleted. This cannot be undone.',
     selectedOne: '1 entry selected',
     selectedMany: '{n} entries selected',
     groupSelection: 'Group into accordion',
@@ -427,6 +467,8 @@ export default {
   },
 
   interactionList: {
+    confirmDeleteTitle: 'Delete this interaction?',
+    confirmDeleteMessage: '"{name}" will be deleted. This cannot be undone.',
     empty: 'No interaction created yet.',
     stepsCount: '{n} steps',
     newInteraction: 'New interaction',
@@ -448,6 +490,8 @@ export default {
   },
 
   automationList: {
+    confirmDeleteTitle: 'Delete this automation?',
+    confirmDeleteMessage: '"{name}" will be deleted. This cannot be undone.',
     empty: 'No automation created yet.',
     newAutomation: 'New automation',
   },
@@ -455,6 +499,8 @@ export default {
   automationForm: {
     intro:
       'An automation runs an action on its own, as soon as a condition becomes true — no click from the player needed.',
+    introHelp:
+      "Unlike an Event (which reacts to a player action), an automation fires on its own — e.g. as soon as trust goes above 5, send a message with no action from the player.",
     labelLabel: 'Name (for reference only)',
     conditionTitle: 'Condition',
     actionTitle: 'Action',
@@ -469,6 +515,9 @@ export default {
   },
 
   entitySchemaList: {
+    confirmDeleteTitle: 'Delete this schema?',
+    confirmDeleteMessage:
+      '"{name}" will be deleted. References to this schema elsewhere in the project (conditions, custom apps) will not be updated. This cannot be undone.',
     empty: 'No schemas created yet.',
     fieldsCount: '{n} fields',
     newSchema: 'New schema',
@@ -629,6 +678,9 @@ export default {
   },
 
   blockBuilder: {
+    confirmRemoveNestedTitle: 'Delete this block?',
+    confirmRemoveNestedMessage:
+      'This block contains {n} nested block(s). Everything will be deleted. This cannot be undone.',
     empty: 'No blocks here yet — click or drag one in from the palette above.',
     emptyRootTitle: 'This screen is empty',
     emptyRootDetail:
@@ -1056,6 +1108,8 @@ export default {
   },
 
   eventList: {
+    confirmDeleteTitle: 'Delete this event?',
+    confirmDeleteMessage: '"{name}" will be deleted. This cannot be undone.',
     paneLabel: 'Events',
     empty: 'No events yet.',
     addEvent: 'Add an event',

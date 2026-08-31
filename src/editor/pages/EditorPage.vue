@@ -112,6 +112,16 @@
             dense
             flat
             round
+            icon="help_outline"
+            class="btn-ghost"
+            @click="conceptsDialogRef?.open()"
+          >
+            <q-tooltip>{{ t('editorPage.conceptsTooltip') }}</q-tooltip>
+          </q-btn>
+          <q-btn
+            dense
+            flat
+            round
             :icon="focusPreview ? 'visibility_off' : 'smartphone'"
             class="btn-ghost"
             @click="focusPreview = !focusPreview"
@@ -192,6 +202,11 @@
               <q-item clickable v-close-popup @click="globalSearchDialogRef?.open()">
                 <q-item-section avatar><q-icon name="search" /></q-item-section>
                 <q-item-section>{{ t('editorPage.globalSearchTooltip') }}</q-item-section>
+              </q-item>
+
+              <q-item clickable v-close-popup @click="conceptsDialogRef?.open()">
+                <q-item-section avatar><q-icon name="help_outline" /></q-item-section>
+                <q-item-section>{{ t('editorPage.conceptsTooltip') }}</q-item-section>
               </q-item>
 
               <q-item clickable @click="focusPreview = !focusPreview">
@@ -291,6 +306,7 @@
           @navigate="(descriptor, hint) => navigateToResource(descriptor, hint)"
           @open-flags="flagsDialogOpen = true"
         />
+        <ConceptsDialog ref="conceptsDialogRef" />
       </div>
 
       <div class="panes">
@@ -750,11 +766,12 @@ import EmojiPickerBtn from '@/components/shared/EmojiPickerBtn.vue'
 import { insertEmojiAtCaret } from '@/components/shared/emojiInsert'
 import EditorSettingsDialog from '@/editor/components/EditorSettingsDialog.vue'
 import GlobalSearchDialog from '@/editor/components/GlobalSearchDialog.vue'
+import ConceptsDialog from '@/editor/components/ConceptsDialog.vue'
 import DebugPanel from '@/editor/components/DebugPanel.vue'
 import WebPreviewDialog from '@/editor/components/WebPreviewDialog.vue'
 import BuildStepper from '@/editor/components/BuildStepper.vue'
 import CloudSyncButton from '@/editor/components/CloudSyncButton.vue'
-import { useUndoHistory } from '@/editor/composables/useUndoHistory'
+import { useUndoHistory, descriptorsEqual } from '@/editor/composables/useUndoHistory'
 import { useEditorI18n } from '@/editor/i18n'
 
 const { t } = useEditorI18n()
@@ -810,6 +827,7 @@ const webPreviewDialogRef = ref(null)
 const buildStepperRef = ref(null)
 const editorSettingsDialogRef = ref(null)
 const globalSearchDialogRef = ref(null)
+const conceptsDialogRef = ref(null)
 // Explicit persist — this dialog opens on top of the 'chapters' tab, whose
 // dirty/save watch is armed on `selectedChapter`, not on `gameConfig` (see
 // activeResource below), so editing a flag's label here needs its own
@@ -1144,6 +1162,13 @@ function watchActiveResource() {
 // different objects) — but which conversation is open WITHIN
 // messages/dms is local state inside SeedBucketEditor.vue, never lifted
 // here, so there's no equivalent of selectedContactIndex to exclude.
+// Tracks the descriptor the watcher below is about to leave — separate
+// from useUndoHistory's own internal baselineDescriptor (that one only
+// updates via resyncUndoHistory(), which we call further down in this same
+// handler; reading currentDescriptor() again after that point would just
+// return the NEW descriptor, same as `newDescriptor` below).
+let previousDescriptor = currentDescriptor()
+
 watch(
   [
     viewMode,
@@ -1154,19 +1179,34 @@ watch(
     selectedBucket,
     selectedSeedBucket,
   ],
-  () => {
-    // resync() flushes whatever was pending on the OLD resource into the
-    // global undo history first, then reports whether the resource
-    // identity actually changed — false for a pure Jeu/Events/Interactions
-    // hop (same gameConfig, same descriptor), in which case `dirty` must
-    // NOT reset: doing so unconditionally used to silently clear "unsaved
-    // changes" on that hop even though nothing was saved (pre-existing bug,
-    // fixed here as a natural consequence of resync() already needing to
-    // know this).
-    const changed = resyncUndoHistory()
-    if (changed) dirty.value = false
+  async () => {
+    const newDescriptor = currentDescriptor()
+    const changed = !descriptorsEqual(previousDescriptor, newDescriptor)
+    // Was: `dirty.value = false` unconditionally on any resource change —
+    // that cleared the "unsaved changes" dot (and disabled Save) the moment
+    // you left a chapter/app/bucket via the most routine navigation in the
+    // editor (e.g. "← Retour au graphe"), even though the edit had only
+    // ever been pushed to the in-memory undo stack, never written to disk.
+    // With autosave off (the default) that edit was then gone for good the
+    // next time the project closed. Fix: flush-save the resource we're
+    // LEAVING before the indicator is allowed to go quiet — save() is
+    // descriptor-driven (see below) specifically so it can target the old
+    // resource even though every viewMode/selection ref has already flipped
+    // to the new one by the time this watcher runs. If the save fails,
+    // dirty stays true and the failure Notify (already inside save())
+    // tells the author why — never a silent clear.
+    let flushed = true
+    if (changed && dirty.value) {
+      flushed = await save(previousDescriptor)
+    }
+    // resync() flushes whatever undo-history commit was pending on the OLD
+    // resource — independent of the disk save above, it only touches the
+    // in-memory undo stack, so ordering between the two doesn't matter.
+    resyncUndoHistory()
+    if (changed && flushed) dirty.value = false
     clearTimeout(debounceTimer)
     watchActiveResource()
+    previousDescriptor = newDescriptor
   },
 )
 watchActiveResource()
@@ -1248,39 +1288,46 @@ async function renameChapterIfNeeded() {
   }
 }
 
-async function save() {
+// Descriptor-driven (defaults to whatever's currently active, e.g. the
+// Save button's plain `@click="save"`) rather than reading viewMode/
+// selectedX refs directly — so it can also be called with a DIFFERENT,
+// already-left-behind descriptor (see the re-arm watch above) at a point
+// where those refs have already flipped to the new resource.
+// resolveResource() (same lookup useUndoHistory.js uses) gives every branch
+// below the live object by descriptor identity instead of "whatever's
+// currently selected", which is what makes saving the outgoing resource
+// possible. Returns true on success, false on a caught error — callers that
+// use the result to decide whether it's safe to clear `dirty` must never
+// clear it on a false return, or the failure becomes silent.
+async function save(descriptor = currentDescriptor()) {
+  if (!descriptor) return true
   try {
-    if (viewMode.value === 'chapters') {
-      const chapter = selectedChapter.value
-      if (!chapter) return
+    if (descriptor.kind === 'chapter') {
+      const chapter = resolveResource(descriptor)
+      if (!chapter) return true
       await window.storieAPI.saveChapter({
         rootPath: story.project.rootPath,
         sourceFile: chapter.__sourceFile,
         source: serializeChapter(chapter),
       })
-    } else if (viewMode.value === 'data' && dataSubTab.value === 'contacts') {
+    } else if (descriptor.kind === 'contacts') {
       await window.storieAPI.saveContacts({
         rootPath: story.project.rootPath,
         source: serializeContacts(story.project.contacts),
       })
-    } else if (viewMode.value === 'data' && dataSubTab.value === 'threads') {
+    } else if (descriptor.kind === 'threads') {
       await window.storieAPI.saveThreads({
         rootPath: story.project.rootPath,
         source: serializeThreads(story.project.threads),
       })
-    } else if (
-      viewMode.value === 'game' ||
-      viewMode.value === 'reactions' ||
-      viewMode.value === 'interactions' ||
-      (viewMode.value === 'data' && ['flags', 'schemas'].includes(dataSubTab.value))
-    ) {
+    } else if (descriptor.kind === 'game') {
       await window.storieAPI.saveGame({
         rootPath: story.project.rootPath,
         source: serializeGame(story.project.gameConfig),
       })
-    } else if (viewMode.value === 'apps') {
-      const app = selectedCustomApp.value
-      if (!app) return
+    } else if (descriptor.kind === 'app') {
+      const app = resolveResource(descriptor)
+      if (!app) return true
       const { __sourceFile, ...data } = app
       await window.storieAPI.saveCustomApp({
         rootPath: story.project.rootPath,
@@ -1296,27 +1343,26 @@ async function save() {
         // loadProjectFromDisk uses on the way back.
         data: JSON.parse(JSON.stringify(data)),
       })
-    } else if (viewMode.value === 'i18n') {
-      if (!selectedLocale.value) return
+    } else if (descriptor.kind === 'i18n') {
       await window.storieAPI.saveI18nBucket({
         rootPath: story.project.rootPath,
-        locale: selectedLocale.value,
-        bucket: selectedBucket.value,
-        source: serializeI18nBucket(
-          story.project.i18n[selectedLocale.value][selectedBucket.value] || {},
-        ),
+        locale: descriptor.locale,
+        bucket: descriptor.bucket,
+        source: serializeI18nBucket(resolveResource(descriptor) || {}),
       })
-    } else if (viewMode.value === 'seed') {
+    } else if (descriptor.kind === 'seed') {
       await window.storieAPI.saveSeedBucket({
         rootPath: story.project.rootPath,
-        bucket: selectedSeedBucket.value,
-        source: serializeSeedBucket(story.project.seed[selectedSeedBucket.value]),
+        bucket: descriptor.bucket,
+        source: serializeSeedBucket(resolveResource(descriptor)),
       })
     }
-    dirty.value = false
+    if (descriptorsEqual(descriptor, currentDescriptor())) dirty.value = false
     Notify.create({ type: 'positive', message: t('editorPage.saved') })
+    return true
   } catch (err) {
     Notify.create({ type: 'negative', message: err.message || String(err) })
+    return false
   }
 }
 
@@ -1499,10 +1545,41 @@ onMounted(() => window.addEventListener('keydown', onKeydown))
 onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
 
 function closeProject() {
+  // dirty tracks the currently-active resource only (see the re-arm watch
+  // above, which already flushes any resource left BEHIND) — so by the
+  // time this runs, dirty=true can only mean the resource on screen right
+  // now has edits neither saved nor yet auto-saved. Previously this wiped
+  // story.project unconditionally, discarding that in-memory edit with no
+  // warning at all.
+  if (dirty.value) {
+    Dialog.create({
+      title: t('editorPage.unsavedCloseTitle'),
+      message: t('editorPage.unsavedCloseMessage'),
+      cancel: true,
+      persistent: true,
+      color: 'negative',
+    }).onOk(doCloseProject)
+    return
+  }
+  doCloseProject()
+}
+
+function doCloseProject() {
   localStorage.removeItem(LAST_PROJECT_KEY)
   story.loadProject(null)
   router.push({ name: 'open-project' })
 }
+
+// Last-resort net for closing the window/tab itself (not caught by
+// closeProject() above, which only guards the in-app "switch project"
+// action) — native browser/Electron confirm, so no i18n string involved.
+function onBeforeUnload(e) {
+  if (!dirty.value) return
+  e.preventDefault()
+  e.returnValue = ''
+}
+onMounted(() => window.addEventListener('beforeunload', onBeforeUnload))
+onBeforeUnmount(() => window.removeEventListener('beforeunload', onBeforeUnload))
 
 // Shared by the "Valider le projet" button and the pre-build check below —
 // runs the pure scanner (validateProject.js) plus the asset-existence IPC

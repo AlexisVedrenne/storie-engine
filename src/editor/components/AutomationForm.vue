@@ -1,6 +1,9 @@
 <template>
   <div class="automation-form">
-    <p class="intro">{{ t('automationForm.intro') }}</p>
+    <p class="intro">
+      {{ t('automationForm.intro') }}
+      <FieldHelp :text="t('automationForm.introHelp')" />
+    </p>
 
     <q-input dense outlined :label="t('automationForm.labelLabel')" v-model="def.label" />
 
@@ -52,6 +55,7 @@
 // Events tab, same precedent as a button's own `button.pressed`).
 import RequiresBuilder from '@/editor/components/RequiresBuilder.vue'
 import BlockActionEditor from '@/editor/components/BlockActionEditor.vue'
+import FieldHelp from '@/editor/components/FieldHelp.vue'
 import { useEditorI18n } from '@/editor/i18n'
 
 const { t } = useEditorI18n()

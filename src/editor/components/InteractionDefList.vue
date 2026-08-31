@@ -59,6 +59,7 @@
 
 <script setup>
 import { computed, ref } from 'vue'
+import { Dialog } from 'quasar'
 import { useStoryStore } from '@/engine/stores/story'
 import { useEditorI18n } from '@/editor/i18n'
 
@@ -84,9 +85,23 @@ function create() {
   newName.value = ''
 }
 
+// Same confirm-before-delete protection as Contact/Thread/CustomApp/Locale
+// rows already have — this list previously deleted on a single stray click,
+// discarding the def's own authored `.steps[]` sequence with it.
 function remove(i) {
-  interactions.value.splice(i, 1)
-  if (i === interactions.value.length) emit('update:modelValue', Math.max(0, i - 1))
+  const def = interactions.value[i]
+  Dialog.create({
+    title: t('interactionList.confirmDeleteTitle'),
+    message: t('interactionList.confirmDeleteMessage', { name: def.name || def.id }),
+    cancel: true,
+    persistent: true,
+    color: 'negative',
+  }).onOk(() => {
+    const idx = interactions.value.indexOf(def)
+    if (idx === -1) return
+    interactions.value.splice(idx, 1)
+    if (idx === interactions.value.length) emit('update:modelValue', Math.max(0, idx - 1))
+  })
 }
 </script>
 

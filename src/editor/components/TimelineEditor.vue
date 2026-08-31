@@ -215,7 +215,7 @@
 
 <script setup>
 import { computed, reactive, ref } from 'vue'
-import { Notify } from 'quasar'
+import { Dialog, Notify } from 'quasar'
 import { useStoryStore } from '@/engine/stores/story'
 import { ENTRY_TYPE_APP } from '@/engine/apps/appIds'
 import { CUSTOM_ENTRY_TYPES, CUSTOM_ENTRY_TYPE_BY_TYPE } from '@/engine/apps/entryTypeRegistry'
@@ -489,11 +489,49 @@ function addEntry(type) {
   expandedSet.add(entry)
 }
 
+// A `choice` entry's options can each carry their own `then` branch, itself
+// potentially containing more nested choices — one click on the card's
+// delete icon (no separate confirm step there, see TimelineEntryCard.vue)
+// could otherwise wipe an entire authored branch tree with no warning.
+// Counts every entry nested anywhere under `entry`, not just direct
+// children, so the confirm message below reflects what's really at stake.
+function countNested(entry) {
+  if (entry.type !== 'choice' || !Array.isArray(entry.options)) return 0
+  let n = 0
+  for (const option of entry.options) {
+    for (const child of option.then || []) {
+      n += 1 + countNested(child)
+    }
+  }
+  return n
+}
+
 // Removing the last-but-one member of a group leaves a "group" of 1, which
 // is pointless clutter — auto-dissolve it rather than require an explicit
 // "Dissoudre" click for something the author didn't really ask to keep.
 function remove(i) {
-  const removed = props.entries[i]
+  const entry = props.entries[i]
+  const nested = countNested(entry)
+  if (nested > 0) {
+    Dialog.create({
+      title: t('timelineEditor.confirmRemoveNestedTitle'),
+      message: t('timelineEditor.confirmRemoveNestedMessage', { n: nested }),
+      cancel: true,
+      persistent: true,
+      color: 'negative',
+    }).onOk(() => removeEntry(entry))
+    return
+  }
+  removeEntry(entry)
+}
+
+// Takes the entry object rather than an index — the confirm dialog above is
+// async, so by the time onOk fires the array may have reordered under it
+// (drag/duplicate/another remove); re-finding by identity avoids removing
+// the wrong row, same reasoning as ChapterGraph.vue's confirmDelete().
+function removeEntry(removed) {
+  const i = props.entries.indexOf(removed)
+  if (i === -1) return
   props.entries.splice(i, 1)
   expandedSet.delete(removed)
   selected.delete(removed)

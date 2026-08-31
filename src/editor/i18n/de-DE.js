@@ -44,6 +44,7 @@ export default {
     validateTooltip:
       'Projekt validieren — sucht nach defekten Referenzen (fehlender Kontakt/Thread/Bild) und Kapitelproblemen',
     globalSearchTooltip: 'Globale Suche (Strg+K)',
+    conceptsTooltip: 'Glossar — die Begriffe des Editors verstehen (Kapitel, Flag, Event…)',
     undoTooltip: 'Rückgängig (Strg+Z)',
     redoTooltip: 'Wiederholen (Strg+Umschalt+Z)',
     undoTargetGone: 'Rückgängig nicht möglich: Dieses Element wurde inzwischen gelöscht.',
@@ -52,6 +53,9 @@ export default {
       'Erstellen — dieses Projekt als spielbares Spiel exportieren (Desktop und/oder Android)',
     webPreviewTooltip: 'Web-Vorschau — auf deinem Handy per WLAN testen',
     switchProjectTooltip: 'Projekt wechseln',
+    unsavedCloseTitle: 'Nicht gespeicherte Änderungen',
+    unsavedCloseMessage:
+      'Deine aktuellen Änderungen gehen verloren, wenn du jetzt das Projekt wechselst. Fortfahren?',
     backToGraphTooltip: 'Zurück zum Graphen',
     chapterTitleLabel: 'Titel',
     chapterRenamed: 'Kapitel umbenannt — ID aktualisiert.',
@@ -122,7 +126,41 @@ export default {
     buildingGeneric: 'Wird erstellt…',
   },
 
+  conceptsDialog: {
+    title: 'Den Editor verstehen',
+    intro: 'Ein kleines Glossar der Begriffe, die im ganzen Editor verwendet werden — nützlich, wenn du das Tool gerade entdeckst.',
+    chapterTerm: 'Kapitel',
+    chapterDesc:
+      'Ein Stück der Geschichte: die Timeline aus Nachrichten, Entscheidungen und Events, die der Spieler am Stück erlebt, bevor es ins nächste Kapitel geht.',
+    flagTerm: 'Flag',
+    flagDesc:
+      'Ein gespeicherter Wert (Ja/Nein, eine Zahl oder Text), der sich merkt, was passiert ist, damit spätere Inhalte auf eine frühere Entscheidung reagieren können.',
+    eventTerm: 'Event',
+    eventDesc:
+      'Eine automatische Reaktion auf eine Spieleraktion am Telefon — eine App öffnen, einen Post liken… — unabhängig von der Timeline eines Kapitels.',
+    automationTerm: 'Automatisierung',
+    automationDesc:
+      'Eine Aktion, die von selbst ausgelöst wird, sobald eine Bedingung wahr wird — ohne dass der Spieler irgendetwas anklicken muss.',
+    interactionTerm: 'Interaktion',
+    interactionDesc:
+      'Eine Telefongeste, die du selbst baust (wischen, halten, schütteln…) und aus einem Kapitel heraus auslöst.',
+    customAppTerm: 'Custom App',
+    customAppDesc:
+      'Ein Telefonbildschirm, den du mit visuellen Blöcken baust (Text, Buttons, Listen…) — wie deine eigene Einstellungen-App, dein Tagebuch usw.',
+    entitySchemaTerm: 'Entity-Schema',
+    entitySchemaDesc:
+      'Eine wiederverwendbare Datenvorlage (wie ein Formular) für strukturierte Inhalte, die in Custom Apps verwendet werden — z. B. eine „Kontaktkarte" mit Name, Foto, Bio.',
+    seedTerm: 'Startinhalt',
+    seedDesc:
+      'Was bereits auf dem Telefon vorhanden ist, bevor die Geschichte überhaupt losgeht — vorab geladene Nachrichten, Posts, Fotos.',
+    i18nTerm: 'Übersetzungen',
+    i18nDesc: 'Übersetzte Kopien jedes Textes im Projekt, für Spieler in einer anderen Sprache.',
+  },
+
   chapterGraph: {
+    emptyTitle: 'Dieses Projekt hat noch kein Kapitel',
+    emptyDetail:
+      'Ein Kapitel ist ein Stück der Geschichte (mit eigener Timeline aus Nachrichten/Entscheidungen). Klicke auf „+ Neues Kapitel", um das erste zu erstellen, oder mach einen Rechtsklick irgendwo auf der Fläche.',
     newChapter: 'Neues Kapitel',
     visitedTooltip: 'In dieser Vorschau bereits besucht',
     titleLabel: 'Titel',
@@ -151,6 +189,9 @@ export default {
   },
 
   timelineEditor: {
+    confirmRemoveNestedTitle: 'Diesen Eintrag löschen?',
+    confirmRemoveNestedMessage:
+      'Dieser Eintrag enthält {n} verschachtelte Einträge in seinen Verzweigungen (Auswahl). Alles wird gelöscht. Dies kann nicht rückgängig gemacht werden.',
     selectedOne: '1 Eintrag ausgewählt',
     selectedMany: '{n} Einträge ausgewählt',
     groupSelection: 'Zu Akkordeon gruppieren',
@@ -437,6 +478,8 @@ export default {
   },
 
   interactionList: {
+    confirmDeleteTitle: 'Diese Interaktion löschen?',
+    confirmDeleteMessage: '„{name}" wird gelöscht. Dies kann nicht rückgängig gemacht werden.',
     empty: 'Noch keine Interaktion erstellt.',
     stepsCount: '{n} Schritte',
     newInteraction: 'Neue Interaktion',
@@ -458,6 +501,8 @@ export default {
   },
 
   automationList: {
+    confirmDeleteTitle: 'Diese Automatisierung löschen?',
+    confirmDeleteMessage: '„{name}" wird gelöscht. Dies kann nicht rückgängig gemacht werden.',
     empty: 'Noch keine Automatisierung erstellt.',
     newAutomation: 'Neue Automatisierung',
   },
@@ -465,6 +510,8 @@ export default {
   automationForm: {
     intro:
       'Eine Automatisierung führt von selbst eine Aktion aus, sobald eine Bedingung wahr wird — ohne dass der Spieler etwas anklickt.',
+    introHelp:
+      'Anders als ein Event (das auf eine Spieleraktion reagiert) löst eine Automatisierung von selbst aus — z. B. sobald das Vertrauen über 5 steigt, eine Nachricht senden, ohne dass der Spieler etwas getan hat.',
     labelLabel: 'Name (nur zur Orientierung)',
     conditionTitle: 'Bedingung',
     actionTitle: 'Aktion',
@@ -479,6 +526,9 @@ export default {
   },
 
   entitySchemaList: {
+    confirmDeleteTitle: 'Dieses Schema löschen?',
+    confirmDeleteMessage:
+      '„{name}" wird gelöscht. Verweise auf dieses Schema an anderer Stelle im Projekt (Bedingungen, Custom Apps) werden nicht aktualisiert. Dies kann nicht rückgängig gemacht werden.',
     empty: 'Noch kein Schema erstellt.',
     fieldsCount: '{n} Felder',
     newSchema: 'Neues Schema',
@@ -640,6 +690,9 @@ export default {
   },
 
   blockBuilder: {
+    confirmRemoveNestedTitle: 'Diesen Block löschen?',
+    confirmRemoveNestedMessage:
+      'Dieser Block enthält {n} verschachtelte Blöcke. Alles wird gelöscht. Dies kann nicht rückgängig gemacht werden.',
     empty: 'Noch keine Blöcke hier — klicke einen an oder ziehe ihn aus der Palette oben hierher.',
     emptyRootTitle: 'Dieser Bildschirm ist leer',
     emptyRootDetail:
@@ -1079,6 +1132,8 @@ export default {
   },
 
   eventList: {
+    confirmDeleteTitle: 'Dieses Event löschen?',
+    confirmDeleteMessage: '„{name}" wird gelöscht. Dies kann nicht rückgängig gemacht werden.',
     paneLabel: 'Ereignisse',
     empty: 'Noch keine Ereignisse.',
     addEvent: 'Ereignis hinzufügen',
