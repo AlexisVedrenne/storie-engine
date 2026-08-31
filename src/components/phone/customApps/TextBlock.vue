@@ -5,6 +5,7 @@
     :style="{
       color: block.color || undefined,
       fontSize: block.size ? `${block.size}px` : undefined,
+      textAlign: block.align || undefined,
     }"
   >
     {{ content }}

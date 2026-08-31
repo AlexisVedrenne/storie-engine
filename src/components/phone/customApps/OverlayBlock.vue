@@ -29,9 +29,21 @@ const ANCHOR_STYLES = {
 }
 
 const props = defineProps({ block: { type: Object, required: true } })
+// `offsetX`/`offsetY` (px, user request — "once positioned, can't nudge it
+// precisely") are plain margin, not an addition to the transform: for the
+// 4 corner anchors, that's a no-op-compatible way to shift the box without
+// touching top/left/right/bottom's own anchor math; for `center`, it
+// composes cleanly with the anchor's OWN centering `transform`, since
+// margin and transform are independent CSS properties (a translate offset
+// would instead have needed to be merged into that same transform string).
+// Positive X always means "further right", positive Y "further down",
+// regardless of which edge the block is anchored to — simpler to reason
+// about than "which direction is positive" changing per anchor.
 const positionStyle = computed(() => ({
   position: 'absolute',
   zIndex: 2,
+  marginLeft: props.block.offsetX ? `${props.block.offsetX}px` : undefined,
+  marginTop: props.block.offsetY ? `${props.block.offsetY}px` : undefined,
   ...(ANCHOR_STYLES[props.block.anchor] || ANCHOR_STYLES['top-right']),
 }))
 </script>

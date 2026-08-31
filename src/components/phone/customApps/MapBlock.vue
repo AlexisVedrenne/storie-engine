@@ -421,7 +421,7 @@ function placePoiAt(clientX, clientY) {
   border: none;
   border-radius: 999px;
   padding: 5px 10px;
-  background: var(--app-accent);
+  background: var(--app-primary);
   color: #fff;
   font-size: 12px;
   font-weight: 700;

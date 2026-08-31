@@ -2,13 +2,15 @@
   <button
     type="button"
     class="button-block"
+    :class="[`size-${block.size || 'normal'}`, { flat: block.flat }]"
     :style="{
-      background: block.color || 'var(--app-accent)',
-      color: block.textColor || undefined,
+      background: block.flat ? 'transparent' : block.color || 'var(--app-primary)',
+      color: block.flat ? block.color || 'var(--app-primary)' : block.textColor || undefined,
       borderRadius: block.radius != null ? `${block.radius}px` : 'var(--app-radius)',
     }"
     @click="onClick"
   >
+    <q-icon v-if="block.icon" :name="block.icon" size="18px" />
     {{ label }}
   </button>
 </template>
@@ -38,12 +40,40 @@ function onClick() {
 
 <style scoped>
 .button-block {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   border: none;
   border-radius: 12px;
-  padding: 11px 16px;
   color: #fff;
-  font-size: 14px;
   font-weight: 700;
   cursor: pointer;
+}
+
+/* `flat` (user request — Quasar's own `q-btn flat` meaning: no fill, no
+   elevation, just colored text) drops the background this element would
+   otherwise always paint. */
+.button-block.flat {
+  box-shadow: none;
+}
+
+/* `size` (user request) — padding/font-size pairs, same "small bounded
+   scale, not a free number" precedent as the radius/spacing scales in the
+   app theme. `normal` matches this button's own original fixed dimensions
+   byte-for-byte, so an existing saved button is unaffected. */
+.button-block.size-small {
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
+.button-block.size-normal {
+  padding: 11px 16px;
+  font-size: 14px;
+}
+
+.button-block.size-large {
+  padding: 15px 22px;
+  font-size: 16px;
 }
 </style>

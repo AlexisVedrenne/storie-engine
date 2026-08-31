@@ -4,6 +4,8 @@
       :blocks="block.blocks || []"
       :direction="block.direction || 'row'"
       :gap="block.gap ?? 8"
+      :justify="block.justify"
+      :align="block.align"
     />
   </div>
 </template>

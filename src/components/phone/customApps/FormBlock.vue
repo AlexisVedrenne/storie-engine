@@ -209,7 +209,7 @@ function onChange(value) {
 
 .form-input:focus,
 .form-select:focus {
-  border-color: var(--app-accent);
+  border-color: var(--app-primary);
 }
 
 .form-input:read-only,
@@ -220,7 +220,7 @@ function onChange(value) {
 
 .form-submit {
   align-self: flex-start;
-  background: var(--app-accent);
+  background: var(--app-primary);
   color: #fff;
   border: none;
   border-radius: var(--app-radius);
@@ -243,7 +243,7 @@ function onChange(value) {
 }
 
 .switch.on {
-  background: var(--app-accent);
+  background: var(--app-primary);
 }
 
 .switch.readonly {

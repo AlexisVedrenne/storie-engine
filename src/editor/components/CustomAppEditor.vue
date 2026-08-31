@@ -75,9 +75,15 @@
           clearable
         />
         <ColorField
-          v-model="theme.palette.accent"
-          :label="t('customAppEditor.themeAccent')"
+          v-model="primaryColor"
+          :label="t('customAppEditor.themePrimary')"
           default-value="#4c8bf5"
+          clearable
+        />
+        <ColorField
+          v-model="theme.palette.secondary"
+          :label="t('customAppEditor.themeSecondary')"
+          default-value="#607d8b"
           clearable
         />
         <ColorField
@@ -298,6 +304,21 @@ function ensureTheme() {
   return theme
 }
 const theme = computed(() => ensureTheme())
+
+// The palette's `accent` role was renamed `primary` (user request — it was
+// already the de-facto "brand color used everywhere", `primary` names that
+// more honestly). Runtime (CustomAppRenderer.vue's themeVars) reads
+// `palette.primary ?? palette.accent` so a project saved before the rename
+// keeps rendering its old accent color with zero migration; this getter/
+// setter gives the editor field that same read-old/write-new behavior, so
+// an existing project's color shows up pre-filled here too instead of
+// looking reset. `palette.accent` itself is never written again.
+const primaryColor = computed({
+  get: () => theme.value.palette.primary ?? theme.value.palette.accent ?? '',
+  set: (v) => {
+    theme.value.palette.primary = v
+  },
+})
 
 // Theme presets (pilier 07) — export writes the CURRENT app's own theme to
 // a plain `.json` file (no assets to bundle, see the IPC handler's own

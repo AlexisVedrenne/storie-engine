@@ -1,12 +1,25 @@
 <template>
-  <div class="block-list" :style="{ flexDirection: direction, gap: `${gap}px` }">
+  <div
+    class="block-list"
+    :style="{
+      flexDirection: direction,
+      gap: `${gap}px`,
+      justifyContent: justify || undefined,
+      alignItems: align || undefined,
+    }"
+  >
     <div
       v-for="(block, i) in visibleBlocks"
       :key="i"
       class="block-wrap"
       :class="{ 'editor-hover': block === phone.hoveredEditorBlock }"
       :style="{
-        marginTop: block.spacingBefore ? `${block.spacingBefore}px` : undefined,
+        marginTop:
+          block.type === 'footer' && block.sticky
+            ? 'auto'
+            : block.spacingBefore
+              ? `${block.spacingBefore}px`
+              : undefined,
         marginBottom: block.spacingAfter ? `${block.spacingAfter}px` : undefined,
       }"
       @click.stop="phone.selectCustomAppBlock(block)"
@@ -35,7 +48,14 @@
 // clicked block to phone.editorSelectedBlock — see BlockBuilder.vue, which
 // watches it to auto-expand/scroll to the matching row in the editor. The
 // wrapper also carries the block's own optional spacingBefore/spacingAfter
-// override (see BlockPropertiesForm.vue's generic "advanced" section).
+// override (see BlockPropertiesForm.vue's generic "advanced" section) — EXCEPT
+// for a sticky footer, whose wrap gets `margin-top: auto` instead (bug fix:
+// a footer used to just sit wherever it fell in the block order, only
+// reading as "pinned to the bottom" once there was enough OTHER content to
+// scroll past — margin-auto pushes it to the bottom of the flex column
+// immediately, and CustomAppRenderer.vue's own `.app-screen-scroll > .block-list`
+// rule makes sure that column actually fills the full screen height first,
+// or this would have nothing to push against on a short screen).
 //
 // `editor-hover` is the OTHER direction of that same link — outlines
 // whichever block the author is currently hovering in the editor's own row
@@ -78,6 +98,15 @@ const props = defineProps({
   blocks: { type: Array, default: () => [] },
   direction: { type: String, default: 'column' },
   gap: { type: [String, Number], default: 10 },
+  // `justify`/`align` (user request, forwarded from a `layout` block's own
+  // fields — see LayoutBlock.vue) map onto justify-content/align-items.
+  // Empty/undefined leaves the CSS property unset entirely (the browser's
+  // own flex-start/stretch defaults), not just visually equivalent to one
+  // of the picker's own options, so every OTHER caller of BlockList (the
+  // screen root, card, footer...) keeps its exact original layout with zero
+  // migration.
+  justify: { type: String, default: '' },
+  align: { type: String, default: '' },
 })
 // `sheet` blocks (pilier 03) are never rendered in their own natural
 // position — only CustomAppRenderer.vue renders the currently-open one, as
@@ -125,7 +154,7 @@ function blockComponent(type) {
 }
 
 .block-wrap.editor-hover {
-  outline: 2px solid var(--app-accent, #4c8bf5);
+  outline: 2px solid var(--app-primary, #4c8bf5);
   outline-offset: 2px;
   border-radius: 4px;
 }

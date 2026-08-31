@@ -60,7 +60,7 @@ const resolvedTabs = computed(() =>
 }
 
 .tab-btn.active {
-  background: rgba(var(--app-accent-rgb), 0.35);
+  background: rgba(var(--app-primary-rgb), 0.35);
   color: var(--app-text);
 }
 </style>

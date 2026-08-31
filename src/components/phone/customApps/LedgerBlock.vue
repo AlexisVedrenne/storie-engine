@@ -108,20 +108,20 @@ const baselineY = computed(() => CHART_H - PAD)
 }
 
 .ledger-area {
-  fill: rgba(var(--app-accent-rgb), 0.18);
+  fill: rgba(var(--app-primary-rgb), 0.18);
   stroke: none;
 }
 
 .ledger-line {
   fill: none;
-  stroke: var(--app-accent);
+  stroke: var(--app-primary);
   stroke-width: 2;
   stroke-linejoin: round;
   stroke-linecap: round;
 }
 
 .ledger-dot {
-  fill: var(--app-accent);
+  fill: var(--app-primary);
 }
 
 .ledger-empty {
