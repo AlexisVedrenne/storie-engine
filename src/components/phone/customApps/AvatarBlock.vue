@@ -3,16 +3,20 @@
     <div
       v-if="block.icon && !src"
       class="icon-circle"
-      :style="{ background: block.color || 'var(--app-secondary)' }"
+      :style="{
+        background: block.color || 'var(--app-secondary)',
+        width: `${size}px`,
+        height: `${size}px`,
+      }"
     >
-      <q-icon :name="block.icon" size="28px" color="white" />
+      <q-icon :name="block.icon" :size="`${Math.round(size * 0.4375)}px`" color="white" />
     </div>
     <AppAvatar
       v-else
       :name="label || '?'"
       :color="block.color || 'var(--app-secondary)'"
       :image="src"
-      :size="block.size || 64"
+      :size="size"
     />
     <span v-if="label" class="avatar-label">{{ label }}</span>
   </div>
@@ -36,6 +40,14 @@ const label = computed(() => resolveDynamicText(props.block.label, story, listIt
 const src = computed(() =>
   props.block.useItemAvatar && listItem ? listItem.avatar || '' : props.block.src || '',
 )
+// `size` (px, user request — was already read by AppAvatar below but had
+// no author-facing control at all) — 64 matches this block's own original
+// fixed dimension, both here and in AppAvatar's own default prop, so an
+// existing saved avatar renders unchanged. The icon-fallback path (no
+// image/photo set) previously had this hardcoded in CSS instead of reading
+// it at all — fixed to match, with its own icon glyph scaled at the same
+// ~44% ratio the original fixed 64px circle / 28px icon pairing had.
+const size = computed(() => props.block.size || 64)
 </script>
 
 <style scoped>
@@ -47,8 +59,6 @@ const src = computed(() =>
 }
 
 .icon-circle {
-  width: 64px;
-  height: 64px;
   border-radius: 50%;
   display: flex;
   align-items: center;
