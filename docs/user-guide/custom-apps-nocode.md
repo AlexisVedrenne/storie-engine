@@ -286,7 +286,7 @@ Like a search result, each point of interest can have its own **action on tap** 
 and a picture, the same idea [Schedule](#schedule) already uses for a character's routine.
 
 The player can zoom in and out — floating +/- buttons, mouse wheel, or a two-finger pinch on a
-touchscreen — between 50% and 300%. **Initial zoom** in the block's settings sets the starting
+touchscreen — between 20% and 300%. **Initial zoom** in the block's settings sets the starting
 level (100% = the image's real size, same as before this existed).
 
 ## Variables and translation

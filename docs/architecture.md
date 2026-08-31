@@ -642,6 +642,13 @@ defaulted to `0` when absent), a missing instance/field reads as `undefined` —
 use `!(value >= min)`/`!(value <= max)` rather than `value < min` so that FAILS the condition
 instead of silently passing.
 
+A field of type `schedule` is special-cased: its raw value is an ARRAY of `{from,to,place}` slots,
+not a scalar, so comparing it directly would never match anything. `checkConditions()` resolves it
+to whichever slot's `place` covers the current `resolvedClock()` time first — `src/engine/
+customApps/scheduleSlot.js`'s `activeSlotPlace()`, extracted from `ScheduleBlock.vue`'s own
+highlighting logic so the two can't drift — letting an author write "this character is currently at
+`<place>`" instead of needing to know the field's internal shape.
+
 **Events** (`game.events[]`, edited in the Events tab) are the same
 `requires`/`effects`/`then` trio, but triggered by a _player action_ instead of the timeline
 reaching a specific point — `handleEngineEvent()` reuses `checkConditions`/`applyEffects`/`runThen`
@@ -692,6 +699,11 @@ evaluate-then-fire pass). Known gap, documented in `evaluateAutomations`'s own c
 `triggerEntry` action's nested timeline can reach `applyEffects()` through existing call sites that
 don't thread `depth` through (they never needed to before this), re-entering at depth 0 — same
 "accepted partial guard" spirit as `runThen`'s own `timelineResume`-clobber limitation.
+
+Also polled every 15s (`automationPollTimer`, (re)started in `loadProject()`, same cadence as
+`StatusBar.vue`'s own clock) on top of the `applyEffects()`-driven checks — needed for a condition
+that can become true purely from TIME passing (a `schedule` field's active slot changing) with no
+accompanying flag/entity mutation to hang the evaluation off of.
 
 **Interactions** (`game.interactions[]`, the "Interactions" tab) are authored phone-gesture
 sequences — `tap`/`hold`/`swipe`/`drag`/`wipe`/`code`/`wait`, a small bounded vocabulary

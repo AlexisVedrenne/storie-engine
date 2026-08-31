@@ -93,7 +93,7 @@ function hasAction(poi) {
   return Boolean(poi.action && poi.action.type !== 'none')
 }
 
-const MIN_ZOOM = 0.5
+const MIN_ZOOM = 0.2
 const MAX_ZOOM = 3
 const ZOOM_STEP = 0.25
 

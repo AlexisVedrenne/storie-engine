@@ -17,6 +17,7 @@ import { APP_REGISTRY } from '@/engine/apps/registry'
 import { CUSTOM_ENTRY_TYPE_BY_TYPE } from '@/engine/apps/entryTypeRegistry'
 import { findScreenWithBlockType } from '@/engine/customApps/appHasModule'
 import { resolveDynamicText } from '@/engine/customApps/resolveDynamicText'
+import { activeSlotPlace } from '@/engine/customApps/scheduleSlot'
 import CustomAppRenderer from '@/components/phone/customApps/CustomAppRenderer.vue'
 import {
   on as onEngineEvent,
@@ -25,6 +26,16 @@ import {
   ENGINE_TRIGGERS,
 } from '@/engine/events/eventManager'
 import { findMatchingEvents } from '@/engine/events/matchEvent'
+
+// Polls evaluateAutomations() every 15s (same cadence as StatusBar.vue's own
+// clock display) — restarted on every loadProject() alongside the engine-
+// event resubscription just below. Needed because a condition can become
+// true purely from TIME passing (a schedule field's active slot changing)
+// with no accompanying flag/entity mutation to hang off of; every other
+// automation trigger path already goes through applyEffects() and doesn't
+// need this. Module-level, not component-scoped: automations are global
+// game logic, not tied to whichever phone screen happens to be mounted.
+let automationPollTimer = null
 
 // Phase 1: this store is project-agnostic — it holds no hardcoded chapters/
 // contacts/threads/seed/i18n of its own. All of that lives in `state.project`,
@@ -590,6 +601,9 @@ export const useStoryStore = defineStore('story', {
       for (const trigger of ENGINE_TRIGGERS) {
         onEngineEvent(trigger, (payload) => this.handleEngineEvent(trigger, payload))
       }
+
+      clearInterval(automationPollTimer)
+      automationPollTimer = setInterval(() => this.evaluateAutomations(), 15000)
     },
 
     // Reacts to an engine-emitted trigger (eventManager.js) by running
@@ -926,7 +940,22 @@ export const useStoryStore = defineStore('story', {
             cond.entityId === '*'
               ? this.entityItems(cond.schemaId)[0]
               : this.entities?.[cond.schemaId]?.[cond.entityId]
-          const value = instance?.[cond.field]
+          let value = instance?.[cond.field]
+          // A `schedule` field holds an ARRAY of { from, to, place } slots,
+          // not a scalar — comparing it directly against `cond.value` could
+          // never match. Resolve it to whichever slot covers RIGHT NOW
+          // first (same logic ScheduleBlock.vue uses to highlight the
+          // active slot), so a condition reads as "this character is
+          // currently at <place>" rather than needing to know the field's
+          // internal array shape.
+          const fieldDef = this.project?.gameConfig?.entitySchemas
+            ?.find((s) => s.id === cond.schemaId)
+            ?.fields?.find((f) => f.key === cond.field)
+          if (fieldDef?.type === 'schedule') {
+            const d = this.resolvedClock()
+            const nowLabel = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+            value = activeSlotPlace(value, nowLabel)
+          }
           const expected = cond.value
           if (typeof expected === 'boolean') return Boolean(value) === expected
           if (expected && typeof expected === 'object') {
@@ -2246,9 +2275,11 @@ export const useStoryStore = defineStore('story', {
     // `game.automations[]` is `{ id, label, requires, action, repeatMode:
     // 'once'|'count'|'unlimited', repeatCount }`. Re-evaluated after EVERY
     // applyEffects() call (the single choke point every flag/entity/
-    // collection mutation already flows through) rather than on a timer —
-    // exact, no polling, and nothing can react to a mutation that hasn't
-    // happened yet.
+    // collection mutation already flows through) — exact, reacts the instant
+    // a mutation happens. ALSO polled every 15s (see `automationPollTimer`,
+    // started in loadProject()) for the one case that isn't a mutation at
+    // all: a condition on a `schedule` field, whose resolved value changes
+    // purely from real time passing.
     //
     // Fires on the FALSE -> TRUE transition only (edge-triggered), never on
     // every re-check while already true — `automationState[id].active`

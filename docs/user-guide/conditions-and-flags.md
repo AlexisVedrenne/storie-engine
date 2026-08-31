@@ -70,7 +70,8 @@ a custom-app block, an event — it's the same builder, with the same rules:
   either/or choice.
 - **Schema field checks**: a specific field of an entity schema instance (exactly/at least/at
   most/between, or true/false) — same rules as a flag check, just reading a schema instance's
-  field instead. See [Entity schemas](#entity-schemas).
+  field instead. A **schedule** field checks the place the character is _currently_ at (right now,
+  by the in-fiction clock), not the raw list of slots. See [Entity schemas](#entity-schemas).
 - Every condition inside one "requires" is combined with **AND** — all of them must hold.
 - There's deliberately no date/time condition, no randomness, and no "has the player seen this
   before" condition built in — flags cover all of those if you need them (e.g. set a boolean flag
@@ -141,7 +142,10 @@ following, schema fields) plus an action:
   condition.
 
 A simple example: a numeric flag `dette` (debt) that a "count" automation checks with
-`dette > 100` — the first three times it crosses that line, it fires a warning toast.
+`dette > 100` — the first three times it crosses that line, it fires a warning toast. A condition
+based on a **schedule** field (see [Entity schemas](#entity-schemas)) is checked every few seconds
+of real time too, not just when something else changes — since "this character just arrived
+somewhere" isn't triggered by an effect, it's triggered by the clock.
 
 ## Interactions
 

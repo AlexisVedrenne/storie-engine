@@ -689,7 +689,7 @@
         type="number"
         :label="t('blockProps.mapInitialZoomLabel')"
         suffix="%"
-        min="50"
+        min="20"
         max="300"
         :model-value="block.initialZoom ?? 100"
         @update:model-value="(v) => (block.initialZoom = v === null || v === '' ? 100 : Number(v))"

@@ -35,6 +35,7 @@
 import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useStoryStore } from '@/engine/stores/story'
+import { slotContains } from '@/engine/customApps/scheduleSlot'
 
 // Player-facing chrome (vue-i18n's own global instance, src/i18n/<locale>/
 // index.js) — NOT @/editor/i18n, which is editor-only tooling that never
@@ -81,13 +82,6 @@ const nowLabel = computed(() => {
   const d = story.resolvedClock()
   return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
 })
-
-function slotContains(slot, now) {
-  if (!slot.from || !slot.to) return false
-  return slot.from <= slot.to
-    ? now >= slot.from && now < slot.to
-    : now >= slot.from || now < slot.to
-}
 
 const activeIndex = computed(() => slots.value.findIndex((s) => slotContains(s, nowLabel.value)))
 const currentPlace = computed(() => slots.value[activeIndex.value]?.place || '')
