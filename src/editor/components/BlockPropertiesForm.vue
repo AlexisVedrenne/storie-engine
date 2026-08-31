@@ -1,7 +1,6 @@
 <template>
   <div class="block-props">
     <template v-if="block.type === 'header'">
-      <div class="prop-group-label">{{ t('blockProps.groupContent') }}</div>
       <q-input
         dense
         outlined
@@ -16,50 +15,15 @@
           />
         </template>
       </q-input>
-
-      <div class="prop-group-label">{{ t('blockProps.groupAppearance') }}</div>
       <q-input dense outlined :label="t('blockProps.iconLabel')" v-model="block.icon">
         <template #append>
           <IconPickerBtn @pick="(v) => (block.icon = v)" />
         </template>
       </q-input>
       <ColorField v-model="block.color" />
-      <q-toggle dense :label="t('blockProps.stickyHeaderLabel')" v-model="block.sticky" />
-    </template>
-
-    <template v-else-if="block.type === 'footer'">
-      <p class="tab-help">{{ t('blockProps.footerHelp') }}</p>
-      <q-toggle dense :label="t('blockProps.stickyFooterLabel')" v-model="block.sticky" />
-      <q-btn-toggle
-        dense
-        no-caps
-        v-model="block.direction"
-        :options="[
-          { label: t('blockProps.directionRow'), value: 'row' },
-          { label: t('blockProps.directionColumn'), value: 'column' },
-        ]"
-      />
-      <q-input
-        dense
-        outlined
-        type="number"
-        :label="t('blockProps.gapLabel')"
-        suffix="px"
-        :model-value="block.gap ?? 8"
-        @update:model-value="(v) => (block.gap = v === null || v === '' ? 8 : Number(v))"
-      />
-      <ColorField v-model="block.bgColor" :label="t('blockProps.bgColorLabel')" clearable />
-      <BlockBuilder
-        :blocks="ensureChildren()"
-        :screens="screens"
-        :sheets="sheets"
-        :item-scope="itemScope"
-        :depth="depth + 1"
-      />
     </template>
 
     <template v-else-if="block.type === 'text'">
-      <div class="prop-group-label">{{ t('blockProps.groupContent') }}</div>
       <q-btn-toggle
         dense
         no-caps
@@ -85,8 +49,6 @@
           />
         </template>
       </q-input>
-
-      <div class="prop-group-label">{{ t('blockProps.groupAppearance') }}</div>
       <div class="row">
         <ColorField
           v-model="block.color"
@@ -115,7 +77,6 @@
     </template>
 
     <template v-else-if="block.type === 'avatar'">
-      <div class="prop-group-label">{{ t('blockProps.groupContent') }}</div>
       <q-input
         dense
         outlined
@@ -130,8 +91,6 @@
           />
         </template>
       </q-input>
-
-      <div class="prop-group-label">{{ t('blockProps.groupAppearance') }}</div>
       <q-toggle
         v-if="itemScope === 'contacts'"
         dense
@@ -158,7 +117,16 @@
     </template>
 
     <template v-else-if="block.type === 'row'">
-      <div class="prop-group-label">{{ t('blockProps.groupContent') }}</div>
+      <q-input dense outlined :label="t('blockProps.iconLabel')" v-model="block.icon">
+        <template #append>
+          <IconPickerBtn @pick="(v) => (block.icon = v)" />
+        </template>
+      </q-input>
+      <ColorField
+        v-model="block.iconColor"
+        :label="t('blockProps.iconColorLabel')"
+        default-value="#ffffff"
+      />
       <q-input
         dense
         outlined
@@ -189,27 +157,11 @@
           />
         </template>
       </q-input>
-
-      <div class="prop-group-label">{{ t('blockProps.groupAppearance') }}</div>
-      <q-input dense outlined :label="t('blockProps.iconLabel')" v-model="block.icon">
-        <template #append>
-          <IconPickerBtn @pick="(v) => (block.icon = v)" />
-        </template>
-      </q-input>
-      <div class="row">
-        <ColorField
-          v-model="block.iconColor"
-          :label="t('blockProps.iconColorLabel')"
-          default-value="#ffffff"
-          class="grow"
-        />
-        <ColorField
-          v-model="block.textColor"
-          :label="t('blockProps.textColorLabel')"
-          default-value="#ffffff"
-          class="grow"
-        />
-      </div>
+      <ColorField
+        v-model="block.textColor"
+        :label="t('blockProps.textColorLabel')"
+        default-value="#ffffff"
+      />
       <q-toggle dense :label="t('blockProps.chevronLabel')" v-model="block.chevron" />
     </template>
 
@@ -221,68 +173,7 @@
         default-value="#2a2e37"
         clearable
       />
-      <BlockBuilder
-        :blocks="ensureChildren()"
-        :screens="screens"
-        :sheets="sheets"
-        :item-scope="itemScope"
-        :depth="depth + 1"
-      />
-    </template>
-
-    <template v-else-if="block.type === 'overlay'">
-      <p class="tab-help">{{ t('blockProps.overlayHelp') }}</p>
-      <q-select
-        dense
-        outlined
-        :label="t('blockProps.overlayAnchorLabel')"
-        v-model="block.anchor"
-        :options="[
-          { label: t('blockProps.anchorTopLeft'), value: 'top-left' },
-          { label: t('blockProps.anchorTopRight'), value: 'top-right' },
-          { label: t('blockProps.anchorBottomLeft'), value: 'bottom-left' },
-          { label: t('blockProps.anchorBottomRight'), value: 'bottom-right' },
-          { label: t('blockProps.anchorCenter'), value: 'center' },
-        ]"
-        emit-value
-        map-options
-      />
-      <BlockBuilder
-        :blocks="ensureChildren()"
-        :screens="screens"
-        :sheets="sheets"
-        :item-scope="itemScope"
-        :depth="depth + 1"
-      />
-    </template>
-
-    <template v-else-if="block.type === 'sheet'">
-      <p class="tab-help">{{ t('blockProps.sheetHelp') }}</p>
-      <q-input
-        dense
-        outlined
-        :label="t('blockProps.sheetIdLabel')"
-        :hint="t('blockProps.sheetIdHint')"
-        v-model="block.sheetId"
-      />
-      <q-btn-toggle
-        dense
-        no-caps
-        :model-value="block.position || 'bottom'"
-        @update:model-value="(v) => (block.position = v)"
-        :options="[
-          { label: t('blockProps.sheetPositionBottom'), value: 'bottom' },
-          { label: t('blockProps.sheetPositionCenter'), value: 'center' },
-          { label: t('blockProps.sheetPositionTop'), value: 'top' },
-        ]"
-      />
-      <BlockBuilder
-        :blocks="ensureChildren()"
-        :screens="screens"
-        :sheets="sheets"
-        :item-scope="itemScope"
-        :depth="depth + 1"
-      />
+      <BlockBuilder :blocks="ensureChildren()" :screens="screens" :item-scope="itemScope" />
     </template>
 
     <template v-else-if="block.type === 'layout'">
@@ -311,17 +202,10 @@
         default-value="#2a2e37"
         clearable
       />
-      <BlockBuilder
-        :blocks="ensureChildren()"
-        :screens="screens"
-        :sheets="sheets"
-        :item-scope="itemScope"
-        :depth="depth + 1"
-      />
+      <BlockBuilder :blocks="ensureChildren()" :screens="screens" :item-scope="itemScope" />
     </template>
 
     <template v-else-if="block.type === 'badge'">
-      <div class="prop-group-label">{{ t('blockProps.groupContent') }}</div>
       <q-input
         dense
         outlined
@@ -336,8 +220,6 @@
           />
         </template>
       </q-input>
-
-      <div class="prop-group-label">{{ t('blockProps.groupAppearance') }}</div>
       <div class="row">
         <ColorField v-model="block.color" class="grow" />
         <ColorField
@@ -359,7 +241,6 @@
     </template>
 
     <template v-else-if="block.type === 'button'">
-      <div class="prop-group-label">{{ t('blockProps.groupContent') }}</div>
       <q-input
         dense
         outlined
@@ -374,8 +255,6 @@
           />
         </template>
       </q-input>
-
-      <div class="prop-group-label">{{ t('blockProps.groupAppearance') }}</div>
       <div class="row">
         <ColorField v-model="block.color" class="grow" />
         <ColorField
@@ -394,13 +273,47 @@
         :model-value="block.radius ?? 12"
         @update:model-value="(v) => (block.radius = v === null || v === '' ? 12 : Number(v))"
       />
-
-      <BlockActionEditor
-        :target="block"
-        :screens="screens"
-        :sheets="sheets"
-        :help-text="t('blockProps.buttonHelp')"
+      <q-btn-toggle
+        dense
+        no-caps
+        :model-value="ensureAction().type"
+        :options="[
+          { label: t('blockProps.actionNone'), value: 'none' },
+          { label: t('blockProps.actionEffect'), value: 'effect' },
+          { label: t('blockProps.actionNavigateScreen'), value: 'navigateScreen' },
+          { label: t('blockProps.actionEvent'), value: 'event' },
+        ]"
+        @update:model-value="setButtonActionType"
       />
+      <template v-if="block.action.type === 'effect'">
+        <p class="tab-help">{{ t('blockProps.actionEffectHelp') }}</p>
+        <EffectsBuilder
+          :model-value="block.action.effects"
+          @update:model-value="(v) => (block.action.effects = v)"
+        />
+      </template>
+      <template v-else-if="block.action.type === 'navigateScreen'">
+        <q-select
+          dense
+          outlined
+          emit-value
+          map-options
+          :label="t('blockProps.actionNavigateScreenLabel')"
+          :options="screenOptions"
+          v-model="block.action.screenId"
+        />
+      </template>
+      <template v-else-if="block.action.type === 'event'">
+        <p class="tab-help">{{ t('blockProps.actionEventHelp') }}</p>
+        <q-input
+          dense
+          outlined
+          :label="t('blockProps.actionEventButtonIdLabel')"
+          :hint="t('blockProps.actionEventButtonIdHint')"
+          v-model="block.action.buttonId"
+        />
+      </template>
+      <p v-else class="tab-help">{{ t('blockProps.buttonHelp') }}</p>
     </template>
 
     <template v-else-if="block.type === 'tabs'">
@@ -460,7 +373,6 @@
         :options="[
           { label: t('blockProps.listSourceContacts'), value: 'contacts' },
           { label: t('blockProps.listSourceCollection'), value: 'flagCollection' },
-          { label: t('blockProps.listSourceEntity'), value: 'entity' },
         ]"
         @update:model-value="(v) => (block.source = v)"
       />
@@ -468,29 +380,11 @@
         <q-toggle dense :label="t('blockProps.onlyFollowedLabel')" v-model="block.onlyFollowed" />
         <p class="tab-help">{{ t('blockProps.listHelp') }}</p>
       </template>
-      <template v-else-if="ensureSource() === 'flagCollection'">
+      <template v-else>
         <FlagNameField v-model="block.flagKey" />
         <p class="tab-help">{{ t('blockProps.listCollectionHelp') }}</p>
       </template>
-      <template v-else>
-        <q-select
-          dense
-          outlined
-          :label="t('blockProps.listSchemaLabel')"
-          v-model="block.schemaId"
-          :options="schemaOptions"
-          emit-value
-          map-options
-        />
-        <p class="tab-help">{{ t('blockProps.listEntityHelp') }}</p>
-      </template>
-      <BlockBuilder
-        :blocks="ensureTemplate()"
-        :screens="screens"
-        :sheets="sheets"
-        :item-scope="templateItemScope()"
-        :depth="depth + 1"
-      />
+      <BlockBuilder :blocks="ensureTemplate()" :screens="screens" :item-scope="ensureSource()" />
     </template>
 
     <template v-else-if="block.type === 'conversations'">
@@ -504,273 +398,6 @@
           { label: t('blockProps.nameFieldName'), value: 'name' },
           { label: t('blockProps.nameFieldPseudo'), value: 'pseudo' },
         ]"
-      />
-    </template>
-
-    <template v-else-if="block.type === 'schedule'">
-      <p class="tab-help">{{ t('blockProps.scheduleHelp') }}</p>
-      <q-select
-        dense
-        outlined
-        :label="t('blockProps.listSchemaLabel')"
-        v-model="block.schemaId"
-        :options="schemaOptions"
-        emit-value
-        map-options
-      />
-      <q-select
-        dense
-        outlined
-        :label="t('blockProps.scheduleFieldLabel')"
-        :hint="t('blockProps.scheduleFieldHint')"
-        v-model="block.fieldKey"
-        :options="scheduleFieldOptions(block.schemaId)"
-        emit-value
-        map-options
-      />
-      <q-input
-        dense
-        outlined
-        :label="t('blockProps.scheduleEntityIdLabel')"
-        :hint="t('blockProps.scheduleEntityIdHint')"
-        v-model="block.entityId"
-      />
-    </template>
-
-    <template v-else-if="block.type === 'ledger'">
-      <p class="tab-help">{{ t('blockProps.ledgerHelp') }}</p>
-      <FlagNameField v-model="block.flagKey" />
-    </template>
-
-    <template v-else-if="block.type === 'form'">
-      <p class="tab-help">{{ t('blockProps.formHelp') }}</p>
-      <q-input
-        dense
-        outlined
-        ref="formLabelInputRef"
-        :label="t('blockProps.labelLabel')"
-        v-model="block.label"
-      >
-        <template #append>
-          <VariablePickerBtn
-            :item-scope="itemScope"
-            @pick="(v) => (block.label = insertEmojiAtCaret(formLabelInputRef, block.label, v))"
-          />
-        </template>
-      </q-input>
-      <FormTargetFields :target="block" />
-      <q-toggle dense v-model="block.readonly" :label="t('blockProps.formReadonlyLabel')" />
-      <template v-if="!block.readonly">
-        <p class="tab-help">{{ t('blockProps.formCommitModeHint') }}</p>
-        <q-btn-toggle
-          dense
-          no-caps
-          v-model="block.commitMode"
-          :options="[
-            { label: t('blockProps.formCommitLive'), value: 'live' },
-            { label: t('blockProps.formCommitBlur'), value: 'blur' },
-            { label: t('blockProps.formCommitButton'), value: 'button' },
-          ]"
-        />
-      </template>
-    </template>
-
-    <template v-else-if="block.type === 'lookup'">
-      <p class="tab-help">{{ t('blockProps.lookupHelp') }}</p>
-      <q-input
-        dense
-        outlined
-        :label="t('blockProps.lookupPlaceholderLabel')"
-        v-model="block.placeholder"
-      />
-
-      <div v-for="(result, i) in ensureResults()" :key="i" class="lookup-result-row">
-        <div class="lookup-result-header">
-          <span class="prop-group-label">{{ t('blockProps.lookupResultN', { n: i + 1 }) }}</span>
-          <q-btn dense flat round icon="close" size="sm" @click="removeResult(i)">
-            <q-tooltip>{{ t('common.delete') }}</q-tooltip>
-          </q-btn>
-        </div>
-        <q-input
-          dense
-          outlined
-          :ref="(el) => (lookupTitleRefs[i] = el)"
-          :label="t('blockProps.lookupResultTitleLabel')"
-          v-model="result.title"
-        >
-          <template #append>
-            <VariablePickerBtn
-              :item-scope="itemScope"
-              @pick="
-                (v) => (result.title = insertEmojiAtCaret(lookupTitleRefs[i], result.title, v))
-              "
-            />
-          </template>
-        </q-input>
-        <q-input
-          dense
-          outlined
-          type="textarea"
-          autogrow
-          :ref="(el) => (lookupExcerptRefs[i] = el)"
-          :label="t('blockProps.lookupResultExcerptLabel')"
-          v-model="result.excerpt"
-        >
-          <template #append>
-            <VariablePickerBtn
-              :item-scope="itemScope"
-              @pick="
-                (v) =>
-                  (result.excerpt = insertEmojiAtCaret(lookupExcerptRefs[i], result.excerpt, v))
-              "
-            />
-          </template>
-        </q-input>
-        <q-input
-          dense
-          outlined
-          :label="t('blockProps.lookupResultSourceLabel')"
-          v-model="result.source"
-        />
-        <q-expansion-item
-          dense
-          :label="t('timelineEntryCard.displayCondition')"
-          class="spacing-section"
-        >
-          <div class="spacing-body condition-body">
-            <p class="tab-help">{{ t('blockProps.lookupResultRequiresHelp') }}</p>
-            <RequiresBuilder
-              :model-value="result.requires"
-              @update:model-value="(v) => (result.requires = v)"
-            />
-          </div>
-        </q-expansion-item>
-        <q-expansion-item
-          dense
-          :label="t('blockProps.lookupResultActionTitle')"
-          class="spacing-section"
-        >
-          <div class="spacing-body condition-body">
-            <BlockActionEditor
-              :target="result"
-              :screens="screens"
-              :sheets="sheets"
-              :help-text="t('blockProps.lookupResultActionHelp')"
-            />
-          </div>
-        </q-expansion-item>
-      </div>
-      <q-btn
-        dense
-        flat
-        no-caps
-        icon="add"
-        :label="t('blockProps.lookupAddResult')"
-        class="btn-ghost"
-        @click="addResult"
-      />
-    </template>
-
-    <template v-else-if="block.type === 'map'">
-      <p class="tab-help">{{ t('blockProps.mapHelp') }}</p>
-      <AssetField v-model="block.src" :label="t('blockProps.mapImageLabel')" />
-      <q-input
-        dense
-        outlined
-        type="number"
-        :label="t('blockProps.mapHeightLabel')"
-        suffix="px"
-        :model-value="block.height ?? 280"
-        @update:model-value="(v) => (block.height = v === null || v === '' ? 280 : Number(v))"
-      />
-      <q-input
-        dense
-        outlined
-        type="number"
-        :label="t('blockProps.mapInitialZoomLabel')"
-        suffix="%"
-        min="20"
-        max="300"
-        :model-value="block.initialZoom ?? 100"
-        @update:model-value="(v) => (block.initialZoom = v === null || v === '' ? 100 : Number(v))"
-      />
-
-      <div v-for="(poi, i) in ensurePois()" :key="i" class="lookup-result-row">
-        <div class="lookup-result-header">
-          <span class="prop-group-label">{{ t('blockProps.mapPoiN', { n: i + 1 }) }}</span>
-          <q-btn dense flat round icon="close" size="sm" @click="removePoi(i)">
-            <q-tooltip>{{ t('common.delete') }}</q-tooltip>
-          </q-btn>
-        </div>
-        <q-input
-          dense
-          outlined
-          :ref="(el) => (mapPoiLabelRefs[i] = el)"
-          :label="t('blockProps.mapPoiLabelLabel')"
-          v-model="poi.label"
-        >
-          <template #append>
-            <VariablePickerBtn
-              :item-scope="itemScope"
-              @pick="(v) => (poi.label = insertEmojiAtCaret(mapPoiLabelRefs[i], poi.label, v))"
-            />
-          </template>
-        </q-input>
-        <div class="row">
-          <q-input
-            dense
-            outlined
-            type="number"
-            :label="t('blockProps.mapPoiXLabel')"
-            suffix="%"
-            :model-value="poi.x ?? 50"
-            @update:model-value="(v) => (poi.x = v === null || v === '' ? 50 : Number(v))"
-            class="grow"
-          />
-          <q-input
-            dense
-            outlined
-            type="number"
-            :label="t('blockProps.mapPoiYLabel')"
-            suffix="%"
-            :model-value="poi.y ?? 50"
-            @update:model-value="(v) => (poi.y = v === null || v === '' ? 50 : Number(v))"
-            class="grow"
-          />
-        </div>
-        <div class="row">
-          <q-input
-            dense
-            outlined
-            :label="t('blockProps.iconLabel')"
-            v-model="poi.icon"
-            class="grow"
-          >
-            <template #append>
-              <IconPickerBtn @pick="(v) => (poi.icon = v)" />
-            </template>
-          </q-input>
-          <ColorField v-model="poi.color" default-value="#4c8bf5" clearable />
-        </div>
-        <q-expansion-item dense :label="t('blockProps.mapPoiActionTitle')" class="spacing-section">
-          <div class="spacing-body condition-body">
-            <BlockActionEditor
-              :target="poi"
-              :screens="screens"
-              :sheets="sheets"
-              :help-text="t('blockProps.mapPoiActionHelp')"
-            />
-          </div>
-        </q-expansion-item>
-      </div>
-      <q-btn
-        dense
-        flat
-        no-caps
-        icon="add"
-        :label="t('blockProps.mapAddPoi')"
-        class="btn-ghost"
-        @click="addPoi"
       />
     </template>
 
@@ -821,10 +448,10 @@
 
 <script setup>
 import { computed, ref } from 'vue'
-import { useStoryStore } from '@/engine/stores/story'
 import AssetField from '@/editor/components/AssetField.vue'
 import ColorField from '@/editor/components/ColorField.vue'
 import RequiresBuilder from '@/editor/components/RequiresBuilder.vue'
+import EffectsBuilder from '@/editor/components/EffectsBuilder.vue'
 import VariablePickerBtn from '@/editor/components/VariablePickerBtn.vue'
 import IconPickerBtn from '@/components/shared/IconPickerBtn.vue'
 import FlagNameField from '@/editor/components/FlagNameField.vue'
@@ -833,12 +460,9 @@ import { insertEmojiAtCaret } from '@/components/shared/emojiInsert'
 // nested builder) — safe: Vue components only reference each other at
 // render time, never during module top-level evaluation.
 import BlockBuilder from '@/editor/components/BlockBuilder.vue'
-import BlockActionEditor from '@/editor/components/BlockActionEditor.vue'
-import FormTargetFields from '@/editor/components/FormTargetFields.vue'
 import { useEditorI18n } from '@/editor/i18n'
 
 const { t } = useEditorI18n()
-const story = useStoryStore()
 
 const props = defineProps({
   block: { type: Object, required: true },
@@ -846,18 +470,10 @@ const props = defineProps({
   // the `tabs` block's screen picker. Passed straight through unchanged
   // when this form recurses into a `card` block's own BlockBuilder.
   screens: { type: Array, default: () => [] },
-  // Every `sheet` block anywhere in the app (id + display label) — populates
-  // a button's `openSheet` action target picker. Same "derived, passed
-  // straight through nested BlockBuilders unchanged" treatment as `screens`.
-  sheets: { type: Array, default: () => [] },
   // See BlockBuilder.vue's own prop — whether this block is inside a
   // `list` block's per-item template, so its VariablePickerBtn instances
   // also offer the `{item:...}` tokens.
   itemScope: { type: Boolean, default: false },
-  // Forwarded straight through to whichever nested BlockBuilder this form
-  // renders (card/layout/list-template) — see BlockBuilder.vue's own prop
-  // for what it drives (indent guide, empty-state treatment).
-  depth: { type: Number, default: 0 },
 })
 
 // One ref per text field that can take a {variable} — a bare template ref
@@ -872,11 +488,7 @@ const rowLabelInputRef = ref(null)
 const rowSublabelInputRef = ref(null)
 const badgeLabelInputRef = ref(null)
 const buttonLabelInputRef = ref(null)
-const formLabelInputRef = ref(null)
 const tabLabelRefs = {}
-const lookupTitleRefs = {}
-const lookupExcerptRefs = {}
-const mapPoiLabelRefs = {}
 
 function ensureChildren() {
   if (!props.block.blocks) props.block.blocks = []
@@ -888,42 +500,6 @@ function ensureTemplate() {
   return props.block.template
 }
 
-// `lookup` block (pilier 05) — author-authored search results, each
-// individually gated by its own `requires` (RequiresBuilder, same component
-// every other condition in this project uses), matched against the
-// player's search query at runtime — see LookupBlock.vue.
-function ensureResults() {
-  if (!props.block.results) props.block.results = []
-  return props.block.results
-}
-function addResult() {
-  ensureResults().push({
-    title: '',
-    excerpt: '',
-    source: '',
-    requires: null,
-    action: { type: 'none' },
-  })
-}
-function removeResult(i) {
-  props.block.results.splice(i, 1)
-}
-
-// `map` block (fake map) — POIs are positioned in percent of the image's
-// own natural size, defaulted to dead center rather than a corner so a
-// freshly-added one starts somewhere visible regardless of image
-// dimensions.
-function ensurePois() {
-  if (!props.block.pois) props.block.pois = []
-  return props.block.pois
-}
-function addPoi() {
-  ensurePois().push({ x: 50, y: 50, label: '', icon: '', color: '', action: { type: 'none' } })
-}
-function removePoi(i) {
-  props.block.pois.splice(i, 1)
-}
-
 // Lazy-inits `source` for a `list` block saved before this field existed —
 // same "usage discovers it" fallback other ensure* helpers here use, keeps
 // old projects working with zero migration.
@@ -932,34 +508,20 @@ function ensureSource() {
   return props.block.source
 }
 
-// Schema catalog for the `entity` source's picker — authored in the Schémas
-// tab (EntitySchemaList.vue), same "read what already exists, don't create
-// it here" spirit as FlagNameField reading the flags catalog.
-const schemaOptions = computed(
-  () =>
-    story.project?.gameConfig?.entitySchemas?.map((s) => ({
-      label: s.label || s.id,
-      value: s.id,
-    })) || [],
-)
-
-// Field picker for a `schedule` block — only fields actually typed
-// `schedule` on the chosen schema make sense here (see EntityFieldInput.vue,
-// the only place that authors an array-of-slots value in the first place).
-function scheduleFieldOptions(schemaId) {
-  const schema = story.project?.gameConfig?.entitySchemas?.find((s) => s.id === schemaId)
-  return (schema?.fields || [])
-    .filter((f) => f.type === 'schedule')
-    .map((f) => ({ label: f.label || f.key, value: f.key }))
+function ensureAction() {
+  if (!props.block.action) props.block.action = { type: 'none' }
+  return props.block.action
 }
-
-// What to forward as the nested BlockBuilder's `itemScope` — plain source
-// name for contacts/flagCollection (their token sets are fixed), but
-// `entity:<schemaId>` for the entity source, since ITS token set depends on
-// which schema was picked (see VariablePickerBtn.vue's own comment).
-function templateItemScope() {
-  const source = ensureSource()
-  return source === 'entity' ? `entity:${props.block.schemaId || ''}` : source
+// Switching kind replaces the action object wholesale (not just its
+// `type`) — keeps stale fields from a previous kind (e.g. `effects` while
+// now `navigateScreen`) from lingering unused in the saved block.
+function setButtonActionType(type) {
+  if (type === 'effect') props.block.action = { type, effects: props.block.action?.effects || {} }
+  else if (type === 'navigateScreen') {
+    props.block.action = { type, screenId: props.block.action?.screenId || '' }
+  } else if (type === 'event') {
+    props.block.action = { type, buttonId: props.block.action?.buttonId || '' }
+  } else props.block.action = { type: 'none' }
 }
 
 function ensureTabs() {
@@ -986,43 +548,10 @@ const screenOptions = computed(() =>
   gap: var(--space-2);
 }
 
-/* Splits a block type's fields into "what it says" vs "how it looks" (vs
-   "what it does", for button) instead of one flat stack of inputs — the
-   single most-requested clarity fix after real user testing on this
-   builder. First-of-type only where a block genuinely mixes several kinds
-   of field; small/single-purpose types (image, card, divider...) skip it,
-   a lone header would just be noise there. */
-.prop-group-label {
-  font-size: var(--text-xs);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--color-text-muted);
-  margin-top: var(--space-1);
-}
-.prop-group-label:first-child {
-  margin-top: 0;
-}
-
 .tab-row {
   display: flex;
   align-items: center;
   gap: var(--space-2);
-}
-
-.lookup-result-row {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-  padding: var(--space-2);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  background: var(--color-surface);
-}
-
-.lookup-result-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
 }
 
 .row {

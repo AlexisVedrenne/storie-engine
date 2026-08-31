@@ -55,7 +55,6 @@
 
             <NotificationBanner />
             <TimeSkipToast />
-            <AppToast />
 
             <!-- Inside .screen-canvas (unlike InteractionPlayer below), so
                  it inherits the SAME 390px-design-width scale transform
@@ -118,7 +117,6 @@ import LockScreen from './LockScreen.vue'
 import HomeScreen from './HomeScreen.vue'
 import NotificationBanner from './NotificationBanner.vue'
 import TimeSkipToast from './TimeSkipToast.vue'
-import AppToast from './AppToast.vue'
 
 import IncomingCallScreen from '@/components/apps/calls/IncomingCallScreen.vue'
 import InteractionPlayer from './interactions/InteractionPlayer.vue'

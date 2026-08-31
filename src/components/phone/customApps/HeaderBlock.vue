@@ -1,9 +1,9 @@
 <template>
-  <div class="header-block" :class="{ sticky: block.sticky }">
+  <div class="header-block">
     <AppTitleBar
       :title="title"
       :icon="block.icon || 'apps'"
-      :color="block.color || 'var(--app-accent)'"
+      :color="block.color || '#4c8bf5'"
       @back="phone.goHome()"
     />
   </div>
@@ -29,19 +29,5 @@ const title = computed(() => resolveDynamicText(props.block.title, story, listIt
    doubled here specifically. */
 .header-block {
   margin: 0 -16px;
-}
-
-/* pilier 03 — pins the header to the top of the screen's own scroll
-   container (CustomAppRenderer.vue's `.app-screen`, overflow-y: auto — the
-   nearest scrolling ancestor `position: sticky` resolves against). Needs an
-   opaque background (falls back to the app's own `--app-bg`) so content
-   scrolled underneath doesn't show through, and the horizontal margin above
-   has to be cancelled back out or the background wouldn't reach the edges. */
-.header-block.sticky {
-  position: sticky;
-  top: 0;
-  z-index: 1;
-  padding: 0 16px;
-  background: var(--app-bg);
 }
 </style>

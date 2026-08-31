@@ -5,32 +5,13 @@
     <div v-if="category === 'image'" class="preview-box">
       <img :src="resolveAssetUrl(modelValue)" class="preview-img" />
     </div>
-    <div v-else-if="category === 'video'" class="preview-box">
-      <video :src="resolveAssetUrl(modelValue)" class="preview-img" muted loop autoplay />
-    </div>
-    <AudioPreview
-      v-else-if="category === 'audio'"
-      :src="resolveAssetUrl(modelValue)"
-      class="audio-box"
-    />
-    <AudioPreview
-      v-else-if="!modelValue && fallbackAudioSrc"
-      :src="fallbackAudioSrc"
-      class="audio-box"
-    />
+    <AudioPreview v-else-if="category === 'audio'" :src="resolveAssetUrl(modelValue)" class="audio-box" />
+    <AudioPreview v-else-if="!modelValue && fallbackAudioSrc" :src="fallbackAudioSrc" class="audio-box" />
 
     <div class="meta-row">
-      <q-icon
-        v-if="!category && modelValue"
-        name="insert_drive_file"
-        size="16px"
-        class="meta-icon"
-      />
+      <q-icon v-if="!category && modelValue" name="insert_drive_file" size="16px" class="meta-icon" />
       <span class="filename" :title="modelValue">
-        {{
-          modelValue ||
-          (fallbackAudioSrc ? t('assetField.defaultSound') : t('assetField.noFileSelected'))
-        }}
+        {{ modelValue || (fallbackAudioSrc ? t('assetField.defaultSound') : t('assetField.noFileSelected')) }}
       </span>
       <q-btn dense flat round icon="upload" size="sm" @click="importFile">
         <q-tooltip>{{ t('assetField.importTooltip') }}</q-tooltip>

@@ -90,16 +90,6 @@ export const TRIGGERS = [
     ],
   },
   {
-    name: 'automation.fired',
-    app: null,
-    // Fires whenever an Automatisations rule's condition transitions from
-    // false to true (see story.js's evaluateAutomations) — same "an action
-    // also emits a fixed engine trigger" precedent as button.pressed, just
-    // condition-driven instead of tap-driven.
-    label: 'Automatisation déclenchée',
-    matchFields: [{ key: 'automationId', label: 'Automatisation', optionsFrom: 'automations' }],
-  },
-  {
     name: 'interaction.won',
     app: null,
     label: 'Interaction gagnée',

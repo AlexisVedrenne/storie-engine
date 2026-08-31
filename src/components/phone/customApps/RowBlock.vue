@@ -33,7 +33,7 @@ const sublabel = computed(() => resolveDynamicText(props.block.sublabel, story, 
   align-items: center;
   gap: 10px;
   padding: 10px 0;
-  color: var(--app-text);
+  color: #fff;
 }
 
 .row-icon {

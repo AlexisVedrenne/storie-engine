@@ -41,7 +41,7 @@ const resolvedTabs = computed(() =>
   gap: 4px;
   padding: 3px;
   border-radius: 11px;
-  background: var(--app-surface);
+  background: rgba(255, 255, 255, 0.06);
 }
 
 .tab-btn {
@@ -60,7 +60,7 @@ const resolvedTabs = computed(() =>
 }
 
 .tab-btn.active {
-  background: rgba(var(--app-accent-rgb), 0.35);
-  color: var(--app-text);
+  background: rgba(76, 139, 245, 0.35);
+  color: #fff;
 }
 </style>

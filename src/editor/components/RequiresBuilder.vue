@@ -262,141 +262,12 @@
         class="btn-ghost"
         @click="addFollowingRow"
       />
-
-      <div class="section-title">
-        {{ t('requiresBuilder.entitiesTitle') }}
-        <FieldHelp :text="t('requiresBuilder.entitiesHelp')" />
-      </div>
-      <div v-if="!entityRows.length" class="empty-hint">
-        {{ t('requiresBuilder.noEntityCondition') }}
-      </div>
-      <div v-for="(row, i) in entityRows" :key="i" class="row-card">
-        <q-btn
-          dense
-          flat
-          round
-          icon="close"
-          size="sm"
-          class="row-remove"
-          @click="removeEntityRow(i)"
-        >
-          <q-tooltip>{{ t('requiresBuilder.removeCondition') }}</q-tooltip>
-        </q-btn>
-        <div class="row-fields">
-          <q-select
-            dense
-            outlined
-            class="mode-select"
-            :label="t('requiresBuilder.schemaLabel')"
-            v-model="row.schemaId"
-            :options="schemaOptions"
-            emit-value
-            map-options
-            @update:model-value="sync"
-          />
-          <q-input
-            dense
-            outlined
-            class="key-input"
-            :label="t('requiresBuilder.entityIdLabel')"
-            v-model="row.entityId"
-            @update:model-value="sync"
-          />
-          <q-select
-            dense
-            outlined
-            class="key-input"
-            :label="t('requiresBuilder.fieldLabel')"
-            v-model="row.field"
-            :options="fieldOptions(row.schemaId)"
-            emit-value
-            map-options
-            @update:model-value="sync"
-          />
-          <q-select
-            dense
-            outlined
-            class="mode-select"
-            :label="t('requiresBuilder.conditionLabel')"
-            v-model="row.mode"
-            :options="FLAG_MODES"
-            emit-value
-            map-options
-            @update:model-value="sync"
-          />
-          <q-toggle
-            v-if="row.mode === 'bool'"
-            v-model="row.boolValue"
-            :label="t('requiresBuilder.trueLabel')"
-            @update:model-value="sync"
-          />
-          <q-input
-            v-else-if="row.mode === 'exact'"
-            dense
-            outlined
-            class="num-input"
-            :label="t('requiresBuilder.valueLabel')"
-            v-model="row.exactValue"
-            @update:model-value="sync"
-          />
-          <q-input
-            v-else-if="row.mode === 'min'"
-            dense
-            outlined
-            type="number"
-            class="num-input"
-            label="min"
-            v-model.number="row.min"
-            @update:model-value="sync"
-          />
-          <q-input
-            v-else-if="row.mode === 'max'"
-            dense
-            outlined
-            type="number"
-            class="num-input"
-            label="max"
-            v-model.number="row.max"
-            @update:model-value="sync"
-          />
-          <template v-else-if="row.mode === 'range'">
-            <q-input
-              dense
-              outlined
-              type="number"
-              class="num-input"
-              label="min"
-              v-model.number="row.min"
-              @update:model-value="sync"
-            />
-            <q-input
-              dense
-              outlined
-              type="number"
-              class="num-input"
-              label="max"
-              v-model.number="row.max"
-              @update:model-value="sync"
-            />
-          </template>
-        </div>
-      </div>
-      <q-btn
-        dense
-        flat
-        no-caps
-        icon="add"
-        :label="t('requiresBuilder.addEntityCondition')"
-        class="btn-ghost"
-        @click="addEntityRow"
-      />
     </template>
   </div>
 </template>
 
 <script setup>
 import { computed, reactive, ref } from 'vue'
-import { useStoryStore } from '@/engine/stores/story'
 import { useContactOptions } from '@/components/shared/useContactOptions'
 import FieldHelp from '@/editor/components/FieldHelp.vue'
 import FlagNameField from '@/editor/components/FlagNameField.vue'
@@ -410,7 +281,6 @@ const { t } = useEditorI18n()
 // round-trip watcher needed since nothing re-derives rows after mount.
 const props = defineProps({ modelValue: { type: Object, default: null } })
 const emit = defineEmits(['update:modelValue'])
-const story = useStoryStore()
 // computed, not a plain const — labels re-evaluate when the editor's own
 // language switches (t() calls inside).
 const FLAG_MODES = computed(() => [
@@ -523,62 +393,6 @@ const followingRows = reactive(
   ),
 )
 
-// { entities: [{ schemaId, entityId, field, value }] } — a LIST (not an
-// object keyed by name like `flags` above) since schemaId+entityId+field
-// isn't a natural single key the way a flag name is. Reuses the exact same
-// bool/exact/min/max/range row shape as flagRowFrom — same comparison
-// semantics, different data source (see checkConditions() in story.js).
-function entityRowFrom(cond) {
-  const base = { schemaId: cond.schemaId, entityId: cond.entityId ?? '*', field: cond.field }
-  const expected = cond.value
-  if (typeof expected === 'boolean')
-    return reactive({ ...base, mode: 'bool', boolValue: expected, exactValue: '', min: 0, max: 0 })
-  if (expected && typeof expected === 'object') {
-    if ('min' in expected && 'max' in expected)
-      return reactive({ ...base, mode: 'range', boolValue: true, exactValue: '', ...expected })
-    if ('min' in expected)
-      return reactive({
-        ...base,
-        mode: 'min',
-        boolValue: true,
-        exactValue: '',
-        min: expected.min,
-        max: 0,
-      })
-    if ('max' in expected)
-      return reactive({
-        ...base,
-        mode: 'max',
-        boolValue: true,
-        exactValue: '',
-        min: 0,
-        max: expected.max,
-      })
-  }
-  return reactive({
-    ...base,
-    mode: 'exact',
-    boolValue: true,
-    exactValue: expected ?? '',
-    min: 0,
-    max: 0,
-  })
-}
-const entityRows = reactive((props.modelValue?.entities || []).map(entityRowFrom))
-
-function schemaFields(schemaId) {
-  return story.project?.gameConfig?.entitySchemas?.find((s) => s.id === schemaId)?.fields || []
-}
-const schemaOptions = computed(() =>
-  (story.project?.gameConfig?.entitySchemas || []).map((s) => ({
-    label: s.label || s.id,
-    value: s.id,
-  })),
-)
-function fieldOptions(schemaId) {
-  return schemaFields(schemaId).map((f) => ({ label: f.label || f.key, value: f.key }))
-}
-
 // Collapsed behind a single "+ Ajouter une condition" row when there's
 // nothing set yet — RequiresBuilder renders at 3 nesting levels (chapter,
 // every timeline entry, every choice option, see docs/ui-ux-audit.md point
@@ -586,12 +400,7 @@ function fieldOptions(schemaId) {
 // repeated at each one. Stays revealed once true (including after the user
 // removes their last row mid-edit) so it never collapses out from under
 // them while they're actively working in it.
-const revealed = ref(
-  flagRows.length > 0 ||
-    collectionRows.length > 0 ||
-    followingRows.length > 0 ||
-    entityRows.length > 0,
-)
+const revealed = ref(flagRows.length > 0 || collectionRows.length > 0 || followingRows.length > 0)
 
 function addFlagRow() {
   flagRows.push(reactive({ key: '', mode: 'bool', boolValue: true, exactValue: 0, min: 0, max: 0 }))
@@ -625,24 +434,6 @@ function removeFollowingRow(i) {
   followingRows.splice(i, 1)
   sync()
 }
-function addEntityRow() {
-  entityRows.push(
-    reactive({
-      schemaId: schemaOptions.value[0]?.value || '',
-      entityId: '*',
-      field: '',
-      mode: 'bool',
-      boolValue: true,
-      exactValue: '',
-      min: 0,
-      max: 0,
-    }),
-  )
-}
-function removeEntityRow(i) {
-  entityRows.splice(i, 1)
-  sync()
-}
 
 function sync() {
   const flags = {}
@@ -672,27 +463,10 @@ function sync() {
     if (!row.contactId) continue
     following[row.contactId] = row.expected
   }
-  const entities = []
-  for (const row of entityRows) {
-    if (!row.schemaId || !row.field) continue
-    let value
-    if (row.mode === 'bool') value = row.boolValue
-    else if (row.mode === 'exact') value = row.exactValue
-    else if (row.mode === 'min') value = { min: row.min }
-    else if (row.mode === 'max') value = { max: row.max }
-    else if (row.mode === 'range') value = { min: row.min, max: row.max }
-    entities.push({
-      schemaId: row.schemaId,
-      entityId: row.entityId || '*',
-      field: row.field,
-      value,
-    })
-  }
   const hasFlags = Object.keys(flags).length > 0
   const hasCollections = Object.keys(collections).length > 0
   const hasFollowing = Object.keys(following).length > 0
-  const hasEntities = entities.length > 0
-  if (!hasFlags && !hasCollections && !hasFollowing && !hasEntities) {
+  if (!hasFlags && !hasCollections && !hasFollowing) {
     emit('update:modelValue', null)
     return
   }
@@ -700,7 +474,6 @@ function sync() {
     ...(hasFlags ? { flags } : {}),
     ...(hasCollections ? { collections } : {}),
     ...(hasFollowing ? { following } : {}),
-    ...(hasEntities ? { entities } : {}),
   })
 }
 </script>

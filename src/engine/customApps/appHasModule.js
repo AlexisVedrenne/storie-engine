@@ -31,19 +31,3 @@ export function findScreenWithBlockType(app, type) {
   }
   return null
 }
-
-// Every block of a given type anywhere in a flat block array (same
-// recursion shape as blocksContainType above, collecting instead of just
-// testing) — used for `sheet` blocks: CustomAppRenderer.vue passes just the
-// current screen's own `blocks` (a sheet only opens on the screen it's
-// authored on), CustomAppEditor.vue passes every screen's blocks flattened
-// together to build the app-wide picker a button's `openSheet` action uses.
-export function collectBlocksOfType(blocks, type) {
-  const out = []
-  for (const block of blocks || []) {
-    if (block.type === type) out.push(block)
-    if (Array.isArray(block.blocks)) out.push(...collectBlocksOfType(block.blocks, type))
-    if (Array.isArray(block.template)) out.push(...collectBlocksOfType(block.template, type))
-  }
-  return out
-}

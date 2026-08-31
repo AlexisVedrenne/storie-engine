@@ -10,17 +10,15 @@
 </template>
 
 <script setup>
-// Three data sources (see blockKinds.js): `'contacts'` (project.contacts,
+// Two data sources (see blockKinds.js): `'contacts'` (project.contacts,
 // optionally filtered to only followed via story.isFollowing(), the same
-// follow state the social Fil already gates on), `'flagCollection'` (a
+// follow state the social Fil already gates on) or `'flagCollection'` (a
 // collection flag's key->value map, story.collectionItems(flagKey) — a
 // growing history/log/inventory the author builds via `effects.collections`,
-// see EffectsBuilder.vue), or `'entity'` (instances of an author-defined
-// schema, story.entityItems(schemaId) — a structured multi-field record a
-// flat collection can't hold, see the Schémas tab). Each item is rendered
-// through ListItemScope so the block's own `template` (a block subtree,
-// authored once) can read `{item:...}` for the current item — see
-// resolveDynamicText.js for which token set applies to which source.
+// see EffectsBuilder.vue). Each item is rendered through ListItemScope so
+// the block's own `template` (a block subtree, authored once) can read
+// `{item:...}` for the current item — see resolveDynamicText.js for which
+// token set applies to which source.
 import { computed } from 'vue'
 import { useStoryStore } from '@/engine/stores/story'
 import ListItemScope from './ListItemScope.vue'
@@ -30,7 +28,6 @@ const story = useStoryStore()
 
 const items = computed(() => {
   if (props.block.source === 'flagCollection') return story.collectionItems(props.block.flagKey)
-  if (props.block.source === 'entity') return story.entityItems(props.block.schemaId)
   const all = story.project?.contacts || []
   if (!props.block.onlyFollowed) return all
   return all.filter((c) => story.isFollowing(c.id))

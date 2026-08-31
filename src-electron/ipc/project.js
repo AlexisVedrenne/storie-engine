@@ -422,20 +422,13 @@ export function registerProjectHandlers(mainWindow) {
     const assetsRoot = path.join(rootPath, 'assets')
     fs.mkdirSync(assetsRoot, { recursive: true })
     const isAudio = accept === 'audio'
-    const isVideo = accept === 'video'
     const result = await dialog.showOpenDialog(mainWindow, {
-      title: isAudio
-        ? 'Choisir un fichier audio'
-        : isVideo
-          ? 'Choisir une vidéo'
-          : 'Choisir une image',
+      title: isAudio ? 'Choisir un fichier audio' : 'Choisir une image',
       defaultPath: assetsRoot,
       properties: ['openFile'],
       filters: isAudio
         ? [{ name: 'Audio', extensions: ['mp3', 'wav', 'ogg', 'm4a'] }]
-        : isVideo
-          ? [{ name: 'Vidéo', extensions: ['mp4', 'webm', 'mov'] }]
-          : [{ name: 'Images', extensions: ['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp'] }],
+        : [{ name: 'Images', extensions: ['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp'] }],
     })
     if (result.canceled || !result.filePaths[0]) return null
     const picked = result.filePaths[0]
@@ -444,9 +437,7 @@ export function registerProjectHandlers(mainWindow) {
       throw new Error(
         isAudio
           ? "Le fichier choisi doit être à l'intérieur du dossier assets/ du projet."
-          : isVideo
-            ? "La vidéo choisie doit être à l'intérieur du dossier assets/ du projet."
-            : "L'image choisie doit être à l'intérieur du dossier assets/ du projet.",
+          : "L'image choisie doit être à l'intérieur du dossier assets/ du projet.",
       )
     }
     return rel.replace(/\\/g, '/')
@@ -469,29 +460,13 @@ export function registerProjectHandlers(mainWindow) {
         ? [
             {
               name: 'Médias',
-              extensions: [
-                'png',
-                'jpg',
-                'jpeg',
-                'gif',
-                'svg',
-                'webp',
-                'mp3',
-                'wav',
-                'ogg',
-                'm4a',
-                'mp4',
-                'webm',
-                'mov',
-              ],
+              extensions: ['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp', 'mp3', 'wav', 'ogg', 'm4a'],
             },
             { name: 'Tous les fichiers', extensions: ['*'] },
           ]
         : accept === 'audio'
           ? [{ name: 'Audio', extensions: ['mp3', 'wav', 'ogg', 'm4a'] }]
-          : accept === 'video'
-            ? [{ name: 'Vidéo', extensions: ['mp4', 'webm', 'mov'] }]
-            : [{ name: 'Images', extensions: ['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp'] }]
+          : [{ name: 'Images', extensions: ['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp'] }]
     const result = await dialog.showOpenDialog(mainWindow, {
       title: 'Importer un fichier',
       properties: ['openFile'],
