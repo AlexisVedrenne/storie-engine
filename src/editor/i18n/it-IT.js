@@ -45,6 +45,7 @@ export default {
     validateTooltip:
       'Valida progetto — cerca riferimenti mancanti (contatto/gruppo/immagine assenti) e problemi nei capitoli',
     globalSearchTooltip: 'Ricerca globale (Ctrl+K)',
+    conceptsTooltip: "Glossario — capire il vocabolario dell'editor (capitolo, flag, event…)",
     undoTooltip: 'Annulla (Ctrl+Z)',
     redoTooltip: 'Ripeti (Ctrl+Shift+Z)',
     undoTargetGone: "Impossibile annullare: quell'elemento è stato nel frattempo eliminato.",
@@ -124,7 +125,41 @@ export default {
     buildingGeneric: 'Compilazione in corso…',
   },
 
+  conceptsDialog: {
+    title: "Capire l'editor",
+    intro: "Un piccolo glossario delle parole usate in tutto l'editor — utile se stai scoprendo lo strumento.",
+    chapterTerm: 'Capitolo',
+    chapterDesc:
+      'Un pezzo della storia: la timeline di messaggi, scelte ed eventi che il giocatore vive di fila prima di passare al capitolo successivo.',
+    flagTerm: 'Flag',
+    flagDesc:
+      'Un valore memorizzato (sì/no, un numero o testo) che tiene traccia di cosa è successo, così il resto della storia può reagire a una scelta fatta prima.',
+    eventTerm: 'Event',
+    eventDesc:
+      "Una reazione automatica a un'azione del giocatore sul telefono — aprire un'app, mettere like a un post… — indipendente dalla timeline di un capitolo.",
+    automationTerm: 'Automazione',
+    automationDesc:
+      'Un\'azione che si attiva da sola non appena una condizione diventa vera, senza che il giocatore debba cliccare nulla.',
+    interactionTerm: 'Interazione',
+    interactionDesc:
+      'Un gesto sul telefono che costruisci tu stesso (scorrere, tenere premuto, scuotere…) e attivi da un capitolo.',
+    customAppTerm: 'App personalizzata',
+    customAppDesc:
+      'Una schermata del telefono che costruisci con blocchi visivi (testo, pulsanti, liste…) — come progettare la tua app di impostazioni, diario, ecc.',
+    entitySchemaTerm: 'Schema di entità',
+    entitySchemaDesc:
+      'Un modello di dati riutilizzabile (come un modulo) per contenuti strutturati usati nelle app personalizzate — ad esempio una "scheda contatto" con nome, foto, bio.',
+    seedTerm: 'Contenuto iniziale',
+    seedDesc:
+      "Ciò che è già presente sul telefono prima ancora che la storia inizi a essere giocata — messaggi, post, foto precaricati.",
+    i18nTerm: 'Traduzioni',
+    i18nDesc: 'Copie tradotte di ogni testo del progetto, per giocatori in un\'altra lingua.',
+  },
+
   chapterGraph: {
+    emptyTitle: 'Questo progetto non ha ancora nessun capitolo',
+    emptyDetail:
+      'Un capitolo è un pezzo della storia (con la propria timeline di messaggi/scelte). Clicca su «+ Nuovo capitolo» per crearne il primo, oppure fai clic destro in un punto qualsiasi della tela.',
     newChapter: 'Nuovo capitolo',
     visitedTooltip: 'Già visitato durante questa anteprima',
     titleLabel: 'Titolo',
@@ -477,6 +512,8 @@ export default {
   automationForm: {
     intro:
       'Un’automazione esegue un’azione da sola, non appena una condizione diventa vera — senza che il giocatore clicchi nulla.',
+    introHelp:
+      "A differenza di un Event (che reagisce a un'azione del giocatore), un'automazione si attiva da sola — es: non appena la fiducia supera 5, invia un messaggio senza che il giocatore abbia fatto nulla.",
     labelLabel: 'Nome (solo di riferimento)',
     conditionTitle: 'Condizione',
     actionTitle: 'Azione',

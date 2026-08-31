@@ -44,6 +44,7 @@ export default {
     validateTooltip:
       'Projekt validieren — sucht nach defekten Referenzen (fehlender Kontakt/Thread/Bild) und Kapitelproblemen',
     globalSearchTooltip: 'Globale Suche (Strg+K)',
+    conceptsTooltip: 'Glossar — die Begriffe des Editors verstehen (Kapitel, Flag, Event…)',
     undoTooltip: 'Rückgängig (Strg+Z)',
     redoTooltip: 'Wiederholen (Strg+Umschalt+Z)',
     undoTargetGone: 'Rückgängig nicht möglich: Dieses Element wurde inzwischen gelöscht.',
@@ -125,7 +126,41 @@ export default {
     buildingGeneric: 'Wird erstellt…',
   },
 
+  conceptsDialog: {
+    title: 'Den Editor verstehen',
+    intro: 'Ein kleines Glossar der Begriffe, die im ganzen Editor verwendet werden — nützlich, wenn du das Tool gerade entdeckst.',
+    chapterTerm: 'Kapitel',
+    chapterDesc:
+      'Ein Stück der Geschichte: die Timeline aus Nachrichten, Entscheidungen und Events, die der Spieler am Stück erlebt, bevor es ins nächste Kapitel geht.',
+    flagTerm: 'Flag',
+    flagDesc:
+      'Ein gespeicherter Wert (Ja/Nein, eine Zahl oder Text), der sich merkt, was passiert ist, damit spätere Inhalte auf eine frühere Entscheidung reagieren können.',
+    eventTerm: 'Event',
+    eventDesc:
+      'Eine automatische Reaktion auf eine Spieleraktion am Telefon — eine App öffnen, einen Post liken… — unabhängig von der Timeline eines Kapitels.',
+    automationTerm: 'Automatisierung',
+    automationDesc:
+      'Eine Aktion, die von selbst ausgelöst wird, sobald eine Bedingung wahr wird — ohne dass der Spieler irgendetwas anklicken muss.',
+    interactionTerm: 'Interaktion',
+    interactionDesc:
+      'Eine Telefongeste, die du selbst baust (wischen, halten, schütteln…) und aus einem Kapitel heraus auslöst.',
+    customAppTerm: 'Custom App',
+    customAppDesc:
+      'Ein Telefonbildschirm, den du mit visuellen Blöcken baust (Text, Buttons, Listen…) — wie deine eigene Einstellungen-App, dein Tagebuch usw.',
+    entitySchemaTerm: 'Entity-Schema',
+    entitySchemaDesc:
+      'Eine wiederverwendbare Datenvorlage (wie ein Formular) für strukturierte Inhalte, die in Custom Apps verwendet werden — z. B. eine „Kontaktkarte" mit Name, Foto, Bio.',
+    seedTerm: 'Startinhalt',
+    seedDesc:
+      'Was bereits auf dem Telefon vorhanden ist, bevor die Geschichte überhaupt losgeht — vorab geladene Nachrichten, Posts, Fotos.',
+    i18nTerm: 'Übersetzungen',
+    i18nDesc: 'Übersetzte Kopien jedes Textes im Projekt, für Spieler in einer anderen Sprache.',
+  },
+
   chapterGraph: {
+    emptyTitle: 'Dieses Projekt hat noch kein Kapitel',
+    emptyDetail:
+      'Ein Kapitel ist ein Stück der Geschichte (mit eigener Timeline aus Nachrichten/Entscheidungen). Klicke auf „+ Neues Kapitel", um das erste zu erstellen, oder mach einen Rechtsklick irgendwo auf der Fläche.',
     newChapter: 'Neues Kapitel',
     visitedTooltip: 'In dieser Vorschau bereits besucht',
     titleLabel: 'Titel',
@@ -475,6 +510,8 @@ export default {
   automationForm: {
     intro:
       'Eine Automatisierung führt von selbst eine Aktion aus, sobald eine Bedingung wahr wird — ohne dass der Spieler etwas anklickt.',
+    introHelp:
+      'Anders als ein Event (das auf eine Spieleraktion reagiert) löst eine Automatisierung von selbst aus — z. B. sobald das Vertrauen über 5 steigt, eine Nachricht senden, ohne dass der Spieler etwas getan hat.',
     labelLabel: 'Name (nur zur Orientierung)',
     conditionTitle: 'Bedingung',
     actionTitle: 'Aktion',

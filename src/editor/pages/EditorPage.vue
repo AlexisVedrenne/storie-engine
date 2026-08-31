@@ -112,6 +112,16 @@
             dense
             flat
             round
+            icon="help_outline"
+            class="btn-ghost"
+            @click="conceptsDialogRef?.open()"
+          >
+            <q-tooltip>{{ t('editorPage.conceptsTooltip') }}</q-tooltip>
+          </q-btn>
+          <q-btn
+            dense
+            flat
+            round
             :icon="focusPreview ? 'visibility_off' : 'smartphone'"
             class="btn-ghost"
             @click="focusPreview = !focusPreview"
@@ -192,6 +202,11 @@
               <q-item clickable v-close-popup @click="globalSearchDialogRef?.open()">
                 <q-item-section avatar><q-icon name="search" /></q-item-section>
                 <q-item-section>{{ t('editorPage.globalSearchTooltip') }}</q-item-section>
+              </q-item>
+
+              <q-item clickable v-close-popup @click="conceptsDialogRef?.open()">
+                <q-item-section avatar><q-icon name="help_outline" /></q-item-section>
+                <q-item-section>{{ t('editorPage.conceptsTooltip') }}</q-item-section>
               </q-item>
 
               <q-item clickable @click="focusPreview = !focusPreview">
@@ -291,6 +306,7 @@
           @navigate="(descriptor, hint) => navigateToResource(descriptor, hint)"
           @open-flags="flagsDialogOpen = true"
         />
+        <ConceptsDialog ref="conceptsDialogRef" />
       </div>
 
       <div class="panes">
@@ -750,6 +766,7 @@ import EmojiPickerBtn from '@/components/shared/EmojiPickerBtn.vue'
 import { insertEmojiAtCaret } from '@/components/shared/emojiInsert'
 import EditorSettingsDialog from '@/editor/components/EditorSettingsDialog.vue'
 import GlobalSearchDialog from '@/editor/components/GlobalSearchDialog.vue'
+import ConceptsDialog from '@/editor/components/ConceptsDialog.vue'
 import DebugPanel from '@/editor/components/DebugPanel.vue'
 import WebPreviewDialog from '@/editor/components/WebPreviewDialog.vue'
 import BuildStepper from '@/editor/components/BuildStepper.vue'
@@ -810,6 +827,7 @@ const webPreviewDialogRef = ref(null)
 const buildStepperRef = ref(null)
 const editorSettingsDialogRef = ref(null)
 const globalSearchDialogRef = ref(null)
+const conceptsDialogRef = ref(null)
 // Explicit persist — this dialog opens on top of the 'chapters' tab, whose
 // dirty/save watch is armed on `selectedChapter`, not on `gameConfig` (see
 // activeResource below), so editing a flag's label here needs its own

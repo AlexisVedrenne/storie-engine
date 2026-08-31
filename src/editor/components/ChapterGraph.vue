@@ -11,6 +11,22 @@
       @click="newChapterDialog = true"
     />
 
+    <!-- First thing a brand-new project shows — an empty canvas with only a
+         floating "+" button explained nothing about what a chapter even is.
+         Same onboarding-empty-state recipe as BlockBuilder.vue's root empty
+         state (icon/title/detail, dashed border): purely decorative overlay,
+         `pointer-events: none` on the wrapper so it never blocks dragging/
+         right-clicking the canvas underneath, VueFlow keeps rendering behind
+         it (no v-if on VueFlow itself — same "never unmount a live Teleport-
+         adjacent canvas" caution as EditorPage.vue's own graph pane). -->
+    <div v-if="!chapters.length" class="empty-state-overlay">
+      <div class="empty-state">
+        <q-icon name="auto_stories" size="28px" />
+        <p>{{ t('chapterGraph.emptyTitle') }}</p>
+        <p class="empty-state-detail">{{ t('chapterGraph.emptyDetail') }}</p>
+      </div>
+    </div>
+
     <VueFlow
       :nodes="displayNodes"
       :edges="graph.edges"
@@ -386,6 +402,42 @@ async function onPaneContextMenu(event) {
 .flow {
   width: 100%;
   height: 100%;
+}
+
+.empty-state-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--space-1);
+  padding: var(--space-6) var(--space-3);
+  max-width: 360px;
+  color: var(--color-text-muted);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+}
+
+.empty-state p {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--color-text);
+}
+
+.empty-state-detail {
+  font-size: var(--text-xs) !important;
+  color: var(--color-text-muted) !important;
+  max-width: 34ch;
 }
 
 .new-chapter-fab {
