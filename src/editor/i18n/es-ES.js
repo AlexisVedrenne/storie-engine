@@ -52,6 +52,8 @@ export default {
     buildTooltip: 'Compilar — exporta este proyecto como un juego jugable (escritorio y/o Android)',
     webPreviewTooltip: 'Vista previa web — pruébalo en tu teléfono por Wi-Fi',
     switchProjectTooltip: 'Cambiar de proyecto',
+    unsavedCloseTitle: 'Cambios sin guardar',
+    unsavedCloseMessage: 'Se perderán los cambios actuales si cambias de proyecto ahora. ¿Continuar?',
     backToGraphTooltip: 'Volver al grafo',
     chapterTitleLabel: 'Título',
     chapterRenamed: 'Capítulo renombrado — id actualizado.',
@@ -151,6 +153,9 @@ export default {
   },
 
   timelineEditor: {
+    confirmRemoveNestedTitle: '¿Eliminar esta entrada?',
+    confirmRemoveNestedMessage:
+      'Esta entrada contiene {n} entrada(s) anidada(s) en sus ramas (elección). Todo se eliminará. Esta acción no se puede deshacer.',
     selectedOne: '1 entrada seleccionada',
     selectedMany: '{n} entradas seleccionadas',
     groupSelection: 'Agrupar en acordeón',
@@ -446,6 +451,8 @@ export default {
   },
 
   interactionList: {
+    confirmDeleteTitle: '¿Eliminar esta interacción?',
+    confirmDeleteMessage: '«{name}» se eliminará. Esta acción no se puede deshacer.',
     empty: 'Aún no se ha creado ninguna interacción.',
     stepsCount: '{n} pasos',
     newInteraction: 'Nueva interacción',
@@ -467,6 +474,8 @@ export default {
   },
 
   automationList: {
+    confirmDeleteTitle: '¿Eliminar esta automatización?',
+    confirmDeleteMessage: '«{name}» se eliminará. Esta acción no se puede deshacer.',
     empty: 'Ninguna automatización creada.',
     newAutomation: 'Nueva automatización',
   },
@@ -488,6 +497,9 @@ export default {
   },
 
   entitySchemaList: {
+    confirmDeleteTitle: '¿Eliminar este esquema?',
+    confirmDeleteMessage:
+      '«{name}» se eliminará. Las referencias a este esquema en otras partes del proyecto (condiciones, apps personalizadas) no se actualizarán. Esta acción no se puede deshacer.',
     empty: 'Aún no se ha creado ningún esquema.',
     fieldsCount: '{n} campos',
     newSchema: 'Nuevo esquema',
@@ -648,6 +660,9 @@ export default {
   },
 
   blockBuilder: {
+    confirmRemoveNestedTitle: '¿Eliminar este bloque?',
+    confirmRemoveNestedMessage:
+      'Este bloque contiene {n} bloque(s) anidado(s). Todo se eliminará. Esta acción no se puede deshacer.',
     empty: 'Aún no hay bloques aquí — haz clic o arrastra uno desde la paleta de arriba.',
     emptyRootTitle: 'Esta pantalla está vacía',
     emptyRootDetail:
@@ -1081,6 +1096,8 @@ export default {
   },
 
   eventList: {
+    confirmDeleteTitle: '¿Eliminar este evento?',
+    confirmDeleteMessage: '«{name}» se eliminará. Esta acción no se puede deshacer.',
     paneLabel: 'Eventos',
     empty: 'Aún no hay eventos.',
     addEvent: 'Añadir un evento',

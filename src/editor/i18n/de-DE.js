@@ -52,6 +52,9 @@ export default {
       'Erstellen — dieses Projekt als spielbares Spiel exportieren (Desktop und/oder Android)',
     webPreviewTooltip: 'Web-Vorschau — auf deinem Handy per WLAN testen',
     switchProjectTooltip: 'Projekt wechseln',
+    unsavedCloseTitle: 'Nicht gespeicherte Änderungen',
+    unsavedCloseMessage:
+      'Deine aktuellen Änderungen gehen verloren, wenn du jetzt das Projekt wechselst. Fortfahren?',
     backToGraphTooltip: 'Zurück zum Graphen',
     chapterTitleLabel: 'Titel',
     chapterRenamed: 'Kapitel umbenannt — ID aktualisiert.',
@@ -151,6 +154,9 @@ export default {
   },
 
   timelineEditor: {
+    confirmRemoveNestedTitle: 'Diesen Eintrag löschen?',
+    confirmRemoveNestedMessage:
+      'Dieser Eintrag enthält {n} verschachtelte Einträge in seinen Verzweigungen (Auswahl). Alles wird gelöscht. Dies kann nicht rückgängig gemacht werden.',
     selectedOne: '1 Eintrag ausgewählt',
     selectedMany: '{n} Einträge ausgewählt',
     groupSelection: 'Zu Akkordeon gruppieren',
@@ -437,6 +443,8 @@ export default {
   },
 
   interactionList: {
+    confirmDeleteTitle: 'Diese Interaktion löschen?',
+    confirmDeleteMessage: '„{name}" wird gelöscht. Dies kann nicht rückgängig gemacht werden.',
     empty: 'Noch keine Interaktion erstellt.',
     stepsCount: '{n} Schritte',
     newInteraction: 'Neue Interaktion',
@@ -458,6 +466,8 @@ export default {
   },
 
   automationList: {
+    confirmDeleteTitle: 'Diese Automatisierung löschen?',
+    confirmDeleteMessage: '„{name}" wird gelöscht. Dies kann nicht rückgängig gemacht werden.',
     empty: 'Noch keine Automatisierung erstellt.',
     newAutomation: 'Neue Automatisierung',
   },
@@ -479,6 +489,9 @@ export default {
   },
 
   entitySchemaList: {
+    confirmDeleteTitle: 'Dieses Schema löschen?',
+    confirmDeleteMessage:
+      '„{name}" wird gelöscht. Verweise auf dieses Schema an anderer Stelle im Projekt (Bedingungen, Custom Apps) werden nicht aktualisiert. Dies kann nicht rückgängig gemacht werden.',
     empty: 'Noch kein Schema erstellt.',
     fieldsCount: '{n} Felder',
     newSchema: 'Neues Schema',
@@ -640,6 +653,9 @@ export default {
   },
 
   blockBuilder: {
+    confirmRemoveNestedTitle: 'Diesen Block löschen?',
+    confirmRemoveNestedMessage:
+      'Dieser Block enthält {n} verschachtelte Blöcke. Alles wird gelöscht. Dies kann nicht rückgängig gemacht werden.',
     empty: 'Noch keine Blöcke hier — klicke einen an oder ziehe ihn aus der Palette oben hierher.',
     emptyRootTitle: 'Dieser Bildschirm ist leer',
     emptyRootDetail:
@@ -1079,6 +1095,8 @@ export default {
   },
 
   eventList: {
+    confirmDeleteTitle: 'Dieses Event löschen?',
+    confirmDeleteMessage: '„{name}" wird gelöscht. Dies kann nicht rückgängig gemacht werden.',
     paneLabel: 'Ereignisse',
     empty: 'Noch keine Ereignisse.',
     addEvent: 'Ereignis hinzufügen',

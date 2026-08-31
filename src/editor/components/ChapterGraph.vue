@@ -370,7 +370,7 @@ async function createChapter() {
 async function onPaneContextMenu(event) {
   event.preventDefault()
   const position = screenToFlowCoordinate({ x: event.clientX, y: event.clientY })
-  const title = 'Nouveau chapitre'
+  const title = t('chapterGraph.newChapter')
   const id = generateChapterId(title, chapters)
   await persistNewChapter({ id, title, timeline: [], next: [], position })
 }

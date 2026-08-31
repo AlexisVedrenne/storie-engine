@@ -82,6 +82,7 @@
 
 <script setup>
 import { computed, ref } from 'vue'
+import { Dialog } from 'quasar'
 import { useStoryStore } from '@/engine/stores/story'
 import { useEditorI18n } from '@/editor/i18n'
 
@@ -108,9 +109,30 @@ function create() {
   newLabel.value = ''
 }
 
+// Same confirm-before-delete protection as Contact/Thread/CustomApp/Locale
+// rows already have — this list previously deleted on a single stray click.
+// Worth being extra deliberate here specifically: a schema id can be
+// referenced from RequiresBuilder's entity-condition rows, EffectsBuilder,
+// and BlockPropertiesForm's entity-bound blocks project-wide, and deleting
+// it leaves those references silently dangling until the next
+// "Valider le projet" run — the message below says so explicitly (a full
+// "referenced in N places" pre-scan, findReferences.js-style, is a
+// follow-up: that scanner only walks contact/thread references today, not
+// the block/condition system entity fields are used from).
 function remove(i) {
-  schemas.value.splice(i, 1)
-  if (i === schemas.value.length) emit('update:modelValue', Math.max(0, i - 1))
+  const def = schemas.value[i]
+  Dialog.create({
+    title: t('entitySchemaList.confirmDeleteTitle'),
+    message: t('entitySchemaList.confirmDeleteMessage', { name: def.label || def.id }),
+    cancel: true,
+    persistent: true,
+    color: 'negative',
+  }).onOk(() => {
+    const idx = schemas.value.indexOf(def)
+    if (idx === -1) return
+    schemas.value.splice(idx, 1)
+    if (idx === schemas.value.length) emit('update:modelValue', Math.max(0, idx - 1))
+  })
 }
 </script>
 

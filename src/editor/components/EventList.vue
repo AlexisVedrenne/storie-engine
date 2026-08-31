@@ -39,6 +39,7 @@
 
 <script setup>
 import { computed } from 'vue'
+import { Dialog } from 'quasar'
 import { useI18n } from 'vue-i18n'
 import { useStoryStore } from '@/engine/stores/story'
 import { APP_REGISTRY } from '@/engine/apps/registry'
@@ -63,9 +64,23 @@ const { contactLabel } = useContactOptions()
 if (!story.project.gameConfig.events) story.project.gameConfig.events = []
 const events = computed(() => story.project.gameConfig.events)
 
+// Same confirm-before-delete protection as Contact/Thread/CustomApp/Locale
+// rows already have — this list previously deleted on a single stray click
+// with nothing to undo it beyond the (not-obvious) global Ctrl+Z.
 function remove(i) {
-  events.value.splice(i, 1)
-  if (i === events.value.length) emit('update:modelValue', Math.max(0, i - 1))
+  const evt = events.value[i]
+  Dialog.create({
+    title: t('eventList.confirmDeleteTitle'),
+    message: t('eventList.confirmDeleteMessage', { name: summaryFor(evt) }),
+    cancel: true,
+    persistent: true,
+    color: 'negative',
+  }).onOk(() => {
+    const idx = events.value.indexOf(evt)
+    if (idx === -1) return
+    events.value.splice(idx, 1)
+    if (idx === events.value.length) emit('update:modelValue', Math.max(0, idx - 1))
+  })
 }
 
 // "Commun" first (cross-app triggers — opening/leaving ANY app), then one

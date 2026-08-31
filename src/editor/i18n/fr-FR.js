@@ -52,6 +52,9 @@ export default {
     buildTooltip: 'Build — exporter ce projet en jeu jouable (desktop et/ou Android)',
     webPreviewTooltip: 'Preview web — tester sur ton téléphone via le Wi-Fi',
     switchProjectTooltip: 'Changer de projet',
+    unsavedCloseTitle: 'Modifications non enregistrées',
+    unsavedCloseMessage:
+      'Les modifications en cours seront perdues si tu changes de projet maintenant. Continuer ?',
     backToGraphTooltip: 'Retour au graphe',
     chapterTitleLabel: 'Titre',
     chapterRenamed: 'Chapitre renommé — id mis à jour.',
@@ -151,6 +154,9 @@ export default {
   },
 
   timelineEditor: {
+    confirmRemoveNestedTitle: 'Supprimer cette entrée ?',
+    confirmRemoveNestedMessage:
+      'Cette entrée contient {n} entrée(s) imbriquée(s) dans ses branches (choix). Tout sera supprimé. Cette action est irréversible.',
     selectedOne: '1 entrée sélectionnée',
     selectedMany: '{n} entrées sélectionnées',
     groupSelection: 'Grouper en accordéon',
@@ -443,6 +449,8 @@ export default {
   },
 
   interactionList: {
+    confirmDeleteTitle: 'Supprimer cette interaction ?',
+    confirmDeleteMessage: '« {name} » sera supprimée. Cette action est irréversible.',
     empty: 'Aucune interaction créée.',
     stepsCount: '{n} étapes',
     newInteraction: 'Nouvelle interaction',
@@ -464,6 +472,8 @@ export default {
   },
 
   automationList: {
+    confirmDeleteTitle: 'Supprimer cette automatisation ?',
+    confirmDeleteMessage: '« {name} » sera supprimée. Cette action est irréversible.',
     empty: 'Aucune automatisation créée.',
     newAutomation: 'Nouvelle automatisation',
   },
@@ -485,6 +495,9 @@ export default {
   },
 
   entitySchemaList: {
+    confirmDeleteTitle: 'Supprimer ce schéma ?',
+    confirmDeleteMessage:
+      '« {name} » sera supprimé. Les références à ce schéma ailleurs dans le projet (conditions, apps custom) ne seront pas mises à jour. Cette action est irréversible.',
     empty: 'Aucun schéma créé.',
     fieldsCount: '{n} champs',
     newSchema: 'Nouveau schéma',
@@ -645,6 +658,9 @@ export default {
   },
 
   blockBuilder: {
+    confirmRemoveNestedTitle: 'Supprimer ce bloc ?',
+    confirmRemoveNestedMessage:
+      'Ce bloc contient {n} bloc(s) imbriqué(s). Tout sera supprimé. Cette action est irréversible.',
     empty: 'Aucun bloc ici — clique ou glisse-en un depuis la palette au-dessus.',
     emptyRootTitle: 'Cet écran est vide',
     emptyRootDetail:
@@ -1078,6 +1094,8 @@ export default {
   },
 
   eventList: {
+    confirmDeleteTitle: 'Supprimer cet event ?',
+    confirmDeleteMessage: '« {name} » sera supprimé. Cette action est irréversible.',
     paneLabel: 'Events',
     empty: "Aucun event pour l'instant.",
     addEvent: 'Ajouter un event',

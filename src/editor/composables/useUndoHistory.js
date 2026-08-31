@@ -62,7 +62,7 @@ function deepEqual(a, b) {
 // descriptor since they share one file on disk (gameConfig), so hopping
 // between those three tabs is NOT a resource change for undo purposes (only
 // for navHint, see below).
-function descriptorsEqual(a, b) {
+export function descriptorsEqual(a, b) {
   if (a === b) return true
   if (!a || !b || a.kind !== b.kind) return false
   switch (a.kind) {

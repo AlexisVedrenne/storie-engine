@@ -49,6 +49,7 @@
 // evaluateAutomations for the runtime side, AutomationForm.vue for the
 // per-rule editor).
 import { computed } from 'vue'
+import { Dialog } from 'quasar'
 import { useStoryStore } from '@/engine/stores/story'
 import { useEditorI18n } from '@/editor/i18n'
 
@@ -73,9 +74,22 @@ function create() {
   emit('update:modelValue', automations.value.length - 1)
 }
 
+// Same confirm-before-delete protection as Contact/Thread/CustomApp/Locale
+// rows already have — this list previously deleted on a single stray click.
 function remove(i) {
-  automations.value.splice(i, 1)
-  if (i === automations.value.length) emit('update:modelValue', Math.max(0, i - 1))
+  const def = automations.value[i]
+  Dialog.create({
+    title: t('automationList.confirmDeleteTitle'),
+    message: t('automationList.confirmDeleteMessage', { name: def.label || def.id }),
+    cancel: true,
+    persistent: true,
+    color: 'negative',
+  }).onOk(() => {
+    const idx = automations.value.indexOf(def)
+    if (idx === -1) return
+    automations.value.splice(idx, 1)
+    if (idx === automations.value.length) emit('update:modelValue', Math.max(0, idx - 1))
+  })
 }
 </script>
 

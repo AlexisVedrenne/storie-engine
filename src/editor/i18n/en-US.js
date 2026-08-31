@@ -51,6 +51,8 @@ export default {
     buildTooltip: 'Build — export this project as a playable game (desktop and/or Android)',
     webPreviewTooltip: 'Web preview — test on your phone over Wi-Fi',
     switchProjectTooltip: 'Switch project',
+    unsavedCloseTitle: 'Unsaved changes',
+    unsavedCloseMessage: 'Your current changes will be lost if you switch project now. Continue?',
     backToGraphTooltip: 'Back to graph',
     chapterTitleLabel: 'Title',
     chapterRenamed: 'Chapter renamed — id updated.',
@@ -147,6 +149,9 @@ export default {
   },
 
   timelineEditor: {
+    confirmRemoveNestedTitle: 'Delete this entry?',
+    confirmRemoveNestedMessage:
+      'This entry contains {n} nested entries in its branches (choice). Everything will be deleted. This cannot be undone.',
     selectedOne: '1 entry selected',
     selectedMany: '{n} entries selected',
     groupSelection: 'Group into accordion',
@@ -427,6 +432,8 @@ export default {
   },
 
   interactionList: {
+    confirmDeleteTitle: 'Delete this interaction?',
+    confirmDeleteMessage: '"{name}" will be deleted. This cannot be undone.',
     empty: 'No interaction created yet.',
     stepsCount: '{n} steps',
     newInteraction: 'New interaction',
@@ -448,6 +455,8 @@ export default {
   },
 
   automationList: {
+    confirmDeleteTitle: 'Delete this automation?',
+    confirmDeleteMessage: '"{name}" will be deleted. This cannot be undone.',
     empty: 'No automation created yet.',
     newAutomation: 'New automation',
   },
@@ -469,6 +478,9 @@ export default {
   },
 
   entitySchemaList: {
+    confirmDeleteTitle: 'Delete this schema?',
+    confirmDeleteMessage:
+      '"{name}" will be deleted. References to this schema elsewhere in the project (conditions, custom apps) will not be updated. This cannot be undone.',
     empty: 'No schemas created yet.',
     fieldsCount: '{n} fields',
     newSchema: 'New schema',
@@ -629,6 +641,9 @@ export default {
   },
 
   blockBuilder: {
+    confirmRemoveNestedTitle: 'Delete this block?',
+    confirmRemoveNestedMessage:
+      'This block contains {n} nested block(s). Everything will be deleted. This cannot be undone.',
     empty: 'No blocks here yet — click or drag one in from the palette above.',
     emptyRootTitle: 'This screen is empty',
     emptyRootDetail:
@@ -1056,6 +1071,8 @@ export default {
   },
 
   eventList: {
+    confirmDeleteTitle: 'Delete this event?',
+    confirmDeleteMessage: '"{name}" will be deleted. This cannot be undone.',
     paneLabel: 'Events',
     empty: 'No events yet.',
     addEvent: 'Add an event',

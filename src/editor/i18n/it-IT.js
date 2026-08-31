@@ -52,6 +52,8 @@ export default {
     buildTooltip: 'Compila — esporta questo progetto come gioco giocabile (desktop e/o Android)',
     webPreviewTooltip: 'Anteprima web — prova sul tuo telefono via Wi-Fi',
     switchProjectTooltip: 'Cambia progetto',
+    unsavedCloseTitle: 'Modifiche non salvate',
+    unsavedCloseMessage: 'Le modifiche attuali andranno perse se cambi progetto ora. Continuare?',
     backToGraphTooltip: 'Torna al grafo',
     chapterTitleLabel: 'Titolo',
     chapterRenamed: 'Capitolo rinominato — id aggiornato.',
@@ -150,6 +152,9 @@ export default {
   },
 
   timelineEditor: {
+    confirmRemoveNestedTitle: 'Eliminare questa voce?',
+    confirmRemoveNestedMessage:
+      'Questa voce contiene {n} voci annidate nei suoi rami (scelta). Tutto verrà eliminato. Azione irreversibile.',
     selectedOne: '1 elemento selezionato',
     selectedMany: '{n} elementi selezionati',
     groupSelection: 'Raggruppa in accordion',
@@ -440,6 +445,8 @@ export default {
   },
 
   interactionList: {
+    confirmDeleteTitle: 'Eliminare questa interazione?',
+    confirmDeleteMessage: '"{name}" verrà eliminata. Azione irreversibile.',
     empty: 'Nessuna interazione ancora creata.',
     stepsCount: '{n} passaggi',
     newInteraction: 'Nuova interazione',
@@ -461,6 +468,8 @@ export default {
   },
 
   automationList: {
+    confirmDeleteTitle: 'Eliminare questa automazione?',
+    confirmDeleteMessage: '"{name}" verrà eliminata. Azione irreversibile.',
     empty: 'Nessuna automazione creata.',
     newAutomation: 'Nuova automazione',
   },
@@ -482,6 +491,9 @@ export default {
   },
 
   entitySchemaList: {
+    confirmDeleteTitle: 'Eliminare questo schema?',
+    confirmDeleteMessage:
+      '"{name}" verrà eliminato. I riferimenti a questo schema altrove nel progetto (condizioni, app personalizzate) non verranno aggiornati. Azione irreversibile.',
     empty: 'Nessuno schema ancora creato.',
     fieldsCount: '{n} campi',
     newSchema: 'Nuovo schema',
@@ -642,6 +654,9 @@ export default {
   },
 
   blockBuilder: {
+    confirmRemoveNestedTitle: 'Eliminare questo blocco?',
+    confirmRemoveNestedMessage:
+      'Questo blocco contiene {n} blocchi annidati. Tutto verrà eliminato. Azione irreversibile.',
     empty: 'Ancora nessun blocco qui — clicca o trascinane uno dalla tavolozza qui sopra.',
     emptyRootTitle: 'Questa schermata è vuota',
     emptyRootDetail:
@@ -1076,6 +1091,8 @@ export default {
   },
 
   eventList: {
+    confirmDeleteTitle: 'Eliminare questo evento?',
+    confirmDeleteMessage: '"{name}" verrà eliminato. Azione irreversibile.',
     paneLabel: 'Eventi',
     empty: 'Ancora nessun evento.',
     addEvent: 'Aggiungi un evento',

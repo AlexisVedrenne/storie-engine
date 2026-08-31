@@ -64,7 +64,9 @@ const ICONS = {
   thread: 'groups',
   app: 'widgets',
   event: 'sensors',
+  automation: 'bolt',
   interaction: 'touch_app',
+  entitySchema: 'dataset',
   flag: 'flag',
 }
 
