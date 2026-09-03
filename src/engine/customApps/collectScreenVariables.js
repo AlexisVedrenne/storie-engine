@@ -109,6 +109,9 @@ function walkBlock(block, seen, out) {
   if (block.type === 'list' && block.source === 'flagCollection' && block.flagKey) {
     addCollection(seen, out, block.flagKey)
   }
+  if (block.type === 'list' && block.source === 'entityCollection' && block.fieldKey) {
+    addEntityField(seen, out, block.schemaId, block.entityId, block.fieldKey)
+  }
   if (block.type === 'schedule' && block.schemaId && block.fieldKey) {
     addEntityField(seen, out, block.schemaId, block.entityId, block.fieldKey)
   }

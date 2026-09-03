@@ -560,6 +560,7 @@ export default {
     typeNumber: 'Nombre',
     typeBoolean: 'Oui / non',
     typeSchedule: 'Emploi du temps',
+    typeCollection: 'Collection (clé → valeur)',
     typeRefContact: 'Référence — contact du projet',
     typeRefEntity: 'Référence — autre schéma',
     seedTitle: 'Instances de départ',
@@ -578,6 +579,10 @@ export default {
     scheduleToPlaceholder: 'À (ex: 12:00)',
     schedulePlacePlaceholder: 'Lieu',
     addScheduleSlot: 'Ajouter un créneau',
+    collectionEmpty: 'Aucun élément — ajoute-en au moins un.',
+    collectionKeyPlaceholder: 'Clé',
+    collectionValuePlaceholder: 'Valeur',
+    addCollectionItem: 'Ajouter un élément',
   },
 
   stepsEditor: {
@@ -730,7 +735,7 @@ export default {
     divider: { label: 'Séparateur' },
     button: { label: 'Bouton' },
     tabs: { label: 'Onglets' },
-    list: { label: 'Liste (contacts)' },
+    list: { label: 'Liste' },
     conversations: { label: 'Conversation' },
     schedule: { label: 'Emploi du temps' },
     ledger: { label: 'Registre (graphe)' },
@@ -863,6 +868,7 @@ export default {
     listSourceContacts: 'Contacts',
     listSourceCollection: 'Collection (flag)',
     listSourceEntity: 'Entités (schéma)',
+    listSourceEntityCollection: 'Collection (champ de schéma)',
     listHelp:
       'Le contenu ci-dessous est répété une fois par contact — utilise le bouton variable pour insérer {item:name} dans un champ texte, ou la case ci-dessus sur un bloc avatar.',
     listCollectionHelp:
@@ -870,6 +876,10 @@ export default {
     listSchemaLabel: 'Schéma',
     listEntityHelp:
       'Le contenu ci-dessous est répété une fois par instance du schéma choisi (créées/modifiées via les effets d’une entrée timeline, d’un bouton...) — utilise le bouton variable pour insérer {item:<nom du champ>}.',
+    entityCollectionFieldLabel: 'Champ (collection)',
+    entityCollectionFieldHint: 'Doit être un champ de type "Collection" du schéma choisi.',
+    listEntityCollectionHelp:
+      'Le contenu ci-dessous est répété une fois par élément de la collection choisie, sur CETTE instance précise du schéma (remplie via les effets "ajouter/retirer un élément" d’une entrée, d’un bouton...) — utilise le bouton variable pour insérer {item:key}/{item:value}.',
     conversationsHelp:
       'Un vrai module de conversation (comme Messages/Pixly) — liste de discussions, ouverture d’un fil, réponses par choix. Les messages sont envoyés depuis la timeline. Les groupes viennent de l’onglet Threads du projet (même contacts/groupes que les DM natifs) — rien à configurer ici pour ça.',
     scheduleHelp:
@@ -983,7 +993,9 @@ export default {
       '"*" = 1ère/seule instance — remplace par un id précis si le schéma en a plusieurs',
     flagsTitle: 'Flags du projet',
     noFlags: 'Aucun flag dans ce projet pour l’instant.',
-    itemTitle: 'Contact (bloc liste)',
+    itemTitleContacts: 'Contact (bloc liste)',
+    itemTitleCollection: 'Élément de collection (bloc liste)',
+    itemTitleEntity: '{schema} (bloc liste)',
   },
 
   requiresBuilder: {
@@ -1061,6 +1073,10 @@ export default {
     entityIdAutoHint: 'Vide = identifiant généré automatiquement',
     modeSet: 'créer / modifier',
     modeRemoveEntity: 'supprimer',
+    modeCollectionAdd: 'collection : ajouter un élément',
+    modeCollectionRemove: 'collection : retirer un élément',
+    modeCollectionIncrement: 'collection : incrémenter un nombre',
+    collectionFieldLabel: 'Champ (collection)',
     addEntityChange: 'Ajouter un changement d’entité',
     widgetsTitle: 'Widgets du téléphone',
     weatherLabel: 'Météo',

@@ -17,7 +17,7 @@
 
         <template v-if="itemScope">
           <q-separator class="variable-picker__sep" />
-          <div class="variable-picker__section-label">{{ t('variablePicker.itemTitle') }}</div>
+          <div class="variable-picker__section-label">{{ itemSectionTitle }}</div>
           <button
             v-for="tok in itemTokens"
             :key="tok.id"
@@ -107,6 +107,22 @@ const itemTokens = computed(() => {
     return entityItemTokens(schema)
   }
   return CONTACT_ITEM_TOKENS
+})
+
+// This section's own header used to hardcode "Contact" regardless of the
+// actual scope — a `list` block was contacts-only when it was written, but
+// a `flagCollection`/`entityCollection` source (both reuse the exact same
+// COLLECTION_ITEM_TOKENS, see resolveDynamicText.js) or an `entity` source
+// is just as likely now (user-reported: mislabeled once collections/schema
+// sources existed). Named per the actual scope instead.
+const itemSectionTitle = computed(() => {
+  if (props.itemScope === 'flagCollection') return t('variablePicker.itemTitleCollection')
+  if (typeof props.itemScope === 'string' && props.itemScope.startsWith('entity:')) {
+    const schemaId = props.itemScope.slice('entity:'.length)
+    const schema = story.project?.gameConfig?.entitySchemas?.find((s) => s.id === schemaId)
+    return t('variablePicker.itemTitleEntity', { schema: schema?.label || schema?.id || schemaId })
+  }
+  return t('variablePicker.itemTitleContacts')
 })
 
 // Same project-wide flag catalog already shown in the Flags dialog

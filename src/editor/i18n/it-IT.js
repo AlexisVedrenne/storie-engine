@@ -555,6 +555,7 @@ export default {
     typeNumber: 'Numero',
     typeBoolean: 'Sì / no',
     typeSchedule: 'Orario',
+    typeCollection: 'Collezione (chiave → valore)',
     typeRefContact: 'Riferimento — contatto del progetto',
     typeRefEntity: 'Riferimento — altro schema',
     seedTitle: 'Istanze iniziali',
@@ -573,6 +574,10 @@ export default {
     scheduleToPlaceholder: 'A (es: 12:00)',
     schedulePlacePlaceholder: 'Luogo',
     addScheduleSlot: 'Aggiungi una fascia oraria',
+    collectionEmpty: 'Nessun elemento ancora — aggiungine almeno uno.',
+    collectionKeyPlaceholder: 'Chiave',
+    collectionValuePlaceholder: 'Valore',
+    addCollectionItem: 'Aggiungi un elemento',
   },
 
   stepsEditor: {
@@ -725,7 +730,7 @@ export default {
     divider: { label: 'Separatore' },
     button: { label: 'Pulsante' },
     tabs: { label: 'Schede (tab)' },
-    list: { label: 'Elenco (contatti)' },
+    list: { label: 'Elenco' },
     conversations: { label: 'Conversazione' },
     schedule: { label: 'Orario' },
     ledger: { label: 'Registro (grafico)' },
@@ -858,6 +863,7 @@ export default {
     listSourceContacts: 'Contatti',
     listSourceCollection: 'Raccolta (flag)',
     listSourceEntity: 'Entità (schema)',
+    listSourceEntityCollection: 'Raccolta (campo di schema)',
     listHelp:
       'Il contenuto qui sotto si ripete una volta per contatto — usa il pulsante variabile per inserire {item:name} in un campo di testo, oppure la casella qui sopra su un blocco avatar.',
     listCollectionHelp:
@@ -865,6 +871,10 @@ export default {
     listSchemaLabel: 'Schema',
     listEntityHelp:
       'Il contenuto qui sotto si ripete una volta per ogni istanza dello schema scelto (create/modificate tramite un elemento della timeline/effetto di un pulsante...) — usa il pulsante variabile per inserire {item:<nome del campo>}.',
+    entityCollectionFieldLabel: 'Campo (raccolta)',
+    entityCollectionFieldHint: 'Deve essere un campo di tipo "Raccolta" dello schema scelto.',
+    listEntityCollectionHelp:
+      'Il contenuto qui sotto si ripete una volta per ogni elemento della raccolta scelta, su QUESTA specifica istanza dello schema (popolata tramite un effetto "aggiungi/rimuovi elemento" di un elemento/pulsante...) — usa il pulsante variabile per inserire {item:key}/{item:value}.',
     conversationsHelp:
       'Un vero modulo di conversazione (come Messaggi/Pixly) — elenco conversazioni, apertura di una conversazione, risposte guidate da scelte. I messaggi vengono inviati dalla timeline. I gruppi provengono dalla scheda Gruppi del progetto (stessi contatti/gruppi del DM nativo) — nulla da configurare qui per questo.',
     scheduleHelp:
@@ -978,7 +988,9 @@ export default {
       '"*" = 1ª/unica istanza — sostituiscilo con un id preciso se lo schema ne ha più di una',
     flagsTitle: 'Flag del progetto',
     noFlags: 'Nessun flag ancora in questo progetto.',
-    itemTitle: 'Contatto (blocco elenco)',
+    itemTitleContacts: 'Contatto (blocco elenco)',
+    itemTitleCollection: 'Elemento di raccolta (blocco elenco)',
+    itemTitleEntity: '{schema} (blocco elenco)',
   },
 
   requiresBuilder: {
@@ -1056,6 +1068,10 @@ export default {
     entityIdAutoHint: 'Vuoto = id generato automaticamente',
     modeSet: 'crea / modifica',
     modeRemoveEntity: 'rimuovi',
+    modeCollectionAdd: 'raccolta: aggiungi elemento',
+    modeCollectionRemove: 'raccolta: rimuovi elemento',
+    modeCollectionIncrement: 'raccolta: incrementa numero',
+    collectionFieldLabel: 'Campo (raccolta)',
     addEntityChange: 'Aggiungi una modifica di entità',
     widgetsTitle: 'Widget del telefono',
     weatherLabel: 'Meteo',

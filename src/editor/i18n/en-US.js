@@ -542,6 +542,7 @@ export default {
     typeNumber: 'Number',
     typeBoolean: 'Yes / no',
     typeSchedule: 'Schedule',
+    typeCollection: 'Collection (key → value)',
     typeRefContact: 'Reference — project contact',
     typeRefEntity: 'Reference — another schema',
     seedTitle: 'Starting instances',
@@ -560,6 +561,10 @@ export default {
     scheduleToPlaceholder: 'To (e.g. 12:00)',
     schedulePlacePlaceholder: 'Place',
     addScheduleSlot: 'Add a time slot',
+    collectionEmpty: 'No items yet — add at least one.',
+    collectionKeyPlaceholder: 'Key',
+    collectionValuePlaceholder: 'Value',
+    addCollectionItem: 'Add an item',
   },
 
   stepsEditor: {
@@ -712,7 +717,7 @@ export default {
     divider: { label: 'Divider' },
     button: { label: 'Button' },
     tabs: { label: 'Tabs' },
-    list: { label: 'List (contacts)' },
+    list: { label: 'List' },
     conversations: { label: 'Conversation' },
     schedule: { label: 'Schedule' },
     ledger: { label: 'Ledger (chart)' },
@@ -843,6 +848,7 @@ export default {
     listSourceContacts: 'Contacts',
     listSourceCollection: 'Collection (flag)',
     listSourceEntity: 'Entities (schema)',
+    listSourceEntityCollection: 'Collection (schema field)',
     listHelp:
       'The content below repeats once per contact — use the variable button to insert {item:name} in a text field, or the checkbox above on an avatar block.',
     listCollectionHelp:
@@ -850,6 +856,10 @@ export default {
     listSchemaLabel: 'Schema',
     listEntityHelp:
       'The content below repeats once per instance of the chosen schema (created/updated via a timeline entry/button effect...) — use the variable button to insert {item:<field name>}.',
+    entityCollectionFieldLabel: 'Field (collection)',
+    entityCollectionFieldHint: 'Must be a field of type "Collection" on the chosen schema.',
+    listEntityCollectionHelp:
+      'The content below repeats once per item in the chosen collection, on THIS specific schema instance (filled via an entry/button "add/remove item" effect...) — use the variable button to insert {item:key}/{item:value}.',
     conversationsHelp:
       "A real conversation module (like Messages/Pixly) — thread list, opening a thread, choice-driven replies. Messages are sent from the timeline. Groups come from the project's Threads tab (same contacts/groups as native DM) — nothing to configure here for that.",
     scheduleHelp:
@@ -961,7 +971,9 @@ export default {
     entitiesHint: '"*" = 1st/only instance — replace with a specific id if the schema has several',
     flagsTitle: 'Project flags',
     noFlags: 'No flags in this project yet.',
-    itemTitle: 'Contact (list block)',
+    itemTitleContacts: 'Contact (list block)',
+    itemTitleCollection: 'Collection item (list block)',
+    itemTitleEntity: '{schema} (list block)',
   },
 
   requiresBuilder: {
@@ -1038,6 +1050,10 @@ export default {
     entityIdAutoHint: 'Blank = auto-generated id',
     modeSet: 'create / update',
     modeRemoveEntity: 'remove',
+    modeCollectionAdd: 'collection: add item',
+    modeCollectionRemove: 'collection: remove item',
+    modeCollectionIncrement: 'collection: increment number',
+    collectionFieldLabel: 'Field (collection)',
     addEntityChange: 'Add an entity change',
     widgetsTitle: 'Phone widgets',
     weatherLabel: 'Weather',

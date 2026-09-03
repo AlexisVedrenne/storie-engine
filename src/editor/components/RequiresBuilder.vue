@@ -313,54 +313,104 @@
             map-options
             @update:model-value="sync"
           />
-          <q-select
-            dense
-            outlined
-            class="mode-select"
-            :label="t('requiresBuilder.conditionLabel')"
-            v-model="row.mode"
-            :options="FLAG_MODES"
-            emit-value
-            map-options
-            @update:model-value="sync"
-          />
-          <q-toggle
-            v-if="row.mode === 'bool'"
-            v-model="row.boolValue"
-            :label="t('requiresBuilder.trueLabel')"
-            @update:model-value="sync"
-          />
-          <q-input
-            v-else-if="row.mode === 'exact'"
-            dense
-            outlined
-            class="num-input"
-            :label="t('requiresBuilder.valueLabel')"
-            v-model="row.exactValue"
-            @update:model-value="sync"
-          />
-          <q-input
-            v-else-if="row.mode === 'min'"
-            dense
-            outlined
-            type="number"
-            class="num-input"
-            label="min"
-            v-model.number="row.min"
-            @update:model-value="sync"
-          />
-          <q-input
-            v-else-if="row.mode === 'max'"
-            dense
-            outlined
-            type="number"
-            class="num-input"
-            label="max"
-            v-model.number="row.max"
-            @update:model-value="sync"
-          />
-          <template v-else-if="row.mode === 'range'">
+          <!-- `collection`-typed field (user request) — size/presence
+               checks, same shape/UI as the flag-collection section above,
+               instead of the scalar value comparison every other field type
+               uses. Which branch shows is decided by the SELECTED field's
+               own type, live — switching the dropdown to a different field
+               switches this too. -->
+          <template v-if="isCollectionField(row)">
+            <q-toggle
+              v-model="row.sizeEnabled"
+              :label="t('requiresBuilder.sizeConditionLabel')"
+              @update:model-value="sync"
+            />
+            <template v-if="row.sizeEnabled">
+              <q-select
+                dense
+                outlined
+                class="mode-select"
+                v-model="row.sizeMode"
+                :options="SIZE_MODES"
+                emit-value
+                map-options
+                @update:model-value="sync"
+              />
+              <q-input
+                v-if="row.sizeMode === 'exact'"
+                dense
+                outlined
+                type="number"
+                class="num-input"
+                :label="t('requiresBuilder.valueLabel')"
+                v-model.number="row.sizeExact"
+                @update:model-value="sync"
+              />
+              <q-input
+                v-if="row.sizeMode === 'min' || row.sizeMode === 'range'"
+                dense
+                outlined
+                type="number"
+                class="num-input"
+                label="min"
+                v-model.number="row.sizeMin"
+                @update:model-value="sync"
+              />
+              <q-input
+                v-if="row.sizeMode === 'max' || row.sizeMode === 'range'"
+                dense
+                outlined
+                type="number"
+                class="num-input"
+                label="max"
+                v-model.number="row.sizeMax"
+                @update:model-value="sync"
+              />
+            </template>
+            <q-toggle
+              v-model="row.hasEnabled"
+              :label="t('requiresBuilder.hasConditionLabel')"
+              @update:model-value="sync"
+            />
             <q-input
+              v-if="row.hasEnabled"
+              dense
+              outlined
+              class="key-input"
+              :label="t('requiresBuilder.itemKeyLabel')"
+              v-model="row.hasKey"
+              @update:model-value="sync"
+            />
+          </template>
+          <template v-else>
+            <q-select
+              dense
+              outlined
+              class="mode-select"
+              :label="t('requiresBuilder.conditionLabel')"
+              v-model="row.mode"
+              :options="FLAG_MODES"
+              emit-value
+              map-options
+              @update:model-value="sync"
+            />
+            <q-toggle
+              v-if="row.mode === 'bool'"
+              v-model="row.boolValue"
+              :label="t('requiresBuilder.trueLabel')"
+              @update:model-value="sync"
+            />
+            <q-input
+              v-else-if="row.mode === 'exact'"
+              dense
+              outlined
+              class="num-input"
+              :label="t('requiresBuilder.valueLabel')"
+              v-model="row.exactValue"
+              @update:model-value="sync"
+            />
+            <q-input
+              v-else-if="row.mode === 'min'"
               dense
               outlined
               type="number"
@@ -370,6 +420,7 @@
               @update:model-value="sync"
             />
             <q-input
+              v-else-if="row.mode === 'max'"
               dense
               outlined
               type="number"
@@ -378,6 +429,26 @@
               v-model.number="row.max"
               @update:model-value="sync"
             />
+            <template v-else-if="row.mode === 'range'">
+              <q-input
+                dense
+                outlined
+                type="number"
+                class="num-input"
+                label="min"
+                v-model.number="row.min"
+                @update:model-value="sync"
+              />
+              <q-input
+                dense
+                outlined
+                type="number"
+                class="num-input"
+                label="max"
+                v-model.number="row.max"
+                @update:model-value="sync"
+              />
+            </template>
           </template>
         </div>
       </div>
@@ -528,17 +599,68 @@ const followingRows = reactive(
 // isn't a natural single key the way a flag name is. Reuses the exact same
 // bool/exact/min/max/range row shape as flagRowFrom — same comparison
 // semantics, different data source (see checkConditions() in story.js).
+//
+// A `collection`-typed field (user request: "conditionner l'affichage par
+// rapport à la collection, comme pour les flags") can't be compared this
+// way at all — its value is a `{itemKey: value}` map, not a scalar — so
+// every row ALSO carries the exact same sizeEnabled/size*/hasEnabled/hasKey
+// fields collectionRowFrom below uses; which set the template actually
+// shows is decided live off the SELECTED field's own type (see
+// isCollectionField below), not frozen at whatever the row loaded with, so
+// switching the field dropdown to a different field immediately switches
+// the row's own UI to match.
 function entityRowFrom(cond) {
   const base = { schemaId: cond.schemaId, entityId: cond.entityId ?? '*', field: cond.field }
+  const collectionFields = {
+    sizeEnabled: cond.size !== undefined,
+    sizeMode: 'exact',
+    sizeExact: 0,
+    sizeMin: 0,
+    sizeMax: 0,
+    hasEnabled: cond.has !== undefined,
+    hasKey: cond.has || '',
+  }
+  if (typeof cond.size === 'number') {
+    collectionFields.sizeMode = 'exact'
+    collectionFields.sizeExact = cond.size
+  } else if (cond.size && typeof cond.size === 'object') {
+    if ('min' in cond.size && 'max' in cond.size) {
+      collectionFields.sizeMode = 'range'
+      collectionFields.sizeMin = cond.size.min
+      collectionFields.sizeMax = cond.size.max
+    } else if ('min' in cond.size) {
+      collectionFields.sizeMode = 'min'
+      collectionFields.sizeMin = cond.size.min
+    } else if ('max' in cond.size) {
+      collectionFields.sizeMode = 'max'
+      collectionFields.sizeMax = cond.size.max
+    }
+  }
   const expected = cond.value
   if (typeof expected === 'boolean')
-    return reactive({ ...base, mode: 'bool', boolValue: expected, exactValue: '', min: 0, max: 0 })
+    return reactive({
+      ...base,
+      ...collectionFields,
+      mode: 'bool',
+      boolValue: expected,
+      exactValue: '',
+      min: 0,
+      max: 0,
+    })
   if (expected && typeof expected === 'object') {
     if ('min' in expected && 'max' in expected)
-      return reactive({ ...base, mode: 'range', boolValue: true, exactValue: '', ...expected })
+      return reactive({
+        ...base,
+        ...collectionFields,
+        mode: 'range',
+        boolValue: true,
+        exactValue: '',
+        ...expected,
+      })
     if ('min' in expected)
       return reactive({
         ...base,
+        ...collectionFields,
         mode: 'min',
         boolValue: true,
         exactValue: '',
@@ -548,6 +670,7 @@ function entityRowFrom(cond) {
     if ('max' in expected)
       return reactive({
         ...base,
+        ...collectionFields,
         mode: 'max',
         boolValue: true,
         exactValue: '',
@@ -557,6 +680,7 @@ function entityRowFrom(cond) {
   }
   return reactive({
     ...base,
+    ...collectionFields,
     mode: 'exact',
     boolValue: true,
     exactValue: expected ?? '',
@@ -577,6 +701,9 @@ const schemaOptions = computed(() =>
 )
 function fieldOptions(schemaId) {
   return schemaFields(schemaId).map((f) => ({ label: f.label || f.key, value: f.key }))
+}
+function isCollectionField(row) {
+  return schemaFields(row.schemaId).find((f) => f.key === row.field)?.type === 'collection'
 }
 
 // Collapsed behind a single "+ Ajouter une condition" row when there's
@@ -636,6 +763,13 @@ function addEntityRow() {
       exactValue: '',
       min: 0,
       max: 0,
+      sizeEnabled: false,
+      sizeMode: 'exact',
+      sizeExact: 0,
+      sizeMin: 0,
+      sizeMax: 0,
+      hasEnabled: false,
+      hasKey: '',
     }),
   )
 }
@@ -675,6 +809,18 @@ function sync() {
   const entities = []
   for (const row of entityRows) {
     if (!row.schemaId || !row.field) continue
+    if (isCollectionField(row)) {
+      const cond = { schemaId: row.schemaId, entityId: row.entityId || '*', field: row.field }
+      if (row.sizeEnabled) {
+        if (row.sizeMode === 'exact') cond.size = row.sizeExact
+        else if (row.sizeMode === 'min') cond.size = { min: row.sizeMin }
+        else if (row.sizeMode === 'max') cond.size = { max: row.sizeMax }
+        else if (row.sizeMode === 'range') cond.size = { min: row.sizeMin, max: row.sizeMax }
+      }
+      if (row.hasEnabled && row.hasKey) cond.has = row.hasKey
+      if (cond.size !== undefined || cond.has !== undefined) entities.push(cond)
+      continue
+    }
     let value
     if (row.mode === 'bool') value = row.boolValue
     else if (row.mode === 'exact') value = row.exactValue

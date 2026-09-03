@@ -608,6 +608,7 @@
           { label: t('blockProps.listSourceContacts'), value: 'contacts' },
           { label: t('blockProps.listSourceCollection'), value: 'flagCollection' },
           { label: t('blockProps.listSourceEntity'), value: 'entity' },
+          { label: t('blockProps.listSourceEntityCollection'), value: 'entityCollection' },
         ]"
         @update:model-value="(v) => (block.source = v)"
       />
@@ -618,6 +619,36 @@
       <template v-else-if="ensureSource() === 'flagCollection'">
         <FlagNameField v-model="block.flagKey" />
         <p class="tab-help">{{ t('blockProps.listCollectionHelp') }}</p>
+      </template>
+      <template v-else-if="ensureSource() === 'entityCollection'">
+        <q-select
+          dense
+          outlined
+          :label="t('blockProps.listSchemaLabel')"
+          v-model="block.schemaId"
+          :options="schemaOptions"
+          emit-value
+          map-options
+        />
+        <q-select
+          dense
+          outlined
+          :label="t('blockProps.entityCollectionFieldLabel')"
+          :hint="t('blockProps.entityCollectionFieldHint')"
+          v-model="block.fieldKey"
+          :options="collectionFieldOptions(block.schemaId)"
+          emit-value
+          map-options
+        />
+        <q-input
+          dense
+          outlined
+          :label="t('blockProps.scheduleEntityIdLabel')"
+          :hint="t('blockProps.scheduleEntityIdHint')"
+          :model-value="block.entityId ?? '*'"
+          @update:model-value="(v) => (block.entityId = v)"
+        />
+        <p class="tab-help">{{ t('blockProps.listEntityCollectionHelp') }}</p>
       </template>
       <template v-else>
         <q-select
@@ -1258,13 +1289,28 @@ function scheduleFieldOptions(schemaId) {
     .map((f) => ({ label: f.label || f.key, value: f.key }))
 }
 
+// `list` block's `source: 'entityCollection'` (user request) — only
+// `collection`-typed fields make sense here, same filter-by-field-type
+// precedent as scheduleFieldOptions above.
+function collectionFieldOptions(schemaId) {
+  const schema = story.project?.gameConfig?.entitySchemas?.find((s) => s.id === schemaId)
+  return (schema?.fields || [])
+    .filter((f) => f.type === 'collection')
+    .map((f) => ({ label: f.label || f.key, value: f.key }))
+}
+
 // What to forward as the nested BlockBuilder's `itemScope` — plain source
 // name for contacts/flagCollection (their token sets are fixed), but
 // `entity:<schemaId>` for the entity source, since ITS token set depends on
 // which schema was picked (see VariablePickerBtn.vue's own comment).
 function templateItemScope() {
   const source = ensureSource()
-  return source === 'entity' ? `entity:${props.block.schemaId || ''}` : source
+  if (source === 'entity') return `entity:${props.block.schemaId || ''}`
+  // `entityCollection` items are the SAME `{key, value}` shape a
+  // `flagCollection` item already is (just read from a different map) —
+  // reuses that token set as-is rather than inventing a parallel one.
+  if (source === 'entityCollection') return 'flagCollection'
+  return source
 }
 
 function ensureTabs() {

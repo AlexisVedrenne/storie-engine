@@ -553,6 +553,7 @@ export default {
     typeNumber: 'Zahl',
     typeBoolean: 'Ja / Nein',
     typeSchedule: 'Zeitplan',
+    typeCollection: 'Sammlung (Schlüssel → Wert)',
     typeRefContact: 'Referenz — Projektkontakt',
     typeRefEntity: 'Referenz — anderes Schema',
     seedTitle: 'Startinstanzen',
@@ -571,6 +572,10 @@ export default {
     scheduleToPlaceholder: 'Bis (z. B. 12:00)',
     schedulePlacePlaceholder: 'Ort',
     addScheduleSlot: 'Zeitfenster hinzufügen',
+    collectionEmpty: 'Noch keine Einträge — füge mindestens einen hinzu.',
+    collectionKeyPlaceholder: 'Schlüssel',
+    collectionValuePlaceholder: 'Wert',
+    addCollectionItem: 'Eintrag hinzufügen',
   },
 
   stepsEditor: {
@@ -724,7 +729,7 @@ export default {
     divider: { label: 'Trennlinie' },
     button: { label: 'Schaltfläche' },
     tabs: { label: 'Tabs' },
-    list: { label: 'Liste (Kontakte)' },
+    list: { label: 'Liste' },
     conversations: { label: 'Unterhaltung' },
     schedule: { label: 'Zeitplan' },
     ledger: { label: 'Verlauf (Diagramm)' },
@@ -858,6 +863,7 @@ export default {
     listSourceContacts: 'Kontakte',
     listSourceCollection: 'Sammlung (Flag)',
     listSourceEntity: 'Entitäten (Schema)',
+    listSourceEntityCollection: 'Sammlung (Schemafeld)',
     listHelp:
       'Der untenstehende Inhalt wiederholt sich für jeden Kontakt — nutze die Variablenschaltfläche, um {item:name} in ein Textfeld einzufügen, oder die Checkbox oben bei einem Avatar-Block.',
     listCollectionHelp:
@@ -865,6 +871,10 @@ export default {
     listSchemaLabel: 'Schema',
     listEntityHelp:
       'Der untenstehende Inhalt wiederholt sich für jede Instanz des gewählten Schemas (erstellt/geändert über einen Timeline-Eintrag/Schaltflächeneffekt...) — nutze die Variablenschaltfläche, um {item:<Feldname>} einzufügen.',
+    entityCollectionFieldLabel: 'Feld (Sammlung)',
+    entityCollectionFieldHint: 'Muss ein Feld vom Typ „Sammlung" des gewählten Schemas sein.',
+    listEntityCollectionHelp:
+      'Der untenstehende Inhalt wiederholt sich für jedes Element der gewählten Sammlung, auf DIESER konkreten Schema-Instanz (befüllt über einen „Element hinzufügen/entfernen"-Effekt eines Eintrags/einer Schaltfläche...) — nutze die Variablenschaltfläche, um {item:key}/{item:value} einzufügen.',
     conversationsHelp:
       'Ein echtes Unterhaltungsmodul (wie Nachrichten/Pixly) — Thread-Liste, Öffnen eines Threads, auswahlgesteuerte Antworten. Nachrichten werden über die Timeline gesendet. Gruppen stammen aus dem Tab „Gruppen" des Projekts (dieselben Kontakte/Gruppen wie native DMs) — hierfür ist nichts weiter zu konfigurieren.',
     scheduleHelp:
@@ -979,7 +989,9 @@ export default {
       '„*" = 1. / einzige Instanz — durch eine konkrete ID ersetzen, wenn das Schema mehrere hat',
     flagsTitle: 'Projekt-Flags',
     noFlags: 'In diesem Projekt gibt es noch keine Flags.',
-    itemTitle: 'Kontakt (Listenblock)',
+    itemTitleContacts: 'Kontakt (Listenblock)',
+    itemTitleCollection: 'Sammlungselement (Listenblock)',
+    itemTitleEntity: '{schema} (Listenblock)',
   },
 
   requiresBuilder: {
@@ -1057,6 +1069,10 @@ export default {
     entityIdAutoHint: 'Leer = automatisch generierte ID',
     modeSet: 'erstellen / ändern',
     modeRemoveEntity: 'entfernen',
+    modeCollectionAdd: 'Sammlung: Element hinzufügen',
+    modeCollectionRemove: 'Sammlung: Element entfernen',
+    modeCollectionIncrement: 'Sammlung: Zahl erhöhen',
+    collectionFieldLabel: 'Feld (Sammlung)',
     addEntityChange: 'Entitätsänderung hinzufügen',
     widgetsTitle: 'Handy-Widgets',
     weatherLabel: 'Wetter',

@@ -17,11 +17,23 @@ function fakeFieldValue(field, index, contacts) {
   if (field.type === 'number') return (index + 1) * 10
   if (field.type === 'boolean') return index % 2 === 0
   if (field.type === 'ref:contact') return contacts?.[index % (contacts.length || 1)]?.id || ''
-  // schedule/ref:entity are structured data a single fake value can't fake
+  // ref:entity is structured data a single fake value can't fake
   // meaningfully — left empty, same "absent = no matching data" spirit
   // every other block here already has for a field with nothing set.
-  if (field.type === 'schedule' || field.type === 'ref:entity')
-    return field.type === 'schedule' ? [] : ''
+  if (field.type === 'ref:entity') return ''
+  if (field.type === 'schedule') return []
+  // `collection` (user request) — a small fake `{itemKey: value}` map, same
+  // shape/generation as the flagCollections loop below, so a `list` block
+  // with `source: 'entityCollection'` previewing this field shows a few
+  // rows instead of nothing (or worse: Object.entries() on a stray string
+  // if this fell through to the plain-text case below).
+  if (field.type === 'collection') {
+    const entries = {}
+    for (let i = 0; i < TEST_LEDGER_ROWS; i++) {
+      entries[`test-${i + 1}`] = (i + 1) * 10 + Math.floor(Math.random() * 9)
+    }
+    return entries
+  }
   return `${field.label || field.key} ${PLACEHOLDER_LABELS[index] || index + 1}`
 }
 
