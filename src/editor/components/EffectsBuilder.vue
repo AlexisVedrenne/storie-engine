@@ -185,10 +185,83 @@
           outlined
           class="key-input"
           :label="t('effectsBuilder.entityIdLabel')"
-          :hint="row.mode === 'set' ? t('effectsBuilder.entityIdAutoHint') : ''"
+          :hint="
+            row.mode === 'set' || row.mode === 'collectionAdd'
+              ? t('effectsBuilder.entityIdAutoHint')
+              : ''
+          "
           v-model="row.entityId"
           @update:model-value="sync"
         />
+        <template v-if="row.mode.startsWith('collection')">
+          <q-select
+            dense
+            outlined
+            class="mode-select"
+            :label="t('effectsBuilder.collectionFieldLabel')"
+            v-model="row.fieldKey"
+            :options="collectionFieldOptions(row.schemaId)"
+            emit-value
+            map-options
+            @update:model-value="sync"
+          />
+          <q-input
+            dense
+            outlined
+            class="key-input"
+            :label="t('effectsBuilder.itemKeyLabel')"
+            :hint="
+              row.mode === 'collectionAdd'
+                ? t('effectsBuilder.itemKeyAutoHint')
+                : row.mode === 'collectionIncrement'
+                  ? t('effectsBuilder.itemKeyRequiredHint')
+                  : ''
+            "
+            v-model="row.itemKey"
+            @update:model-value="sync"
+          />
+          <template v-if="row.mode === 'collectionAdd'">
+            <q-select
+              dense
+              outlined
+              class="mode-select"
+              v-model="row.valueType"
+              :options="VALUE_TYPES"
+              emit-value
+              map-options
+              @update:model-value="sync"
+            />
+            <q-input
+              v-if="row.valueType === 'number'"
+              dense
+              outlined
+              type="number"
+              class="num-input"
+              :label="t('effectsBuilder.valueLabel')"
+              v-model.number="row.value"
+              @update:model-value="sync"
+            />
+            <q-input
+              v-else
+              dense
+              outlined
+              class="key-input"
+              :label="t('effectsBuilder.valueLabel')"
+              v-model="row.value"
+              @update:model-value="sync"
+            />
+          </template>
+          <q-input
+            v-else-if="row.mode === 'collectionIncrement'"
+            dense
+            outlined
+            type="number"
+            class="num-input"
+            :label="t('effectsBuilder.deltaLabel')"
+            v-model.number="row.value"
+            @update:model-value="sync"
+          />
+        </template>
       </div>
       <div v-if="row.mode === 'set' && schemaFields(row.schemaId).length" class="entity-fields">
         <EntityFieldInput
@@ -520,7 +593,18 @@ const VALUE_TYPES = computed(() => [
 const ENTITY_MODES = computed(() => [
   { label: t('effectsBuilder.modeSet'), value: 'set' },
   { label: t('effectsBuilder.modeRemoveEntity'), value: 'remove' },
+  { label: t('effectsBuilder.modeCollectionAdd'), value: 'collectionAdd' },
+  { label: t('effectsBuilder.modeCollectionRemove'), value: 'collectionRemove' },
+  { label: t('effectsBuilder.modeCollectionIncrement'), value: 'collectionIncrement' },
 ])
+// `collection`-typed schema fields only (user request) — same
+// filter-by-field-type precedent as BlockPropertiesForm.vue's own
+// scheduleFieldOptions, just a different target type.
+function collectionFieldOptions(schemaId) {
+  return schemaFields(schemaId)
+    .filter((f) => f.type === 'collection')
+    .map((f) => ({ label: f.label || f.key, value: f.key }))
+}
 const schemaOptions = computed(
   () =>
     story.project?.gameConfig?.entitySchemas?.map((s) => ({
@@ -569,6 +653,14 @@ const entityRows = reactive(
       mode: op.mode || 'set',
       entityId: op.entityId || '',
       fields: reactive({ ...op.fields }),
+      // Only meaningful for the 3 `collection*` modes (a collection-typed
+      // field's own push/remove/increment ops — user request) — same shape
+      // as `collectionRows` above, just entity-field-scoped instead of
+      // global-flag-scoped.
+      fieldKey: op.fieldKey || '',
+      itemKey: op.itemKey || '',
+      valueType: typeof op.value === 'number' ? 'number' : 'text',
+      value: op.value ?? '',
     }),
   ),
 )
@@ -631,6 +723,10 @@ function addEntityRow() {
       mode: 'set',
       entityId: '',
       fields: reactive({}),
+      fieldKey: '',
+      itemKey: '',
+      valueType: 'text',
+      value: '',
     }),
   )
 }
@@ -691,6 +787,35 @@ function sync() {
     if (row.mode === 'remove') {
       if (!row.entityId) continue // nothing to target without an id
       entities.push({ schemaId: row.schemaId, mode: 'remove', entityId: row.entityId })
+    } else if (row.mode === 'collectionRemove') {
+      if (!row.entityId || !row.fieldKey || !row.itemKey) continue // nothing to target
+      entities.push({
+        schemaId: row.schemaId,
+        mode: 'collectionRemove',
+        entityId: row.entityId,
+        fieldKey: row.fieldKey,
+        itemKey: row.itemKey,
+      })
+    } else if (row.mode === 'collectionIncrement') {
+      if (!row.entityId || !row.fieldKey || !row.itemKey) continue // no auto-generated key makes sense for "increment THIS counter"
+      entities.push({
+        schemaId: row.schemaId,
+        mode: 'collectionIncrement',
+        entityId: row.entityId,
+        fieldKey: row.fieldKey,
+        itemKey: row.itemKey,
+        value: Number(row.value) || 0,
+      })
+    } else if (row.mode === 'collectionAdd') {
+      if (!row.fieldKey) continue
+      entities.push({
+        schemaId: row.schemaId,
+        mode: 'collectionAdd',
+        entityId: row.entityId || undefined,
+        fieldKey: row.fieldKey,
+        itemKey: row.itemKey || undefined,
+        value: row.valueType === 'number' ? Number(row.value) || 0 : row.value,
+      })
     } else {
       const fields = {}
       for (const field of schemaFields(row.schemaId)) {

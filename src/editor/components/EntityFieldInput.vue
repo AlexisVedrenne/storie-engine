@@ -1,7 +1,10 @@
 <template>
   <div
     class="entity-field"
-    :class="{ 'entity-field--wide': field.type === 'text' || field.type === 'schedule' }"
+    :class="{
+      'entity-field--wide':
+        field.type === 'text' || field.type === 'schedule' || field.type === 'collection',
+    }"
   >
     <div v-if="field.type === 'schedule'" class="schedule-field">
       <div class="schedule-field-label">{{ field.label || field.key }}</div>
@@ -45,6 +48,42 @@
         :label="t('entityFieldInput.addScheduleSlot')"
         class="btn-ghost"
         @click="addSlot"
+      />
+    </div>
+    <div v-else-if="field.type === 'collection'" class="collection-field">
+      <div class="schedule-field-label">{{ field.label || field.key }}</div>
+      <div v-if="!collectionEntries.length" class="schedule-empty">
+        {{ t('entityFieldInput.collectionEmpty') }}
+      </div>
+      <div v-for="([key, value], i) in collectionEntries" :key="i" class="collection-row">
+        <q-input
+          dense
+          outlined
+          :placeholder="t('entityFieldInput.collectionKeyPlaceholder')"
+          :model-value="key"
+          class="collection-key"
+          @update:model-value="(v) => updateCollectionKey(i, v)"
+        />
+        <q-input
+          dense
+          outlined
+          :placeholder="t('entityFieldInput.collectionValuePlaceholder')"
+          :model-value="value"
+          class="collection-value"
+          @update:model-value="(v) => updateCollectionValue(i, v)"
+        />
+        <q-btn dense flat round icon="close" size="sm" @click="removeCollectionItem(i)">
+          <q-tooltip>{{ t('common.delete') }}</q-tooltip>
+        </q-btn>
+      </div>
+      <q-btn
+        dense
+        flat
+        no-caps
+        icon="add"
+        :label="t('entityFieldInput.addCollectionItem')"
+        class="btn-ghost"
+        @click="addCollectionItem"
       />
     </div>
     <q-toggle
@@ -142,6 +181,43 @@ function removeSlot(i) {
     slots.value.filter((_, idx) => idx !== i),
   )
 }
+
+// `type: 'collection'` (user request) — value is a `{itemKey: value}` map,
+// the SAME shape a top-level flag collection already uses (see
+// story.flagCollections), just nested under one entity's own field —
+// authored here as the schema's SEED starting data (this component is also
+// used by EffectsBuilder.vue's 'set' mode for the same reason schedule is),
+// with `effects.entities`'s new collectionAdd/collectionRemove/
+// collectionIncrement ops (story.js) pushing/removing individual items at
+// runtime afterward. Edited via `Object.entries` (an array, for stable
+// per-ROW identity while a key is mid-rename) rather than mutating the
+// object directly, then re-assembled with `Object.fromEntries` on every
+// change — same "always emit a fresh value" contract every other field type
+// here follows.
+const collectionEntries = computed(() =>
+  Object.entries(
+    props.modelValue && typeof props.modelValue === 'object' ? props.modelValue : {},
+  ),
+)
+function addCollectionItem() {
+  const key = `item-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`
+  emit('update:modelValue', { ...(props.modelValue || {}), [key]: '' })
+}
+function updateCollectionKey(i, newKey) {
+  const entries = collectionEntries.value.slice()
+  entries[i] = [newKey, entries[i][1]]
+  emit('update:modelValue', Object.fromEntries(entries))
+}
+function updateCollectionValue(i, newValue) {
+  const entries = collectionEntries.value.slice()
+  entries[i] = [entries[i][0], newValue]
+  emit('update:modelValue', Object.fromEntries(entries))
+}
+function removeCollectionItem(i) {
+  const entries = collectionEntries.value.slice()
+  entries.splice(i, 1)
+  emit('update:modelValue', Object.fromEntries(entries))
+}
 </script>
 
 <style scoped>
@@ -192,6 +268,31 @@ function removeSlot(i) {
 }
 
 .schedule-place {
+  flex: 1 1 140px;
+  min-width: 0;
+}
+
+.collection-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/* Same flex-wrap reasoning as .schedule-slot above — reflows instead of
+   overflowing a narrow column. */
+.collection-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.collection-key {
+  flex: 1 1 120px;
+  min-width: 0;
+}
+
+.collection-value {
   flex: 1 1 140px;
   min-width: 0;
 }

@@ -561,6 +561,7 @@ export default {
     typeNumber: 'Número',
     typeBoolean: 'Sí / no',
     typeSchedule: 'Horario',
+    typeCollection: 'Colección (clave → valor)',
     typeRefContact: 'Referencia — contacto del proyecto',
     typeRefEntity: 'Referencia — otro esquema',
     seedTitle: 'Instancias iniciales',
@@ -579,6 +580,10 @@ export default {
     scheduleToPlaceholder: 'Hasta (ej: 12:00)',
     schedulePlacePlaceholder: 'Lugar',
     addScheduleSlot: 'Añadir una franja horaria',
+    collectionEmpty: 'Aún no hay elementos — añade al menos uno.',
+    collectionKeyPlaceholder: 'Clave',
+    collectionValuePlaceholder: 'Valor',
+    addCollectionItem: 'Añadir un elemento',
   },
 
   stepsEditor: {
@@ -731,7 +736,7 @@ export default {
     divider: { label: 'Separador' },
     button: { label: 'Botón' },
     tabs: { label: 'Pestañas' },
-    list: { label: 'Lista (contactos)' },
+    list: { label: 'Lista' },
     conversations: { label: 'Conversación' },
     schedule: { label: 'Horario' },
     ledger: { label: 'Registro (gráfico)' },
@@ -863,6 +868,7 @@ export default {
     listSourceContacts: 'Contactos',
     listSourceCollection: 'Colección (indicador)',
     listSourceEntity: 'Entidades (esquema)',
+    listSourceEntityCollection: 'Colección (campo de esquema)',
     listHelp:
       'El contenido de abajo se repite una vez por contacto — usa el botón de variable para insertar {item:name} en un campo de texto, o la casilla de arriba en un bloque de avatar.',
     listCollectionHelp:
@@ -870,6 +876,10 @@ export default {
     listSchemaLabel: 'Esquema',
     listEntityHelp:
       'El contenido de abajo se repite una vez por instancia del esquema elegido (creadas/modificadas mediante un efecto de entrada de línea temporal/botón...) — usa el botón de variable para insertar {item:<nombre del campo>}.',
+    entityCollectionFieldLabel: 'Campo (colección)',
+    entityCollectionFieldHint: 'Debe ser un campo de tipo "Colección" del esquema elegido.',
+    listEntityCollectionHelp:
+      'El contenido de abajo se repite una vez por elemento de la colección elegida, en ESTA instancia concreta del esquema (rellenada mediante un efecto "añadir/retirar elemento" de una entrada, un botón...) — usa el botón de variable para insertar {item:key}/{item:value}.',
     conversationsHelp:
       'Un módulo de conversación real (como Mensajes/Pixly) — lista de hilos, apertura de un hilo, respuestas guiadas por elecciones. Los mensajes se envían desde la línea temporal. Los grupos provienen de la pestaña Hilos del proyecto (los mismos contactos/grupos que en DM nativo) — nada que configurar aquí para eso.',
     scheduleHelp:
@@ -984,7 +994,9 @@ export default {
       '"*" = 1ª/única instancia — sustitúyelo por un id concreto si el esquema tiene varias',
     flagsTitle: 'Indicadores del proyecto',
     noFlags: 'Aún no hay indicadores en este proyecto.',
-    itemTitle: 'Contacto (bloque de lista)',
+    itemTitleContacts: 'Contacto (bloque de lista)',
+    itemTitleCollection: 'Elemento de colección (bloque de lista)',
+    itemTitleEntity: '{schema} (bloque de lista)',
   },
 
   requiresBuilder: {
@@ -1062,6 +1074,10 @@ export default {
     entityIdAutoHint: 'Vacío = id generado automáticamente',
     modeSet: 'crear / modificar',
     modeRemoveEntity: 'eliminar',
+    modeCollectionAdd: 'colección: añadir elemento',
+    modeCollectionRemove: 'colección: retirar elemento',
+    modeCollectionIncrement: 'colección: incrementar número',
+    collectionFieldLabel: 'Campo (colección)',
     addEntityChange: 'Añadir un cambio de entidad',
     widgetsTitle: 'Widgets del teléfono',
     weatherLabel: 'Clima',

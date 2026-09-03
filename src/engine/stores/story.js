@@ -345,6 +345,22 @@ export const useStoryStore = defineStore('story', {
     // collectionItems above.
     entityItems: (state) => (schemaId) =>
       Object.entries(state.entities[schemaId] || {}).map(([id, fields]) => ({ id, ...fields })),
+    // A `list` block's `source: 'entityCollection'` (user request) — one
+    // entity instance's own `type: 'collection'` field, flattened the exact
+    // same `{key, value}` shape as collectionItems above (a collection field
+    // is literally the same `{itemKey: value}` map, just nested under one
+    // entity's field instead of a top-level flagKey), so the SAME
+    // `{item:key}`/`{item:value}` tokens already work with zero changes to
+    // resolveDynamicText.js. `entityId: '*'` is the usual first/only-instance
+    // sentinel every other entity-field reader here uses (schedule/ledger/
+    // the `{entity:...}` token).
+    entityCollectionItems: (state) => (schemaId, entityId, fieldKey) => {
+      const instance =
+        entityId === '*'
+          ? Object.values(state.entities[schemaId] || {})[0]
+          : state.entities[schemaId]?.[entityId]
+      return Object.entries(instance?.[fieldKey] || {}).map(([key, value]) => ({ key, value }))
+    },
     totalUnread: (state) => Object.values(state.unreadCounts).reduce((a, b) => a + b, 0),
     currentChapter: (state) =>
       (state.project?.chapters ?? []).find((c) => c.id === state.currentChapterId) || null,
@@ -955,6 +971,28 @@ export const useStoryStore = defineStore('story', {
             const d = this.resolvedClock()
             const nowLabel = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
             value = activeSlotPlace(value, nowLabel)
+          }
+          // A `collection` field holds a `{itemKey: value}` map, same as a
+          // top-level flag collection — same "size and/or key presence"
+          // condition shape/semantics as `requires.collections` above
+          // (user request: "conditionner l'affichage par rapport à la
+          // collection, comme pour les flags"), just reading `cond.size`/
+          // `cond.has` instead of `cond.value` since a map can't be compared
+          // with `===`/min/max the way a scalar can. Both absent is a
+          // vacuous pass, same as requires.collections' own behavior.
+          if (fieldDef?.type === 'collection') {
+            const map = value && typeof value === 'object' ? value : {}
+            if (cond.size !== undefined) {
+              const size = Object.keys(map).length
+              if (typeof cond.size === 'number') {
+                if (size !== cond.size) return false
+              } else {
+                if ('min' in cond.size && size < cond.size.min) return false
+                if ('max' in cond.size && size > cond.size.max) return false
+              }
+            }
+            if (cond.has !== undefined && !(cond.has in map)) return false
+            return true
           }
           const expected = cond.value
           if (typeof expected === 'boolean') return Boolean(value) === expected
@@ -2160,16 +2198,30 @@ export const useStoryStore = defineStore('story', {
         }
       }
 
-      // effects.entities = [{ schemaId, entityId, mode: 'set'|'remove',
-      // fields }] — same "list of ops, not object-keyed" shape as
-      // effects.collections above, for the same reason (one effect can touch
-      // more than one entity, or the same one twice). 'set' MERGES `fields`
-      // onto whatever's already at that id (Object.assign, not overwrite) so
-      // an author can update a single field — e.g. just `humeur` — without
-      // re-specifying every other field of that instance; entityId left
-      // blank auto-generates one, same id-gen shape as the collections
-      // 'add' case just above. 'remove' with no matching entityId is a
-      // silent no-op, same "nothing to do" spirit as collections' 'remove'.
+      // effects.entities = [{ schemaId, entityId, mode: 'set'|'remove'|
+      // 'collectionAdd'|'collectionRemove'|'collectionIncrement', fields,
+      // fieldKey, itemKey, value }] — same "list of ops, not object-keyed"
+      // shape as effects.collections above, for the same reason (one effect
+      // can touch more than one entity, or the same one twice). 'set' MERGES
+      // `fields` onto whatever's already at that id (Object.assign, not
+      // overwrite) so an author can update a single field — e.g. just
+      // `humeur` — without re-specifying every other field of that instance;
+      // entityId left blank auto-generates one, same id-gen shape as the
+      // collections 'add' case above. 'remove' with no matching entityId is
+      // a silent no-op, same "nothing to do" spirit as collections' 'remove'.
+      //
+      // The 3 `collection*` modes (user request — a schema field of type
+      // `collection` holds its OWN `{itemKey: value}` map, same shape as a
+      // top-level flag collection, just nested under one entity's own field
+      // instead of a global flagKey) mirror effects.collections' own
+      // add/remove/increment semantics exactly, just addressed by
+      // `schemaId`+`entityId`+`fieldKey` instead of `flagKey`.
+      // `collectionAdd` auto-generates BOTH the entity id (if blank, same as
+      // 'set') and the item key (if blank, same as collections' 'add') —
+      // the common case of "push onto this record's growing list" with the
+      // author never having to think about either id. `collectionRemove`/
+      // `collectionIncrement` need a real existing entityId+itemKey or are a
+      // silent no-op, same spirit as their flagCollection counterparts.
       if (effects.entities) {
         for (const op of effects.entities) {
           if (!op.schemaId) continue
@@ -2177,6 +2229,28 @@ export const useStoryStore = defineStore('story', {
           const bucket = this.entities[op.schemaId]
           if (op.mode === 'remove') {
             if (op.entityId) delete bucket[op.entityId]
+          } else if (op.mode === 'collectionRemove') {
+            if (!op.entityId || !op.fieldKey || !op.itemKey) continue
+            const map = bucket[op.entityId]?.[op.fieldKey]
+            if (map) delete map[op.itemKey]
+          } else if (op.mode === 'collectionIncrement') {
+            if (!op.entityId || !op.fieldKey || !op.itemKey) continue
+            const instance = bucket[op.entityId]
+            if (!instance) continue
+            if (!instance[op.fieldKey]) instance[op.fieldKey] = {}
+            const map = instance[op.fieldKey]
+            map[op.itemKey] = (Number(map[op.itemKey]) || 0) + (Number(op.value) || 0)
+          } else if (op.mode === 'collectionAdd') {
+            if (!op.fieldKey) continue
+            const id =
+              op.entityId ||
+              `entity-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`
+            if (!bucket[id]) bucket[id] = {}
+            if (!bucket[id][op.fieldKey]) bucket[id][op.fieldKey] = {}
+            const key =
+              op.itemKey ||
+              `item-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`
+            bucket[id][op.fieldKey][key] = op.value
           } else {
             const id =
               op.entityId ||

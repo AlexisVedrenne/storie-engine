@@ -176,6 +176,13 @@ export function defaultBlock(type) {
       // author-defined entity schema (story.entities, `schemaId` picks
       // which one — see the Schémas tab / EntitySchemaForm.vue), for
       // structured multi-field records a flat collection can't hold.
+      // `source: 'entityCollection'` (user request) iterates ONE entity
+      // instance's own `type: 'collection'` field (story.entityCollectionItems,
+      // `schemaId`+`entityId`+`fieldKey` pick which one — `entityId: '*'` is
+      // the usual first/only-instance sentinel) — same key->value shape as
+      // `flagCollection`, just scoped to a single record's own field
+      // instead of a project-wide flag, so it reuses the exact same
+      // `{item:key}`/`{item:value}` tokens.
       // `template` is a block subtree (same shape as card/layout's own
       // `blocks[]`) authored ONCE and repeated per item; its text fields can
       // use the `{item:...}` tokens (see resolveDynamicText.js —
@@ -187,6 +194,8 @@ export function defaultBlock(type) {
         onlyFollowed: false,
         flagKey: '',
         schemaId: '',
+        entityId: '*',
+        fieldKey: '',
         template: [],
       }
     case 'conversations':
