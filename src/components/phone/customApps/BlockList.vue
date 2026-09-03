@@ -78,6 +78,7 @@ import BadgeBlock from './BadgeBlock.vue'
 import DividerBlock from './DividerBlock.vue'
 import ButtonBlock from './ButtonBlock.vue'
 import TabsBlock from './TabsBlock.vue'
+import TabPanelBlock from './TabPanelBlock.vue'
 import ListBlock from './ListBlock.vue'
 import ConversationsBlock from './ConversationsBlock.vue'
 import ScheduleBlock from './ScheduleBlock.vue'
@@ -131,6 +132,7 @@ const BLOCK_COMPONENTS = {
   divider: DividerBlock,
   button: ButtonBlock,
   tabs: TabsBlock,
+  tabPanel: TabPanelBlock,
   list: ListBlock,
   conversations: ConversationsBlock,
   schedule: ScheduleBlock,

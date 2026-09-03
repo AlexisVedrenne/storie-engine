@@ -132,6 +132,9 @@ function walkBlock(block, seen, out) {
 
   for (const child of block.blocks || []) walkBlock(child, seen, out)
   for (const child of block.template || []) walkBlock(child, seen, out)
+  for (const tab of block.tabs || []) {
+    for (const child of tab.blocks || []) walkBlock(child, seen, out)
+  }
 }
 
 export function collectScreenVariables(blocks) {

@@ -716,7 +716,8 @@ export default {
     badge: { label: 'Badge' },
     divider: { label: 'Divider' },
     button: { label: 'Button' },
-    tabs: { label: 'Tabs' },
+    tabs: { label: 'Tabs (screen navigation)' },
+    tabPanel: { label: 'Tabs (in-place content)' },
     list: { label: 'List' },
     conversations: { label: 'Conversation' },
     schedule: { label: 'Schedule' },
@@ -839,6 +840,8 @@ export default {
     tabLabelLabel: 'Tab text',
     tabScreenLabel: 'Target screen',
     addTab: 'Add a tab',
+    tabPanelHelp:
+      'Unlike the "Tabs (screen navigation)" block, this never changes screen — each tab has its own content (blocks), shown in place of the others without leaving the page.',
     spacingTitle: 'Spacing (advanced)',
     spacingBeforeLabel: 'Space before (optional)',
     spacingAfterLabel: 'Space after (optional)',

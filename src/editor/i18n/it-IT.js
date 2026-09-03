@@ -729,7 +729,8 @@ export default {
     badge: { label: 'Badge' },
     divider: { label: 'Separatore' },
     button: { label: 'Pulsante' },
-    tabs: { label: 'Schede (tab)' },
+    tabs: { label: 'Schede (navigazione schermo)' },
+    tabPanel: { label: 'Schede (contenuto, stessa pagina)' },
     list: { label: 'Elenco' },
     conversations: { label: 'Conversazione' },
     schedule: { label: 'Orario' },
@@ -854,6 +855,8 @@ export default {
     tabLabelLabel: 'Testo della scheda',
     tabScreenLabel: 'Schermata di destinazione',
     addTab: 'Aggiungi una scheda',
+    tabPanelHelp:
+      'A differenza del blocco "Schede (navigazione schermo)", questo non cambia mai schermata — ogni scheda ha il proprio contenuto (blocchi), mostrato al posto degli altri senza lasciare la pagina.',
     spacingTitle: 'Spaziatura (avanzato)',
     spacingBeforeLabel: 'Spazio prima (opzionale)',
     spacingAfterLabel: 'Spazio dopo (opzionale)',

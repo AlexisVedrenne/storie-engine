@@ -55,6 +55,9 @@ export function collectAssetRefs(blocks, out = []) {
       if (typeof poi.image === 'string' && poi.image) out.push(poi.image)
       if (Array.isArray(poi.content)) collectAssetRefs(poi.content, out)
     }
+    for (const tab of block.tabs || []) {
+      if (Array.isArray(tab.blocks)) collectAssetRefs(tab.blocks, out)
+    }
   }
   return out
 }
@@ -75,6 +78,11 @@ export function rewriteBlockSrcs(blocks, mapFn) {
         if (Array.isArray(nextPoi.content)) nextPoi.content = rewriteBlockSrcs(nextPoi.content, mapFn)
         return nextPoi
       })
+    }
+    if (Array.isArray(next.tabs)) {
+      next.tabs = next.tabs.map((tab) =>
+        Array.isArray(tab.blocks) ? { ...tab, blocks: rewriteBlockSrcs(tab.blocks, mapFn) } : tab,
+      )
     }
     return next
   })
