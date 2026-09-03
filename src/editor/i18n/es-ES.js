@@ -735,7 +735,8 @@ export default {
     badge: { label: 'Insignia' },
     divider: { label: 'Separador' },
     button: { label: 'Botón' },
-    tabs: { label: 'Pestañas' },
+    tabs: { label: 'Pestañas (navegación de pantalla)' },
+    tabPanel: { label: 'Pestañas (contenido en la misma página)' },
     list: { label: 'Lista' },
     conversations: { label: 'Conversación' },
     schedule: { label: 'Horario' },
@@ -859,6 +860,8 @@ export default {
     tabLabelLabel: 'Texto de la pestaña',
     tabScreenLabel: 'Pantalla de destino',
     addTab: 'Añadir una pestaña',
+    tabPanelHelp:
+      'A diferencia del bloque "Pestañas (navegación de pantalla)", esto nunca cambia de pantalla — cada pestaña tiene su propio contenido (bloques), mostrado en lugar de los demás sin salir de la página.',
     spacingTitle: 'Espaciado (avanzado)',
     spacingBeforeLabel: 'Espacio antes (opcional)',
     spacingAfterLabel: 'Espacio después (opcional)',

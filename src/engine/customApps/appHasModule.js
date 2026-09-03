@@ -1,7 +1,7 @@
 // Whether a custom app actually uses a given block type ANYWHERE in its
 // screens (including nested card/layout containers, a list block's own
-// template, and a map pin's own content) — same recursion shape as
-// collectAssetRefs/rewriteBlockSrcs in
+// template, a map pin's own content, and a tabPanel's own per-tab content)
+// — same recursion shape as collectAssetRefs/rewriteBlockSrcs in
 // src-electron/ipc/customApps.js, duplicated here rather than imported from
 // there since that file statically imports `electron` and can't load
 // outside a real Electron process (see docs/interactions-et-apps-custom.md's
@@ -15,6 +15,9 @@ function blocksContainType(blocks, type) {
     if (Array.isArray(block.template) && blocksContainType(block.template, type)) return true
     for (const poi of block.pois || []) {
       if (Array.isArray(poi.content) && blocksContainType(poi.content, type)) return true
+    }
+    for (const tab of block.tabs || []) {
+      if (Array.isArray(tab.blocks) && blocksContainType(tab.blocks, type)) return true
     }
   }
   return false
@@ -50,6 +53,9 @@ export function collectBlocksOfType(blocks, type) {
     if (Array.isArray(block.template)) out.push(...collectBlocksOfType(block.template, type))
     for (const poi of block.pois || []) {
       if (Array.isArray(poi.content)) out.push(...collectBlocksOfType(poi.content, type))
+    }
+    for (const tab of block.tabs || []) {
+      if (Array.isArray(tab.blocks)) out.push(...collectBlocksOfType(tab.blocks, type))
     }
   }
   return out

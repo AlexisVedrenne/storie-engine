@@ -19,6 +19,7 @@ export const BLOCK_KINDS = [
   { type: 'divider', icon: 'horizontal_rule' },
   { type: 'button', icon: 'smart_button' },
   { type: 'tabs', icon: 'tab' },
+  { type: 'tabPanel', icon: 'view_carousel' },
   { type: 'list', icon: 'repeat' },
   { type: 'conversations', icon: 'forum' },
   { type: 'schedule', icon: 'schedule' },
@@ -164,6 +165,27 @@ export function defaultBlock(type) {
       }
     case 'tabs':
       return { type, tabs: [{ label: '', screenId: '' }] }
+    case 'tabPanel':
+      // Same "tab bar" look as `tabs` above, but switches CONTENT within
+      // this same spot instead of navigating to a different screen (user
+      // request — the "q-tabs + q-panel" pattern: `tabs` only ever pointed
+      // at a screen, no way to swap a chunk of the CURRENT one in place).
+      // Each tab carries its own `blocks[]` (same recursive shape as
+      // card/sheet) rather than a `screenId` — genuinely a different block,
+      // not a mode toggle on `tabs`, same "small bounded blocks, not one
+      // block wearing two hats" precedent `sheet`/`overlay` already set.
+      // Which tab is showing is PURELY LOCAL UI STATE (a plain ref in
+      // TabPanelBlock.vue, always resets to the first tab on mount) —
+      // deliberately not project/save data, matching every other "which
+      // sub-thing is currently shown" state in this engine (activeScreenId,
+      // selected list row...).
+      return {
+        type,
+        tabs: [
+          { label: '', blocks: [] },
+          { label: '', blocks: [] },
+        ],
+      }
     case 'list':
       // `source: 'contacts'` (original v1, the only one for a while — see
       // git history for why a picker wasn't added until a second source

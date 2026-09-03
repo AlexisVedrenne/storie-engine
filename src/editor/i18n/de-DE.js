@@ -728,7 +728,8 @@ export default {
     badge: { label: 'Abzeichen' },
     divider: { label: 'Trennlinie' },
     button: { label: 'Schaltfläche' },
-    tabs: { label: 'Tabs' },
+    tabs: { label: 'Tabs (Bildschirmnavigation)' },
+    tabPanel: { label: 'Tabs (Inhalt, gleiche Seite)' },
     list: { label: 'Liste' },
     conversations: { label: 'Unterhaltung' },
     schedule: { label: 'Zeitplan' },
@@ -854,6 +855,8 @@ export default {
     tabLabelLabel: 'Tab-Text',
     tabScreenLabel: 'Zielbildschirm',
     addTab: 'Tab hinzufügen',
+    tabPanelHelp:
+      'Im Gegensatz zum Block "Tabs (Bildschirmnavigation)" wechselt dieser nie den Bildschirm — jeder Tab hat seinen eigenen Inhalt (Blöcke), der anstelle der anderen angezeigt wird, ohne die Seite zu verlassen.',
     spacingTitle: 'Abstand (erweitert)',
     spacingBeforeLabel: 'Abstand davor (optional)',
     spacingAfterLabel: 'Abstand danach (optional)',

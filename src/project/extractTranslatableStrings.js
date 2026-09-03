@@ -104,6 +104,12 @@ export function addBlockStrings(blocks, set) {
           if (tab.label) set.add(tab.label)
         }
         break
+      case 'tabPanel':
+        for (const tab of block.tabs || []) {
+          if (tab.label) set.add(tab.label)
+          if (Array.isArray(tab.blocks)) addBlockStrings(tab.blocks, set)
+        }
+        break
       case 'map':
         for (const poi of block.pois || []) {
           if (poi.label) set.add(poi.label)

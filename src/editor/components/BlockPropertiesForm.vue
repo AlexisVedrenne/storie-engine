@@ -599,6 +599,57 @@
       />
     </template>
 
+    <template v-else-if="block.type === 'tabPanel'">
+      <p class="tab-help">{{ t('blockProps.tabPanelHelp') }}</p>
+      <div v-for="(tab, i) in ensureTabPanelTabs()" :key="i" class="lookup-result-row">
+        <div class="lookup-result-header">
+          <q-input
+            dense
+            outlined
+            :ref="(el) => (tabPanelLabelRefs[i] = el)"
+            :label="t('blockProps.tabLabelLabel')"
+            v-model="tab.label"
+            class="grow"
+          >
+            <template #append>
+              <VariablePickerBtn
+                :item-scope="itemScope"
+                @pick="
+                  (v) => (tab.label = insertEmojiAtCaret(tabPanelLabelRefs[i], tab.label, v))
+                "
+              />
+            </template>
+          </q-input>
+          <q-btn
+            dense
+            flat
+            round
+            icon="close"
+            size="sm"
+            color="negative"
+            :disable="block.tabs.length <= 1"
+            @click="removeTabPanelTab(i)"
+          />
+        </div>
+        <BlockBuilder
+          :blocks="ensureTabPanelBlocks(tab)"
+          :screens="screens"
+          :sheets="sheets"
+          :item-scope="itemScope"
+          :depth="depth + 1"
+        />
+      </div>
+      <q-btn
+        dense
+        flat
+        no-caps
+        icon="add"
+        :label="t('blockProps.addTab')"
+        class="btn-ghost"
+        @click="addTabPanelTab"
+      />
+    </template>
+
     <template v-else-if="block.type === 'list'">
       <q-btn-toggle
         dense
@@ -1160,6 +1211,7 @@ const badgeLabelInputRef = ref(null)
 const buttonLabelInputRef = ref(null)
 const formLabelInputRef = ref(null)
 const tabLabelRefs = {}
+const tabPanelLabelRefs = {}
 const lookupTitleRefs = {}
 const lookupExcerptRefs = {}
 const mapPoiLabelRefs = {}
@@ -1323,6 +1375,29 @@ function addTab() {
 }
 function removeTab(i) {
   props.block.tabs.splice(i, 1)
+}
+
+// `tabPanel` (user request — the "q-tabs + q-panel" pattern) — same list-of-
+// tabs shape as `tabs` above, but each tab carries its own `blocks[]`
+// instead of a `screenId`, so it needs its own row/add/remove trio rather
+// than sharing `ensureTabs()`/`addTab()`/`removeTab()`.
+function ensureTabPanelTabs() {
+  if (!props.block.tabs?.length)
+    props.block.tabs = [
+      { label: '', blocks: [] },
+      { label: '', blocks: [] },
+    ]
+  return props.block.tabs
+}
+function addTabPanelTab() {
+  ensureTabPanelTabs().push({ label: '', blocks: [] })
+}
+function removeTabPanelTab(i) {
+  props.block.tabs.splice(i, 1)
+}
+function ensureTabPanelBlocks(tab) {
+  if (!tab.blocks) tab.blocks = []
+  return tab.blocks
 }
 
 const screenOptions = computed(() =>

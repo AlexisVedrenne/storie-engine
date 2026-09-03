@@ -734,7 +734,8 @@ export default {
     badge: { label: 'Badge' },
     divider: { label: 'Séparateur' },
     button: { label: 'Bouton' },
-    tabs: { label: 'Onglets' },
+    tabs: { label: 'Onglets (navigation d’écran)' },
+    tabPanel: { label: 'Onglets (contenu, même page)' },
     list: { label: 'Liste' },
     conversations: { label: 'Conversation' },
     schedule: { label: 'Emploi du temps' },
@@ -859,6 +860,8 @@ export default {
     tabLabelLabel: 'Texte de l’onglet',
     tabScreenLabel: 'Écran ciblé',
     addTab: 'Ajouter un onglet',
+    tabPanelHelp:
+      'Contrairement au bloc "Onglets (navigation d’écran)", ceci ne change pas d’écran — chaque onglet a son propre contenu (blocs), affiché à la place des autres sans quitter la page.',
     spacingTitle: 'Espacement (avancé)',
     spacingBeforeLabel: 'Espace avant (optionnel)',
     spacingAfterLabel: 'Espace après (optionnel)',
